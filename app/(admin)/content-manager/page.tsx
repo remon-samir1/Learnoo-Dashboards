@@ -11,7 +11,7 @@ import type { Course, Lecture, Chapter } from '@/src/types';
 import { toast } from 'react-hot-toast';
 
 export default function ContentManagerPage() {
-  const { data: coursesData, isLoading: coursesLoading, refetch: refetchCourses } = useCourses();
+  const { data: coursesData, isLoading: coursesLoading, refetch: refetchCourses } = useCourses([]);
   const [courses, setCourses] = useState<Course[]>([]);
   
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());

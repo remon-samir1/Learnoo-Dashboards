@@ -16,6 +16,11 @@ export const useActivityData = createQueryHook(
   { enabled: true }
 );
 
+export const useEngagementData = createQueryHook(
+  (period?: string) => api.dashboard.getEngagement({ period }),
+  { enabled: true }
+);
+
 export const useRecentActivity = createQueryHook(
   (limit?: number) => api.dashboard.getRecentActivity({ limit }),
   { enabled: true, refetchInterval: 30000 } // Refetch every 30 seconds

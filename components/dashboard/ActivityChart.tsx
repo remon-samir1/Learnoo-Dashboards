@@ -6,7 +6,7 @@ interface ActivityChartProps {
 }
 
 function generatePathFromData(data: ActivityData[], field: 'students' | 'revenue'): string {
-  if (!data || data.length === 0) return '';
+  if (!data || !Array.isArray(data) || data.length === 0) return '';
   
   const maxValue = field === 'students' ? 400 : 2400;
   const width = 640;
@@ -87,7 +87,7 @@ export default function ActivityChart({ data }: ActivityChartProps) {
               strokeLinecap="round"
             />
             {/* Dots on Blue Line */}
-            {data && data.map((item, i) => {
+            {data && Array.isArray(data) && data.map((item, i) => {
               const x = (i * 640) / Math.max(data.length - 1, 1);
               const y = 200 - ((item.students || 0) / 400) * 200;
               return <circle key={i} cx={x} cy={y} r="4" fill="white" stroke="#2137D6" strokeWidth="2" />;
@@ -102,7 +102,7 @@ export default function ActivityChart({ data }: ActivityChartProps) {
               strokeLinecap="round"
             />
              {/* Dots on Green Line */}
-            {data && data.map((item, i) => {
+            {data && Array.isArray(data) && data.map((item, i) => {
               const x = (i * 640) / Math.max(data.length - 1, 1);
               const y = 200 - ((item.revenue || 0) / 2400) * 200;
               return <circle key={i} cx={x} cy={y} r="4" fill="white" stroke="#10B981" strokeWidth="2" />;

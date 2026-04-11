@@ -6,16 +6,18 @@ import QuickAction from '@/components/QuickAction';
 import ActivityChart from '@/components/dashboard/ActivityChart';
 import EngagementChart from '@/components/dashboard/EngagementChart';
 import RecentActivity from '@/components/dashboard/RecentActivity';
-import { useDashboardStats, useActivityData, useRecentActivity } from '@/src/hooks/useDashboard';
+import { useDashboardStats, useActivityData, useEngagementData, useRecentActivity } from '@/src/hooks/useDashboard';
 import { StatCardSkeleton, QuickActionSkeleton, ChartSkeleton, ActivityItemSkeleton, Skeleton } from '@/src/components/ui/Skeleton';
 
 export default function DashboardPage() {
   const { data: statsResponse, isLoading: statsLoading } = useDashboardStats([], {});
   const { data: activityResponse, isLoading: activityLoading } = useActivityData(['week'], {});
+  const { data: engagementResponse, isLoading: engagementLoading } = useEngagementData(['week'], {});
   const { data: recentActivityResponse, isLoading: activityListLoading } = useRecentActivity([10], {});
 
   const stats = statsResponse?.data;
   const activityData = activityResponse?.data;
+  const engagementData = engagementResponse?.data;
   const recentActivities = recentActivityResponse?.data;
 
   return (
@@ -146,7 +148,7 @@ export default function DashboardPage() {
       {/* Charts and Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 flex flex-col gap-8">
-          {activityLoading ? (
+          {activityLoading || engagementLoading ? (
             <>
               <ChartSkeleton />
               <ChartSkeleton />
@@ -154,7 +156,7 @@ export default function DashboardPage() {
           ) : (
             <>
                <ActivityChart data={activityData} />
-               <EngagementChart data={activityData} />
+               <EngagementChart data={engagementData} />
             </>
           )}
         </div>

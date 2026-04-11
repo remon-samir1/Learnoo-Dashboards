@@ -16,7 +16,7 @@ export default function EngagementChart({ data }: EngagementChartProps) {
     { day: 'Sun', value: '175px' },
   ];
 
-  const bars = data ? data.map((item, i) => ({
+  const bars = data && Array.isArray(data) ? data.map((item, i) => ({
     day: item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }) : defaultBars[i]?.day || '',
     value: `${Math.max(20, (item.engagement || 0) / 4)}px`,
   })) : defaultBars;
