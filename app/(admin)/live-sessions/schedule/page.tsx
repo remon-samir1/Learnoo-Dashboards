@@ -1,5 +1,8 @@
 "use client";
 
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import { ChevronLeft, Info } from 'lucide-react';
+import Link from 'next/link';
 import { api } from '@/src/lib/api';
 import { Course, CreateLiveRoomRequest } from '@/src/types';
 import { useRouter } from 'next/navigation';
@@ -7,11 +10,11 @@ import { toast } from 'react-hot-toast';
 
 export default function ScheduleSessionPage() {
   const router = useRouter();
-  const [courses, setCourses] = React.useState<Course[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [isFetchingCourses, setIsFetchingCourses] = React.useState(true);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isFetchingCourses, setIsFetchingCourses] = useState(true);
   
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = useState({
     title: '',
     course_id: '',
     description: '',
@@ -21,7 +24,7 @@ export default function ScheduleSessionPage() {
     max_students: 50
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchCourses = async () => {
       try {
         const response = await api.courses.list();
@@ -36,7 +39,7 @@ export default function ScheduleSessionPage() {
     fetchCourses();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };

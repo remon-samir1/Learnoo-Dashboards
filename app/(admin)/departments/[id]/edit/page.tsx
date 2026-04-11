@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { BookOpen, Loader2 } from 'lucide-react';
+import { GraduationCap, Loader2 } from 'lucide-react';
 import { useDepartment, useUpdateDepartment } from '@/src/hooks/useDepartments';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
+import { FileUpload } from '@/components/FileUpload';
 
 export default function EditDepartmentPage() {
   const router = useRouter();
@@ -20,6 +21,8 @@ export default function EditDepartmentPage() {
     name: '',
     code: '',
     faculty_id: '',
+    image: null as File | null,
+    existingImage: null as string | null,
   });
 
   useEffect(() => {
@@ -28,6 +31,8 @@ export default function EditDepartmentPage() {
         name: department.attributes.name,
         code: department.attributes.code || '',
         faculty_id: String(department.attributes.faculty_id),
+        image: null,
+        existingImage: department.attributes.image,
       });
     }
   }, [department]);
@@ -40,6 +45,7 @@ export default function EditDepartmentPage() {
         name: formData.name,
         code: formData.code || undefined,
         faculty_id: parseInt(formData.faculty_id),
+        image: formData.image || undefined,
       });
       router.push('/departments');
     } catch {
@@ -50,8 +56,8 @@ export default function EditDepartmentPage() {
   if (isLoadingDepartment || isLoadingFaculties) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
-        <p className="mt-4 text-[#64748B]">Loading subject...</p>
+        <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
+        <p className="mt-4 text-[#64748B]">Loading department...</p>
       </div>
     );
   }
@@ -59,7 +65,7 @@ export default function EditDepartmentPage() {
   if (!department) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <p className="text-[#64748B]">Subject not found</p>
+        <p className="text-[#64748B]">Department not found</p>
       </div>
     );
   }
@@ -71,26 +77,35 @@ export default function EditDepartmentPage() {
 
   return (
     <EntityForm
-      title="Edit Subject"
-      description="Update subject information"
+      title="Edit Department"
+      description="Update department details and category information"
       backHref="/departments"
       onSubmit={handleSubmit}
       isLoading={isUpdating}
       error={error}
     >
-      <FormSection title="Subject Information" icon={<BookOpen className="w-4 h-4" />}>
+      <FormSection title="Department Information" icon={<GraduationCap className="w-4 h-4" />}>
+        <div className="md:col-span-2 flex justify-center mb-6">
+          <FileUpload
+            label="Department Image"
+            onFileSelect={(file) => setFormData({ ...formData, image: file })}
+            previewUrl={formData.image ? URL.createObjectURL(formData.image) : (formData.existingImage || undefined)}
+            onClear={() => setFormData({ ...formData, image: null, existingImage: null })}
+          />
+        </div>
+
         <FormInput
-          label="Subject Name"
+          label="Department Name"
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Mathematics"
+          placeholder="e.g., Medicine"
         />
         <FormInput
           label="Code"
           value={formData.code}
           onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-          placeholder="e.g., MATH"
+          placeholder="e.g., MED"
         />
         <FormSelect
           label="Faculty"

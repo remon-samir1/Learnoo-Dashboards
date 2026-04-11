@@ -21,7 +21,7 @@ export const useCreateDepartment = createMutationHook(
 );
 
 export const useUpdateDepartment = createMutationHook(
-  (id: number, data: CreateDepartmentRequest) => 
+  (id: number, data: Partial<CreateDepartmentRequest>) => 
     api.departments.update(id, data).then(res => res.data)
 );
 

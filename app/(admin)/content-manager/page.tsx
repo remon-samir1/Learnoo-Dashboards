@@ -35,18 +35,21 @@ export default function ContentManagerPage() {
     title: '',
     duration: '',
     is_free_preview: 0 as 0 | 1,
-    thumbnail: null as File | null,
+    image: null as File | null,
+    video: null as File | null,
     attachments: [] as File[]
   });
 
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [pendingThumbnail, setPendingThumbnail] = useState<File | null>(null);
+  const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const attachmentInputRef = React.useRef<HTMLInputElement>(null);
   const videoInputRef = React.useRef<HTMLInputElement>(null);
   const modalAttachmentInputRef = React.useRef<HTMLInputElement>(null);
   const modalThumbnailInputRef = React.useRef<HTMLInputElement>(null);
+  const modalVideoInputRef = React.useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (coursesData) {
@@ -138,9 +141,9 @@ export default function ContentManagerPage() {
         lecture_id: Number(selectedLecture.id),
         title: addChapterData.title,
         duration: addChapterData.duration,
-        thumbnail: addChapterData.thumbnail || undefined,
+        thumbnail: addChapterData.image || undefined,
         is_free_preview: addChapterData.is_free_preview,
-        attachments: addChapterData.attachments,
+        attachments: addChapterData.video ? [addChapterData.video, ...addChapterData.attachments] : addChapterData.attachments,
       });
       toast.success("Chapter created successfully");
       setIsAddChapterModalOpen(false);
@@ -148,7 +151,8 @@ export default function ContentManagerPage() {
         title: '',
         duration: '',
         is_free_preview: 0,
-        thumbnail: null,
+        image: null,
+        video: null,
         attachments: []
       });
       // Refresh chapters
@@ -163,24 +167,23 @@ export default function ContentManagerPage() {
     if (!selectedChapter) return;
     setIsUpdating(true);
     try {
-      // If we have a thumbnailFile (video/preview), we add it to attachments as requested
       const finalAttachments = [...pendingAttachments];
-      if (thumbnailFile) {
-        finalAttachments.push(thumbnailFile);
+      if (pendingVideo) {
+        finalAttachments.push(pendingVideo);
       }
 
       await api.chapters.update(Number(selectedChapter.id), {
         title: selectedChapter.attributes.title,
         duration: selectedChapter.attributes.duration,
         is_free_preview: selectedChapter.attributes.is_free_preview ? 1 : 0,
-        // thumbnail is technically for the image preview, but we can send it if thumbnailFile is an image
-        thumbnail: (thumbnailFile && thumbnailFile.type.startsWith('image/')) ? thumbnailFile : undefined,
+        thumbnail: pendingThumbnail || undefined,
         attachments: finalAttachments.length > 0 ? finalAttachments : undefined,
       });
       toast.success("Chapter updated successfully");
       // Reset pending
       setPendingAttachments([]);
-      setThumbnailFile(null);
+      setPendingThumbnail(null);
+      setPendingVideo(null);
       // Update local state
       const lectureId = selectedChapter.attributes.lecture_id.toString();
       const chapters = await api.chapters.list({ lecture_id: lectureId });
@@ -422,24 +425,20 @@ export default function ContentManagerPage() {
                   <h3 className="text-[15px] font-bold text-[#1E293B]">Video Content</h3>
                 </div>
                 <div className="relative aspect-video bg-[#0F172A] rounded-2xl overflow-hidden group cursor-pointer flex items-center justify-center">
-                  {thumbnailFile ? (
-                    thumbnailFile.type.startsWith('video/') ? (
-                      <video 
-                        src={URL.createObjectURL(thumbnailFile)} 
-                        className="w-full h-full object-cover" 
-                        controls 
-                      />
-                    ) : (
-                      <img src={URL.createObjectURL(thumbnailFile)} alt="Preview" className="w-full h-full object-cover" />
-                    )
+                  {pendingVideo ? (
+                    <video 
+                      src={URL.createObjectURL(pendingVideo)} 
+                      className="w-full h-full object-cover" 
+                      controls 
+                    />
+                  ) : pendingThumbnail ? (
+                    <img src={URL.createObjectURL(pendingThumbnail)} alt="Preview" className="w-full h-full object-cover" />
                   ) : selectedChapter.attributes.thumbnail ? (
-                    // Check if the thumbnail attribute is actually a video link
                     selectedChapter.attributes.thumbnail.match(/\.(mp4|webm|ogg)$/) ? (
                       <video 
                         src={selectedChapter.attributes.thumbnail} 
                         className="w-full h-full object-cover" 
                         controls
-                        poster={selectedChapter.attributes.thumbnail} // Fallback poster
                       />
                     ) : (
                       <img src={selectedChapter.attributes.thumbnail} alt={selectedChapter.attributes.title} className="w-full h-full object-cover" />
@@ -450,7 +449,7 @@ export default function ContentManagerPage() {
                     </div>
                   )}
                   
-                  {!thumbnailFile && !selectedChapter.attributes.thumbnail?.match(/\.(mp4|webm|ogg)$/) && (
+                  {!pendingVideo && !selectedChapter.attributes.thumbnail?.match(/\.(mp4|webm|ogg)$/) && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 group-hover:scale-110 transition-transform">
                         <Play className="w-8 h-8 text-white fill-white" />
@@ -460,22 +459,29 @@ export default function ContentManagerPage() {
 
                   <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
+                      onClick={() => modalThumbnailInputRef.current?.click()}
+                      className="px-3 py-1.5 bg-white rounded-lg text-[12px] font-bold text-[#1E293B] hover:bg-[#F8FAFC] transition-all"
+                    >
+                      {pendingThumbnail ? "Image Changed" : "Replace Image"}
+                    </button>
+                    <button
                       onClick={() => videoInputRef.current?.click()}
                       className="px-3 py-1.5 bg-white rounded-lg text-[12px] font-bold text-[#1E293B] hover:bg-[#F8FAFC] transition-all"
                     >
-                      {thumbnailFile ? "Change Selection" : "Replace Video/Link"}
+                      {pendingVideo ? "Video Changed" : "Replace Video"}
                     </button>
                     <input
                       type="file"
                       ref={videoInputRef}
                       className="hidden"
-                      accept="video/*,image/*"
-                      onChange={(e) => setThumbnailFile(e.target.files?.[0] || null)}
+                      accept="video/*"
+                      onChange={(e) => setPendingVideo(e.target.files?.[0] || null)}
                     />
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        setThumbnailFile(null);
+                        setPendingVideo(null);
+                        setPendingThumbnail(null);
                       }}
                       className="p-1.5 bg-[#EF4444] rounded-lg text-white hover:bg-red-600 transition-all"
                     >
@@ -656,22 +662,39 @@ export default function ContentManagerPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Thumbnail / Video</label>
+                <label className="text-[13px] font-bold text-[#64748B]">Thumbnail Image</label>
                 <button
                   onClick={() => modalThumbnailInputRef.current?.click()}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium"
                 >
-                  {addChapterData.thumbnail ? addChapterData.thumbnail.name : "Select file"}
+                  {addChapterData.image ? addChapterData.image.name : "Select image file"}
                 </button>
                 <input
                   type="file"
                   ref={modalThumbnailInputRef}
                   className="hidden"
-                  onChange={(e) => setAddChapterData({ ...addChapterData, thumbnail: e.target.files?.[0] || null })}
+                  accept="image/*"
+                  onChange={(e) => setAddChapterData({ ...addChapterData, image: e.target.files?.[0] || null })}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Attachments</label>
+                <label className="text-[13px] font-bold text-[#64748B]">Video File (will be in attachments)</label>
+                <button
+                  onClick={() => modalVideoInputRef.current?.click()}
+                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium"
+                >
+                  {addChapterData.video ? addChapterData.video.name : "Select video file"}
+                </button>
+                <input
+                  type="file"
+                  ref={modalVideoInputRef}
+                  className="hidden"
+                  accept="video/*"
+                  onChange={(e) => setAddChapterData({ ...addChapterData, video: e.target.files?.[0] || null })}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-bold text-[#64748B]">Other Attachments</label>
                 <button
                   onClick={() => modalAttachmentInputRef.current?.click()}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium"
