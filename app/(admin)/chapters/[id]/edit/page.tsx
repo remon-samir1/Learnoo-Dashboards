@@ -20,7 +20,7 @@ export default function EditChapterPage() {
     title: '',
     lecture_id: '',
     duration: '',
-    is_free_preview: false,
+    is_free_preview: 0 as 0 | 1,
   });
 
   useEffect(() => {
@@ -109,8 +109,8 @@ export default function EditChapterPage() {
           <input
             type="checkbox"
             id="is_free_preview"
-            checked={formData.is_free_preview}
-            onChange={(e) => setFormData({ ...formData, is_free_preview: e.target.checked })}
+            checked={formData.is_free_preview === 1}
+            onChange={(e) => setFormData({ ...formData, is_free_preview: e.target.checked ? 1 : 0 })}
             className="w-4 h-4 rounded border-gray-300 text-[#2137D6] focus:ring-[#2137D6]"
           />
           <label htmlFor="is_free_preview" className="text-sm text-[#475569]">

@@ -74,11 +74,11 @@ export default function ChaptersPage() {
       header: 'Free Preview',
       render: (item) => (
         <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-          item.attributes.is_free_preview 
+          item.attributes.is_free_preview === 1
             ? 'bg-green-100 text-green-700' 
             : 'bg-gray-100 text-gray-700'
         }`}>
-          {item.attributes.is_free_preview ? 'Yes' : 'No'}
+          {item.attributes.is_free_preview === 1 ? 'Yes' : 'No'}
         </span>
       ),
     },

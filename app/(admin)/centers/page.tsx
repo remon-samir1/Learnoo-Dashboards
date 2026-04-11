@@ -13,7 +13,7 @@ export default function CentersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
-  
+
   const { data: centers, isLoading, error, refetch } = useCenters([]);
   const { mutate: deleteCenter, isLoading: isDeleting } = useDeleteCenter();
 
@@ -24,7 +24,7 @@ export default function CentersPage() {
 
   const handleConfirmDelete = async () => {
     if (!selectedCenter) return;
-    
+
     try {
       await deleteCenter(parseInt(selectedCenter.id));
       setDeleteModalOpen(false);
@@ -52,20 +52,20 @@ export default function CentersPage() {
         </div>
       ),
     },
-    {
-      key: 'parent_id',
-      header: 'Parent Center',
-      render: (item) => {
-        if (!item.parent_id) return '-';
-        const parent = centers?.find(c => parseInt(c.id) === item.parent_id);
-        return parent?.name || '-';
-      },
-    },
+    // {
+    //   key: 'parent_id',
+    //   header: 'Parent Center',
+    //   render: (item) => {
+    //     if (!item.parent_id) return '-';
+    //     const parent = centers?.find(c => parseInt(c.id) === item.parent_id);
+    //     return parent?.name || '-';
+    //   },
+    // },
     {
       key: 'created_at',
       header: 'Created',
-      render: (item) => item.created_at 
-        ? new Date(item.created_at).toLocaleDateString() 
+      render: (item) => item.created_at
+        ? new Date(item.created_at).toLocaleDateString()
         : '-',
     },
   ];

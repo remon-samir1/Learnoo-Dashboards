@@ -10,11 +10,11 @@ export default function EditCenterPage() {
   const router = useRouter();
   const params = useParams();
   const centerId = parseInt(params.id as string);
-  
+
   const { data: center, isLoading: isLoadingCenter } = useCenter([centerId]);
   const { data: centers, isLoading: isLoadingCenters } = useCenters([]);
   const { mutate: updateCenter, isLoading: isUpdating, error } = useUpdateCenter();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     parent_id: '',
@@ -31,7 +31,7 @@ export default function EditCenterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       await updateCenter(centerId, {
         name: formData.name,
@@ -65,7 +65,7 @@ export default function EditCenterPage() {
     ?.filter(c => c.id !== centerId.toString())
     .map(c => ({
       value: c.id,
-      label: c.attributes.name,
+      label: c.name,
     })) || [];
 
   return (
@@ -85,12 +85,12 @@ export default function EditCenterPage() {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Main Center, Dokki"
         />
-        <FormSelect
+        {/* <FormSelect
           label="Parent Center (Optional)"
           value={formData.parent_id}
           onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
           options={[{ value: '', label: 'No Parent' }, ...parentOptions]}
-        />
+        /> */}
       </FormSection>
     </EntityForm>
   );

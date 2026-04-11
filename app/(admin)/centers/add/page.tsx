@@ -53,12 +53,12 @@ export default function AddCenterPage() {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Main Center, Dokki"
         />
-        <FormSelect
+        {/* <FormSelect
           label="Parent Center (Optional)"
           value={formData.parent_id}
           onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
           options={[{ value: '', label: 'No Parent' }, ...parentOptions]}
-        />
+        /> */}
       </FormSection>
     </EntityForm>
   );

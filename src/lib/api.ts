@@ -389,11 +389,22 @@ export const departmentsApi = {
 
   get: (id: number) => get<ApiResponse<Department>>(`/v1/department/${id}`),
 
-  create: (data: CreateDepartmentRequest) =>
-    post<ApiResponse<Department>>('/v1/department', data),
+  create: (data: CreateDepartmentRequest) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    // Map faculty_id to parent_id if needed by backend as per api-collection.yaml
+    if (data.faculty_id && !formData.has('parent_id')) {
+      formData.append('parent_id', String(data.faculty_id));
+    }
+    return postMultipart<ApiResponse<Department>>('/v1/department', formData);
+  },
 
-  update: (id: number, data: CreateDepartmentRequest) =>
-    put<ApiResponse<Department>>(`/v1/department/${id}`, data),
+  update: (id: number, data: Partial<CreateDepartmentRequest>) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    if (data.faculty_id && !formData.has('parent_id')) {
+      formData.append('parent_id', String(data.faculty_id));
+    }
+    return putMultipart<ApiResponse<Department>>(`/v1/department/${id}`, formData);
+  },
 
   delete: (id: number) => del<ApiResponse<Department>>(`/v1/department/${id}`),
 };

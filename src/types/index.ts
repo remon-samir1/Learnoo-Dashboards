@@ -152,7 +152,7 @@ export interface ChapterAttributes {
   title: string;
   thumbnail: string;
   duration: string;
-  is_free_preview: boolean;
+  is_free_preview: 0 | 1;
   max_views: number;
   current_user_views: number;
   is_activated: boolean;
@@ -169,7 +169,7 @@ export interface CreateChapterRequest {
   title: string;
   thumbnail?: File;
   duration: string;
-  is_free_preview?: boolean;
+  is_free_preview?: 0 | 1;
   attachments: File[];
 }
 
@@ -178,7 +178,7 @@ export interface UpdateChapterRequest {
   title?: string;
   thumbnail?: File;
   duration?: string;
-  is_free_preview?: boolean;
+  is_free_preview?: 0 | 1;
   attachments?: File[];
 }
 
@@ -276,8 +276,13 @@ export interface UpdateCourseRequest {
 
 export interface DepartmentAttributes {
   name: string;
-  code: string | null;
+  image: string | null;
+  code?: string | null;
   faculty_id: number;
+  stats?: {
+    courses: number;
+    students: number;
+  };
   created_at: string | null;
   updated_at: string | null;
 }
@@ -286,6 +291,7 @@ export type Department = JsonApiData<DepartmentAttributes>;
 
 export interface CreateDepartmentRequest {
   name: string;
+  image?: File;
   code?: string;
   faculty_id: number;
 }
@@ -704,11 +710,11 @@ export interface RecentActivityItem {
   id?: string;
   type?: string;
   message?: string;
-  content?: string;
+  title?: string;
   timestamp?: string;
   time?: string;
-  icon_color?: string;
-  icon_bg?: string;
+  color?: string;
+  icon?: string;
   user?: {
     name?: string;
     avatar?: string;

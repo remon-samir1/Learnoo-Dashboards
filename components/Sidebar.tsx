@@ -35,6 +35,7 @@ interface SidebarProps {
 const menuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Students', icon: Users, path: '/students' },
+  { name: 'Departments', icon: GraduationCap, path: '/departments' },
   { name: 'My Courses', icon: BookOpen, path: '/courses' },
   { name: 'Content Manager', icon: FileEdit, path: '/content-manager' },
   { name: 'Centers', icon: Building2, path: '/centers' },
