@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useDepartments, useDeleteDepartment } from '@/src/hooks/useDepartments';
 import { useFaculties } from '@/src/hooks/useFaculties';
+import { GraduationCap } from 'lucide-react';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { SearchFilter } from '@/src/components/admin/SearchFilter';
 import { DataTable, Column } from '@/src/components/ui/DataTable';
@@ -56,6 +57,23 @@ export default function DepartmentsPage() {
 
   const columns: Column<Department>[] = [
     {
+      key: 'image',
+      header: 'Image',
+      render: (item) => (
+        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+          {item.attributes.image ? (
+            <img 
+              src={item.attributes.image} 
+              alt={item.attributes.name} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <GraduationCap className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+      ),
+    },
+    {
       key: 'name',
       header: 'Name',
       render: (item) => item.attributes.name,
@@ -71,6 +89,16 @@ export default function DepartmentsPage() {
       render: (item) => getFacultyName(item.attributes.faculty_id),
     },
     {
+      key: 'stats',
+      header: 'Stats',
+      render: (item) => (
+        <div className="flex gap-4 text-xs">
+          <span className="text-blue-600 font-medium">{item.attributes.stats?.courses || 0} Courses</span>
+          <span className="text-green-600 font-medium">{item.attributes.stats?.students || 0} Students</span>
+        </div>
+      ),
+    },
+    {
       key: 'created_at',
       header: 'Created',
       render: (item) => item.attributes.created_at 
@@ -83,13 +111,13 @@ export default function DepartmentsPage() {
     return (
       <div className="flex flex-col gap-8">
         <AdminPageHeader
-          title="Subjects Management"
-          description="Manage subjects and departments (departments are subjects)"
-          actionLabel="Add Subject"
+          title="Departments Management"
+          description="Manage departments and categories"
+          actionLabel="Add Department"
           actionHref="/departments/add"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="text-red-600">Failed to load subjects: {error}</p>
+          <p className="text-red-600">Failed to load departments: {error}</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -104,14 +132,14 @@ export default function DepartmentsPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <AdminPageHeader
-        title="Subjects Management"
-        description="Manage subjects and departments (departments are subjects)"
-        actionLabel="Add Subject"
+        title="Departments Management"
+        description="Manage departments and categories"
+        actionLabel="Add Department"
         actionHref="/departments/add"
       />
 
       <SearchFilter
-        searchPlaceholder="Search subjects..."
+        searchPlaceholder="Search departments..."
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={[
@@ -132,7 +160,7 @@ export default function DepartmentsPage() {
         keyExtractor={(item) => item.id}
         onDelete={handleDelete}
         editHref={(item) => `/departments/${item.id}/edit`}
-        emptyMessage="No subjects found. Create your first subject!"
+        emptyMessage="No departments found. Create your first department!"
       />
 
       <DeleteModal
@@ -141,8 +169,8 @@ export default function DepartmentsPage() {
           setDeleteModalOpen(false);
           setSelectedDepartment(null);
         }}
-        onConfirm={handleConfirmDelete}
-        title="Delete Subject"
+        onConfirm= { handleConfirmDelete }
+        title="Delete Department"
         itemName={selectedDepartment?.attributes.name || ''}
         isLoading={isDeleting}
       />

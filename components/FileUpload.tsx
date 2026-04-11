@@ -1,14 +1,23 @@
-import React from 'react';
-import { Upload } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Upload, X } from 'lucide-react';
 
 interface FileUploadProps {
   label: string;
   description?: string;
   onFileSelect?: (file: File) => void;
+  previewUrl?: string;
+  onClear?: () => void;
 }
 
-export const FileUpload: React.FC<FileUploadProps> = ({ label, description, onFileSelect }) => {
+export const FileUpload: React.FC<FileUploadProps> = ({ 
+  label, 
+  description, 
+  onFileSelect,
+  previewUrl,
+  onClear
+}) => {
   const [isDragging, setIsDragging] = React.useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -34,19 +43,48 @@ export const FileUpload: React.FC<FileUploadProps> = ({ label, description, onFi
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
         className={`
-          border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center gap-3 transition-all cursor-pointer
-          ${isDragging ? 'border-[#2137D6] bg-blue-50' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}
+          relative border-2 border-dashed rounded-2xl min-h-[160px] flex flex-col items-center justify-center gap-3 transition-all cursor-pointer overflow-hidden
+          ${isDragging ? 'border-[#4F46E5] bg-blue-50' : 'border-[#E2E8F0] bg-white hover:border-[#CBD5E1]'}
+          ${previewUrl ? 'border-none' : ''}
         `}
       >
-        <div className="p-3 bg-[#F8FAFC] rounded-full">
-          <Upload className="w-6 h-6 text-[#94A3B8]" />
-        </div>
-        <div className="text-center">
-          <p className="text-sm font-bold text-[#1E293B]">Click to upload {description || 'image'}</p>
-          <p className="text-xs text-[#94A3B8] mt-1">PNG, JPG up to 5MB</p>
-        </div>
+        {previewUrl ? (
+          <div className="absolute inset-0 w-full h-full group">
+            <img 
+              src={previewUrl} 
+              alt="Preview" 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <p className="text-white text-xs font-medium">Click to change</p>
+            </div>
+            {onClear && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClear();
+                }}
+                className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-red-500 rounded-full shadow-sm z-10"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="p-3 bg-[#F8FAFC] rounded-full">
+              <Upload className="w-6 h-6 text-[#94A3B8]" />
+            </div>
+            <div className="text-center px-4">
+              <p className="text-sm font-bold text-[#1E293B]">Click to upload {description || 'image'}</p>
+              <p className="text-xs text-[#94A3B8] mt-1">PNG, JPG up to 5MB</p>
+            </div>
+          </>
+        )}
         <input 
+          ref={fileInputRef}
           type="file" 
           className="hidden" 
           accept="image/*"

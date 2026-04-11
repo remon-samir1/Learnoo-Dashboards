@@ -1,11 +1,11 @@
 'use client';
-
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
 import { useCreateDepartment } from '@/src/hooks/useDepartments';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
+import { FileUpload } from '@/components/FileUpload';
 
 export default function AddDepartmentPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function AddDepartmentPage() {
     name: '',
     code: '',
     faculty_id: '',
+    image: null as File | null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,6 +27,7 @@ export default function AddDepartmentPage() {
         name: formData.name,
         code: formData.code || undefined,
         faculty_id: parseInt(formData.faculty_id),
+        image: formData.image || undefined,
       });
       router.push('/departments');
     } catch {
@@ -40,26 +42,34 @@ export default function AddDepartmentPage() {
 
   return (
     <EntityForm
-      title="Add New Subject"
-      description="Create a new subject (department)"
+      title="Add New Department"
+      description="Create a new department or course category"
       backHref="/departments"
       onSubmit={handleSubmit}
       isLoading={isLoading || isLoadingFaculties}
       error={error}
     >
-      <FormSection title="Subject Information" icon={<BookOpen className="w-4 h-4" />}>
+      <FormSection title="Department Information" icon={<GraduationCap className="w-4 h-4" />}>
+        <div className="md:col-span-2 flex justify-center mb-6">
+          <FileUpload
+            label="Department Image"
+            onFileSelect={(file) => setFormData({ ...formData, image: file })}
+            previewUrl={formData.image ? URL.createObjectURL(formData.image) : undefined}
+          />
+        </div>
+
         <FormInput
-          label="Subject Name"
+          label="Department Name"
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Mathematics"
+          placeholder="e.g., Medicine"
         />
         <FormInput
           label="Code"
           value={formData.code}
           onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-          placeholder="e.g., MATH"
+          placeholder="e.g., MED"
         />
         <FormSelect
           label="Faculty"
