@@ -44,6 +44,8 @@ export default function ContentManagerPage() {
   const [pendingThumbnail, setPendingThumbnail] = useState<File | null>(null);
   const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isCreatingLecture, setIsCreatingLecture] = useState(false);
+  const [isCreatingChapter, setIsCreatingChapter] = useState(false);
 
   const attachmentInputRef = React.useRef<HTMLInputElement>(null);
   const videoInputRef = React.useRef<HTMLInputElement>(null);
@@ -117,6 +119,7 @@ export default function ContentManagerPage() {
 
   const handleCreateLecture = async () => {
     if (!selectedCourse) return;
+    setIsCreatingLecture(true);
     try {
       await api.lectures.create({
         course_id: Number(selectedCourse.id),
@@ -131,11 +134,14 @@ export default function ContentManagerPage() {
       setLecturesByCourse(prev => ({ ...prev, [selectedCourse.id]: lectures.data }));
     } catch (error) {
       toast.error("Failed to create lecture");
+    } finally {
+      setIsCreatingLecture(false);
     }
   };
 
   const handleCreateChapter = async () => {
     if (!selectedLecture) return;
+    setIsCreatingChapter(true);
     try {
       await api.chapters.create({
         lecture_id: Number(selectedLecture.id),
@@ -160,6 +166,8 @@ export default function ContentManagerPage() {
       setChaptersByLecture(prev => ({ ...prev, [selectedLecture.id]: chapters.data }));
     } catch (error) {
       toast.error("Failed to create chapter");
+    } finally {
+      setIsCreatingChapter(false);
     }
   };
 
@@ -623,9 +631,11 @@ export default function ContentManagerPage() {
               </button>
               <button
                 onClick={handleCreateLecture}
-                className="flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100"
+                disabled={isCreatingLecture}
+                className={`flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 ${isCreatingLecture ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                Create Lecture
+                {isCreatingLecture ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {isCreatingLecture ? 'Creating...' : 'Create Lecture'}
               </button>
             </div>
           </div>
@@ -728,9 +738,11 @@ export default function ContentManagerPage() {
               </button>
               <button
                 onClick={handleCreateChapter}
-                className="flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100"
+                disabled={isCreatingChapter}
+                className={`flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 ${isCreatingChapter ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                Create Chapter
+                {isCreatingChapter ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {isCreatingChapter ? 'Creating...' : 'Create Chapter'}
               </button>
             </div>
           </div>

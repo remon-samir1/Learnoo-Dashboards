@@ -236,11 +236,11 @@ function buildFormData(data: Record<string, unknown>): FormData {
     if (value instanceof File) {
       formData.append(key, value);
     } else if (Array.isArray(value)) {
-      value.forEach((item, index) => {
+      value.forEach((item) => {
         if (item instanceof File) {
-          formData.append(`${key}[${index}]`, item);
+          formData.append(`${key}[]`, item);
         } else {
-          formData.append(`${key}[${index}]`, String(item));
+          formData.append(`${key}[]`, String(item));
         }
       });
     } else {
