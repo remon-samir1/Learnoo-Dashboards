@@ -236,6 +236,7 @@ export interface CodeAttributes {
   code: string;
   codeable_id: number;
   codeable_type: string;
+  is_used: boolean;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -248,10 +249,17 @@ export interface CreateCodeRequest {
   codes: string[];
 }
 
+export interface UpdateCodeRequest {
+  codeable_id: number;
+  codeable_type: string;
+  code: string;
+}
+
 export interface ActivateCodeRequest {
   code: string;
   item_id: number;
   item_type: 'chapter' | 'course' | 'library';
+  user_id?: string;
 }
 
 // ============================================
@@ -980,6 +988,7 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
     device: string;
     last_ip: string;
   };
+  used_codes?: Code[];
 }
 
 export type Student = JsonApiData<StudentAttributes>;

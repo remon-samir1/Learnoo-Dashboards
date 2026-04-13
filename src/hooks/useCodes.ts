@@ -1,5 +1,5 @@
 import { api } from '@/src/lib/api';
-import type { Code, CreateCodeRequest, ActivateCodeRequest } from '@/src/types';
+import type { Code, CreateCodeRequest, UpdateCodeRequest, ActivateCodeRequest } from '@/src/types';
 import { createQueryHook, createMutationHook } from './index';
 
 // ============================================
@@ -21,7 +21,7 @@ export const useCreateCode = createMutationHook(
 );
 
 export const useUpdateCode = createMutationHook(
-  (id: number, data: Partial<CreateCodeRequest>) => 
+  (id: number, data: Partial<UpdateCodeRequest>) => 
     api.codes.update(id, data).then(res => res.data)
 );
 
