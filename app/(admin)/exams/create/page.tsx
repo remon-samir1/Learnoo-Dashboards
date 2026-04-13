@@ -54,8 +54,8 @@ interface ExamDetails {
 
 export default function CreateExamPage() {
   const router = useRouter();
-  const { data: courses, isLoading: coursesLoading } = useCourses([]);
-  const { data: chapters, isLoading: chaptersLoading } = useChapters([]);
+  const { data: courses, isLoading: coursesLoading } = useCourses();
+  const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { mutate: createQuiz, isLoading: isCreatingQuiz, isError: isQuizError, error: quizError } = useCreateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

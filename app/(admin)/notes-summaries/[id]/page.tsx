@@ -26,7 +26,7 @@ export default function NoteDetailPage() {
   const params = useParams();
   const noteId = parseInt(params.id as string);
 
-  const { data: note, isLoading, error } = useNote([noteId]);
+  const { data: note, isLoading, error } = useNote(noteId);
   const { mutate: deleteNote, isLoading: isDeleting } = useDeleteNote();
 
   const handleDelete = async () => {

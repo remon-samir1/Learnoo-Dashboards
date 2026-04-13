@@ -54,9 +54,9 @@ export default function EditExamPage() {
   const params = useParams();
   const examId = params.id as string;
 
-  const { data: courses, isLoading: coursesLoading } = useCourses([]);
-  const { data: chapters, isLoading: chaptersLoading } = useChapters([]);
-  const { data: quiz, isLoading: quizLoading } = useQuiz([parseInt(examId)]);
+  const { data: courses, isLoading: coursesLoading } = useCourses();
+  const { data: chapters, isLoading: chaptersLoading } = useChapters();
+  const { data: quiz, isLoading: quizLoading } = useQuiz(parseInt(examId));
   const { mutate: updateQuiz, isLoading: isUpdating } = useUpdateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

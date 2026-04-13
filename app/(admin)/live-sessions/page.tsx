@@ -62,7 +62,7 @@ function getDuration(startedAt: string, endedAt?: string | null): string {
 
 export default function LiveSessionsPage() {
   const router = useRouter();
-  const { data: liveRooms, isLoading, error, refetch } = useLiveRooms([]);
+  const { data: liveRooms, isLoading, error, refetch } = useLiveRooms();
   const deleteMutation = useDeleteLiveRoom();
 
   const handleStart = (roomId: string) => {

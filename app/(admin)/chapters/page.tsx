@@ -15,8 +15,8 @@ export default function ChaptersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
   
-  const { data: chapters, isLoading, error, refetch } = useChapters([]);
-  const { data: lectures } = useLectures([]);
+  const { data: chapters, isLoading, error, refetch } = useChapters();
+  const { data: lectures } = useLectures();
   const { mutate: deleteChapter, isLoading: isDeleting } = useDeleteChapter();
 
   const handleDelete = (chapter: Chapter) => {

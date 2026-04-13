@@ -12,8 +12,8 @@ export default function EditCenterPage() {
   const params = useParams();
   const centerId = parseInt(params.id as string);
 
-  const { data: center, isLoading: isLoadingCenter } = useCenter([centerId]);
-  const { data: faculties, isLoading: isLoadingFaculties } = useFaculties([]);
+  const { data: center, isLoading: isLoadingCenter } = useCenter(centerId);
+  const { data: faculties, isLoading: isLoadingFaculties } = useFaculties();
   const { mutate: updateCenter, isLoading: isUpdating, error } = useUpdateCenter();
 
   const [formData, setFormData] = useState({

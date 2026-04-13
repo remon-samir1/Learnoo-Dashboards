@@ -10,7 +10,7 @@ import { FileUpload } from '@/components/FileUpload';
 export default function AddDepartmentPage() {
   const router = useRouter();
   const { mutate: createDepartment, isLoading, error } = useCreateDepartment();
-  const { data: centers, isLoading: isLoadingCenters } = useCenters([]);
+  const { data: centers, isLoading: isLoadingCenters } = useCenters();
   
   const [formData, setFormData] = useState({
     name: '',

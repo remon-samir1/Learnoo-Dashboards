@@ -10,7 +10,7 @@ import { EntityForm, FormSection, FormInput, FormTextarea, FormSelect } from '@/
 export default function AddLecturePage() {
   const router = useRouter();
   const { mutate: createLecture, isLoading, error } = useCreateLecture();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
   
   const [formData, setFormData] = useState({
     title: '',

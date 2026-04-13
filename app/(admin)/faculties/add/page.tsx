@@ -10,7 +10,7 @@ import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components
 export default function AddFacultyPage() {
   const router = useRouter();
   const { mutate: createFaculty, isLoading, error } = useCreateFaculty();
-  const { data: universities, isLoading: isLoadingUniversities } = useUniversities([]);
+  const { data: universities, isLoading: isLoadingUniversities } = useUniversities();
   
   const [formData, setFormData] = useState({
     name: '',

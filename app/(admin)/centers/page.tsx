@@ -14,7 +14,7 @@ export default function CentersPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
 
-  const { data: centers, isLoading, error, refetch } = useCenters([]);
+  const { data: centers, isLoading, error, refetch } = useCenters();
   const { mutate: deleteCenter, isLoading: isDeleting } = useDeleteCenter();
 
   const handleDelete = (center: Center) => {

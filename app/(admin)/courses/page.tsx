@@ -43,7 +43,7 @@ export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [approvalFilter, setApprovalFilter] = useState('All Approvals');
-  const { data: courses, isLoading, error } = useCourses([], {});
+  const { data: courses, isLoading, error } = useCourses({});
 
   return (
     <div className="flex flex-col gap-8 pb-12">

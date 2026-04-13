@@ -28,10 +28,10 @@ export default function AddStudentPage() {
   const router = useRouter();
   
   // Queries
-  const { data: universities, isLoading: isUniversitiesLoading } = useUniversities([]);
-  const { data: faculties, isLoading: isFacultiesLoading } = useFaculties([]);
-  const { data: centersData, isLoading: isCentersLoading } = useCenters([]);
-  const { data: coursesData, isLoading: isCoursesLoading } = useCourses([]);
+  const { data: universities, isLoading: isUniversitiesLoading } = useUniversities();
+  const { data: faculties, isLoading: isFacultiesLoading } = useFaculties();
+  const { data: centersData, isLoading: isCentersLoading } = useCenters();
+  const { data: coursesData, isLoading: isCoursesLoading } = useCourses();
   
   // Mutation
   const { mutate: createStudent, isLoading: isCreating, error: createError } = useCreateStudent();

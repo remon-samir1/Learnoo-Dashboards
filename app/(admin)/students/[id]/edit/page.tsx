@@ -31,11 +31,11 @@ export default function EditStudentPage() {
   const studentId = params.id as string;
   
   // Queries
-  const { data: studentResponse, isLoading: isStudentLoading } = useStudent([studentId]);
-  const { data: universities, isLoading: isUniversitiesLoading } = useUniversities([]);
-  const { data: faculties, isLoading: isFacultiesLoading } = useFaculties([]);
-  const { data: centersData, isLoading: isCentersLoading } = useCenters([]);
-  const { data: coursesData, isLoading: isCoursesLoading } = useCourses([]);
+  const { data: studentResponse, isLoading: isStudentLoading } = useStudent(studentId);
+  const { data: universities, isLoading: isUniversitiesLoading } = useUniversities();
+  const { data: faculties, isLoading: isFacultiesLoading } = useFaculties();
+  const { data: centersData, isLoading: isCentersLoading } = useCenters();
+  const { data: coursesData, isLoading: isCoursesLoading } = useCourses();
   
   // Mutation
   const { mutate: updateStudent, isLoading: isUpdating, error: updateError } = useUpdateStudent();

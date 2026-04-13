@@ -10,10 +10,10 @@ import { useDashboardStats, useActivityData, useEngagementData, useRecentActivit
 import { StatCardSkeleton, QuickActionSkeleton, ChartSkeleton, ActivityItemSkeleton, Skeleton } from '@/src/components/ui/Skeleton';
 
 export default function DashboardPage() {
-  const { data: statsResponse, isLoading: statsLoading } = useDashboardStats([], {});
-  const { data: activityResponse, isLoading: activityLoading } = useActivityData(['week'], {});
-  const { data: engagementResponse, isLoading: engagementLoading } = useEngagementData(['week'], {});
-  const { data: recentActivityResponse, isLoading: activityListLoading } = useRecentActivity([10], {});
+  const { data: statsResponse, isLoading: statsLoading } = useDashboardStats({});
+  const { data: activityResponse, isLoading: activityLoading } = useActivityData('week', {});
+  const { data: engagementResponse, isLoading: engagementLoading } = useEngagementData('week', {});
+  const { data: recentActivityResponse, isLoading: activityListLoading } = useRecentActivity(10, {});
 
   const stats = statsResponse?.data;
   const activityData = activityResponse?.data;

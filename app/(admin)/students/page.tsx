@@ -46,7 +46,7 @@ export default function StudentsPage() {
     page,
   }), [debouncedSearch, statusFilter, page]);
 
-  const { data: studentsResponse, isLoading, error, refetch } = useStudents([filter], {});
+  const { data: studentsResponse, isLoading, error, refetch } = useStudents(filter, {});
   const { mutate: deleteStudent, isLoading: isDeleting } = useDeleteStudent();
   const { mutate: resetPassword, isLoading: isResetting } = useResetStudentPassword();
 

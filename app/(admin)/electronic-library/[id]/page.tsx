@@ -27,7 +27,7 @@ export default function LibraryDetailPage() {
   const params = useParams();
   const libraryId = parseInt(params.id as string);
 
-  const { data: library, isLoading, error } = useLibrary([libraryId]);
+  const { data: library, isLoading, error } = useLibrary(libraryId);
   const { mutate: deleteLibrary, isLoading: isDeleting } = useDeleteLibrary();
 
   const handleDelete = async () => {

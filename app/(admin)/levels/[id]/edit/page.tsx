@@ -11,7 +11,7 @@ export default function EditLevelPage() {
   const params = useParams();
   const levelId = parseInt(params.id as string);
   
-  const { data: level, isLoading: isLoadingLevel } = useLevel([levelId]);
+  const { data: level, isLoading: isLoadingLevel } = useLevel(levelId);
   const { mutate: updateLevel, isLoading: isUpdating, error } = useUpdateLevel();
   
   const [formData, setFormData] = useState({

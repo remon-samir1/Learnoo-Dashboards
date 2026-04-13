@@ -13,7 +13,7 @@ export default function UniversitiesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
   
-  const { data: universities, isLoading, error, refetch } = useUniversities([]);
+  const { data: universities, isLoading, error, refetch } = useUniversities();
   const { mutate: deleteUniversity, isLoading: isDeleting, isSuccess, reset } = useDeleteUniversity();
 
   const handleDelete = (university: University) => {

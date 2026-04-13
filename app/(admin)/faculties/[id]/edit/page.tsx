@@ -12,8 +12,8 @@ export default function EditFacultyPage() {
   const params = useParams();
   const facultyId = parseInt(params.id as string);
   
-  const { data: faculty, isLoading: isLoadingFaculty } = useFaculty([facultyId]);
-  const { data: universities, isLoading: isLoadingUniversities } = useUniversities([]);
+  const { data: faculty, isLoading: isLoadingFaculty } = useFaculty(facultyId);
+  const { data: universities, isLoading: isLoadingUniversities } = useUniversities();
   const { mutate: updateFaculty, isLoading: isUpdating, error } = useUpdateFaculty();
   
   const [formData, setFormData] = useState({
