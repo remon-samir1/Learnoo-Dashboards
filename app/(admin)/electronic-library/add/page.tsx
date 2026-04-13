@@ -24,7 +24,7 @@ function getPreviewUrl(path: string | null): string {
 export default function AddLibraryItemPage() {
   const router = useRouter();
   const { mutate: createLibrary, isLoading } = useCreateLibrary();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState('');

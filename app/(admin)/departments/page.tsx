@@ -16,8 +16,8 @@ export default function DepartmentsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
   
-  const { data: departments, isLoading, error, refetch } = useDepartments([]);
-  const { data: faculties } = useFaculties([]);
+  const { data: departments, isLoading, error, refetch } = useDepartments();
+  const { data: faculties } = useFaculties();
   const { mutate: deleteDepartment, isLoading: isDeleting } = useDeleteDepartment();
 
   const handleDelete = (department: Department) => {

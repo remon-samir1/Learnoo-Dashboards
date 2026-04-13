@@ -13,7 +13,7 @@ export default function LevelsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
   
-  const { data: levels, isLoading, error, refetch } = useLevels([]);
+  const { data: levels, isLoading, error, refetch } = useLevels();
   const { mutate: deleteLevel, isLoading: isDeleting } = useDeleteLevel();
 
   const handleDelete = (level: Level) => {

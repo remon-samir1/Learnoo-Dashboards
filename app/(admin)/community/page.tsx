@@ -46,16 +46,16 @@ function getTypeColor(type: string): string {
 }
 
 export default function CommunityModerationPage() {
-  const { data: postsData, isLoading, error, refetch } = usePosts([]);
+  const { data: postsData, isLoading, error, refetch } = usePosts();
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
   const { mutate: updatePost } = useUpdatePost();
   
   // Social Links hooks
-  const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks([]);
+  const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks();
   const { mutate: createSocialLink } = useCreateSocialLink();
   const { mutate: updateSocialLink } = useUpdateSocialLink();
   const { mutate: deleteSocialLink } = useDeleteSocialLink();
-  const { data: courses, isLoading: coursesLoading } = useCourses([]);
+  const { data: courses, isLoading: coursesLoading } = useCourses();
   
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [editingSocialLink, setEditingSocialLink] = useState<SocialLink | null>(null);

@@ -46,7 +46,7 @@ export default function PostDetailsPage() {
   const router = useRouter();
   const postId = params.id as string;
   
-  const { data: post, isLoading, error, refetch: refetchPost } = usePost([parseInt(postId)]);
+  const { data: post, isLoading, error, refetch: refetchPost } = usePost(parseInt(postId));
   const { mutate: updatePost } = useUpdatePost();
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
   const { mutate: createComment } = useCreateComment();

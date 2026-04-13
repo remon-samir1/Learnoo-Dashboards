@@ -10,7 +10,7 @@ import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components
 export default function AddChapterPage() {
   const router = useRouter();
   const { mutate: createChapter, isLoading, error } = useCreateChapter();
-  const { data: lectures, isLoading: isLoadingLectures } = useLectures([]);
+  const { data: lectures, isLoading: isLoadingLectures } = useLectures();
   
   const [formData, setFormData] = useState({
     title: '',

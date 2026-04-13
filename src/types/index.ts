@@ -643,6 +643,8 @@ export interface UpdateLiveRoomRequest {
   ended_at?: string;
   max_students?: number;
   max_join_time?: number | null;
+  enable_chat?: boolean;
+  enable_recording?: boolean;
 }
 
 // Note Types

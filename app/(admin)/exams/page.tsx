@@ -22,7 +22,7 @@ export default function ExamsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
-  const { data: quizzesData, isLoading, error, refetch } = useQuizzes([]);
+  const { data: quizzesData, isLoading, error, refetch } = useQuizzes();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
 
   // Sync local state with API data
@@ -31,7 +31,7 @@ export default function ExamsPage() {
       setQuizzes(quizzesData);
     }
   }, [quizzesData]);
-  const { data: chapters } = useChapters([]);
+  const { data: chapters } = useChapters();
   const { mutate: deleteQuiz, isLoading: isDeleting } = useDeleteQuiz();
   const { mutate: updateQuiz } = useUpdateQuiz();
 

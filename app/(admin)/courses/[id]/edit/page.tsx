@@ -26,9 +26,9 @@ export default function EditCoursePage() {
   const courseId = Number(id);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const { data: course, isLoading: courseLoading, error: courseError } = useCourse([courseId]);
+  const { data: course, isLoading: courseLoading, error: courseError } = useCourse(courseId);
   const { mutate: updateCourse, isLoading: isUpdating, error: updateError } = useUpdateCourse();
-  const { data: departments, isLoading: departmentsLoading } = useDepartments([]);
+  const { data: departments, isLoading: departmentsLoading } = useDepartments();
 
   const [formData, setFormData] = useState({
     title: '',

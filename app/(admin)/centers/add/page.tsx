@@ -10,11 +10,11 @@ import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components
 export default function AddCenterPage() {
   const router = useRouter();
   const { mutate: createCenter, isLoading, error } = useCreateCenter();
-  const { data: faculties, isLoading: isLoadingFaculties } = useFaculties([]);
+  const { data: faculties, isLoading: isLoadingFaculties } = useFaculties();
 
   const [formData, setFormData] = useState({
     name: '',
-    faculty_id: '',
+    parent_id: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,7 +23,7 @@ export default function AddCenterPage() {
     try {
       await createCenter({
         name: formData.name,
-        faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : undefined,
+        parent_id: formData.parent_id ? parseInt(formData.parent_id) : undefined,
       });
       router.push('/centers');
     } catch {
@@ -55,8 +55,8 @@ export default function AddCenterPage() {
         />
         <FormSelect
           label="Parent Faculty"
-          value={formData.faculty_id}
-          onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
+          value={formData.parent_id}
+          onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
           options={[{ value: '', label: 'Select Faculty' }, ...facultyOptions]}
         />
       </FormSection>

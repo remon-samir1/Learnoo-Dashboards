@@ -25,7 +25,7 @@ export default function AddNotePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { mutate: createNote, isLoading } = useCreateNote();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
   const validate = () => {
     const newErrors: Record<string, string> = {};

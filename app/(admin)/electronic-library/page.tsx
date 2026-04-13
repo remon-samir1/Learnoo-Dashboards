@@ -34,8 +34,8 @@ export default function ElectronicLibraryPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: librariesResponse, isLoading, error, refetch } = useLibraries([]);
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+  const { data: librariesResponse, isLoading, error, refetch } = useLibraries();
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
   const { mutate: deleteLibrary, isLoading: isDeleting } = useDeleteLibrary();
 
   const libraries = librariesResponse || [];

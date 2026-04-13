@@ -54,7 +54,7 @@ export default function NotesSummariesPage() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: notesResponse, isLoading, error, refetch } = useNotes([]);
+  const { data: notesResponse, isLoading, error, refetch } = useNotes();
   const { mutate: deleteNote, isLoading: isDeleting } = useDeleteNote();
 
   const notes = notesResponse || [];

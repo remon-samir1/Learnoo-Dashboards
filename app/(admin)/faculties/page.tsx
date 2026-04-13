@@ -15,8 +15,8 @@ export default function FacultiesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
 
-  const { data: faculties, isLoading, error, refetch } = useFaculties([]);
-  const { data: universities } = useUniversities([]);
+  const { data: faculties, isLoading, error, refetch } = useFaculties();
+  const { data: universities } = useUniversities();
   const { mutate: deleteFaculty, isLoading: isDeleting } = useDeleteFaculty();
 
   const handleDelete = (faculty: Faculty) => {

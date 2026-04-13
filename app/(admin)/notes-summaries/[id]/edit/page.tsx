@@ -19,9 +19,9 @@ export default function EditNotePage() {
   const params = useParams();
   const noteId = parseInt(params.id as string);
 
-  const { data: note, isLoading: isLoadingNote, error } = useNote([noteId]);
+  const { data: note, isLoading: isLoadingNote, error } = useNote(noteId);
   const { mutate: updateNote, isLoading: isUpdating } = useUpdateNote();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
   const [title, setTitle] = useState('');
   const [type, setType] = useState('summary');

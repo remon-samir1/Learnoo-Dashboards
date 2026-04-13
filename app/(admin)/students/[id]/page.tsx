@@ -44,7 +44,7 @@ export default function StudentProfilePage() {
   const [resetError, setResetError] = useState<string | null>(null);
 
   // Fetch student data
-  const { data: studentResponse, isLoading, error } = useStudent([studentId]);
+  const { data: studentResponse, isLoading, error } = useStudent(studentId);
   const { mutate: resetPassword, isLoading: isResetting } = useResetStudentPassword();
 
   // New API response structure: { data: { id, type, attributes } }

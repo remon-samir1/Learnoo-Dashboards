@@ -50,7 +50,7 @@ export default function LiveRoomPage() {
   const router = useRouter();
   const roomId = params.id as string;
 
-  const { data: liveRoom, isLoading: isRoomLoading } = useLiveRoom([parseInt(roomId)]);
+  const { data: liveRoom, isLoading: isRoomLoading } = useLiveRoom(parseInt(roomId));
 
   const [peer, setPeer] = useState<Peer | null>(null);
   const [myPeerId, setMyPeerId] = useState<string>('');

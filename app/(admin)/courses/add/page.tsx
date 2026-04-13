@@ -28,8 +28,7 @@ export default function AddCoursePage() {
   const { mutate: createCourse, isLoading, error } = useCreateCourse();
 
   // Fetch data from APIs
-  const { data: departments, isLoading: departmentsLoading } = useDepartments([]);
-  const { data: users, isLoading: usersLoading } = useUsers([]);
+  const { data: departments, isLoading: departmentsLoading } = useDepartments();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -37,6 +36,7 @@ export default function AddCoursePage() {
     description: '',
     objectives: '',
     user_id: '',
+    instructorName: '',
     category_id: '',
     price: '0',
     max_views_per_student: '10',
@@ -224,7 +224,7 @@ export default function AddCoursePage() {
               </select>
               <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
             </div>
-            <div className="flex flex-col gap-2">
+            {/* <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">Instructor Name</label>
               <input
                 type="text"
@@ -233,7 +233,7 @@ export default function AddCoursePage() {
                 value={formData.instructorName}
                 onChange={(e) => setFormData({ ...formData, instructorName: e.target.value })}
               />
-            </div>
+            </div> */}
           </div>
         </section>
 

@@ -27,9 +27,9 @@ export default function EditLibraryItemPage() {
   const params = useParams();
   const libraryId = parseInt(params.id as string);
 
-  const { data: library, isLoading: isLoadingLibrary, error } = useLibrary([libraryId]);
+  const { data: library, isLoading: isLoadingLibrary, error } = useLibrary(libraryId);
   const { mutate: updateLibrary, isLoading: isUpdating } = useUpdateLibrary();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState('');

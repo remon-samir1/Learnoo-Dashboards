@@ -26,8 +26,8 @@ export default function CourseDetailPage() {
   const { id } = useParams();
   const courseId = Number(id);
 
-  const { data: course, isLoading: courseLoading, error: courseError } = useCourse([courseId]);
-  const { data: lectures, isLoading: lecturesLoading } = useLectures([{ course_id: courseId }]);
+  const { data: course, isLoading: courseLoading, error: courseError } = useCourse(courseId);
+  const { data: lectures, isLoading: lecturesLoading } = useLectures({ course_id: courseId });
   
   // For simplicity in this view, we'll show lectures and their chapter counts.
   // If we wanted to show all chapters, we might need a more complex join or multiple fetches.

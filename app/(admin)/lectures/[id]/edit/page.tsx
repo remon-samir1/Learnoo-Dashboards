@@ -12,8 +12,8 @@ export default function EditLecturePage() {
   const params = useParams();
   const lectureId = parseInt(params.id as string);
   
-  const { data: lecture, isLoading: isLoadingLecture } = useLecture([lectureId]);
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+  const { data: lecture, isLoading: isLoadingLecture } = useLecture(lectureId);
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
   const { mutate: updateLecture, isLoading: isUpdating, error } = useUpdateLecture();
   
   const [formData, setFormData] = useState({

@@ -26,5 +26,5 @@ export const useUpdateUniversity = createMutationHook(
 );
 
 export const useDeleteUniversity = createMutationHook(
-  (id: number) => api.universities.delete(id).then(res => res.data)
+  (id: number) => api.universities.delete(id)
 );

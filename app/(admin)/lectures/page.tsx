@@ -15,8 +15,8 @@ export default function LecturesPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
   
-  const { data: lectures, isLoading, error, refetch } = useLectures([]);
-  const { data: courses } = useCourses([]);
+  const { data: lectures, isLoading, error, refetch } = useLectures();
+  const { data: courses } = useCourses();
   const { mutate: deleteLecture, isLoading: isDeleting } = useDeleteLecture();
 
   const handleDelete = (lecture: Lecture) => {

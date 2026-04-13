@@ -35,7 +35,16 @@ export function createQueryHook<T, P extends unknown[] = []>(
   fetcher: (...params: P) => Promise<T>,
   defaultOptions: QueryOptions = {}
 ) {
-  return function useQuery(params: P, options: QueryOptions = {}) {
+  return function useQuery(...paramsAndOptions: [...P, QueryOptions?]) {
+    const maybeOptions = paramsAndOptions.length > 0 &&
+      typeof paramsAndOptions[paramsAndOptions.length - 1] === 'object' &&
+      paramsAndOptions[paramsAndOptions.length - 1] !== null &&
+      !Array.isArray(paramsAndOptions[paramsAndOptions.length - 1])
+      ? (paramsAndOptions.pop() as QueryOptions)
+      : {};
+    const params = paramsAndOptions as unknown as P;
+    const options = maybeOptions;
+
     const mergedOptions = { ...defaultOptions, ...options };
     const [state, setState] = useState<QueryState<T>>({
       data: mergedOptions.initialData as T | null,
@@ -60,8 +69,8 @@ export function createQueryHook<T, P extends unknown[] = []>(
         return data;
       } catch (error) {
         if (isMountedRef.current) {
-          const message = error instanceof ApiError 
-            ? error.message 
+          const message = error instanceof ApiError
+            ? error.message
             : 'An error occurred while fetching data';
           setState({ data: null, isLoading: false, error: message, isError: true });
         }
@@ -173,3 +182,5 @@ export * from './usePosts';
 export * from './useCodes';
 export * from './useLiveRooms';
 export * from './useNotes';
+export * from './useStudents';
+export * from './useCourses';

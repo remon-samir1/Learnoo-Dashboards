@@ -12,8 +12,8 @@ export default function EditChapterPage() {
   const params = useParams();
   const chapterId = parseInt(params.id as string);
   
-  const { data: chapter, isLoading: isLoadingChapter } = useChapter([chapterId]);
-  const { data: lectures, isLoading: isLoadingLectures } = useLectures([]);
+  const { data: chapter, isLoading: isLoadingChapter } = useChapter(chapterId);
+  const { data: lectures, isLoading: isLoadingLectures } = useLectures();
   const { mutate: updateChapter, isLoading: isUpdating, error } = useUpdateChapter();
   
   const [formData, setFormData] = useState({

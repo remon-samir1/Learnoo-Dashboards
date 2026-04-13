@@ -13,8 +13,8 @@ export default function EditDepartmentPage() {
   const params = useParams();
   const departmentId = parseInt(params.id as string);
   
-  const { data: department, isLoading: isLoadingDepartment } = useDepartment([departmentId]);
-  const { data: centers, isLoading: isLoadingCenters } = useCenters([]);
+  const { data: department, isLoading: isLoadingDepartment } = useDepartment(departmentId);
+  const { data: centers, isLoading: isLoadingCenters } = useCenters();
   const { mutate: updateDepartment, isLoading: isUpdating, error } = useUpdateDepartment();
   
   const [formData, setFormData] = useState({
