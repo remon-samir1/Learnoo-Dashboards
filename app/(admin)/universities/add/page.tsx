@@ -12,16 +12,14 @@ export default function AddUniversityPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    code: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       await createUniversity({
         name: formData.name,
-        code: formData.code || undefined,
       });
       router.push('/universities');
     } catch {
@@ -45,12 +43,7 @@ export default function AddUniversityPage() {
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Cairo University"
-        />
-        <FormInput
-          label="Code"
-          value={formData.code}
-          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-          placeholder="e.g., CU"
+          className="md:col-span-2"
         />
       </FormSection>
     </EntityForm>

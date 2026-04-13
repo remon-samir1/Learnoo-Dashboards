@@ -88,9 +88,12 @@ export default function CourseDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#475569] rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-all">
+          <Link
+            href="/content-manager"
+            className="px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#475569] rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-all"
+          >
             Manage Content
-          </button>
+          </Link>
           <Link 
             href={`/courses/${id}/edit`}
             className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
@@ -103,11 +106,11 @@ export default function CourseDetailPage() {
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard icon={Layers} value={lectures?.length.toString() || "0"} label="Lectures" />
-        <StatCard icon={Video} value="-" label="Videos" />
-        <StatCard icon={BookOpen} value="-" label="Notes" />
-        <StatCard icon={FileText} value="-" label="Exams" />
-        <StatCard icon={Users} value="-" label="Students" />
+        <StatCard icon={Layers} value={attributes.stats?.lectures?.toString() || "0"} label="Lectures" />
+        <StatCard icon={Video} value={attributes.stats?.chapters?.toString() || "0"} label="Chapters" />
+        <StatCard icon={BookOpen} value={attributes.stats?.notes?.toString() || "0"} label="Notes" />
+        <StatCard icon={FileText} value={attributes.stats?.exams?.toString() || "0"} label="Exams" />
+        <StatCard icon={Users} value={attributes.stats?.students?.toString() || "0"} label="Students" />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -130,18 +133,8 @@ export default function CourseDetailPage() {
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
             <h2 className="text-lg font-bold text-[#1E293B] mb-6">Lectures & Content</h2>
             <div className="flex flex-col gap-3">
-              {lecturesLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-[#2137D6]" />
-                </div>
-              ) : lectures?.length === 0 ? (
-                <div className="text-center py-12 bg-[#F8FAFC] rounded-2xl border border-dashed border-[#E2E8F0]">
-                  <Video className="w-8 h-8 text-[#94A3B8] mx-auto mb-3" />
-                  <p className="text-sm font-medium text-[#64748B]">No lectures added yet</p>
-                  <button className="text-[#2137D6] text-xs font-bold mt-2 hover:underline">Add First Lecture</button>
-                </div>
-              ) : (
-                lectures?.map((lecture, idx) => (
+              {attributes.lectures && attributes.lectures.length > 0 ? (
+                attributes.lectures.map((lecture: any, idx: number) => (
                   <div key={lecture.id} className="flex items-center justify-between p-4 bg-[#F8FAFC] border border-[#F1F5F9] rounded-xl hover:border-[#2137D6]/20 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-white rounded-lg border border-[#E2E8F0] flex items-center justify-center text-sm font-bold text-[#2137D6]">
@@ -157,6 +150,8 @@ export default function CourseDetailPage() {
                     </button>
                   </div>
                 ))
+              ) : (
+                <p className="text-sm text-[#94A3B8]">No lectures available.</p>
               )}
             </div>
           </section>

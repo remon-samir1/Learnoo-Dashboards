@@ -1,41 +1,38 @@
 import React from 'react';
 import SettingsCard from '@/components/settings/SettingsCard';
-import { 
-  Settings, 
-  Palette, 
-  Bell, 
-  Globe, 
-  FileText 
-} from 'lucide-react';
 
 export default function PlatformSettingsPage() {
   const settingsCategories = [
     {
-      icon: Settings,
+      icon: 'Settings' as const,
       title: 'General Settings',
       description: 'Platform name, timezone, and basic configuration.',
       href: '/settings/general'
     },
     {
-      icon: Palette,
+      icon: 'Palette' as const,
       title: 'Branding',
       description: 'Logos, colors, and visual identity.',
       href: '/settings/branding'
     },
     {
-      icon: Bell,
+      icon: 'Bell' as const,
       title: 'Notifications Settings',
       description: 'Email templates and push notification defaults.',
-      href: '/settings/notifications'
+      href: '/settings/notifications',
+      soon: true,
+      disabled: true
     },
     {
-      icon: Globe,
+      icon: 'Globe' as const,
       title: 'Language & Region',
       description: 'Default language, date formats, and currency.',
-      href: '/settings/language'
+      href: '/settings/language',
+      soon: true,
+      disabled: true
     },
     {
-      icon: FileText,
+      icon: 'FileText' as const,
       title: 'Terms & Privacy',
       description: 'Manage terms of service and privacy policy text.',
       href: '/settings/terms'
@@ -59,6 +56,8 @@ export default function PlatformSettingsPage() {
             title={category.title}
             description={category.description}
             href={category.href}
+            soon={category.soon}
+            disabled={category.disabled}
           />
         ))}
       </div>

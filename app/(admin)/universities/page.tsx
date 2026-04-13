@@ -14,24 +14,26 @@ export default function UniversitiesPage() {
   const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
   
   const { data: universities, isLoading, error, refetch } = useUniversities([]);
-  const { mutate: deleteUniversity, isLoading: isDeleting } = useDeleteUniversity();
+  const { mutate: deleteUniversity, isLoading: isDeleting, isSuccess, reset } = useDeleteUniversity();
 
   const handleDelete = (university: University) => {
     setSelectedUniversity(university);
     setDeleteModalOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!selectedUniversity) return;
-    
-    try {
-      await deleteUniversity(parseInt(selectedUniversity.id));
+  // Handle successful deletion
+  React.useEffect(() => {
+    if (isSuccess) {
       setDeleteModalOpen(false);
       setSelectedUniversity(null);
-      refetch();
-    } catch {
-      // Error handled by hook
+      window.location.reload();
+      reset();
     }
+  }, [isSuccess, reset]);
+
+  const handleConfirmDelete = async () => {
+    if (!selectedUniversity) return;
+    await deleteUniversity(parseInt(selectedUniversity.id));
   };
 
   const filteredUniversities = universities?.filter((u) =>
@@ -46,15 +48,10 @@ export default function UniversitiesPage() {
       render: (item) => item.attributes.name,
     },
     {
-      key: 'code',
-      header: 'Code',
-      render: (item) => item.attributes.code || '-',
-    },
-    {
       key: 'created_at',
       header: 'Created',
-      render: (item) => item.attributes.created_at 
-        ? new Date(item.attributes.created_at).toLocaleDateString() 
+      render: (item) => item.attributes.created_at
+        ? new Date(item.attributes.created_at).toLocaleDateString()
         : '-',
     },
   ];

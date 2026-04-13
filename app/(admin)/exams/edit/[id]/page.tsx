@@ -1,13 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Plus,
   Trash2,
   ChevronDown,
-  Info,
-  HelpCircle,
   Clock,
   Calendar,
   FileText,
@@ -16,10 +14,10 @@ import {
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
-import { useCreateQuiz } from '@/src/hooks/useQuizzes';
+import { useQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
 
 interface Answer {
   id: string;
@@ -29,7 +27,6 @@ interface Answer {
 
 interface Question {
   id: string;
-  quizId: string;
   text: string;
   type: 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer';
   score: number;
@@ -52,11 +49,15 @@ interface ExamDetails {
   is_public: boolean;
 }
 
-export default function CreateExamPage() {
+export default function EditExamPage() {
   const router = useRouter();
+  const params = useParams();
+  const examId = params.id as string;
+
   const { data: courses, isLoading: coursesLoading } = useCourses([]);
   const { data: chapters, isLoading: chaptersLoading } = useChapters([]);
-  const { mutate: createQuiz, isLoading: isCreatingQuiz, isError: isQuizError, error: quizError } = useCreateQuiz();
+  const { data: quiz, isLoading: quizLoading } = useQuiz([parseInt(examId)]);
+  const { mutate: updateQuiz, isLoading: isUpdating } = useUpdateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
@@ -74,31 +75,67 @@ export default function CreateExamPage() {
     is_public: false
   });
 
+  const [questions, setQuestions] = useState<Question[]>([]);
+
+  // Helper to format ISO datetime to datetime-local format (YYYY-MM-DDTHH:MM)
+  const formatDateTimeForInput = (isoString: string | null): string => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    // Format to YYYY-MM-DDTHH:MM
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   // Filter chapters based on selected course
   const filteredChapters = examDetails.course
     ? chapters?.filter(ch => ch.attributes.course_id === parseInt(examDetails.course))
     : chapters;
 
-  const [questions, setQuestions] = useState<Question[]>([
-    {
-      id: '1',
-      quizId: '',
-      text: '',
-      type: 'single_choice',
-      score: 1,
-      autoCorrect: true,
-      answers: [
-        { id: '1', text: '', isCorrect: false },
-        { id: '2', text: '', isCorrect: false }
-      ]
+  // Load quiz data when available
+  useEffect(() => {
+    if (quiz) {
+      setExamDetails({
+        title: quiz.attributes.title || '',
+        course: quiz.attributes.course_id ? String(quiz.attributes.course_id) : '',
+        chapter: quiz.attributes.chapter_id ? String(quiz.attributes.chapter_id) : '',
+        type: quiz.attributes.type === 'exam' ? 'exam' : 'homework',
+        duration: String(quiz.attributes.duration || 60),
+        totalMarks: String(quiz.attributes.total_marks || 100),
+        passingMarks: String(quiz.attributes.passing_marks || 60),
+        maxAttempts: String(quiz.attributes.max_attempts || 1),
+        startTime: formatDateTimeForInput(quiz.attributes.start_time),
+        endTime: formatDateTimeForInput(quiz.attributes.end_time),
+        is_public: quiz.attributes.is_public || false,
+        status: (quiz.attributes.is_public || quiz.attributes.status === 'active') ? 'Active' : 'Draft'
+      });
+
+      // Load questions if available
+      if (quiz.attributes.questions && quiz.attributes.questions.length > 0) {
+        setQuestions(quiz.attributes.questions.map((q) => ({
+          id: String(q.id),
+          text: q.attributes.text,
+          type: q.attributes.type,
+          score: q.attributes.score,
+          autoCorrect: q.attributes.auto_correct ?? true,
+          answers: q.attributes.answers?.map((ans, idx) => ({
+            id: String(idx + 1),
+            text: ans.attributes.text,
+            isCorrect: ans.attributes.is_correct
+          })) || []
+        })));
+      }
     }
-  ]);
+  }, [quiz]);
 
   const addQuestion = () => {
     const newId = (questions.length + 1).toString();
     setQuestions([...questions, {
       id: newId,
-      quizId: '',
       text: '',
       type: 'single_choice',
       score: 1,
@@ -161,7 +198,6 @@ export default function CreateExamPage() {
     setQuestions(questions.map(q => {
       if (q.id === qId) {
         if (q.type === 'single_choice' || q.type === 'true_false') {
-          // Single choice - only one correct answer
           return {
             ...q,
             answers: q.answers.map(a => ({
@@ -170,7 +206,6 @@ export default function CreateExamPage() {
             }))
           };
         } else {
-          // Multiple choice - toggle without affecting others
           return {
             ...q,
             answers: q.answers.map(a =>
@@ -195,7 +230,6 @@ export default function CreateExamPage() {
         return;
       }
 
-      // Step 1: Create the quiz/exam with questions
       const quizData = {
         course_id: parseInt(examDetails.course),
         chapter_id: examDetails.chapter ? parseInt(examDetails.chapter) : undefined,
@@ -222,35 +256,49 @@ export default function CreateExamPage() {
         })),
       };
 
-      const createdQuiz = await createQuiz(quizData);
+      await updateQuiz(parseInt(examId), quizData);
 
-      if (!createdQuiz) {
-        throw new Error('Failed to create exam');
-      }
-
-      // Success - redirect to exams page
-      router.push('/exams');
+      alert('Exam updated successfully!');
     } catch (error) {
-      console.error('Error creating exam:', error);
-      alert('Failed to create exam. Please try again.');
+      console.error('Error updating exam:', error);
+      alert('Failed to update exam. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (quizLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
+      </div>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-[#64748B]">Exam not found</p>
+        <Link href="/exams" className="text-[#2137D6] hover:underline">
+          Back to Exams
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link 
+        <Link
           href="/exams"
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Create New Exam</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Build an exam with questions and answers.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">Edit Exam</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">Update exam details and questions.</p>
         </div>
       </div>
 
@@ -275,7 +323,7 @@ export default function CreateExamPage() {
               />
             </div>
 
-            {/* Type, Course, Chapter */}
+            {/* Type, Course, Center */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex flex-col gap-2 relative">
                 <label className="text-[13px] font-bold text-[#475569]">Exam Type <span className="text-[#EF4444]">*</span></label>
@@ -297,7 +345,6 @@ export default function CreateExamPage() {
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={examDetails.course}
                   onChange={(e) => setExamDetails({...examDetails, course: e.target.value, chapter: ''})}
-                  required
                   disabled={coursesLoading}
                 >
                   <option value="">{coursesLoading ? 'Loading...' : 'Select Course'}</option>
@@ -625,7 +672,7 @@ export default function CreateExamPage() {
         </div>
 
         {/* Add Question Button */}
-        <button 
+        <button
           type="button"
           onClick={addQuestion}
           className="flex items-center gap-2 px-6 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#1E293B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all w-fit"
@@ -646,13 +693,13 @@ export default function CreateExamPage() {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting || isCreatingQuiz}
+            disabled={isSubmitting || isUpdating}
             className="px-10 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            {(isSubmitting || isCreatingQuiz) && (
+            {(isSubmitting || isUpdating) && (
               <Loader2 className="w-4 h-4 animate-spin" />
             )}
-            {isSubmitting || isCreatingQuiz ? 'Creating...' : 'Create Exam'}
+            {isSubmitting || isUpdating ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>

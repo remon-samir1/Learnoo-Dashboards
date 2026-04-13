@@ -53,15 +53,18 @@ export function QuickActionSkeleton() {
 }
 
 export function ChartSkeleton() {
+  // Fixed heights to prevent hydration mismatch (server vs client random values)
+  const barHeights = [45, 65, 40, 80, 55, 70, 50];
+  
   return (
     <div className="bg-white border border-[#F1F5F9] rounded-2xl p-6 shadow-sm">
       <Skeleton width={150} height={20} className="mb-4" />
       <div className="flex items-end gap-2 h-[200px] mt-4">
-        {[...Array(7)].map((_, i) => (
+        {barHeights.map((height, i) => (
           <Skeleton 
             key={i} 
-            width={`${100 / 7}%`} 
-            height={`${Math.random() * 60 + 40}%`}
+            width="14.3%" 
+            height={`${height}%`}
             className="rounded-t-lg"
           />
         ))}

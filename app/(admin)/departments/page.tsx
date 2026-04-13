@@ -38,15 +38,18 @@ export default function DepartmentsPage() {
     }
   };
 
-  const getFacultyName = (facultyId: number) => {
-    const faculty = faculties?.find(f => parseInt(f.id) === facultyId);
-    return faculty?.attributes.name || '-';
+  const getParentName = (department: Department) => {
+    return department.attributes.parent?.data?.attributes?.name || '-';
+  };
+
+  const getParentId = (department: Department) => {
+    return department.attributes.parent?.data?.id;
   };
 
   const filteredDepartments = departments?.filter((d) => {
     const matchesSearch = d.attributes.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (d.attributes.code && d.attributes.code.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesFaculty = !selectedFaculty || d.attributes.faculty_id === parseInt(selectedFaculty);
+    const matchesFaculty = !selectedFaculty || getParentId(d) === selectedFaculty;
     return matchesSearch && matchesFaculty;
   }) || [];
 
@@ -79,14 +82,9 @@ export default function DepartmentsPage() {
       render: (item) => item.attributes.name,
     },
     {
-      key: 'code',
-      header: 'Code',
-      render: (item) => item.attributes.code || '-',
-    },
-    {
-      key: 'faculty',
-      header: 'Faculty',
-      render: (item) => getFacultyName(item.attributes.faculty_id),
+      key: 'parent',
+      header: 'Parent (Center)',
+      render: (item) => getParentName(item),
     },
     {
       key: 'stats',

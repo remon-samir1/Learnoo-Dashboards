@@ -5,15 +5,23 @@ import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import LiveSessionCard from '@/components/live-sessions/LiveSessionCard';
-import { useLiveRooms } from '@/src/hooks/useLiveRooms';
+import { useLiveRooms, useDeleteLiveRoom } from '@/src/hooks/useLiveRooms';
 import type { LiveRoom } from '@/src/types';
+import { toast } from 'react-hot-toast';
 
 function getSessionStatus(room: LiveRoom): 'LIVE' | 'UPCOMING' | 'ENDED' {
+  // Use API status if available
+  const apiStatus = room.attributes.status;
+  if (apiStatus === 'live') return 'LIVE';
+  if (apiStatus === 'ended') return 'ENDED';
+  if (apiStatus === 'pending') return 'UPCOMING';
+  
+  // Fallback to calculation if no API status
   const now = new Date();
   const startTime = new Date(room.attributes.started_at);
-  const endTime = new Date(room.attributes.ended_at);
+  const endTime = room.attributes.ended_at ? new Date(room.attributes.ended_at) : null;
 
-  if (now >= startTime && now <= endTime) {
+  if (endTime && now >= startTime && now <= endTime) {
     return 'LIVE';
   } else if (now < startTime) {
     return 'UPCOMING';
@@ -35,11 +43,14 @@ function formatTime(dateString: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-function getDuration(startedAt: string, endedAt: string): string {
+function getDuration(startedAt: string, endedAt?: string | null): string {
+  if (!endedAt) return '';
   const start = new Date(startedAt);
   const end = new Date(endedAt);
   const diffMs = end.getTime() - start.getTime();
   const diffMins = Math.round(diffMs / 60000);
+
+  if (isNaN(diffMins) || diffMins < 0) return '';
 
   if (diffMins >= 60) {
     const hours = Math.floor(diffMins / 60);
@@ -51,10 +62,23 @@ function getDuration(startedAt: string, endedAt: string): string {
 
 export default function LiveSessionsPage() {
   const router = useRouter();
-  const { data: liveRooms, isLoading, error } = useLiveRooms([]);
+  const { data: liveRooms, isLoading, error, refetch } = useLiveRooms([]);
+  const deleteMutation = useDeleteLiveRoom();
 
   const handleStart = (roomId: string) => {
     router.push(`/live-sessions/${roomId}/room`);
+  };
+
+  const handleDelete = async (roomId: string) => {
+    if (!confirm('Are you sure you want to delete this session?')) return;
+    try {
+      await deleteMutation.mutate(Number(roomId));
+      toast.success('Session deleted successfully');
+      refetch();
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast.error('Failed to delete session');
+    }
   };
 
   const transformRoomToCardProps = (room: LiveRoom) => {
@@ -63,11 +87,12 @@ export default function LiveSessionsPage() {
       id: room.id,
       status: getSessionStatus(room),
       title: attrs.title,
-      course: 'Course', // Will be populated from API when available
-      instructor: 'Instructor', // Will be populated from API when available
+      course: attrs.course?.data?.attributes?.title || 'No Course',
+      instructor: attrs.user?.data?.attributes?.full_name || 'Unknown Instructor',
       time: formatTime(attrs.started_at),
       duration: getDuration(attrs.started_at, attrs.ended_at),
-      features: { chat: true, qa: true, voice: true }, // Default features
+      enable_chat: attrs.enable_chat ?? true,
+      enable_recording: attrs.enable_recording ?? false,
     };
   };
 
@@ -120,6 +145,7 @@ export default function LiveSessionsPage() {
                 onEnd={() => {}}
                 onDetails={() => router.push(`/live-sessions/${room.id}`)}
                 onSettings={() => router.push(`/live-sessions/${room.id}/settings`)}
+                onDelete={() => handleDelete(room.id)}
               />
             );
           })

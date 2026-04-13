@@ -8,11 +8,13 @@ import {
   Key, 
   Edit2, 
   Trash2,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useStudents, useDeleteStudent } from '@/src/hooks/useStudents';
+import { useStudents, useDeleteStudent, useResetStudentPassword } from '@/src/hooks/useStudents';
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
 import type { Student } from '@/src/types';
+import ResetPasswordModal from '@/components/modals/ResetPasswordModal';
 
 // Helper to get initials from name
 function getInitials(firstName: string, lastName: string) {
@@ -24,6 +26,10 @@ export default function StudentsPage() {
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<{ id: string; name: string } | null>(null);
+  const [generatedPassword, setGeneratedPassword] = useState<string | undefined>(undefined);
+  const [resetError, setResetError] = useState<string | null>(null);
 
   // Debounce search term
   useEffect(() => {
@@ -42,6 +48,7 @@ export default function StudentsPage() {
 
   const { data: studentsResponse, isLoading, error, refetch } = useStudents([filter], {});
   const { mutate: deleteStudent, isLoading: isDeleting } = useDeleteStudent();
+  const { mutate: resetPassword, isLoading: isResetting } = useResetStudentPassword();
 
   const students = studentsResponse?.data || [];
   const meta = studentsResponse?.meta as any;
@@ -55,6 +62,37 @@ export default function StudentsPage() {
         // Error handled by hook
       }
     }
+  };
+
+  // Step 1: Open confirmation modal
+  const handleResetClick = (student: Student) => {
+    const attrs = student.attributes;
+    const displayName = attrs.full_name || `${attrs.first_name || ''} ${attrs.last_name || ''}`.trim() || 'Unknown';
+    setSelectedStudent({ id: student.id, name: displayName });
+    setGeneratedPassword(undefined);
+    setResetError(null);
+    setIsResetModalOpen(true);
+  };
+
+  // Step 2: Confirm and call API
+  const handleConfirmReset = async () => {
+    if (!selectedStudent) return;
+    
+    try {
+      const newPassword = Math.random().toString(36).slice(-10).toUpperCase();
+      await resetPassword({ studentId: selectedStudent.id, password: newPassword });
+      setGeneratedPassword(newPassword);
+    } catch (err: any) {
+      console.error('Failed to reset password:', err);
+      setResetError(err.message || 'Failed to reset password. Please try again.');
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsResetModalOpen(false);
+    setSelectedStudent(null);
+    setGeneratedPassword(undefined);
+    setResetError(null);
   };
 
   return (
@@ -125,12 +163,11 @@ export default function StudentsPage() {
                 </thead>
                 <tbody className="divide-y divide-[#F1F5F9]">
                   {students.map((student: Student) => {
-                    const { first_name, last_name, email, phone, role, university, centers } = student.attributes;
-                    // Use status if available, otherwise fallback to role or 'Active'
-                    const status = (student.attributes as any).status || (role === 'Student' ? 'Active' : role);
-                    const fullName = `${first_name} ${last_name}`;
+                    const { first_name, last_name, full_name, email, phone, role, status, university, centers } = student.attributes;
+                    const displayStatus = status || (role === 'Student' ? 'active' : role?.toLowerCase());
+                    const displayName = full_name || `${first_name || ''} ${last_name || ''}`.trim() || 'Unknown';
                     const universityName = university?.data?.attributes?.name || 'N/A';
-                    const centersNames = centers?.map(c => c.attributes.name).join(', ') || 'N/A';
+                    const centersNames = centers?.map(c => c.attributes?.name || 'Unknown').join(', ') || 'N/A';
                     
                     return (
                       <tr key={student.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
@@ -140,7 +177,7 @@ export default function StudentsPage() {
                               <span className="text-sm font-bold text-[#4F46E5]">{getInitials(first_name, last_name)}</span>
                             </div>
                             <div className="flex flex-col min-w-0">
-                              <span className="text-sm font-bold text-[#1E293B]">{fullName}</span>
+                              <span className="text-sm font-bold text-[#1E293B]">{displayName}</span>
                               <span className="text-[12px] text-[#64748B] truncate">{email}</span>
                               <span className="text-[11px] text-[#94A3B8]">{phone || 'No phone'}</span>
                             </div>
@@ -154,11 +191,11 @@ export default function StudentsPage() {
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold ${
-                            status === 'Active' || status === 'active' 
-                              ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100' 
+                            displayStatus === 'active'
+                              ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100'
                               : 'bg-[#F1F5F9] text-[#64748B] border border-slate-200'
                           }`}>
-                            {status}
+                            {displayStatus}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -170,18 +207,25 @@ export default function StudentsPage() {
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
-                            <button 
-                              className="p-2 text-[#64748B] hover:text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-all"
+                            <button
+                              className="p-2 text-[#64748B] hover:text-[#F59E0B] hover:bg-amber-50 rounded-lg transition-all"
                               title="Reset Password"
+                              onClick={() => handleResetClick(student)}
+                              disabled={isResetting}
                             >
-                              <Key className="w-4 h-4" />
+                              {isResetting && selectedStudent?.id === student.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Key className="w-4 h-4" />
+                              )}
                             </button>
-                            <button 
+                            <Link 
+                              href={`/students/${student.id}/edit`}
                               className="p-2 text-[#64748B] hover:text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-all"
                               title="Edit Student"
                             >
                               <Edit2 className="w-4 h-4" />
-                            </button>
+                            </Link>
                             <button 
                               className="p-2 text-[#64748B] hover:text-[#EF4444] hover:bg-red-50 rounded-lg transition-all"
                               title="Delete Student"
@@ -228,6 +272,17 @@ export default function StudentsPage() {
           </div>
         )}
       </div>
+
+      {/* Reset Password Modal */}
+      <ResetPasswordModal
+        isOpen={isResetModalOpen}
+        onClose={handleCloseModal}
+        studentName={selectedStudent?.name || ''}
+        generatedPassword={generatedPassword}
+        onConfirm={handleConfirmReset}
+        isLoading={isResetting}
+        error={resetError}
+      />
     </div>
   );
 }

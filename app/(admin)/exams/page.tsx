@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
-import { 
-  ClipboardList, 
-  MessageSquare, 
+import React, { useState, useEffect } from 'react';
+import {
+  ClipboardList,
   Plus,
   CheckCircle2,
   XCircle,
@@ -12,7 +11,7 @@ import {
   Edit
 } from 'lucide-react';
 import Link from 'next/link';
-import { useQuizzes, useDeleteQuiz } from '@/src/hooks/useQuizzes';
+import { useQuizzes, useDeleteQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
 import { useChapters } from '@/src/hooks/useChapters';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { DataTable, Column } from '@/src/components/ui/DataTable';
@@ -20,13 +19,21 @@ import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import type { Quiz } from '@/src/types';
 
 export default function ExamsPage() {
-  const [activeTab, setActiveTab] = useState<'exams' | 'qa'>('exams');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
-  
-  const { data: quizzes, isLoading, error, refetch } = useQuizzes([]);
+
+  const { data: quizzesData, isLoading, error, refetch } = useQuizzes([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+
+  // Sync local state with API data
+  useEffect(() => {
+    if (quizzesData) {
+      setQuizzes(quizzesData);
+    }
+  }, [quizzesData]);
   const { data: chapters } = useChapters([]);
   const { mutate: deleteQuiz, isLoading: isDeleting } = useDeleteQuiz();
+  const { mutate: updateQuiz } = useUpdateQuiz();
 
   const handleDelete = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
@@ -35,14 +42,23 @@ export default function ExamsPage() {
 
   const handleConfirmDelete = async () => {
     if (!selectedQuiz) return;
-    
+
+    const deletedId = selectedQuiz.id;
+
     try {
-      await deleteQuiz(parseInt(selectedQuiz.id));
+      // Immediately remove from UI
+      setQuizzes(prev => prev.filter(q => q.id !== deletedId));
       setDeleteModalOpen(false);
       setSelectedQuiz(null);
-      refetch();
+
+      // Then delete on server
+      await deleteQuiz(parseInt(deletedId));
+      await refetch();
+
+      alert('Exam deleted successfully!');
     } catch {
-      // Error handled by hook
+      // Restore on error
+      await refetch();
     }
   };
 
@@ -76,18 +92,62 @@ export default function ExamsPage() {
       render: (item) => `${item.attributes.duration} mins`,
     },
     {
-      key: 'status',
-      header: 'Status',
+      key: 'questions',
+      header: 'Questions',
       render: (item) => (
-        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${
-          item.attributes.is_published
-            ? 'bg-[#E1FCEF] text-[#059669]'
-            : 'bg-[#F1F5F9] text-[#64748B]'
-        }`}>
-          {item.attributes.is_published ? 'Published' : 'Draft'}
+        <span className="text-sm text-[#475569]">
+          {item.attributes.questions?.length || 0} Qs
         </span>
       ),
     },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (item) => (
+        <button
+          onClick={async () => {
+            try {
+              await updateQuiz(parseInt(item.id), {
+                status: item.attributes.status === 'active' ? 'draft' : 'active'
+              });
+              refetch();
+            } catch {
+              // Error handled by hook
+            }
+          }}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all hover:opacity-80 ${item.attributes.status === 'active'
+            ? 'bg-[#E1FCEF] text-[#059669]'
+            : 'bg-[#F1F5F9] text-[#64748B]'
+            }`}
+        >
+          {item.attributes.status === 'active' ? 'Active' : 'Draft'}
+        </button>
+      ),
+    },
+    {
+      key: 'visibility',
+      header: 'Visibility',
+      render: (item) => (
+        <button
+          onClick={async () => {
+            try {
+              await updateQuiz(parseInt(item.id), {
+                is_public: !item.attributes.is_public
+              });
+              refetch();
+            } catch {
+              // Error handled by hook
+            }
+          }}
+          className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all hover:opacity-80 ${item.attributes.is_public
+            ? 'bg-[#E0E7FF] text-[#2137D6]'
+            : 'bg-[#F1F5F9] text-[#64748B]'
+            }`}
+        >
+          {item.attributes.is_public ? 'Public' : 'Private'}
+        </button>
+      ),
+    }
   ];
 
   return (
@@ -99,66 +159,28 @@ export default function ExamsPage() {
         actionHref="/exams/create"
       />
 
-      {/* Tabs */}
-      <div className="flex items-center gap-8 border-b border-[#E2E8F0]">
-        <button
-          onClick={() => setActiveTab('exams')}
-          className={`flex items-center gap-2 px-1 py-4 text-sm font-bold border-b-2 transition-all ${
-            activeTab === 'exams'
-              ? 'border-[#2137D6] text-[#2137D6]'
-              : 'border-transparent text-[#94A3B8] hover:text-[#64748B]'
-          }`}
-        >
-          <ClipboardList className="w-4 h-4" />
-          Exams & Quizzes
-        </button>
-        <button
-          onClick={() => setActiveTab('qa')}
-          className={`flex items-center gap-2 px-1 py-4 text-sm font-bold border-b-2 transition-all ${
-            activeTab === 'qa'
-              ? 'border-[#2137D6] text-[#2137D6]'
-              : 'border-transparent text-[#94A3B8] hover:text-[#64748B]'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          Q&A Moderation
-          <span className="ml-2 px-2 py-0.5 bg-[#FEE2E2] text-[#EF4444] text-[10px] rounded-full">
-            Coming Soon
-          </span>
-        </button>
-      </div>
-
       {/* Content */}
       <div className="mt-2">
-        {activeTab === 'exams' ? (
-          <>
-            <DataTable
-              data={quizzes || []}
-              columns={columns}
-              isLoading={isLoading}
-              keyExtractor={(item) => item.id}
-              onDelete={handleDelete}
-              editHref={(item) => `/exams/edit/${item.id}`}
-              emptyMessage="No exams found. Create your first exam!"
-            />
-            <DeleteModal
-              isOpen={deleteModalOpen}
-              onClose={() => {
-                setDeleteModalOpen(false);
-                setSelectedQuiz(null);
-              }}
-              onConfirm={handleConfirmDelete}
-              title="Delete Exam"
-              itemName={selectedQuiz?.attributes.title || ''}
-              isLoading={isDeleting}
-            />
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-[#64748B]">
-            <MessageSquare className="w-12 h-12 mb-4 text-[#94A3B8]" />
-            <p>Q&A Moderation coming soon</p>
-          </div>
-        )}
+        <DataTable
+          data={quizzes || []}
+          columns={columns}
+          isLoading={isLoading}
+          keyExtractor={(item) => item.id}
+          onDelete={handleDelete}
+          editHref={(item) => `/exams/edit/${item.id}`}
+          emptyMessage="No exams found. Create your first exam!"
+        />
+        <DeleteModal
+          isOpen={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setSelectedQuiz(null);
+          }}
+          onConfirm={handleConfirmDelete}
+          title="Delete Exam"
+          itemName={selectedQuiz?.attributes.title || ''}
+          isLoading={isDeleting}
+        />
       </div>
     </div>
   );

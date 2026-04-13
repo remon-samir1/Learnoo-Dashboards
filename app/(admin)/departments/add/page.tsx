@@ -3,18 +3,17 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { GraduationCap } from 'lucide-react';
 import { useCreateDepartment } from '@/src/hooks/useDepartments';
-import { useFaculties } from '@/src/hooks/useFaculties';
+import { useCenters } from '@/src/hooks/useCenters';
 import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
 import { FileUpload } from '@/components/FileUpload';
 
 export default function AddDepartmentPage() {
   const router = useRouter();
   const { mutate: createDepartment, isLoading, error } = useCreateDepartment();
-  const { data: faculties, isLoading: isLoadingFaculties } = useFaculties([]);
+  const { data: centers, isLoading: isLoadingCenters } = useCenters([]);
   
   const [formData, setFormData] = useState({
     name: '',
-    code: '',
     faculty_id: '',
     image: null as File | null,
   });
@@ -25,8 +24,7 @@ export default function AddDepartmentPage() {
     try {
       await createDepartment({
         name: formData.name,
-        code: formData.code || undefined,
-        faculty_id: parseInt(formData.faculty_id),
+        center_id: parseInt(formData.faculty_id),
         image: formData.image || undefined,
       });
       router.push('/departments');
@@ -35,9 +33,9 @@ export default function AddDepartmentPage() {
     }
   };
 
-  const facultyOptions = faculties?.map(f => ({
-    value: f.id,
-    label: f.attributes.name,
+  const centerOptions = centers?.map(c => ({
+    value: c.id,
+    label: c.name,
   })) || [];
 
   return (
@@ -46,7 +44,7 @@ export default function AddDepartmentPage() {
       description="Create a new department or course category"
       backHref="/departments"
       onSubmit={handleSubmit}
-      isLoading={isLoading || isLoadingFaculties}
+      isLoading={isLoading || isLoadingCenters}
       error={error}
     >
       <FormSection title="Department Information" icon={<GraduationCap className="w-4 h-4" />}>
@@ -65,18 +63,12 @@ export default function AddDepartmentPage() {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Medicine"
         />
-        <FormInput
-          label="Code"
-          value={formData.code}
-          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-          placeholder="e.g., MED"
-        />
         <FormSelect
-          label="Faculty"
+          label="Center"
           required
           value={formData.faculty_id}
           onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
-          options={[{ value: '', label: 'Select Faculty' }, ...facultyOptions]}
+          options={[{ value: '', label: 'Select Center' }, ...centerOptions]}
           className="md:col-span-2"
         />
       </FormSection>

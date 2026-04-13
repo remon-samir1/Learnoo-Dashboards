@@ -15,13 +15,12 @@ export default function ScheduleSessionPage() {
   const [isFetchingCourses, setIsFetchingCourses] = useState(true);
   
   const [formData, setFormData] = useState({
-    title: '',
     course_id: '',
+    title: '',
     description: '',
-    date: '',
-    time: '',
-    duration: 60,
-    max_students: 50
+    started_at: '',
+    max_students: 50,
+    max_join_time: 15
   });
 
   useEffect(() => {
@@ -45,41 +44,27 @@ export default function ScheduleSessionPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.date || !formData.time) {
-      toast.error('Please fill in title, date, and time');
+    if (!formData.course_id || !formData.title || !formData.started_at) {
+      toast.error('Please fill in course, title, and start time');
       return;
     }
 
     setLoading(true);
     try {
-      // Create started_at and ended_at
-      const startDateTime = new Date(`${formData.date}T${formData.time}`);
-      const endDateTime = new Date(startDateTime.getTime() + formData.duration * 60000);
-
-      // Format as Y-m-d H:i:s
-      const formatDateTime = (date: Date) => {
-        const y = date.getFullYear();
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const d = String(date.getDate()).padStart(2, '0');
-        const h = String(date.getHours()).padStart(2, '0');
-        const min = String(date.getMinutes()).padStart(2, '0');
-        const s = String(date.getSeconds()).padStart(2, '0');
-        return `${y}-${m}-${d} ${h}-${min}-${s}`; // Wait, API example shows space between date and time
-      };
-      
-      // Actually standard SQL format is Y-m-d H:i:s
-      const sqlFormat = (date: Date) => {
-        const iso = date.toISOString(); // 2026-04-11T18:40:56.000Z
+      // Format started_at as Y-m-d H:i:s
+      const sqlFormat = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const iso = date.toISOString();
         return iso.replace('T', ' ').slice(0, 19);
       };
 
       const requestData: CreateLiveRoomRequest = {
+        course_id: Number(formData.course_id),
         title: formData.title,
         description: formData.description,
-        course_id: formData.course_id ? Number(formData.course_id) : undefined,
-        started_at: sqlFormat(startDateTime),
-        ended_at: sqlFormat(endDateTime),
+        started_at: sqlFormat(formData.started_at),
         max_students: Number(formData.max_students),
+        max_join_time: formData.max_join_time ? Number(formData.max_join_time) : null,
       };
 
       await api.liveRooms.create(requestData);
@@ -133,7 +118,7 @@ export default function ScheduleSessionPage() {
 
               {/* Course */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Course</label>
+                <label className="text-[13px] font-bold text-[#1E293B]">Course *</label>
                 <div className="relative">
                   <select 
                     name="course_id"
@@ -142,7 +127,7 @@ export default function ScheduleSessionPage() {
                     disabled={isFetchingCourses}
                     className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none appearance-none transition-all text-[14px] bg-white disabled:bg-gray-50"
                   >
-                    <option value="">{isFetchingCourses ? 'Loading courses...' : 'Select Course (Optional)'}</option>
+                    <option value="">{isFetchingCourses ? 'Loading courses...' : 'Select Course'}</option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
                         {course.attributes.title}
@@ -153,43 +138,14 @@ export default function ScheduleSessionPage() {
                 </div>
               </div>
 
-              {/* Date */}
+              {/* Start Time */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Date</label>
-                <div className="relative">
-                  <input 
-                    type="date" 
-                    name="date"
-                    value={formData.date}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
-                  />
-                </div>
-              </div>
-
-              {/* Time */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Time</label>
-                <div className="relative">
-                  <input 
-                    type="time" 
-                    name="time"
-                    value={formData.time}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
-                  />
-                </div>
-              </div>
-
-              {/* Duration */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Duration (minutes)</label>
+                <label className="text-[13px] font-bold text-[#1E293B]">Start Time *</label>
                 <input 
-                  type="number" 
-                  name="duration"
-                  value={formData.duration}
+                  type="datetime-local" 
+                  name="started_at"
+                  value={formData.started_at}
                   onChange={handleChange}
-                  step={15}
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
                 />
               </div>
@@ -204,6 +160,21 @@ export default function ScheduleSessionPage() {
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
                 />
+              </div>
+
+              {/* Max Join Time */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#1E293B]">Max Join Time (minutes after start)</label>
+                <input 
+                  type="number" 
+                  name="max_join_time"
+                  value={formData.max_join_time}
+                  onChange={handleChange}
+                  min={0}
+                  placeholder="15"
+                  className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
+                />
+                <p className="text-[11px] text-[#94A3B8]">Students can join within this time after session starts. 0 = anytime.</p>
               </div>
 
               {/* Description */}

@@ -55,7 +55,7 @@ export default function EditCoursePage() {
         sub_title: attrs.sub_title || '',
         description: attrs.description || '',
         objectives: attrs.objectives || '',
-        category_id: attrs.category_id?.toString() || '',
+        category_id: attrs.category?.data?.id?.toString() || attrs.category_id?.toString() || '',
         price: attrs.price?.toString() || '0',
         max_views_per_student: attrs.max_views_per_student?.toString() || '10',
         visibility: attrs.visibility || 'public',

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Video, MoreVertical, MessageCircle, HelpCircle, Mic, MicOff, Play, Square, Settings as SettingsIcon, Info } from 'lucide-react';
+import { Video, MessageCircle, Play, Square, Settings as SettingsIcon, Info, Disc, Trash2 } from 'lucide-react';
 
 interface LiveSessionCardProps {
   status: 'LIVE' | 'UPCOMING' | 'ENDED';
@@ -10,15 +10,13 @@ interface LiveSessionCardProps {
   instructor: string;
   time: string;
   duration: string;
-  features: {
-    chat: boolean;
-    qa: boolean;
-    voice: boolean;
-  };
+  enable_chat?: boolean;
+  enable_recording?: boolean;
   onStart?: () => void;
   onEnd?: () => void;
   onDetails?: () => void;
   onSettings?: () => void;
+  onDelete?: () => void;
 }
 
 export default function LiveSessionCard({
@@ -28,11 +26,13 @@ export default function LiveSessionCard({
   instructor,
   time,
   duration,
-  features,
+  enable_chat = true,
+  enable_recording = false,
   onStart,
   onEnd,
   onDetails,
-  onSettings
+  onSettings,
+  onDelete
 }: LiveSessionCardProps) {
   const isLive = status === 'LIVE';
   const isUpcoming = status === 'UPCOMING';
@@ -56,7 +56,7 @@ export default function LiveSessionCard({
             {status}
           </span>
           <span className="text-[13px] font-medium text-[#1E293B]">{time}</span>
-          <span className="text-[13px] text-[#64748B]">• {duration}</span>
+          {duration && <span className="text-[13px] text-[#64748B]">• {duration}</span>}
         </div>
         
         <h3 className="text-lg font-bold text-[#1E293B] mb-1 truncate">{title}</h3>
@@ -71,20 +71,12 @@ export default function LiveSessionCard({
         {/* Feature Indicators */}
         <div className="flex flex-wrap items-center gap-4 mt-4">
           <div className="flex items-center gap-1.5 text-[12px] font-medium">
-            <MessageCircle className={`w-4 h-4 ${features.chat ? 'text-[#10B981]' : 'text-[#94A3B8]'}`} />
-            <span className={features.chat ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>Chat {features.chat ? 'On' : 'Off'}</span>
+            <MessageCircle className={`w-4 h-4 ${enable_chat ? 'text-[#10B981]' : 'text-[#94A3B8]'}`} />
+            <span className={enable_chat ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>Chat {enable_chat ? 'On' : 'Off'}</span>
           </div>
           <div className="flex items-center gap-1.5 text-[12px] font-medium">
-            <HelpCircle className={`w-4 h-4 ${features.qa ? 'text-[#10B981]' : 'text-[#94A3B8]'}`} />
-            <span className={features.qa ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>Q&A {features.qa ? 'On' : 'Off'}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-[12px] font-medium">
-            {features.voice ? (
-              <Mic className="w-4 h-4 text-[#10B981]" />
-            ) : (
-              <MicOff className="w-4 h-4 text-[#94A3B8]" />
-            )}
-            <span className={features.voice ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>Voice {features.voice ? 'On' : 'Off'}</span>
+            <Disc className={`w-4 h-4 ${enable_recording ? 'text-[#EF4444]' : 'text-[#94A3B8]'}`} />
+            <span className={enable_recording ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>Recording {enable_recording ? 'On' : 'Off'}</span>
           </div>
         </div>
       </div>
@@ -124,6 +116,13 @@ export default function LiveSessionCard({
         >
           <SettingsIcon className="w-4 h-4" />
           Settings
+        </button>
+        <button 
+          onClick={onDelete}
+          className="w-full py-2 bg-white border border-[#E2E8F0] text-[#EF4444] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] hover:border-[#EF4444] transition-colors"
+        >
+          <Trash2 className="w-4 h-4" />
+          Delete
         </button>
       </div>
     </div>

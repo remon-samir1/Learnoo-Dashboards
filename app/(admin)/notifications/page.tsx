@@ -1,5 +1,32 @@
 "use client";
 
+import { Bell, Clock } from "lucide-react";
+
+export default function NotificationsPage() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+      <div className="w-24 h-24 bg-gradient-to-br from-[#EEF2FF] to-[#F1F5F9] rounded-2xl flex items-center justify-center shadow-sm border border-[#E2E8F0]">
+        <Bell className="w-12 h-12 text-[#2137D6]" />
+      </div>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-[#1E293B] mb-2">Notifications</h1>
+        <div className="flex items-center gap-2 text-[#64748B] bg-[#F8FAFC] px-4 py-2 rounded-full">
+          <Clock className="w-4 h-4" />
+          <span>Coming Soon</span>
+        </div>
+      </div>
+      <p className="text-sm text-[#94A3B8] max-w-md text-center">
+        Send push and in-app notifications to students. This feature is under development and will be available soon.
+      </p>
+    </div>
+  );
+}
+
+/*
+ORIGINAL CODE - SAVED FOR LATER:
+
+"use client";
+
 import React, { useState } from 'react';
 import { Send, Bell, ChevronDown } from 'lucide-react';
 
@@ -33,15 +60,12 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-12">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#1E293B]">Notifications</h1>
         <p className="text-sm text-[#64748B] mt-0.5">Send push and in-app notifications to students.</p>
       </div>
 
-      {/* Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Compose Notification Panel */}
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <Send className="w-5 h-5 text-[#2137D6]" />
@@ -89,7 +113,6 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        {/* Recent History Panel */}
         <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <Bell className="w-5 h-5 text-[#2137D6]" />
@@ -117,3 +140,4 @@ export default function NotificationsPage() {
     </div>
   );
 }
+*/
