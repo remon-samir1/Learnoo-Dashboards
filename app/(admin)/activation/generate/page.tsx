@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { ArrowLeft, Plus, Loader2, Copy, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -16,7 +16,7 @@ const CODE_TYPES = [
   { value: 'App\\Models\\Library', label: 'Library' },
 ];
 
-export default function GenerateCodePage() {
+function GenerateCodeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { mutate: createCode, isLoading } = useCreateCode();
@@ -250,5 +250,29 @@ export default function GenerateCodePage() {
         )}
       </form>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function GenerateCodeSkeleton() {
+  return (
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-12">
+      <div className="flex items-center gap-4">
+        <div className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl">
+          <ArrowLeft className="w-5 h-5 text-[#94A3B8]" />
+        </div>
+        <div className="h-8 w-48 bg-[#F1F5F9] rounded animate-pulse" />
+      </div>
+      <div className="h-64 bg-[#F1F5F9] rounded-2xl animate-pulse" />
+    </div>
+  );
+}
+
+// Export wrapped in Suspense boundary for useSearchParams compatibility
+export default function GenerateCodePage() {
+  return (
+    <Suspense fallback={<GenerateCodeSkeleton />}>
+      <GenerateCodeForm />
+    </Suspense>
   );
 }
