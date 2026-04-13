@@ -567,10 +567,10 @@ export interface LibraryAttributes {
 export type Library = JsonApiData<LibraryAttributes>;
 
 export interface CreateLibraryRequest {
-  cover_image: string | File;
+  cover_image: File;
   title: string;
   description: string;
-  attachments?: File[];
+  attachment: File;
   course_id: number;
   material_type: MaterialType;
   code_activation?: boolean;
@@ -580,10 +580,10 @@ export interface CreateLibraryRequest {
 }
 
 export interface UpdateLibraryRequest {
-  cover_image?: string | File;
+  cover_image?: File;
   title?: string;
   description?: string;
-  attachments?: File[];
+  attachment?: File;
   course_id?: number;
   material_type?: MaterialType;
   code_activation?: boolean;

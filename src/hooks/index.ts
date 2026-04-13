@@ -168,6 +168,7 @@ export function createMutationHook<T, P extends unknown[] = []>(
 export * from './useAuth';
 export * from './useCenters';
 export { useCodes, useActivateCode } from './useCodes';
+export { usePreActivations, useUploadPreActivation, useDeletePreActivation } from './usePreActivation';
 export { useDashboardStats, useActivityData, useEngagementData, useRecentActivity } from './useDashboard';
 export { usePlatformFeature, useUpdatePlatformFeature } from './usePlatformFeature';
 export * from './useDepartments';

@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   FileEdit, Plus, ChevronRight, ChevronDown, Video, Play, Settings, Trash2,
-  FileText, Link as LinkIcon, Save, Eye, Building2, BookOpen, Loader2, X
+  FileText, Link as LinkIcon, Save, Eye, Building2, BookOpen, Loader2, X,
+  Power, Upload, CheckCircle, Copy, Search
 } from 'lucide-react';
+import Link from 'next/link';
 import { api } from '@/src/lib/api';
 import { useCourses } from '@/src/hooks/useCourses';
+import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
+import { useStudents } from '@/src/hooks/useStudents';
 import type { Course, Lecture, Chapter } from '@/src/types';
 import { toast } from 'react-hot-toast';
 
@@ -45,8 +49,22 @@ export default function ContentManagerPage() {
   const [removeThumbnail, setRemoveThumbnail] = useState(false);
   const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isCreatingLecture, setIsCreatingLecture] = useState(false);
   const [isCreatingChapter, setIsCreatingChapter] = useState(false);
+
+  // Chapter Activation State
+  const [chapterActivationTab, setChapterActivationTab] = useState<'code' | 'preactivation'>('code');
+  const [selectedChapterCode, setSelectedChapterCode] = useState('');
+  const [selectedChapterStudent, setSelectedChapterStudent] = useState('');
+  const [chapterStudentSearch, setChapterStudentSearch] = useState('');
+  const [chapterPreactivationNumbers, setChapterPreactivationNumbers] = useState<string[]>([]);
+  const [chapterPreactivationResults, setChapterPreactivationResults] = useState<{ success: number; failed: number; count: number } | null>(null);
+  const [copiedChapterCode, setCopiedChapterCode] = useState<string | null>(null);
+  const chapterFileInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: codes, refetch: refetchCodes } = useCodes();
+  const { mutate: activateCode, isLoading: isActivatingChapter } = useActivateCode();
+  const { mutate: uploadPreActivation, isLoading: isUploadingChapterPreActivation } = useUploadPreActivation();
+  const { data: students } = useStudents();
 
   const attachmentInputRef = React.useRef<HTMLInputElement>(null);
   const videoInputRef = React.useRef<HTMLInputElement>(null);
@@ -162,6 +180,7 @@ export default function ContentManagerPage() {
 
   const handleCreateChapter = async () => {
     if (!selectedLecture || !selectedCourse) return;
+    setIsCreatingChapter(true);
     try {
       await api.chapters.create({
         lecture_id: Number(selectedLecture.id),
@@ -260,6 +279,107 @@ export default function ContentManagerPage() {
     });
   };
 
+  // Chapter Activation Handlers
+  const handleCopyChapterCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedChapterCode(code);
+    setTimeout(() => setCopiedChapterCode(null), 2000);
+    toast.success('Code copied to clipboard');
+  };
+
+  const handleActivateChapter = async () => {
+    if (!selectedChapterCode || !selectedChapterStudent || !selectedChapter) return;
+
+    try {
+      await activateCode({
+        code: selectedChapterCode,
+        item_id: Number(selectedChapter.id),
+        item_type: 'chapter',
+        user_id: String(selectedChapterStudent),
+      });
+      toast.success('Chapter activated successfully!');
+      setSelectedChapterCode('');
+      setSelectedChapterStudent('');
+      setChapterStudentSearch('');
+      refetchCodes();
+    } catch {
+      // Error handled by hook
+    }
+  };
+
+  const handleChapterPreactivationFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setChapterPreactivationNumbers([]);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const numbers = text
+        .split(/[\n,\r,;]/)
+        .map((n) => n.trim())
+        .filter((n) => n.length > 0);
+      setChapterPreactivationNumbers(numbers);
+      setChapterPreactivationResults(null);
+      toast.success(`${numbers.length} phone numbers ready for upload`);
+    };
+    reader.readAsText(file);
+  };
+
+  const clearChapterPreactivationNumbers = () => {
+    setChapterPreactivationNumbers([]);
+    setChapterPreactivationResults(null);
+    if (chapterFileInputRef.current) {
+      chapterFileInputRef.current.value = '';
+    }
+  };
+
+  const handleChapterPreactivationUpload = async () => {
+    if (!selectedChapter) {
+      toast.error('Please select a chapter first');
+      return;
+    }
+    const file = chapterFileInputRef.current?.files?.[0];
+    if (!file) {
+      toast.error('Please select a file first');
+      return;
+    }
+
+    try {
+      const result = await uploadPreActivation({ item_id: Number(selectedChapter.id), item_type: 'chapter', file });
+      setChapterPreactivationResults({
+        success: result.data.count || 0,
+        failed: chapterPreactivationNumbers.length - (result.data.count || 0),
+        count: result.data.count || 0
+      });
+      toast.success(result.data.message || `Processed ${result.data.count} pre-activations`);
+      refetchCodes();
+      if (chapterFileInputRef.current) {
+        chapterFileInputRef.current.value = '';
+      }
+      setChapterPreactivationNumbers([]);
+    } catch {
+      toast.error('Failed to upload pre-activation file');
+    }
+  };
+
+  // Filter codes for this chapter
+  const chapterCodes = codes?.filter(
+    (code) =>
+      code.attributes.codeable_type === 'App\\Models\\Chapter' &&
+      code.attributes.codeable_id === Number(selectedChapter?.id) &&
+      !code.attributes.is_used
+  ) || [];
+
+  const filteredChapterStudents = students?.data?.filter((student: any) => {
+    const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
+    const email = student.attributes.email?.toLowerCase() || '';
+    const search = chapterStudentSearch.toLowerCase();
+    return fullName.includes(search) || email.includes(search);
+  }) || [];
+
   if (coursesLoading) {
     return (
       <div className="flex h-[400px] items-center justify-center">
@@ -282,9 +402,6 @@ export default function ContentManagerPage() {
         <div className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm p-6 flex flex-col gap-6 self-start sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
           <div className="flex items-center justify-between">
             <h2 className="text-[17px] font-bold text-[#1E293B]">Course Structure</h2>
-            <button className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#4F46E5] transition-all">
-              <Plus className="w-4 h-4" />
-            </button>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -311,21 +428,28 @@ export default function ContentManagerPage() {
                           <div key={lecture.id} className="flex flex-col gap-1">
                             <div
                               onClick={() => toggleLecture(course.id, lecture)}
-                              className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-colors group ${expandedLectures.has(`${course.id}-${lecture.id}`) ? 'bg-[#F0FDF4] text-[#10B981]' : 'hover:bg-[#F8FAFC] text-[#64748B]'}`}
+                              className={`flex flex-col p-2 rounded-xl cursor-pointer transition-colors group ${expandedLectures.has(`${course.id}-${lecture.id}`) ? 'bg-[#F0FDF4] text-[#10B981]' : 'hover:bg-[#F8FAFC] text-[#64748B]'}`}
                             >
-                              <div className="flex items-center gap-2 truncate">
-                                {expandedLectures.has(`${course.id}-${lecture.id}`) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                                <span className="text-[13px] font-bold truncate">{lecture.attributes.title}</span>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 truncate">
+                                  {expandedLectures.has(`${course.id}-${lecture.id}`) ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                  <span className="text-[13px] font-bold truncate">{lecture.attributes.title}</span>
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteLecture(lecture.id);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteLecture(lecture.id);
-                                }}
-                                className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {lecture.attributes.description && (
+                                <p className="text-[11px] text-[#94A3B8] mt-0.5 pl-6 line-clamp-2">
+                                  {lecture.attributes.description}
+                                </p>
+                              )}
                             </div>
 
                             {expandedLectures.has(`${course.id}-${lecture.id}`) && (
@@ -683,6 +807,239 @@ export default function ContentManagerPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Chapter Activation Section */}
+              <section className="bg-white rounded-3xl border border-[#F1F5F9] p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Power className="w-4 h-4 text-[#2137D6]" />
+                    <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Chapter Activation</h2>
+                  </div>
+                  <Link
+                    href={`/activation/generate?chapter_id=${selectedChapter.id}`}
+                    className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
+                    title="Generate Activation Codes"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Link>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
+                  <button
+                    onClick={() => setChapterActivationTab('code')}
+                    className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
+                      chapterActivationTab === 'code'
+                        ? 'bg-white text-[#2137D6] shadow-sm'
+                        : 'text-[#64748B] hover:text-[#1E293B]'
+                    }`}
+                  >
+                    By Code
+                  </button>
+                  <button
+                    onClick={() => setChapterActivationTab('preactivation')}
+                    className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
+                      chapterActivationTab === 'preactivation'
+                        ? 'bg-white text-[#2137D6] shadow-sm'
+                        : 'text-[#64748B] hover:text-[#1E293B]'
+                    }`}
+                  >
+                    Pre-activation
+                  </button>
+                </div>
+
+                {chapterActivationTab === 'code' ? (
+                  <div className="flex flex-col gap-4">
+                    {/* Available Codes */}
+                    <div>
+                      <label className="text-xs font-bold text-[#64748B] mb-2 block">Available Codes ({chapterCodes.length})</label>
+                      {chapterCodes.length > 0 ? (
+                        <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-2">
+                          <div className="flex flex-wrap gap-2">
+                            {chapterCodes.map((code) => (
+                              <button
+                                key={code.id}
+                                onClick={() => setSelectedChapterCode(code.attributes.code)}
+                                className={`px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                                  selectedChapterCode === code.attributes.code
+                                    ? 'bg-[#2137D6] text-white'
+                                    : 'bg-white border border-[#E2E8F0] text-[#475569] hover:border-[#2137D6]'
+                                }`}
+                              >
+                                {code.attributes.code}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#94A3B8]">No available codes. Generate codes first.</p>
+                      )}
+                    </div>
+
+                    {/* Student Selection */}
+                    <div>
+                      <label className="text-xs font-bold text-[#64748B] mb-2 block">Select Student</label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                        <input
+                          type="text"
+                          placeholder="Search students..."
+                          value={chapterStudentSearch}
+                          onChange={(e) => setChapterStudentSearch(e.target.value)}
+                          className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                        />
+                      </div>
+                      {chapterStudentSearch && (
+                        <div className="mt-2 max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
+                          {filteredChapterStudents.length > 0 ? (
+                            filteredChapterStudents.map((student: any) => (
+                              <label
+                                key={student.id}
+                                className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${
+                                  selectedChapterStudent === String(student.id) ? 'bg-[#EEF2FF]' : 'hover:bg-[#F8FAFC]'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="radio"
+                                    name="chapter-student"
+                                    value={student.id}
+                                    checked={selectedChapterStudent === String(student.id)}
+                                    onChange={(e) => {
+                                      setSelectedChapterStudent(e.target.value);
+                                      setChapterStudentSearch(`${student.attributes.first_name} ${student.attributes.last_name}`);
+                                    }}
+                                    className="w-4 h-4 text-[#2137D6]"
+                                  />
+                                  <span className="text-xs font-medium text-[#1E293B]">
+                                    {student.attributes.first_name} {student.attributes.last_name}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-[#94A3B8] pl-6">{student.attributes.email}</span>
+                              </label>
+                            ))
+                          ) : (
+                            <p className="text-xs text-[#94A3B8] italic">No students found</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Activate Button */}
+                    <button
+                      onClick={handleActivateChapter}
+                      disabled={!selectedChapterCode || !selectedChapterStudent || isActivatingChapter}
+                      className="w-full py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isActivatingChapter ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Activating...
+                        </>
+                      ) : (
+                        <>
+                          <Power className="w-4 h-4" />
+                          Activate Chapter
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
+                      <p className="text-xs text-[#2137D6]">
+                        <span className="font-bold">How it works:</span> Upload phone numbers, and we will generate unique codes and immediately activate them for matching students.
+                      </p>
+                    </div>
+
+                    {/* File Upload */}
+                    <div>
+                      <label className="text-xs font-bold text-[#64748B] mb-2 block">Upload Phone Numbers</label>
+                      <p className="text-[10px] text-[#94A3B8] mb-2">Supported: .txt, .csv (one phone per line)</p>
+                      <input
+                        ref={chapterFileInputRef}
+                        type="file"
+                        accept=".txt,.csv"
+                        onChange={handleChapterPreactivationFileSelect}
+                        className="hidden"
+                      />
+                      <button
+                        onClick={() => chapterFileInputRef.current?.click()}
+                        className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Choose File
+                      </button>
+                    </div>
+
+                    {/* Phone Numbers Preview */}
+                    {chapterPreactivationNumbers.length > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs font-bold text-[#64748B]">Phone Numbers ({chapterPreactivationNumbers.length})</label>
+                          <button
+                            onClick={clearChapterPreactivationNumbers}
+                            className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
+                          >
+                            <X className="w-3 h-3" />
+                            Clear
+                          </button>
+                        </div>
+                        <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
+                          <div className="flex flex-wrap gap-2">
+                            {chapterPreactivationNumbers.map((num, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
+                              >
+                                {num}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pre-activate Button */}
+                    <button
+                      onClick={handleChapterPreactivationUpload}
+                      disabled={chapterPreactivationNumbers.length === 0 || isUploadingChapterPreActivation}
+                      className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isUploadingChapterPreActivation ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4" />
+                          Upload & Process {chapterPreactivationNumbers.length > 0 && `(${chapterPreactivationNumbers.length})`}
+                        </>
+                      )}
+                    </button>
+
+                    {/* Pre-activation Results */}
+                    {chapterPreactivationResults && (
+                      <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                        <p className="text-xs font-bold text-[#1E293B] mb-2">Pre-activation Results:</p>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs text-green-600 flex items-center gap-1">
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Success: {chapterPreactivationResults.success}
+                          </span>
+                          {chapterPreactivationResults.failed > 0 && (
+                            <span className="text-xs text-red-600 flex items-center gap-1">
+                              <X className="w-3.5 h-3.5" />
+                              Failed: {chapterPreactivationResults.failed}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
             </>
           ) : (
             <div className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm p-12 flex flex-col items-center justify-center text-center gap-4">
@@ -762,7 +1119,8 @@ export default function ContentManagerPage() {
                   type="text"
                   value={addChapterData.title}
                   onChange={(e) => setAddChapterData({ ...addChapterData, title: e.target.value })}
-                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all"
+                  disabled={isCreatingChapter}
+                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Enter chapter title"
                 />
               </div>
@@ -772,7 +1130,8 @@ export default function ContentManagerPage() {
                   type="text"
                   value={addChapterData.duration}
                   onChange={(e) => setAddChapterData({ ...addChapterData, duration: e.target.value })}
-                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all"
+                  disabled={isCreatingChapter}
+                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="00:00"
                 />
               </div>
@@ -780,7 +1139,8 @@ export default function ContentManagerPage() {
                 <label className="text-[13px] font-bold text-[#64748B]">Thumbnail Image</label>
                 <button
                   onClick={() => modalThumbnailInputRef.current?.click()}
-                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium"
+                  disabled={isCreatingChapter}
+                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {addChapterData.image ? addChapterData.image.name : "Select image file"}
                 </button>
@@ -796,7 +1156,8 @@ export default function ContentManagerPage() {
                 <label className="text-[13px] font-bold text-[#64748B]">Video File</label>
                 <button
                   onClick={() => modalVideoInputRef.current?.click()}
-                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium"
+                  disabled={isCreatingChapter}
+                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {addChapterData.video ? addChapterData.video.name : "Select video file"}
                 </button>
@@ -812,7 +1173,8 @@ export default function ContentManagerPage() {
                 <label className="text-[13px] font-bold text-[#64748B]">Other Attachments</label>
                 <button
                   onClick={() => modalAttachmentInputRef.current?.click()}
-                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium"
+                  disabled={isCreatingChapter}
+                  className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {addChapterData.attachments.length > 0 ? `${addChapterData.attachments.length} files selected` : "Select files"}
                 </button>
@@ -825,10 +1187,10 @@ export default function ContentManagerPage() {
                 />
               </div>
               <div className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0]">
-                <span className="text-[13px] font-bold text-[#1E293B]">Free Preview</span>
+                <span className={`text-[13px] font-bold ${isCreatingChapter ? 'text-[#94A3B8]' : 'text-[#1E293B]'}`}>Free Preview</span>
                 <div
-                  onClick={() => setAddChapterData({ ...addChapterData, is_free_preview: addChapterData.is_free_preview ? 0 : 1 })}
-                  className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${addChapterData.is_free_preview ? 'bg-[#2137D6]' : 'bg-[#E2E8F0]'}`}
+                  onClick={() => !isCreatingChapter && setAddChapterData({ ...addChapterData, is_free_preview: addChapterData.is_free_preview ? 0 : 1 })}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${addChapterData.is_free_preview ? 'bg-[#2137D6]' : 'bg-[#E2E8F0]'} ${isCreatingChapter ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                 >
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${addChapterData.is_free_preview ? 'right-1' : 'left-1'}`}></div>
                 </div>
@@ -844,10 +1206,16 @@ export default function ContentManagerPage() {
               <button
                 onClick={handleCreateChapter}
                 disabled={isCreatingChapter}
-                className={`flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 ${isCreatingChapter ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className="flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {isCreatingChapter ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {isCreatingChapter ? 'Creating...' : 'Create Chapter'}
+                {isCreatingChapter ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  "Create Chapter"
+                )}
               </button>
             </div>
           </div>

@@ -44,6 +44,8 @@ export default function AddLibraryItemPage() {
     if (!description.trim()) newErrors.description = 'Description is required';
     if (!courseId) newErrors.courseId = 'Course is required';
     if (!price.trim() || isNaN(parseFloat(price))) newErrors.price = 'Valid price is required';
+    if (!coverImage) newErrors.coverImage = 'Cover image is required';
+    if (attachments.length === 0) newErrors.attachment = 'Attachment file is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -69,10 +71,10 @@ export default function AddLibraryItemPage() {
 
     try {
       await createLibrary({
-        cover_image: coverImage || 'libraries/covers/default.jpg',
+        cover_image: coverImage!,
         title: title.trim(),
         description: description.trim(),
-        attachments: attachments.length > 0 ? attachments : undefined,
+        attachment: attachments[0],
         course_id: parseInt(courseId),
         material_type: materialType as any,
         code_activation: codeActivation,
@@ -229,6 +231,7 @@ export default function AddLibraryItemPage() {
                   {coverImage ? coverImage.name : 'Click to upload image'}
                 </label>
               </div>
+              {errors.coverImage && <p className="text-xs text-[#EF4444]">{errors.coverImage}</p>}
               <p className="text-xs text-[#94A3B8]">Supported formats: JPG, PNG, WebP</p>
             </div>
           </div>
@@ -272,6 +275,7 @@ export default function AddLibraryItemPage() {
                   {attachments.length > 0 ? 'Change file' : 'Click to upload file'}
                 </label>
               </div>
+              {errors.attachment && <p className="text-xs text-[#EF4444]">{errors.attachment}</p>}
               <p className="text-xs text-[#94A3B8]">PDF, DOC, DOCX, or any file type</p>
             </div>
           </div>

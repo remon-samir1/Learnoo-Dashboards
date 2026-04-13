@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Loader2, Copy, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCreateCode } from '@/src/hooks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
@@ -18,6 +18,7 @@ const CODE_TYPES = [
 
 export default function GenerateCodePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { mutate: createCode, isLoading } = useCreateCode();
   const { data: courses } = useCourses();
   const { data: chapters } = useChapters();
@@ -28,6 +29,24 @@ export default function GenerateCodePage() {
   const [quantity, setQuantity] = useState(1);
   const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  // Handle query params for pre-selection
+  useEffect(() => {
+    const courseId = searchParams.get('course_id');
+    const chapterId = searchParams.get('chapter_id');
+    const libraryId = searchParams.get('library_id');
+
+    if (courseId) {
+      setCodeType('App\\Models\\Course');
+      setItemId(courseId);
+    } else if (chapterId) {
+      setCodeType('App\\Models\\Chapter');
+      setItemId(chapterId);
+    } else if (libraryId) {
+      setCodeType('App\\Models\\Library');
+      setItemId(libraryId);
+    }
+  }, [searchParams]);
 
   const getItems = () => {
     switch (codeType) {
