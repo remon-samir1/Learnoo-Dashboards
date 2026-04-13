@@ -13,7 +13,8 @@ import {
 import Link from 'next/link';
 import { useStudents, useDeleteStudent, useResetStudentPassword } from '@/src/hooks/useStudents';
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
-import type { Student } from '@/src/types';
+import type { Student, StudentStatus } from '@/src/types';
+import { StudentStatusLabels } from '@/src/types';
 import ResetPasswordModal from '@/components/modals/ResetPasswordModal';
 
 // Helper to get initials from name
@@ -23,7 +24,7 @@ function getInitials(firstName: string, lastName: string) {
 
 export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [statusFilter, setStatusFilter] = useState<StudentStatus | 'all'>('all');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -42,7 +43,7 @@ export default function StudentsPage() {
 
   const filter = useMemo(() => ({
     search: debouncedSearch || undefined,
-    status: statusFilter === 'All Statuses' ? undefined : statusFilter.toLowerCase(),
+    status: statusFilter === 'all' ? undefined : statusFilter,
     page,
   }), [debouncedSearch, statusFilter, page]);
 
@@ -125,17 +126,19 @@ export default function StudentsPage() {
           />
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <select 
+          <select
             className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl px-4 py-2.5 text-sm text-[#475569] focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 w-full md:w-[200px] appearance-none cursor-pointer"
             value={statusFilter}
             onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1); // Reset to first page on filter change
+              const value = e.target.value;
+              setStatusFilter(value === 'all' ? 'all' : parseInt(value) as StudentStatus);
+              setPage(1);
             }}
           >
-            <option>All Statuses</option>
-            <option>Active</option>
-            <option>Inactive</option>
+            <option value="all">All Statuses</option>
+            <option value={1}>Active</option>
+            <option value={0}>Inactive</option>
+            <option value={2}>Suspended</option>
           </select>
         </div>
       </div>
@@ -163,12 +166,11 @@ export default function StudentsPage() {
                 </thead>
                 <tbody className="divide-y divide-[#F1F5F9]">
                   {students.map((student: Student) => {
-                    const { first_name, last_name, full_name, email, phone, role, status, university, centers } = student.attributes;
-                    const displayStatus = status || (role === 'Student' ? 'active' : role?.toLowerCase());
+                    const { first_name, last_name, full_name, email, phone, status, university, centers } = student.attributes;
                     const displayName = full_name || `${first_name || ''} ${last_name || ''}`.trim() || 'Unknown';
                     const universityName = university?.data?.attributes?.name || 'N/A';
                     const centersNames = centers?.map(c => c.attributes?.name || 'Unknown').join(', ') || 'N/A';
-                    
+
                     return (
                       <tr key={student.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
                         <td className="px-6 py-4">
@@ -190,12 +192,14 @@ export default function StudentsPage() {
                           <span className="text-sm text-[#475569]">{centersNames}</span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold ${
-                            displayStatus === 'active'
-                              ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100'
-                              : 'bg-[#F1F5F9] text-[#64748B] border border-slate-200'
+                          <span className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold border ${
+                            status === 1
+                              ? 'bg-[#EBFDF5] text-[#10B981] border-[#10B981]/20'
+                              : status === 0
+                                ? 'bg-red-50 text-red-600 border-red-600/20'
+                                : 'bg-orange-50 text-orange-600 border-orange-600/20'
                           }`}>
-                            {displayStatus}
+                            {StudentStatusLabels[status ?? 1]}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">

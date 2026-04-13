@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Loader2, Copy, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { ArrowLeft, Plus, Loader2, Copy, CheckCircle, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCreateCode } from '@/src/hooks';
@@ -16,7 +16,7 @@ const CODE_TYPES = [
   { value: 'App\\Models\\Library', label: 'Library' },
 ];
 
-export default function GenerateCodePage() {
+function GenerateCodeForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { mutate: createCode, isLoading } = useCreateCode();
@@ -71,7 +71,7 @@ export default function GenerateCodePage() {
     return code;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, shouldDownload = false) => {
     e.preventDefault();
     if (!itemId) {
       toast.error('Please select an item');
@@ -95,6 +95,10 @@ export default function GenerateCodePage() {
         const returnedCodes = result.map((c) => c.attributes.code);
         setGeneratedCodes(returnedCodes);
         toast.success(`${quantity} code(s) generated successfully!`);
+
+        if (shouldDownload) {
+          handleDownload(returnedCodes);
+        }
       }
     } catch {
       // Error handled by hook
@@ -106,6 +110,22 @@ export default function GenerateCodePage() {
     setCopiedIndex(index);
     toast.success('Code copied to clipboard');
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleDownload = (codes: string[]) => {
+    import('xlsx').then((XLSX) => {
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ['#', 'Activation Code'],
+        ...codes.map((code, index) => [index + 1, code])
+      ]);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Activation Codes');
+
+      const date = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `activation-codes-${date}.xlsx`);
+      toast.success('Codes downloaded as Excel');
+    });
   };
 
   const items = getItems();
@@ -195,6 +215,24 @@ export default function GenerateCodePage() {
             Cancel
           </Link>
           <button
+            type="button"
+            disabled={isLoading || !itemId}
+            onClick={(e) => handleSubmit(e as unknown as React.FormEvent, true)}
+            className="flex items-center gap-2 px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Generate & Download
+              </>
+            )}
+          </button>
+          <button
             type="submit"
             disabled={isLoading || !itemId}
             className="flex items-center gap-2 px-8 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -250,5 +288,29 @@ export default function GenerateCodePage() {
         )}
       </form>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function GenerateCodeSkeleton() {
+  return (
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-12">
+      <div className="flex items-center gap-4">
+        <div className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl">
+          <ArrowLeft className="w-5 h-5 text-[#94A3B8]" />
+        </div>
+        <div className="h-8 w-48 bg-[#F1F5F9] rounded animate-pulse" />
+      </div>
+      <div className="h-64 bg-[#F1F5F9] rounded-2xl animate-pulse" />
+    </div>
+  );
+}
+
+// Export wrapped in Suspense boundary for useSearchParams compatibility
+export default function GenerateCodePage() {
+  return (
+    <Suspense fallback={<GenerateCodeSkeleton />}>
+      <GenerateCodeForm />
+    </Suspense>
   );
 }
