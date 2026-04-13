@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import React from 'react';
-import { 
-  ArrowLeft, 
-  Settings, 
-  Video, 
-  BookOpen, 
-  FileText, 
-  Users, 
-  Layers, 
+import React, { useState, useRef } from 'react';
+import {
+  ArrowLeft,
+  Video,
+  BookOpen,
+  FileText,
+  Users,
+  Layers,
   Edit3,
   BarChart3,
   ClipboardList,
-  Loader2
+  Loader2,
+  Power,
+  Upload,
+  CheckCircle,
+  Copy,
+  Search,
+  X,
+  Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -20,7 +26,9 @@ import { StatCard } from '@/components/StatCard';
 import { ProgressBar } from '@/components/ProgressBar';
 import { useCourse } from '@/src/hooks/useCourses';
 import { useLectures } from '@/src/hooks/useLectures';
-import { useChapters } from '@/src/hooks/useChapters';
+import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
+import { useStudents } from '@/src/hooks/useStudents';
+import toast from 'react-hot-toast';
 
 export default function CourseDetailPage() {
   const { id } = useParams();
@@ -28,6 +36,127 @@ export default function CourseDetailPage() {
 
   const { data: course, isLoading: courseLoading, error: courseError } = useCourse(courseId);
   const { data: lectures, isLoading: lecturesLoading } = useLectures({ course_id: courseId });
+  const { data: codes, isLoading: codesLoading, refetch: refetchCodes } = useCodes();
+  const { mutate: activateCode, isLoading: isActivating } = useActivateCode();
+  const { mutate: uploadPreActivation, isLoading: isUploadingPreActivation } = useUploadPreActivation();
+  const { data: students } = useStudents();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const preactivationFileRef = useRef<HTMLInputElement>(null);
+
+  // Activation state
+  const [selectedCode, setSelectedCode] = useState('');
+  const [selectedStudent, setSelectedStudent] = useState('');
+  const [studentSearch, setStudentSearch] = useState('');
+  const [activationTab, setActivationTab] = useState<'code' | 'preactivation'>('code');
+  const [uploadedNumbers, setUploadedNumbers] = useState<string[]>([]);
+  const [preactivationNumbers, setPreactivationNumbers] = useState<string[]>([]);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const [preactivationResults, setPreactivationResults] = useState<{ success: number; failed: number; count: number } | null>(null);
+
+  // Filter codes for this course
+  const courseCodes = codes?.filter(
+    (code) =>
+      code.attributes.codeable_type === 'App\\Models\\Course' &&
+      code.attributes.codeable_id === courseId &&
+      !code.attributes.is_used
+  ) || [];
+
+  const filteredStudents = students?.data?.filter((student: any) => {
+    const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
+    const email = student.attributes.email?.toLowerCase() || '';
+    const search = studentSearch.toLowerCase();
+    return fullName.includes(search) || email.includes(search);
+  }) || [];
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    toast.success('Code copied to clipboard');
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const handleActivate = async () => {
+    if (!selectedCode || !selectedStudent) {
+      toast.error('Please select both a code and a student');
+      return;
+    }
+
+    const code = codes?.find((c) => c.id === selectedCode);
+    if (!code) return;
+
+    try {
+      await activateCode({
+        code: code.attributes.code,
+        item_id: courseId,
+        item_type: 'course',
+        user_id: selectedStudent,
+      });
+      toast.success('Course activated successfully!');
+      setSelectedCode('');
+      setSelectedStudent('');
+      setStudentSearch('');
+      refetchCodes();
+    } catch {
+      // Error handled by hook
+    }
+  };
+
+  const handlePreactivationFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setPreactivationNumbers([]);
+      return;
+    }
+
+    // Read file to show preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const numbers = text
+        .split(/[\n,\r,;]/)
+        .map((n) => n.trim())
+        .filter((n) => n.length > 0);
+      setPreactivationNumbers(numbers);
+      setPreactivationResults(null);
+      toast.success(`${numbers.length} phone numbers ready for upload`);
+    };
+    reader.readAsText(file);
+  };
+
+  const clearPreactivationNumbers = () => {
+    setPreactivationNumbers([]);
+    setPreactivationResults(null);
+    if (preactivationFileRef.current) {
+      preactivationFileRef.current.value = '';
+    }
+  };
+
+  const handlePreactivationUpload = async () => {
+    const file = preactivationFileRef.current?.files?.[0];
+    if (!file) {
+      toast.error('Please select a file first');
+      return;
+    }
+
+    try {
+      const result = await uploadPreActivation({ item_id: courseId, item_type: 'course', file });
+      setPreactivationResults({
+        success: result.data.count || 0,
+        failed: preactivationNumbers.length - (result.data.count || 0),
+        count: result.data.count || 0
+      });
+      toast.success(result.data.message || `Processed ${result.data.count} pre-activations`);
+      refetchCodes();
+      // Clear the file after successful upload
+      if (preactivationFileRef.current) {
+        preactivationFileRef.current.value = '';
+      }
+      setPreactivationNumbers([]);
+    } catch {
+      toast.error('Failed to upload pre-activation file');
+    }
+  };
   
   // For simplicity in this view, we'll show lectures and their chapter counts.
   // If we wanted to show all chapters, we might need a more complex join or multiple fetches.
@@ -197,6 +326,259 @@ export default function CourseDetailPage() {
                 </p>
               </div>
             </div>
+          </section>
+
+          {/* Activation Card */}
+          <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Power className="w-4 h-4 text-[#2137D6]" />
+                <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Course Activation</h2>
+              </div>
+              <Link
+                href={`/activation/generate?course_id=${courseId}`}
+                className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
+                title="Generate Activation Codes"
+              >
+                <Plus className="w-4 h-4" />
+              </Link>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
+              <button
+                onClick={() => setActivationTab('code')}
+                className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
+                  activationTab === 'code'
+                    ? 'bg-white text-[#2137D6] shadow-sm'
+                    : 'text-[#64748B] hover:text-[#1E293B]'
+                }`}
+              >
+                By Code
+              </button>
+              <button
+                onClick={() => setActivationTab('preactivation')}
+                className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
+                  activationTab === 'preactivation'
+                    ? 'bg-white text-[#2137D6] shadow-sm'
+                    : 'text-[#64748B] hover:text-[#1E293B]'
+                }`}
+              >
+                Pre-activation
+              </button>
+            </div>
+
+            {activationTab === 'code' ? (
+              <div className="flex flex-col gap-4">
+                {/* Available Codes */}
+                <div>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Available Codes ({courseCodes.length})</label>
+                  {codesLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
+                    </div>
+                  ) : courseCodes.length > 0 ? (
+                    <div className="max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
+                      {courseCodes.map((code) => (
+                        <label
+                          key={code.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                            selectedCode === code.id ? 'bg-[#EEF2FF] border border-[#2137D6]' : 'hover:bg-[#F8FAFC] border border-transparent'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="code"
+                            value={code.id}
+                            checked={selectedCode === code.id}
+                            onChange={(e) => setSelectedCode(e.target.value)}
+                            className="w-4 h-4 text-[#2137D6]"
+                          />
+                          <span className="flex-1 font-mono text-xs text-[#1E293B]">{code.attributes.code}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopyCode(code.attributes.code);
+                            }}
+                            className="p-1 hover:bg-[#EEF2FF] rounded transition-colors"
+                          >
+                            {copiedCode === code.attributes.code ? (
+                              <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5 text-[#94A3B8]" />
+                            )}
+                          </button>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#94A3B8] italic">No available codes. Generate codes first.</p>
+                  )}
+                </div>
+
+                {/* Student Selection */}
+                <div>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Select Student</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <input
+                      type="text"
+                      placeholder="Search students..."
+                      value={studentSearch}
+                      onChange={(e) => setStudentSearch(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                    />
+                  </div>
+                  {studentSearch && (
+                    <div className="mt-2 max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
+                      {filteredStudents.length > 0 ? (
+                        filteredStudents.map((student: any) => (
+                          <label
+                            key={student.id}
+                            className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${
+                              selectedStudent === student.id ? 'bg-[#EEF2FF]' : 'hover:bg-[#F8FAFC]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                name="student"
+                                value={student.id}
+                                checked={selectedStudent === student.id}
+                                onChange={(e) => {
+                                  setSelectedStudent(e.target.value);
+                                  setStudentSearch(`${student.attributes.first_name} ${student.attributes.last_name}`);
+                                }}
+                                className="w-4 h-4 text-[#2137D6]"
+                              />
+                              <span className="text-xs font-medium text-[#1E293B]">
+                                {student.attributes.first_name} {student.attributes.last_name}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-[#94A3B8] pl-6">{student.attributes.email}</span>
+                          </label>
+                        ))
+                      ) : (
+                        <p className="text-xs text-[#94A3B8] italic">No students found</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Activate Button */}
+                <button
+                  onClick={handleActivate}
+                  disabled={isActivating || !selectedCode || !selectedStudent}
+                  className="w-full py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isActivating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Activating...
+                    </>
+                  ) : (
+                    <>
+                      <Power className="w-4 h-4" />
+                      Activate Course
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
+                  <p className="text-xs text-[#2137D6]">
+                    <span className="font-bold">How it works:</span> Upload phone numbers, and we will generate unique codes and immediately activate them for matching students.
+                  </p>
+                </div>
+
+                {/* File Upload */}
+                <div>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Upload Phone Numbers</label>
+                  <p className="text-[10px] text-[#94A3B8] mb-2">Supported: .txt, .csv (one phone per line)</p>
+                  <input
+                    ref={preactivationFileRef}
+                    type="file"
+                    accept=".txt,.csv"
+                    onChange={handlePreactivationFileSelect}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => preactivationFileRef.current?.click()}
+                    className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Choose File
+                  </button>
+                </div>
+
+                {/* Phone Numbers Preview */}
+                {preactivationNumbers.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-[#64748B]">Phone Numbers ({preactivationNumbers.length})</label>
+                      <button
+                        onClick={clearPreactivationNumbers}
+                        className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
+                      >
+                        <X className="w-3 h-3" />
+                        Clear
+                      </button>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
+                      <div className="flex flex-wrap gap-2">
+                        {preactivationNumbers.map((num, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
+                          >
+                            {num}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Pre-activate Button */}
+                <button
+                  onClick={handlePreactivationUpload}
+                  disabled={preactivationNumbers.length === 0 || isUploadingPreActivation}
+                  className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isUploadingPreActivation ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Upload & Process {preactivationNumbers.length > 0 && `(${preactivationNumbers.length})`}
+                    </>
+                  )}
+                </button>
+
+                {/* Pre-activation Results */}
+                {preactivationResults && (
+                  <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                    <p className="text-xs font-bold text-[#1E293B] mb-2">Pre-activation Results:</p>
+                    <div className="flex items-center gap-4 mb-3">
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        Success: {preactivationResults.success}
+                      </span>
+                      {preactivationResults.failed > 0 && (
+                        <span className="text-xs text-red-600 flex items-center gap-1">
+                          <X className="w-3.5 h-3.5" />
+                          Failed: {preactivationResults.failed}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
         </div>
       </div>

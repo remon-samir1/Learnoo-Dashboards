@@ -80,7 +80,7 @@ export default function EditLibraryItemPage() {
     try {
       await updateLibrary(libraryId, {
         ...(coverImage && { cover_image: coverImage }),
-        ...(attachments.length > 0 && { attachments: attachments }),
+        ...(attachments.length > 0 && { attachment: attachments[0] }),
         title: title.trim(),
         description: description.trim(),
         course_id: parseInt(courseId || '0'),

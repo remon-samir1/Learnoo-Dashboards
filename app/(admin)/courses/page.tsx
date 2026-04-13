@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { Plus, Search, ChevronDown } from 'lucide-react';
 import { CourseCard } from '@/components/CourseCard';
 import Link from 'next/link';
-import { useCourses } from '@/src/hooks/useCourses';
+import { useCourses, useDeleteCourse } from '@/src/hooks/useCourses';
 import { CourseCardSkeleton } from '@/src/components/ui/Skeleton';
 import type { Course } from '@/src/types';
+import toast from 'react-hot-toast';
 
 // Helper function to transform API course data to CourseCard props
 function transformCourseToCardProps(course: Course) {
@@ -43,7 +44,19 @@ export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [approvalFilter, setApprovalFilter] = useState('All Approvals');
-  const { data: courses, isLoading, error } = useCourses({});
+  const { data: courses, isLoading, error, refetch } = useCourses({});
+  const { mutate: deleteCourse } = useDeleteCourse();
+
+  const handleDelete = async (courseId: number) => {
+    if (!confirm('Are you sure you want to delete this course?')) return;
+    try {
+      await deleteCourse(courseId);
+      toast.success('Course deleted successfully');
+      refetch();
+    } catch {
+      toast.error('Failed to delete course');
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -135,9 +148,13 @@ export default function CoursesPage() {
             .map((course) => {
               const cardProps = transformCourseToCardProps(course);
               return (
-                <Link href={`/courses/${cardProps.id}`} key={course.id}>
-                  <CourseCard {...cardProps} />
-                </Link>
+                <CourseCard
+                  key={course.id}
+                  {...cardProps}
+                  onView={() => window.location.href = `/courses/${cardProps.id}`}
+                  onEdit={() => window.location.href = `/courses/${cardProps.id}/edit`}
+                  onDelete={() => handleDelete(cardProps.id)}
+                />
               );
             })
         ) : (

@@ -389,6 +389,44 @@ export const codesApi = {
 };
 
 // ============================================
+// Pre-activation API
+// ============================================
+
+export interface PreActivationUploadRequest {
+  item_id: number;
+  item_type: 'course' | 'chapter' | 'library';
+  file: File;
+}
+
+export interface PreActivation {
+  id: number;
+  attributes: {
+    item_id: number;
+    item_type: string;
+    phone: string;
+    code: string;
+    status: 'pending' | 'activated' | 'failed';
+    student_id?: number;
+    created_at: string;
+  };
+}
+
+export const preActivationApi = {
+  upload: (data: PreActivationUploadRequest) => {
+    const formData = new FormData();
+    formData.append('item_id', data.item_id.toString());
+    formData.append('item_type', data.item_type);
+    formData.append('file', data.file);
+    return postMultipart<ApiResponse<{ message: string; count: number }>>('/v1/pre-activation/upload', formData);
+  },
+
+  list: (itemId?: number, itemType?: string) =>
+    get<ApiListResponse<PreActivation>>('/v1/pre-activation', itemId && itemType ? { item_id: itemId, item_type: itemType } : undefined),
+
+  delete: (id: number) => del<ApiResponse<PreActivation>>(`/v1/pre-activation/${id}`),
+};
+
+// ============================================
 // Courses API
 // ============================================
 
