@@ -1,0 +1,235 @@
+'use client';
+
+import React, { useState } from 'react';
+import { ArrowLeft, Plus, Loader2, Copy, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useCreateCode } from '@/src/hooks';
+import { useCourses } from '@/src/hooks/useCourses';
+import { useChapters } from '@/src/hooks/useChapters';
+import { useLibraries } from '@/src/hooks/useLibraries';
+import toast from 'react-hot-toast';
+
+const CODE_TYPES = [
+  { value: 'App\\Models\\Course', label: 'Course' },
+  { value: 'App\\Models\\Chapter', label: 'Chapter' },
+  { value: 'App\\Models\\Library', label: 'Library' },
+];
+
+export default function GenerateCodePage() {
+  const router = useRouter();
+  const { mutate: createCode, isLoading } = useCreateCode();
+  const { data: courses } = useCourses();
+  const { data: chapters } = useChapters();
+  const { data: libraries } = useLibraries();
+
+  const [codeType, setCodeType] = useState('App\\Models\\Course');
+  const [itemId, setItemId] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const getItems = () => {
+    switch (codeType) {
+      case 'App\\Models\\Course':
+        return courses || [];
+      case 'App\\Models\\Chapter':
+        return chapters || [];
+      case 'App\\Models\\Library':
+        return libraries || [];
+      default:
+        return [];
+    }
+  };
+
+  // Generate a random 8-character alphanumeric code
+  const generateRandomCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!itemId) {
+      toast.error('Please select an item');
+      return;
+    }
+
+    try {
+      // Generate the requested number of codes
+      const codesToGenerate: string[] = [];
+      for (let i = 0; i < quantity; i++) {
+        codesToGenerate.push(generateRandomCode());
+      }
+
+      const result = await createCode({
+        codeable_id: parseInt(itemId),
+        codeable_type: codeType,
+        codes: codesToGenerate,
+      });
+
+      if (result && Array.isArray(result)) {
+        const returnedCodes = result.map((c) => c.attributes.code);
+        setGeneratedCodes(returnedCodes);
+        toast.success(`${quantity} code(s) generated successfully!`);
+      }
+    } catch {
+      // Error handled by hook
+    }
+  };
+
+  const handleCopy = (code: string, index: number) => {
+    navigator.clipboard.writeText(code);
+    setCopiedIndex(index);
+    toast.success('Code copied to clipboard');
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const items = getItems();
+
+  return (
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-12">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link
+          href="/activation"
+          className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-[#1E293B]">Generate Activation Codes</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">Create new activation codes for courses, chapters, or library items.</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* Configuration Section */}
+        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Code Configuration</h2>
+          </div>
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Type */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-bold text-[#475569]">Code Type <span className="text-red-500">*</span></label>
+              <select
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+                value={codeType}
+                onChange={(e) => {
+                  setCodeType(e.target.value);
+                  setItemId('');
+                }}
+                required
+              >
+                {CODE_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>{type.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Item */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-bold text-[#475569]">Assigned Item <span className="text-red-500">*</span></label>
+              <select
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+                value={itemId}
+                onChange={(e) => setItemId(e.target.value)}
+                required
+              >
+                <option value="">Select {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
+                {items.map((item: any) => (
+                  <option key={item.id} value={item.id}>
+                    {item.attributes.title || item.attributes.name || `Item ${item.id}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Quantity */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-bold text-[#475569]">Quantity <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                required
+              />
+              <p className="text-xs text-[#94A3B8]">Generate up to 100 codes at once</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-4">
+          <Link
+            href="/activation"
+            className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all"
+          >
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            disabled={isLoading || !itemId}
+            className="flex items-center gap-2 px-8 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Generate Codes
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Generated Codes Display */}
+        {generatedCodes.length > 0 && (
+          <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#F1F5F9] bg-green-50/50">
+              <h2 className="text-sm font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Generated Codes ({generatedCodes.length})
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {generatedCodes.map((code, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl"
+                  >
+                    <span className="font-mono font-medium text-[#1E293B] flex-1">{code}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(code, index)}
+                      className="p-1.5 hover:bg-[#EEF2FF] rounded-lg transition-colors"
+                      title="Copy code"
+                    >
+                      {copiedIndex === index ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-[#64748B]" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+      </form>
+    </div>
+  );
+}

@@ -24,7 +24,8 @@ import {
   Download,
   ShieldCheck,
   Building2,
-  School
+  School,
+  Power
 } from 'lucide-react';
 
 import Logo from '@/components/Logo';
@@ -59,6 +60,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   { name: 'Students', icon: Users2, path: '/students' },
+  { name: 'Activation', icon: Power, path: '/activation' },
   { name: 'My Courses', icon: BookOpen, path: '/courses' },
   { name: 'Content Manager', icon: FileEdit, path: '/content-manager' },
   { name: 'Live Sessions', icon: Video, path: '/live-sessions' },
@@ -220,7 +222,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   return (
     <aside
-      className={`bg-[#F9FAFF] flex flex-col min-h-screen sticky top-0 border-r border-[#E5E7EB] transition-all duration-300 ease-in-out z-50 ${isCollapsed ? 'w-20' : 'w-64'
+      className={`bg-[#F9FAFF] flex flex-col min-h-full border-r border-[#E5E7EB] transition-all duration-300 ease-in-out z-50 ${isCollapsed ? 'w-20' : 'w-64'
         }`}
     >
       {/* Brand Logo and Title */}

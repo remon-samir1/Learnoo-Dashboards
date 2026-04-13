@@ -60,7 +60,7 @@ export default function Header() {
   const pageTitle = getPageTitle(pathname);
 
   return (
-    <header className="h-16 bg-white border-b border-[#EEEEEE] flex items-center justify-between px-8 sticky top-0 z-30 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
+    <header className="h-16 bg-white border-b border-[#EEEEEE] flex items-center justify-between px-8 flex-shrink-0 z-30 shadow-[0px_1px_2px_rgba(0,0,0,0.05)]">
       {/* Title */}
       <h2 className="text-[17px] font-semibold text-[#111827]">{pageTitle}</h2>
 
