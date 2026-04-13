@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { ArrowLeft, Plus, Loader2, Copy, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Loader2, Copy, CheckCircle, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCreateCode } from '@/src/hooks';
@@ -71,7 +71,7 @@ function GenerateCodeForm() {
     return code;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, shouldDownload = false) => {
     e.preventDefault();
     if (!itemId) {
       toast.error('Please select an item');
@@ -95,6 +95,10 @@ function GenerateCodeForm() {
         const returnedCodes = result.map((c) => c.attributes.code);
         setGeneratedCodes(returnedCodes);
         toast.success(`${quantity} code(s) generated successfully!`);
+
+        if (shouldDownload) {
+          handleDownload(returnedCodes);
+        }
       }
     } catch {
       // Error handled by hook
@@ -106,6 +110,22 @@ function GenerateCodeForm() {
     setCopiedIndex(index);
     toast.success('Code copied to clipboard');
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleDownload = (codes: string[]) => {
+    import('xlsx').then((XLSX) => {
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ['#', 'Activation Code'],
+        ...codes.map((code, index) => [index + 1, code])
+      ]);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Activation Codes');
+
+      const date = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(workbook, `activation-codes-${date}.xlsx`);
+      toast.success('Codes downloaded as Excel');
+    });
   };
 
   const items = getItems();
@@ -194,6 +214,24 @@ function GenerateCodeForm() {
           >
             Cancel
           </Link>
+          <button
+            type="button"
+            disabled={isLoading || !itemId}
+            onClick={(e) => handleSubmit(e as unknown as React.FormEvent, true)}
+            className="flex items-center gap-2 px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Generate & Download
+              </>
+            )}
+          </button>
           <button
             type="submit"
             disabled={isLoading || !itemId}

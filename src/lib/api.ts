@@ -78,6 +78,7 @@ import type {
   // Student types
   Student,
   CreateStudentRequest,
+  StudentStatus,
   // Dashboard types
   DashboardStats,
   ActivityData,
@@ -746,12 +747,12 @@ export const userProgressApi = {
 // ============================================
 
 export const studentsApi = {
-  list: (params?: { 
-    search?: string; 
-    status?: string; 
-    university_id?: number | string; 
-    faculty_id?: number | string; 
-    center_id?: number | string; 
+  list: (params?: {
+    search?: string;
+    status?: StudentStatus;
+    university_id?: number | string;
+    faculty_id?: number | string;
+    center_id?: number | string;
     per_page?: number;
     page?: number;
   }) => get<ApiListResponse<Student>>('/v1/student', params),

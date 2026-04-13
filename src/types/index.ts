@@ -963,10 +963,59 @@ export type UserProgress = JsonApiData<UserProgressAttributes>;
 // Student Types
 // ============================================
 
+export type StudentStatus = 0 | 1 | 2;
+
+export const StudentStatusLabels: Record<StudentStatus, string> = {
+  0: 'Inactive',
+  1: 'Active',
+  2: 'Suspended'
+};
+
+export const StudentStatusValues: Record<string, StudentStatus> = {
+  'inactive': 0,
+  'active': 1,
+  'suspended': 2,
+  'Inactive': 0,
+  'Active': 1,
+  'Suspended': 2,
+  '0': 0,
+  '1': 1,
+  '2': 2,
+  '': 1
+};
+
+export const parseStudentStatus = (status: string | number | undefined | null): StudentStatus => {
+  if (status === undefined || status === null) return 1;
+  if (typeof status === 'number') return status as StudentStatus;
+  return StudentStatusValues[status] ?? 1;
+};
+
+export const getStudentStatusColor = (status: StudentStatus | undefined): string => {
+  switch (status) {
+    case 0: return 'red';
+    case 1: return 'emerald';
+    case 2: return 'orange';
+    default: return 'slate';
+  }
+};
+
+export const getStudentStatusStyles = (status: StudentStatus | undefined): { bg: string; text: string; border: string } => {
+  switch (status) {
+    case 0:
+      return { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' };
+    case 1:
+      return { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' };
+    case 2:
+      return { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-100' };
+    default:
+      return { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-100' };
+  }
+};
+
 export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
   student_id?: string;
   full_name?: string;
-  status?: string;
+  status?: StudentStatus;
   joined?: string;
   university?: {
     data: University;
@@ -1004,7 +1053,7 @@ export interface CreateStudentRequest {
   center_id?: number | null;
   center_ids?: number[];
   course_ids?: number[];
-  status?: string;
+  status?: StudentStatus;
   image?: File;
 }
 

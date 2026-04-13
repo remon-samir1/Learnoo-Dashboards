@@ -1,5 +1,5 @@
 import { api } from '@/src/lib/api';
-import type { Student, CreateStudentRequest } from '@/src/types';
+import type { Student, CreateStudentRequest, StudentStatus } from '@/src/types';
 import { createQueryHook, createMutationHook } from './index';
 
 // ============================================
@@ -8,7 +8,7 @@ import { createQueryHook, createMutationHook } from './index';
 
 export interface StudentsFilter {
   search?: string;
-  status?: string;
+  status?: StudentStatus;
   university_id?: number | string;
   faculty_id?: number | string;
   center_id?: number | string;

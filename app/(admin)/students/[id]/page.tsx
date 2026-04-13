@@ -28,6 +28,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useStudent, useResetStudentPassword } from '@/src/hooks/useStudents';
 import ResetPasswordModal from '@/components/modals/ResetPasswordModal';
+import { StudentStatusLabels } from '@/src/types';
 
 // Helper to get initials from name
 function getInitials(firstName: string | null | undefined, lastName: string | null | undefined) {
@@ -55,7 +56,7 @@ export default function StudentProfilePage() {
     name: studentData.full_name || `${studentData.first_name || ''} ${studentData.last_name || ''}`.trim() || 'Unknown',
     firstName: studentData.first_name,
     lastName: studentData.last_name,
-    status: studentData.status || 'active',
+    status: studentData.status ?? 1,
     email: studentData.email,
     phone: studentData.phone?.toString() || 'N/A',
     university: studentData.university?.data?.attributes?.name || 'N/A',
@@ -185,11 +186,14 @@ export default function StudentProfilePage() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">Status</span>
-                <span className={`inline-flex w-fit px-3 py-1 text-[10px] font-bold rounded-lg border uppercase ${student.status?.toLowerCase() === 'active'
-                    ? 'bg-[#EBFDF5] text-[#10B981] border-emerald-100'
-                    : 'bg-[#F1F5F9] text-[#64748B] border-slate-200'
+                <span className={`inline-flex w-fit px-3 py-1 text-[10px] font-bold rounded-lg border uppercase ${
+                    student.status === 1
+                      ? 'bg-[#EBFDF5] text-[#10B981] border-emerald-100'
+                      : student.status === 0
+                        ? 'bg-red-50 text-red-600 border-red-100'
+                        : 'bg-orange-50 text-orange-600 border-orange-100'
                   }`}>
-                  {student.status}
+                  {StudentStatusLabels[student.status]}
                 </span>
               </div>
               <div className="flex items-center gap-4">

@@ -23,7 +23,8 @@ import {
   useCenters, 
   useCourses 
 } from '@/src/hooks';
-import type { CreateStudentRequest } from '@/src/types';
+import type { CreateStudentRequest, StudentStatus } from '@/src/types';
+import { StudentStatusLabels, parseStudentStatus } from '@/src/types';
 
 export default function EditStudentPage() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function EditStudentPage() {
     faculty_id: '',
     center_ids: [] as number[],
     course_ids: [] as number[],
-    status: 'active',
+    status: 1 as StudentStatus,
     image: null as File | null
   });
 
@@ -71,7 +72,7 @@ export default function EditStudentPage() {
         faculty_id: attrs.faculty?.data?.id?.toString() || '',
         center_ids: attrs.centers?.map((c: any) => parseInt(c.id)) || [],
         course_ids: attrs.enrolled_courses?.map((c: any) => parseInt(c.id)) || [],
-        status: attrs.status || 'active',
+        status: parseStudentStatus(attrs.status),
         image: null
       });
 
@@ -404,16 +405,16 @@ export default function EditStudentPage() {
           <div className="p-6">
             <div className="flex flex-col gap-2 relative max-w-md">
               <label className="text-[13px] font-bold text-[#475569]">Status</label>
-              <select 
+              <select
                 className={`w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer font-bold ${
-                  formData.status === 'active' ? 'text-[#10B981]' : formData.status === 'inactive' ? 'text-red-500' : 'text-orange-500'
+                  formData.status === 1 ? 'text-[#10B981]' : formData.status === 0 ? 'text-red-500' : 'text-orange-500'
                 }`}
                 value={formData.status}
-                onChange={(e) => setFormData({...formData, status: e.target.value})}
+                onChange={(e) => setFormData({...formData, status: parseInt(e.target.value) as StudentStatus})}
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
+                <option value={1}>{StudentStatusLabels[1]}</option>
+                <option value={0}>{StudentStatusLabels[0]}</option>
+                <option value={2}>{StudentStatusLabels[2]}</option>
               </select>
               <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
             </div>
