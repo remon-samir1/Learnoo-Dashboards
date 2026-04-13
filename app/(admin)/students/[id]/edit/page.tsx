@@ -64,19 +64,33 @@ export default function EditStudentPage() {
       setFormData({
         first_name: attrs.first_name || '',
         last_name: attrs.last_name || '',
-        phone: attrs.phone || '',
+        phone: attrs.phone?.toString() || '',
         email: attrs.email || '',
         password: '', // Don't pre-fill password
-        university_id: attrs.university_id?.toString() || '',
-        faculty_id: attrs.faculty_id?.toString() || '',
+        university_id: attrs.university?.data?.id?.toString() || '',
+        faculty_id: attrs.faculty?.data?.id?.toString() || '',
         center_ids: attrs.centers?.map((c: any) => parseInt(c.id)) || [],
-        course_ids: [] as number[],
-        status: (attrs.role === 'Student' ? 'active' : 'inactive').toLowerCase(),
+        course_ids: attrs.enrolled_courses?.map((c: any) => parseInt(c.id)) || [],
+        status: attrs.status || 'active',
         image: null
       });
 
+      // Set selected centers with proper name from attributes
       if (attrs.centers) {
-        setSelectedCenters(attrs.centers);
+        setSelectedCenters(attrs.centers.map((c: any) => ({
+          id: c.id,
+          name: c.attributes?.name || 'Unknown'
+        })));
+      }
+
+      // Set selected courses with proper title from attributes
+      if (attrs.enrolled_courses) {
+        setSelectedCourses(attrs.enrolled_courses.map((c: any) => ({
+          id: c.id,
+          attributes: {
+            title: c.attributes?.title || 'Untitled'
+          }
+        })));
       }
     }
   }, [studentResponse]);
@@ -206,8 +220,8 @@ export default function EditStudentPage() {
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">Phone Number</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="+20 100 123 4567"
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.phone}
@@ -303,7 +317,7 @@ export default function EditStudentPage() {
               >
                 <option value="">Select Center</option>
                 {centersData?.map((center: any) => (
-                  <option key={center.id} value={center.id}>{center.name}</option>
+                  <option key={center.id} value={center.id}>{center.attributes?.name || center.name}</option>
                 ))}
               </select>
               {isCentersLoading ? (

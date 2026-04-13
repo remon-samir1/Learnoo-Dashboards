@@ -1,5 +1,5 @@
 import { api } from '@/src/lib/api';
-import type { Library, CreateLibraryRequest } from '@/src/types';
+import type { Library, CreateLibraryRequest, UpdateLibraryRequest } from '@/src/types';
 import { createQueryHook, createMutationHook } from './index';
 
 // ============================================
@@ -21,7 +21,7 @@ export const useCreateLibrary = createMutationHook(
 );
 
 export const useUpdateLibrary = createMutationHook(
-  (id: number, data: Partial<CreateLibraryRequest>) => 
+  (id: number, data: UpdateLibraryRequest) => 
     api.libraries.update(id, data).then(res => res.data)
 );
 

@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Building2, Loader2 } from 'lucide-react';
-import { useCenter, useUpdateCenter, useCenters } from '@/src/hooks/useCenters';
+import { useCenter, useUpdateCenter } from '@/src/hooks/useCenters';
+import { useFaculties } from '@/src/hooks/useFaculties';
 import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
 
 export default function EditCenterPage() {
@@ -12,7 +13,7 @@ export default function EditCenterPage() {
   const centerId = parseInt(params.id as string);
 
   const { data: center, isLoading: isLoadingCenter } = useCenter([centerId]);
-  const { data: centers, isLoading: isLoadingCenters } = useCenters([]);
+  const { data: faculties, isLoading: isLoadingFaculties } = useFaculties([]);
   const { mutate: updateCenter, isLoading: isUpdating, error } = useUpdateCenter();
 
   const [formData, setFormData] = useState({
@@ -24,7 +25,7 @@ export default function EditCenterPage() {
     if (center) {
       setFormData({
         name: center.name,
-        parent_id: center.parent_id ? String(center.parent_id) : '',
+        parent_id: String(center.parent?.data?.id || center.parent_id || ''),
       });
     }
   }, [center]);
@@ -43,7 +44,7 @@ export default function EditCenterPage() {
     }
   };
 
-  if (isLoadingCenter || isLoadingCenters) {
+  if (isLoadingCenter || isLoadingFaculties) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
@@ -60,13 +61,10 @@ export default function EditCenterPage() {
     );
   }
 
-  // Filter out the current center from parent options to prevent circular reference
-  const parentOptions = centers
-    ?.filter(c => c.id !== centerId.toString())
-    .map(c => ({
-      value: c.id,
-      label: c.name,
-    })) || [];
+  const facultyOptions = faculties?.map(f => ({
+    value: f.id,
+    label: f.attributes.name,
+  })) || [];
 
   return (
     <EntityForm
@@ -85,12 +83,12 @@ export default function EditCenterPage() {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Main Center, Dokki"
         />
-        {/* <FormSelect
-          label="Parent Center (Optional)"
+        <FormSelect
+          label="Parent Faculty"
           value={formData.parent_id}
           onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
-          options={[{ value: '', label: 'No Parent' }, ...parentOptions]}
-        /> */}
+          options={[{ value: '', label: 'Select Faculty' }, ...facultyOptions]}
+        />
       </FormSection>
     </EntityForm>
   );

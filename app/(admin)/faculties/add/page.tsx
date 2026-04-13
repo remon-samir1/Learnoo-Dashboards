@@ -14,18 +14,20 @@ export default function AddFacultyPage() {
   
   const [formData, setFormData] = useState({
     name: '',
-    code: '',
-    university_id: '',
+    parent_id: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!formData.parent_id) {
+      return;
+    }
+
     try {
       await createFaculty({
         name: formData.name,
-        code: formData.code || undefined,
-        university_id: parseInt(formData.university_id),
+        parent_id: parseInt(formData.parent_id),
       });
       router.push('/faculties');
     } catch {
@@ -54,18 +56,13 @@ export default function AddFacultyPage() {
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Faculty of Engineering"
-        />
-        <FormInput
-          label="Code"
-          value={formData.code}
-          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-          placeholder="e.g., ENG"
+          className="md:col-span-2"
         />
         <FormSelect
           label="University"
           required
-          value={formData.university_id}
-          onChange={(e) => setFormData({ ...formData, university_id: e.target.value })}
+          value={String(formData.parent_id)}
+          onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
           options={[{ value: '', label: 'Select University' }, ...universityOptions]}
           className="md:col-span-2"
         />

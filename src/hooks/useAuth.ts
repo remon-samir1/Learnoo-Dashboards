@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useAuth, useAuthActions } from '@/src/stores/authStore';
 import type { LoginRequest, RegisterRequest } from '@/src/types';
 
@@ -68,15 +68,16 @@ export function useAuthHook() {
 
 export function useCurrentUser() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  
-  return {
+
+  // Use useMemo to maintain stable reference and prevent unnecessary re-renders
+  return useMemo(() => ({
     user,
     isAuthenticated,
     isLoading,
     fullName: user ? `${user.attributes.first_name} ${user.attributes.last_name}` : null,
     email: user?.attributes.email || null,
     role: user?.attributes.role || null,
-  };
+  }), [user, isAuthenticated, isLoading]);
 }
 
 // ============================================

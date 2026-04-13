@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Loader2, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, FileText, Loader2, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
-import { useNote, useUpdateNote } from '@/src/hooks/useNotes';
+import { useRouter } from 'next/navigation';
+import { useCreateNote } from '@/src/hooks/useNotes';
 import { useCourses } from '@/src/hooks/useCourses';
 
 const NOTE_TYPES = [
@@ -14,91 +14,68 @@ const NOTE_TYPES = [
   { value: 'important_notice', label: 'Important Notice' }
 ];
 
-export default function EditNotePage() {
+export default function AddNotePage() {
   const router = useRouter();
-  const params = useParams();
-  const noteId = parseInt(params.id as string);
-
-  const { data: note, isLoading: isLoadingNote, error } = useNote([noteId]);
-  const { mutate: updateNote, isLoading: isUpdating } = useUpdateNote();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
-
   const [title, setTitle] = useState('');
   const [type, setType] = useState('summary');
   const [content, setContent] = useState('');
   const [courseId, setCourseId] = useState('');
   const [linkedLecture, setLinkedLecture] = useState('');
   const [isPublish, setIsPublish] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Populate form when note data loads
-  useEffect(() => {
-    if (note) {
-      setTitle(note.attributes.title || '');
-      setType(note.attributes.type || 'summary');
-      setContent(note.attributes.content || '');
-      setCourseId(note.attributes.course_id ? String(note.attributes.course_id) : '');
-      setLinkedLecture(note.attributes.linked_lecture || '');
-      setIsPublish(note.attributes.is_publish || false);
+  const { mutate: createNote, isLoading } = useCreateNote();
+  const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!title.trim()) {
+      newErrors.title = 'Title is required';
     }
-  }, [note]);
+    
+    if (!type.trim()) {
+      newErrors.type = 'Type is required';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim()) return;
+    if (!validate()) return;
     
     try {
-      await updateNote(noteId, {
+      await createNote({
         title: title.trim(),
         type: type as any,
-        content: content.trim(),
+        content: content.trim() || '',
         course_id: courseId ? parseInt(courseId) : undefined,
         linked_lecture: linkedLecture.trim() || undefined,
         is_publish: isPublish
       });
       
-      router.push(`/notes-summaries/${noteId}`);
+      router.push('/notes-summaries');
     } catch {
       // Error handled by hook
     }
   };
 
-  if (isLoadingNote) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
-      </div>
-    );
-  }
-
-  if (error || !note) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-[#EF4444]">Failed to load note. Please try again.</p>
-        <Link 
-          href="/notes-summaries"
-          className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Notes
-        </Link>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-12">
+    <div className="flex flex-col gap-8 max-w-4xl mx-auto pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
-          href={`/notes-summaries/${noteId}`}
+          href="/notes-summaries"
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Edit Note</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Update note details and content.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">Add New Note</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">Create a new note or summary.</p>
         </div>
       </div>
 
@@ -114,9 +91,13 @@ export default function EditNotePage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter note title"
-              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
-              required
+              className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${
+                errors.title ? 'border-[#EF4444]' : 'border-[#E2E8F0]'
+              }`}
             />
+            {errors.title && (
+              <p className="mt-1 text-sm text-[#EF4444]">{errors.title}</p>
+            )}
           </div>
 
           {/* Type */}
@@ -127,12 +108,17 @@ export default function EditNotePage() {
             <select
               value={type}
               onChange={(e) => setType(e.target.value)}
-              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+              className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all ${
+                errors.type ? 'border-[#EF4444]' : 'border-[#E2E8F0]'
+              }`}
             >
               {NOTE_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
+            {errors.type && (
+              <p className="mt-1 text-sm text-[#EF4444]">{errors.type}</p>
+            )}
           </div>
 
           {/* Course */}
@@ -180,13 +166,16 @@ export default function EditNotePage() {
             <label className="block text-sm font-semibold text-[#475569] mb-2">
               Content
             </label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Enter note content..."
-              rows={8}
-              className="w-full px-4 py-4 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
-            />
+            <div className="relative">
+              <FileText className="absolute left-4 top-4 w-5 h-5 text-[#94A3B8]" />
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Enter note content..."
+                rows={8}
+                className="w-full pl-12 pr-4 py-4 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
+              />
+            </div>
             <p className="mt-2 text-xs text-[#94A3B8]">
               {content.length} characters
             </p>
@@ -202,7 +191,7 @@ export default function EditNotePage() {
               className="w-5 h-5 rounded border-[#E2E8F0] text-[#2137D6] focus:ring-[#2137D6]"
             />
             <label htmlFor="isPublish" className="text-sm font-semibold text-[#475569]">
-              Published
+              Publish immediately
             </label>
           </div>
         </div>
@@ -210,7 +199,7 @@ export default function EditNotePage() {
         {/* Actions */}
         <div className="px-6 py-4 bg-[#F8FAFC] border-t border-[#F1F5F9] flex items-center justify-between">
           <Link
-            href={`/notes-summaries/${noteId}`}
+            href="/notes-summaries"
             className="px-5 py-2.5 text-sm font-bold text-[#64748B] hover:text-[#1E293B] transition-colors"
           >
             Cancel
@@ -218,19 +207,16 @@ export default function EditNotePage() {
           <div className="flex items-center gap-3">
             <button
               type="submit"
-              disabled={isUpdating}
+              disabled={isLoading}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isUpdating ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
+                  Creating...
                 </>
               ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Save Changes
-                </>
+                'Create Note'
               )}
             </button>
           </div>

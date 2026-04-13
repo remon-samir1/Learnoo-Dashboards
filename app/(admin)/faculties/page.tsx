@@ -14,7 +14,7 @@ export default function FacultiesPage() {
   const [selectedUniversity, setSelectedUniversity] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
-  
+
   const { data: faculties, isLoading, error, refetch } = useFaculties([]);
   const { data: universities } = useUniversities([]);
   const { mutate: deleteFaculty, isLoading: isDeleting } = useDeleteFaculty();
@@ -26,7 +26,7 @@ export default function FacultiesPage() {
 
   const handleConfirmDelete = async () => {
     if (!selectedFaculty) return;
-    
+
     try {
       await deleteFaculty(parseInt(selectedFaculty.id));
       setDeleteModalOpen(false);
@@ -37,15 +37,14 @@ export default function FacultiesPage() {
     }
   };
 
-  const getUniversityName = (universityId: number) => {
-    const university = universities?.find(u => parseInt(u.id) === universityId);
-    return university?.attributes.name || '-';
+  // Get university name from parent relationship
+  const getUniversityName = (faculty: Faculty) => {
+    return faculty.attributes.parent?.data?.attributes?.name || '-';
   };
 
   const filteredFaculties = faculties?.filter((f) => {
-    const matchesSearch = f.attributes.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (f.attributes.code && f.attributes.code.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesUniversity = !selectedUniversity || f.attributes.university_id === parseInt(selectedUniversity);
+    const matchesSearch = f.attributes.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesUniversity = !selectedUniversity || f.attributes.parent?.data?.id === selectedUniversity;
     return matchesSearch && matchesUniversity;
   }) || [];
 
@@ -61,20 +60,15 @@ export default function FacultiesPage() {
       render: (item) => item.attributes.name,
     },
     {
-      key: 'code',
-      header: 'Code',
-      render: (item) => item.attributes.code || '-',
-    },
-    {
       key: 'university',
       header: 'University',
-      render: (item) => getUniversityName(item.attributes.university_id),
+      render: (item) => getUniversityName(item),
     },
     {
       key: 'created_at',
       header: 'Created',
-      render: (item) => item.attributes.created_at 
-        ? new Date(item.attributes.created_at).toLocaleDateString() 
+      render: (item) => item.attributes.created_at
+        ? new Date(item.attributes.created_at).toLocaleDateString()
         : '-',
     },
   ];

@@ -6,7 +6,8 @@ interface CourseCardProps {
   title: string;
   instructor: string;
   center: string;
-  status: 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
+  status: 'ACTIVE' | 'DRAFT';
+  approval?: 'Approved' | 'Pending' | 'Declined';
   lectures: number;
   notes: number;
   exams: number;
@@ -21,6 +22,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   instructor,
   center,
   status,
+  approval,
   lectures,
   notes,
   exams,
@@ -34,12 +36,25 @@ export const CourseCard: React.FC<CourseCardProps> = ({
     ARCHIVED: 'bg-gray-100 text-gray-700'
   };
 
+  const approvalColors = {
+    Approved: 'bg-blue-100 text-blue-700',
+    Pending: 'bg-orange-100 text-orange-700',
+    Declined: 'bg-orange-100 text-orange-700'
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-[#F1F5F9] overflow-hidden shadow-sm hover:shadow-md transition-all group">
       <div className="relative h-48 w-full overflow-hidden">
         <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        <div className={`absolute top-3 right-3 px-2 py-1 rounded-md text-[10px] font-bold ${statusColors[status]}`}>
-          {status}
+        <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
+          <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${statusColors[status]}`}>
+            {status}
+          </span>
+          {approval && (
+            <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${approvalColors[approval]}`}>
+              {approval}
+            </span>
+          )}
         </div>
       </div>
       

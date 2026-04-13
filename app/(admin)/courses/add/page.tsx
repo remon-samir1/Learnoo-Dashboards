@@ -19,6 +19,7 @@ import Image from 'next/image';
 import toast, { Toaster } from 'react-hot-toast';
 import { useCreateCourse } from '@/src/hooks/useCourses';
 import { useDepartments } from '@/src/hooks/useDepartments';
+
 import type { CourseVisibility, CourseStatus, Department } from '@/src/types';
 
 export default function AddCoursePage() {
@@ -28,13 +29,14 @@ export default function AddCoursePage() {
 
   // Fetch data from APIs
   const { data: departments, isLoading: departmentsLoading } = useDepartments([]);
+  const { data: users, isLoading: usersLoading } = useUsers([]);
 
   const [formData, setFormData] = useState({
     title: '',
     sub_title: '',
     description: '',
     objectives: '',
-    instructorName: '',
+    user_id: '',
     category_id: '',
     price: '0',
     max_views_per_student: '10',

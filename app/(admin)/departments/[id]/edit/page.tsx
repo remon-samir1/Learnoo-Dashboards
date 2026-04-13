@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { GraduationCap, Loader2 } from 'lucide-react';
 import { useDepartment, useUpdateDepartment } from '@/src/hooks/useDepartments';
-import { useFaculties } from '@/src/hooks/useFaculties';
+import { useCenters } from '@/src/hooks/useCenters';
 import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
 import { FileUpload } from '@/components/FileUpload';
 
@@ -14,23 +14,24 @@ export default function EditDepartmentPage() {
   const departmentId = parseInt(params.id as string);
   
   const { data: department, isLoading: isLoadingDepartment } = useDepartment([departmentId]);
-  const { data: faculties, isLoading: isLoadingFaculties } = useFaculties([]);
+  const { data: centers, isLoading: isLoadingCenters } = useCenters([]);
   const { mutate: updateDepartment, isLoading: isUpdating, error } = useUpdateDepartment();
   
   const [formData, setFormData] = useState({
     name: '',
-    code: '',
-    faculty_id: '',
+    center_id: '',
     image: null as File | null,
     existingImage: null as string | null,
   });
 
   useEffect(() => {
     if (department) {
+      const centerId = department.attributes.center_id
+        || department.attributes.parent?.data?.id
+        || '';
       setFormData({
         name: department.attributes.name,
-        code: department.attributes.code || '',
-        faculty_id: String(department.attributes.faculty_id),
+        center_id: String(centerId),
         image: null,
         existingImage: department.attributes.image,
       });
@@ -43,8 +44,7 @@ export default function EditDepartmentPage() {
     try {
       await updateDepartment(departmentId, {
         name: formData.name,
-        code: formData.code || undefined,
-        faculty_id: parseInt(formData.faculty_id),
+        center_id: parseInt(formData.center_id),
         image: formData.image || undefined,
       });
       router.push('/departments');
@@ -53,7 +53,7 @@ export default function EditDepartmentPage() {
     }
   };
 
-  if (isLoadingDepartment || isLoadingFaculties) {
+  if (isLoadingDepartment || isLoadingCenters) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#4F46E5]" />
@@ -70,9 +70,9 @@ export default function EditDepartmentPage() {
     );
   }
 
-  const facultyOptions = faculties?.map(f => ({
-    value: f.id,
-    label: f.attributes.name,
+  const centerOptions = centers?.map(c => ({
+    value: c.id,
+    label: c.name,
   })) || [];
 
   return (
@@ -101,18 +101,12 @@ export default function EditDepartmentPage() {
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Medicine"
         />
-        <FormInput
-          label="Code"
-          value={formData.code}
-          onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-          placeholder="e.g., MED"
-        />
         <FormSelect
-          label="Faculty"
+          label="Center"
           required
-          value={formData.faculty_id}
-          onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
-          options={[{ value: '', label: 'Select Faculty' }, ...facultyOptions]}
+          value={formData.center_id}
+          onChange={(e) => setFormData({ ...formData, center_id: e.target.value })}
+          options={[{ value: '', label: 'Select Center' }, ...centerOptions]}
           className="md:col-span-2"
         />
       </FormSection>

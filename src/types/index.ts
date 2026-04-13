@@ -40,6 +40,25 @@ export interface JsonApiData<T> {
   id: string;
   type: string;
   attributes: T;
+  relationships?: {
+    user?: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+    course?: {
+      data: {
+        id: string;
+        type: string;
+      };
+    };
+  };
+  included?: Array<{
+    id: string;
+    type: string;
+    attributes: Record<string, unknown>;
+  }>;
 }
 
 // ============================================
@@ -132,7 +151,19 @@ export interface Center {
   id: string;
   name: string;
   image: string | null;
-  parent_id?: number | null;
+  parent_id?: number;
+  parent?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        name: string;
+        image: string | null;
+        created_at?: string;
+        updated_at?: string;
+      };
+    };
+  };
   created_at: string | null;
   updated_at: string | null;
 }
@@ -149,8 +180,10 @@ export interface CreateCenterRequest {
 
 export interface ChapterAttributes {
   lecture_id: number;
+  course_id?: number;
   title: string;
   thumbnail: string;
+  video?: string;
   duration: string;
   is_free_preview: 0 | 1;
   max_views: number;
@@ -158,6 +191,16 @@ export interface ChapterAttributes {
   is_activated: boolean;
   is_locked: boolean;
   can_watch: boolean;
+  attachments?: Array<{
+    id: string;
+    type: string;
+    attributes: {
+      title?: string;
+      file_path: string;
+      mime_type?: string;
+    };
+  }>;
+  discussions?: any[];
   created_at: string | null;
   updated_at: string | null;
 }
@@ -168,6 +211,7 @@ export interface CreateChapterRequest {
   lecture_id: number;
   title: string;
   thumbnail?: File;
+  video?: File;
   duration: string;
   is_free_preview?: 0 | 1;
   attachments: File[];
@@ -176,9 +220,11 @@ export interface CreateChapterRequest {
 export interface UpdateChapterRequest {
   lecture_id?: number;
   title?: string;
-  thumbnail?: File;
+  thumbnail?: File | null;
+  video?: File | null;
   duration?: string;
   is_free_preview?: 0 | 1;
+  max_views?: number;
   attachments?: File[];
 }
 
@@ -232,6 +278,59 @@ export interface CourseAttributes {
   chapter_discussions: any[];
   category_id?: number;
   doctor_id?: number;
+  instructor?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        full_name: string;
+      };
+    };
+  };
+  category?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        image: string | null;
+        name: string;
+        stats?: {
+          courses: number;
+          students: number;
+        };
+        created_at?: string;
+        updated_at?: string;
+      };
+    };
+  };
+  center?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        name: string;
+      };
+    };
+  };
+  department?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        name: string;
+      };
+    };
+  };
+  stats?: {
+    lectures: number;
+    chapters: number;
+    notes: number;
+    exams: number;
+    students: number;
+  };
+  lectures?: Lecture[];
+  notes?: any[];
+  exams?: any[];
   created_at?: string;
   updated_at?: string;
 }
@@ -241,6 +340,7 @@ export type Course = JsonApiData<CourseAttributes>;
 export interface CreateCourseRequest {
   category_id: number;
   doctor_id?: number;
+  user_id?: number;
   title: string;
   sub_title: string;
   description: string;
@@ -278,7 +378,24 @@ export interface DepartmentAttributes {
   name: string;
   image: string | null;
   code?: string | null;
-  faculty_id: number;
+  center_id?: number;
+  parent?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        name: string;
+        image: string | null;
+        stats?: {
+          courses: number;
+          students: number;
+        };
+        created_at?: string;
+        updated_at?: string;
+      };
+    };
+  };
+  courses?: any[];
   stats?: {
     courses: number;
     students: number;
@@ -292,8 +409,7 @@ export type Department = JsonApiData<DepartmentAttributes>;
 export interface CreateDepartmentRequest {
   name: string;
   image?: File;
-  code?: string;
-  faculty_id: number;
+  center_id: number;
 }
 
 // ============================================
@@ -319,20 +435,43 @@ export interface CreateDiscussionRequest {
 // Faculty Types
 // ============================================
 
-export interface FacultyAttributes {
-  name: string;
-  code: string | null;
-  university_id: number;
-  created_at: string | null;
-  updated_at: string | null;
+export interface FacultyStats {
+  courses: number;
+  students: number;
 }
 
-export type Faculty = JsonApiData<FacultyAttributes>;
+export interface FacultyParent {
+  data: {
+    id: string;
+    type: string;
+    attributes: {
+      image: string | null;
+      name: string;
+      stats: FacultyStats;
+      created_at: string;
+      updated_at: string;
+    };
+  };
+}
+
+export interface FacultyAttributes {
+  image: string | null;
+  name: string;
+  stats: FacultyStats;
+  parent: FacultyParent;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Faculty {
+  id: string;
+  type: string;
+  attributes: FacultyAttributes;
+}
 
 export interface CreateFacultyRequest {
   name: string;
-  code?: string;
-  university_id: number;
+  parent_id: number;
 }
 
 // ============================================
@@ -357,6 +496,8 @@ export interface LectureAttributes {
   title: string;
   thumbnail: string;
   description: string;
+  order?: number;
+  chapters?: Chapter[];
   created_at: string | null;
   updated_at: string | null;
 }
@@ -387,13 +528,30 @@ export type Level = JsonApiData<LevelAttributes>;
 // Library Types
 // ============================================
 
+export type MaterialType = 'booklet' | 'reference' | 'guide';
+
+export interface AttachmentAttributes {
+  name: string;
+  path: string;
+  extension: string;
+  size: string;
+  downloadable: boolean;
+  created_at: string;
+}
+
+export type Attachment = JsonApiData<AttachmentAttributes>;
+
 export interface LibraryAttributes {
+  cover_image: string;
   title: string;
   description: string;
-  thumbnail: string;
-  file_path: string;
-  price: number;
-  visibility: CourseVisibility;
+  course_id: number;
+  material_type: MaterialType;
+  code_activation: boolean;
+  is_publish: boolean;
+  is_locked: boolean;
+  price: string;
+  attachments: Attachment[];
   created_at: string | null;
   updated_at: string | null;
 }
@@ -401,12 +559,29 @@ export interface LibraryAttributes {
 export type Library = JsonApiData<LibraryAttributes>;
 
 export interface CreateLibraryRequest {
+  cover_image: string | File;
   title: string;
   description: string;
-  thumbnail: File;
-  file: File;
+  attachments?: File[];
+  course_id: number;
+  material_type: MaterialType;
+  code_activation?: boolean;
+  is_publish?: boolean;
+  is_locked?: boolean;
   price: number;
-  visibility: CourseVisibility;
+}
+
+export interface UpdateLibraryRequest {
+  cover_image?: string | File;
+  title?: string;
+  description?: string;
+  attachments?: File[];
+  course_id?: number;
+  material_type?: MaterialType;
+  code_activation?: boolean;
+  is_publish?: boolean;
+  is_locked?: boolean;
+  price?: number;
 }
 
 // ============================================
@@ -419,7 +594,30 @@ export interface LiveRoomAttributes {
   started_at: string;
   ended_at: string;
   max_students: number;
-  max_join_time: string | null;
+  max_join_time: number | null;
+  status?: 'pending' | 'live' | 'ended';
+  enable_chat?: boolean;
+  enable_recording?: boolean;
+  user?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        first_name: string;
+        last_name: string;
+        full_name: string;
+      };
+    };
+  };
+  course?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        title: string;
+      };
+    };
+  };
   created_at: string | null;
   updated_at: string | null;
 }
@@ -427,24 +625,39 @@ export interface LiveRoomAttributes {
 export type LiveRoom = JsonApiData<LiveRoomAttributes>;
 
 export interface CreateLiveRoomRequest {
-  course_id?: number;
+  course_id: number;
   title: string;
   description?: string;
   started_at: string;
-  ended_at: string;
+  ended_at?: string;
   max_students?: number;
-  max_join_time?: string | null;
+  max_join_time?: number | null;
+  enable_chat?: boolean;
+  enable_recording?: boolean;
 }
 
-// ============================================
+export interface UpdateLiveRoomRequest {
+  title?: string;
+  description?: string;
+  started_at?: string;
+  ended_at?: string;
+  max_students?: number;
+  max_join_time?: number | null;
+}
+
 // Note Types
 // ============================================
 
+export type NoteType = 'summary' | 'highlight' | 'key_point' | 'important_notice';
+
 export interface NoteAttributes {
-  user_id: number;
-  chapter_id: number;
+  title: string;
+  type: NoteType;
   content: string;
-  timestamp: string;
+  course_id?: number;
+  linked_lecture?: string;
+  is_publish?: boolean;
+  user_id?: number;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -452,9 +665,21 @@ export interface NoteAttributes {
 export type Note = JsonApiData<NoteAttributes>;
 
 export interface CreateNoteRequest {
-  chapter_id: number;
+  title: string;
+  type: NoteType;
   content: string;
-  timestamp: string;
+  course_id?: number;
+  linked_lecture?: string;
+  is_publish?: boolean;
+}
+
+export interface UpdateNoteRequest {
+  title?: string;
+  type?: NoteType;
+  content?: string;
+  course_id?: number;
+  linked_lecture?: string;
+  is_publish?: boolean;
 }
 
 // ============================================
@@ -464,30 +689,110 @@ export interface CreateNoteRequest {
 export interface PostAttributes {
   title: string;
   content: string;
-  image: string | null;
-  user_id: number;
-  likes_count: number;
-  comments_count: number;
+  image?: string | null;
+  status: 'draft' | 'published';
+  type: 'post' | 'question' | 'summary';
+  tags: string[];
+  reactions_count: number;
+  user_reaction: string | null;
+  parent_id?: number | null;
+  comments_count?: number;
   created_at: string | null;
   updated_at: string | null;
+  user?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        student_id: string;
+        first_name: string;
+        last_name: string;
+        full_name: string;
+        role: string;
+      };
+    };
+  };
+  children?: Post[];
 }
 
 export type Post = JsonApiData<PostAttributes>;
 
 export interface CreatePostRequest {
-  title: string;
-  content: string;
+  title?: string;
+  content?: string;
   image?: File;
+  status?: 'draft' | 'published';
+  type?: 'post' | 'question' | 'summary';
+}
+
+// ============================================
+// Comment Types
+// ============================================
+
+export interface CommentAttributes {
+  parent_id: number;
+  user_id: string;
+  content: string;
+  created_at: string | null;
+  updated_at: string | null;
+  user?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        first_name: string;
+        last_name: string;
+        full_name: string;
+        role: string;
+      };
+    };
+  };
+}
+
+export type Comment = JsonApiData<CommentAttributes>;
+
+export interface CreateCommentRequest {
+  parent_id: number;
+  content: string;
+}
+
+// ============================================
+// Social Link Types
+// ============================================
+
+export interface SocialLinkAttributes {
+  course_id: number;
+  icon: string | null;
+  link: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  status: boolean;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export type SocialLink = JsonApiData<SocialLinkAttributes>;
+
+export interface CreateSocialLinkRequest {
+  course_id: number;
+  icon?: File | null;
+  link: string;
+  title: string;
+  subtitle: string;
+  color: string;
+  status: boolean;
 }
 
 // ============================================
 // Quiz & Exam Types
 // ============================================
 
-export type QuizType = 'quiz' | 'exam';
+export type QuizType = 'exam' | 'homework';
 
 export interface QuizAttributes {
   chapter_id: number | null;
+  course_id?: number;
   title: string;
   description: string;
   type: QuizType;
@@ -495,56 +800,74 @@ export interface QuizAttributes {
   total_marks: number;
   passing_marks: number;
   max_attempts: number;
-  is_published: boolean;
+  is_public: boolean;
+  status?: 'draft' | 'active';
   start_time: string | null;
   end_time: string | null;
   created_at: string | null;
   updated_at: string | null;
+  questions?: QuizQuestion[];
 }
 
 export type Quiz = JsonApiData<QuizAttributes>;
 
 export interface CreateQuizRequest {
   chapter_id?: number;
+  course_id: number;
   title: string;
-  description: string;
+  description?: string;
   type: QuizType;
   duration: number;
-  total_marks: number;
-  passing_marks: number;
+  total_marks?: number;
+  passing_marks?: number;
   max_attempts?: number;
-  is_published?: boolean;
-  start_time?: string;
-  end_time?: string;
+  is_public?: boolean;
+  status?: 'draft' | 'active';
+  start_time?: string | null;
+  end_time?: string | null;
+  questions?: CreateQuizQuestionRequest[];
 }
 
 // ============================================
 // Quiz Question Types
 // ============================================
 
-export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay';
+export type QuestionType = 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer';
 
 export interface QuizQuestionAttributes {
   quiz_id: number;
-  question: string;
+  text: string;
   type: QuestionType;
-  options: string[] | null;
-  correct_answer: string;
-  marks: number;
-  order: number;
+  score: number;
+  auto_correct?: boolean;
+  answers?: QuizQuestionAnswer[];
   created_at: string | null;
-  updated_at: string | null;
 }
 
 export type QuizQuestion = JsonApiData<QuizQuestionAttributes>;
 
+export interface QuizQuestionAnswerAttributes {
+  id: number;
+  quiz_question_id: number;
+  text: string;
+  is_correct: boolean;
+  created_at: string | null;
+}
+
+export type QuizQuestionAnswer = JsonApiData<QuizQuestionAnswerAttributes>;
+
+export interface QuizAnswerRequest {
+  text: string;
+  is_correct?: boolean;
+}
+
 export interface CreateQuizQuestionRequest {
-  quiz_id: number;
-  question: string;
+  quiz_id?: number;
+  text: string;
   type: QuestionType;
-  options?: string[];
-  correct_answer: string;
-  marks: number;
+  score: number;
+  auto_correct?: boolean;
+  answers?: QuizAnswerRequest[];
   order?: number;
 }
 
@@ -631,6 +954,10 @@ export type UserProgress = JsonApiData<UserProgressAttributes>;
 // ============================================
 
 export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
+  student_id?: string;
+  full_name?: string;
+  status?: string;
+  joined?: string;
   university?: {
     data: University;
   } | null;
@@ -638,6 +965,19 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
     data: Faculty;
   } | null;
   centers: JsonApiData<Center>[];
+  enrolled_courses?: any[];
+  exam_results?: any[];
+  quizzes?: any[];
+  activity_stats?: {
+    notes_created: number;
+    downloads: number;
+    live_attendance: number;
+    community_posts: number;
+  };
+  device_access?: {
+    device: string;
+    last_ip: string;
+  };
 }
 
 export type Student = JsonApiData<StudentAttributes>;
@@ -719,4 +1059,26 @@ export interface RecentActivityItem {
     name?: string;
     avatar?: string;
   };
+}
+
+// ============================================
+// Platform Feature Types (General Settings)
+// ============================================
+
+export interface PlatformFeatureAttributes {
+  key: string;
+  value: string;
+  group: string;
+  type: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type PlatformFeature = JsonApiData<PlatformFeatureAttributes>;
+
+export type PlatformFeaturesResponse = ApiListResponse<PlatformFeature>;
+
+export interface UpdatePlatformFeatureRequest {
+  key: string;
+  value: string;
 }

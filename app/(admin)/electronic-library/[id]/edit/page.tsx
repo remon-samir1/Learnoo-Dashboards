@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ArrowLeft, Loader2, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Save, Loader2, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useCreateLibrary } from '@/src/hooks/useLibraries';
+import { useRouter, useParams } from 'next/navigation';
+import { useLibrary, useUpdateLibrary } from '@/src/hooks/useLibraries';
 import { useCourses } from '@/src/hooks/useCourses';
+import type { Attachment } from '@/src/types';
 
 const MATERIAL_TYPES = [
   { value: 'booklet', label: 'Booklet' },
@@ -21,14 +22,19 @@ function getPreviewUrl(path: string | null): string {
   return path;
 }
 
-export default function AddLibraryItemPage() {
+export default function EditLibraryItemPage() {
   const router = useRouter();
-  const { mutate: createLibrary, isLoading } = useCreateLibrary();
+  const params = useParams();
+  const libraryId = parseInt(params.id as string);
+
+  const { data: library, isLoading: isLoadingLibrary, error } = useLibrary([libraryId]);
+  const { mutate: updateLibrary, isLoading: isUpdating } = useUpdateLibrary();
   const { data: courses, isLoading: isLoadingCourses } = useCourses([]);
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [courseId, setCourseId] = useState('');
@@ -36,17 +42,21 @@ export default function AddLibraryItemPage() {
   const [codeActivation, setCodeActivation] = useState(false);
   const [isPublish, setIsPublish] = useState(false);
   const [price, setPrice] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-    if (!title.trim()) newErrors.title = 'Title is required';
-    if (!description.trim()) newErrors.description = 'Description is required';
-    if (!courseId) newErrors.courseId = 'Course is required';
-    if (!price.trim() || isNaN(parseFloat(price))) newErrors.price = 'Valid price is required';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  // Populate form when data loads
+  useEffect(() => {
+    if (library) {
+      setCoverImagePreview(library.attributes.cover_image || '');
+      setExistingAttachments(library.attributes.attachments || []);
+      setTitle(library.attributes.title || '');
+      setDescription(library.attributes.description || '');
+      setCourseId(String(library.attributes.course_id) || '');
+      setMaterialType(library.attributes.material_type || 'booklet');
+      setCodeActivation(library.attributes.code_activation || false);
+      setIsPublish(library.attributes.is_publish || false);
+      setPrice(library.attributes.price || '');
+    }
+  }, [library]);
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,39 +75,62 @@ export default function AddLibraryItemPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!title.trim()) return;
 
     try {
-      await createLibrary({
-        cover_image: coverImage || 'libraries/covers/default.jpg',
+      await updateLibrary(libraryId, {
+        ...(coverImage && { cover_image: coverImage }),
+        ...(attachments.length > 0 && { attachments: attachments }),
         title: title.trim(),
         description: description.trim(),
-        attachments: attachments.length > 0 ? attachments : undefined,
-        course_id: parseInt(courseId),
+        course_id: parseInt(courseId || '0'),
         material_type: materialType as any,
         code_activation: codeActivation,
         is_publish: isPublish,
-        price: parseFloat(price)
+        price: price ? parseFloat(price) : 0
       });
-      router.push('/electronic-library');
+      router.push(`/electronic-library/${libraryId}`);
     } catch {
       // Error handled by hook
     }
   };
+
+  if (isLoadingLibrary) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
+      </div>
+    );
+  }
+
+  if (error || !library) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-[#EF4444]">Failed to load library item. Please try again.</p>
+        <Link 
+          href="/electronic-library"
+          className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Library
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link 
-          href="/electronic-library"
+          href={`/electronic-library/${libraryId}`}
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Add Library Item</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Add a new book or material to the electronic library and send a notification to students</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">Edit Library Item</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">Update library item details</p>
         </div>
       </div>
 
@@ -111,34 +144,31 @@ export default function AddLibraryItemPage() {
             <label className="text-[13px] font-bold text-[#475569]">Title <span className="text-[#EF4444]">*</span></label>
             <input 
               type="text" 
-              placeholder="e.g., Math Reference Guide"
-              className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] ${errors.title ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
+              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
             />
-            {errors.title && <p className="text-xs text-[#EF4444]">{errors.title}</p>}
           </div>
 
           {/* Description */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Description <span className="text-[#EF4444]">*</span></label>
+            <label className="text-[13px] font-bold text-[#475569]">Description</label>
             <textarea 
-              placeholder="Describe the item..."
               rows={4}
-              className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] resize-none ${errors.description ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
+              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all resize-none"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            {errors.description && <p className="text-xs text-[#EF4444]">{errors.description}</p>}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Course */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Course <span className="text-[#EF4444]">*</span></label>
+              <label className="text-[13px] font-bold text-[#475569]">Course</label>
               <div className="relative">
                 <select 
-                  className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer ${errors.courseId ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
+                  className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={courseId}
                   onChange={(e) => setCourseId(e.target.value)}
                   disabled={isLoadingCourses}
@@ -150,7 +180,6 @@ export default function AddLibraryItemPage() {
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
               </div>
-              {errors.courseId && <p className="text-xs text-[#EF4444]">{errors.courseId}</p>}
             </div>
 
             {/* Material Type */}
@@ -173,16 +202,14 @@ export default function AddLibraryItemPage() {
 
           {/* Price */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Price <span className="text-[#EF4444]">*</span></label>
+            <label className="text-[13px] font-bold text-[#475569]">Price</label>
             <input 
               type="number" 
               step="0.01"
-              placeholder="19.99"
-              className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] ${errors.price ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
+              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
             />
-            {errors.price && <p className="text-xs text-[#EF4444]">{errors.price}</p>}
           </div>
         </section>
 
@@ -213,7 +240,7 @@ export default function AddLibraryItemPage() {
             
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Upload Cover Image</label>
+              <label className="text-[13px] font-bold text-[#475569]">Upload New Cover Image</label>
               <div className="relative">
                 <input 
                   type="file" 
@@ -226,7 +253,7 @@ export default function AddLibraryItemPage() {
                   htmlFor="coverImageUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
-                  {coverImage ? coverImage.name : 'Click to upload image'}
+                  {coverImage ? coverImage.name : 'Click to upload new image'}
                 </label>
               </div>
               <p className="text-xs text-[#94A3B8]">Supported formats: JPG, PNG, WebP</p>
@@ -238,7 +265,26 @@ export default function AddLibraryItemPage() {
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-4">
           <h2 className="text-base font-bold text-[#1E293B]">Attachment File</h2>
           <div className="flex flex-col gap-4">
-            {/* Selected File Display */}
+            {/* Existing Attachments Display */}
+            {existingAttachments.length > 0 && attachments.length === 0 && (
+              existingAttachments.map((att) => (
+                <div key={att.id} className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#1E293B] truncate">{att.attributes.name}</p>
+                    <p className="text-xs text-[#94A3B8]">{att.attributes.extension.toUpperCase()} • {(parseInt(att.attributes.size) / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setExistingAttachments(existingAttachments.filter(a => a.id !== att.id))}
+                    className="p-1.5 hover:bg-red-50 text-[#64748B] hover:text-[#EF4444] rounded-lg transition-all"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))
+            )}
+            
+            {/* Selected New File Display */}
             {attachments.map((file, index) => (
               <div key={index} className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
                 <div className="flex-1 min-w-0">
@@ -257,7 +303,7 @@ export default function AddLibraryItemPage() {
             
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Upload File</label>
+              <label className="text-[13px] font-bold text-[#475569]">Upload New File</label>
               <div className="relative">
                 <input 
                   type="file" 
@@ -269,7 +315,7 @@ export default function AddLibraryItemPage() {
                   htmlFor="attachmentUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
-                  {attachments.length > 0 ? 'Change file' : 'Click to upload file'}
+                  {attachments.length > 0 ? 'Change file' : 'Click to upload new file'}
                 </label>
               </div>
               <p className="text-xs text-[#94A3B8]">PDF, DOC, DOCX, or any file type</p>
@@ -318,25 +364,27 @@ export default function AddLibraryItemPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 mt-2">
-          <button 
-            type="button"
-            onClick={() => router.push('/electronic-library')}
+          <Link 
+            href={`/electronic-library/${libraryId}`}
             className="px-6 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-all"
           >
             Cancel
-          </button>
+          </Link>
           <button 
             type="submit"
-            disabled={isLoading}
+            disabled={isUpdating}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50"
           >
-            {isLoading ? (
+            {isUpdating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Adding...
+                Saving...
               </>
             ) : (
-              'Add to Library'
+              <>
+                <Save className="w-4 h-4" />
+                Save Changes
+              </>
             )}
           </button>
         </div>

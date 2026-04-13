@@ -52,15 +52,11 @@ export default function CentersPage() {
         </div>
       ),
     },
-    // {
-    //   key: 'parent_id',
-    //   header: 'Parent Center',
-    //   render: (item) => {
-    //     if (!item.parent_id) return '-';
-    //     const parent = centers?.find(c => parseInt(c.id) === item.parent_id);
-    //     return parent?.name || '-';
-    //   },
-    // },
+    {
+      key: 'parent',
+      header: 'Parent (Faculty)',
+      render: (item) => item.parent?.data?.attributes?.name || '-',
+    },
     {
       key: 'created_at',
       header: 'Created',

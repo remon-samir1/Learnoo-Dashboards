@@ -132,111 +132,111 @@ export default function LiveRoomPage() {
           debug: 2,
         });
 
-        newPeer.on('open', (id) => {
-          console.log('Connected to PeerJS server with ID:', id);
-          setMyPeerId(id);
-          setConnectionStatus('connected');
+        // newPeer.on('open', (id) => {
+        //   console.log('Connected to PeerJS server with ID:', id);
+        //   setMyPeerId(id);
+        //   setConnectionStatus('connected');
 
-          if (!isHostAttempt) {
-            // I am a participant, connect to the host
-            console.log('Connecting to host:', roomId);
-            const conn = newPeer.connect(roomId);
-            conn.on('open', () => {
-              console.log('Data connection to host opened, sending join action');
-              conn.send({
-                action: 'join',
-                id: id,
-                name: userName
-              });
-            });
+        //   if (!isHostAttempt) {
+        //     // I am a participant, connect to the host
+        //     console.log('Connecting to host:', roomId);
+        //     const conn = newPeer.connect(roomId);
+        //     conn.on('open', () => {
+        //       console.log('Data connection to host opened, sending join action');
+        //       conn.send({
+        //         action: 'join',
+        //         id: id,
+        //         name: userName
+        //       });
+        //     });
 
-            conn.on('error', (err) => {
-              console.error('Data connection error:', err);
-            });
-          }
-        });
+        //     conn.on('error', (err) => {
+        //       console.error('Data connection error:', err);
+        //     });
+        //   }
+        // });
 
-        newPeer.on('error', (err) => {
-          console.error('PeerJS error:', err);
+        // newPeer.on('error', (err) => {
+        //   console.error('PeerJS error:', err);
 
-          if (isHostAttempt && err.type === 'unavailable-id') {
-            console.log('Room ID taken, joining as participant...');
-            newPeer.destroy();
-            initPeer(); // Try again without a specific ID to be a participant
-            return;
-          }
+        //   if (isHostAttempt && err.type === 'unavailable-id') {
+        //     console.log('Room ID taken, joining as participant...');
+        //     newPeer.destroy();
+        //     initPeer(); // Try again without a specific ID to be a participant
+        //     return;
+        //   }
 
-          setConnectionStatus('error');
-        });
+        //   setConnectionStatus('error');
+        // });
 
-        newPeer.on('call', (call) => {
-          console.log('Incoming call from:', call.peer);
-          if (stream) {
-            call.answer(stream);
-          }
+        // newPeer.on('call', (call) => {
+        //   console.log('Incoming call from:', call.peer);
+        //   if (stream) {
+        //     call.answer(stream);
+        //   }
 
-          call.on('stream', (remoteStream) => {
-            setParticipants((prev) => {
-              const updated = new Map(prev);
-              const participant = updated.get(call.peer);
-              if (participant) {
-                updated.set(call.peer, { ...participant, stream: remoteStream });
-              } else {
-                // If we don't know this participant yet, add them
-                updated.set(call.peer, {
-                  id: call.peer,
-                  name: 'Remote User',
-                  stream: remoteStream,
-                  isAudioEnabled: true,
-                  isVideoEnabled: true,
-                  isScreenSharing: false,
-                });
-              }
-              return updated;
-            });
-          });
-        });
+        //   call.on('stream', (remoteStream) => {
+        //     setParticipants((prev) => {
+        //       const updated = new Map(prev);
+        //       const participant = updated.get(call.peer);
+        //       if (participant) {
+        //         updated.set(call.peer, { ...participant, stream: remoteStream });
+        //       } else {
+        //         // If we don't know this participant yet, add them
+        //         updated.set(call.peer, {
+        //           id: call.peer,
+        //           name: 'Remote User',
+        //           stream: remoteStream,
+        //           isAudioEnabled: true,
+        //           isVideoEnabled: true,
+        //           isScreenSharing: false,
+        //         });
+        //       }
+        //       return updated;
+        //     });
+        //   });
+        // });
 
-        newPeer.on('connection', (conn) => {
-          conn.on('data', (data: any) => {
-            console.log('Data received:', data);
-            if (data.action === 'join') {
-              console.log('Participant joining:', data.id);
-              // When a participant sends 'join', call them with our current stream
-              const streamToShare = screenStreamRef.current || stream;
-              if (streamToShare) {
-                newPeer.call(data.id, streamToShare);
-              }
+        // newPeer.on('connection', (conn) => {
+        //   conn.on('data', (data: any) => {
+        //     console.log('Data received:', data);
+        //     if (data.action === 'join') {
+        //       console.log('Participant joining:', data.id);
+        //       // When a participant sends 'join', call them with our current stream
+        //       const streamToShare = screenStreamRef.current || stream;
+        //       if (streamToShare) {
+        //         newPeer.call(data.id, streamToShare);
+        //       }
 
-              setParticipants((prev) => {
-                if (prev.has(data.id)) return prev;
-                const updated = new Map(prev);
-                updated.set(data.id, {
-                  id: data.id,
-                  name: data.name || 'Participant',
-                  isAudioEnabled: true,
-                  isVideoEnabled: true,
-                  isScreenSharing: false,
-                });
-                return updated;
-              });
-            } else if (typeof data === 'object' && data !== null) {
-              const msg = data as { type: string; senderId: string; senderName: string; message: string };
-              if (msg.type === 'chat') {
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `${Date.now()}-${Math.random()}`,
-                    senderId: msg.senderId,
-                    senderName: msg.senderName,
-                    message: msg.message,
-                    timestamp: new Date(),
-                  },
-                ]);
-              }
-            }
-          });
-        });
+        //       setParticipants((prev) => {
+        //         if (prev.has(data.id)) return prev;
+        //         const updated = new Map(prev);
+        //         updated.set(data.id, {
+        //           id: data.id,
+        //           name: data.name || 'Participant',
+        //           isAudioEnabled: true,
+        //           isVideoEnabled: true,
+        //           isScreenSharing: false,
+        //         });
+        //         return updated;
+        //       });
+        //     } else if (typeof data === 'object' && data !== null) {
+        //       const msg = data as { type: string; senderId: string; senderName: string; message: string };
+        //       if (msg.type === 'chat') {
+        //         setMessages((prev) => [
+        //           ...prev,
+        //           {
+        //             id: `${Date.now()}-${Math.random()}`,
+        //             senderId: msg.senderId,
+        //             senderName: msg.senderName,
+        //             message: msg.message,
+        //             timestamp: new Date(),
+        //           },
+        //         ]);
+        //       }
+        //     }
+        //   });
+        // });
 
         setPeer(newPeer);
         return newPeer;

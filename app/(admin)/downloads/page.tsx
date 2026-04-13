@@ -1,5 +1,32 @@
 "use client";
 
+import { Download, Clock } from "lucide-react";
+
+export default function DownloadsPage() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+      <div className="w-24 h-24 bg-gradient-to-br from-[#EEF2FF] to-[#F1F5F9] rounded-2xl flex items-center justify-center shadow-sm border border-[#E2E8F0]">
+        <Download className="w-12 h-12 text-[#2137D6]" />
+      </div>
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-[#1E293B] mb-2">Downloads</h1>
+        <div className="flex items-center gap-2 text-[#64748B] bg-[#F8FAFC] px-4 py-2 rounded-full">
+          <Clock className="w-4 h-4" />
+          <span>Coming Soon</span>
+        </div>
+      </div>
+      <p className="text-sm text-[#94A3B8] max-w-md text-center">
+        Track and manage student downloads. This feature is under development and will be available soon.
+      </p>
+    </div>
+  );
+}
+
+/*
+ORIGINAL CODE - SAVED FOR LATER:
+
+"use client";
+
 import React, { useState } from 'react';
 import { 
   Search, 
@@ -100,7 +127,7 @@ const getTypeBadgeColor = (type: string) => {
     case 'Video':
       return 'bg-[#EEF2FF] text-[#4F46E5]';
     case 'Note':
-      return 'bg-[#F8FAFC] text-[#94A3B8]'; // Adjusted for note
+      return 'bg-[#F8FAFC] text-[#94A3B8]';
     case 'Library':
       return 'bg-[#ECFDF5] text-[#10B981]';
     default:
@@ -115,7 +142,7 @@ const getTypeIcon = (type: string) => {
     case 'Video':
       return <Video className="w-4 h-4 text-[#8B5CF6]" />;
     case 'Note':
-      return <FileText className="w-4 h-4 text-[#F59E0B]" />; // Yellow document for Note
+      return <FileText className="w-4 h-4 text-[#F59E0B]" />;
     case 'Library':
       return <BookOpen className="w-4 h-4 text-[#10B981]" />;
     default:
@@ -139,7 +166,6 @@ export default function DownloadsPage() {
       </div>
 
       <div className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden flex flex-col">
-        {/* Filter Bar */}
         <div className="p-4 border-b border-[#F1F5F9] flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:max-w-[400px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
@@ -168,7 +194,6 @@ export default function DownloadsPage() {
           </div>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -178,24 +203,24 @@ export default function DownloadsPage() {
                 <th className="px-6 py-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Type</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Course</th>
                 <th className="px-6 py-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Center</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Date & Time</th>
+                <th className="px-6 py-4 text-[11px] font-bold text-[#64748B] uppercase tracking-wider">Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#F1F5F9]">
               {initialRecords.map((record) => (
-                <tr key={record.id} className="hover:bg-[#F8FAFC]/50 transition-colors group">
+                <tr key={record.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${record.studentColor}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${record.studentColor}`}>
                         {record.studentInitials}
                       </div>
-                      <span className="text-[13px] font-bold text-[#1E293B] group-hover:text-[#4F46E5] transition-colors">{record.studentName}</span>
+                      <span className="text-[13px] font-medium text-[#1E293B]">{record.studentName}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                       {getTypeIcon(record.type)}
-                      <span className="text-[13px] font-medium text-[#475569]">{record.fileName}</span>
+                      {getTypeIcon(record.type)}
+                      <span className="text-[13px] text-[#1E293B] truncate max-w-[200px]">{record.fileName}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -218,7 +243,6 @@ export default function DownloadsPage() {
           </table>
         </div>
 
-        {/* Pagination */}
         <div className="p-4 border-t border-[#F1F5F9] flex items-center justify-between">
           <p className="text-[13px] text-[#64748B] font-medium">
             Showing <span className="font-bold text-[#1E293B]">1</span> to <span className="font-bold text-[#1E293B]">6</span> of <span className="font-bold text-[#1E293B]">6</span> downloads
@@ -236,3 +260,4 @@ export default function DownloadsPage() {
     </div>
   );
 }
+*/

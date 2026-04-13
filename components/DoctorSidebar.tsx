@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -22,6 +22,10 @@ import {
 } from 'lucide-react';
 
 import Logo from '@/components/Logo';
+import { logout } from '@/lib/auth';
+import { useCurrentUser } from '@/src/hooks/useAuth';
+import { usePlatformFeature } from '@/src/hooks';
+import { initializeAuthStore } from '@/src/stores/authStore';
 
 interface DoctorSidebarProps {
   isCollapsed: boolean;
@@ -45,6 +49,39 @@ const menuItems = [
 
 export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarProps) {
   const pathname = usePathname();
+  const { user, fullName, role } = useCurrentUser();
+  const { data: features } = usePlatformFeature();
+
+  // Initialize auth store from cookies on mount
+  useEffect(() => {
+    initializeAuthStore();
+  }, []);
+
+  // Get platform branding from features
+  const getFeatureValue = (key: string, defaultValue: string = ''): string => {
+    if (!features) return defaultValue;
+    const feature = features.find((f) => f.attributes.key === key);
+    return feature?.attributes.value || defaultValue;
+  };
+
+  const platformName = getFeatureValue('platform_name', 'Learnoo');
+  const primaryColor = getFeatureValue('primary_color', '#4F46E5');
+  const logoUrl = getFeatureValue('logo', '');
+
+  // Get user initials
+  const getInitials = () => {
+    if (!user) return '??';
+    const first = user.attributes.first_name?.charAt(0) || '';
+    const last = user.attributes.last_name?.charAt(0) || '';
+    return `${first}${last}`.toUpperCase() || '??';
+  };
+
+  // Get display name
+  const getDisplayName = () => {
+    if (fullName) return fullName;
+    if (user) return `${user.attributes.first_name} ${user.attributes.last_name}`;
+    return 'User';
+  };
 
   return (
     <aside
@@ -53,11 +90,25 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
     >
       {/* Brand Logo and Title */}
       <div className={`h-20 flex items-center px-5 gap-3 border-b border-[#F0F2F5] ${isCollapsed ? 'justify-center px-0' : ''}`}>
-        <div className="w-10 h-10 bg-gradient-to-br from-[#4F46E5] to-[#7C3AED] rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-200">
-          <Logo className="w-8 h-8 text-white" />
+        <div 
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
+          style={{ 
+            background: logoUrl ? 'transparent' : `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
+          }}
+        >
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+          ) : (
+            <Logo className="w-8 h-8 text-white" />
+          )}
         </div>
         {!isCollapsed && (
-          <span className="font-bold text-xl text-[#4F46E5] tracking-tight">Learnoo</span>
+          <span 
+            className="font-bold text-xl tracking-tight"
+            style={{ color: primaryColor }}
+          >
+            {platformName}
+          </span>
         )}
       </div>
 
@@ -112,31 +163,49 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
       <div className={`p-4 border-t border-[#F0F2F5] mt-auto ${isCollapsed ? 'items-center' : ''}`}>
         {!isCollapsed && (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop&crop=face" 
-                alt="Dr. Nada Salah"
-                className="w-full h-full object-cover"
-              />
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ 
+                backgroundColor: `${primaryColor}15`,
+              }}
+            >
+              <span 
+                className="text-[15px] font-bold"
+                style={{ color: primaryColor }}
+              >
+                {getInitials()}
+              </span>
             </div>
             <div className="flex flex-col min-w-0">
-              <p className="text-[13px] font-bold text-[#1E293B] truncate">Dr. Nada Salah</p>
+              <p className="text-[13px] font-bold text-[#1E293B] truncate">{getDisplayName()}</p>
             </div>
-            <button className="ml-auto text-[#64748B] hover:text-[#EF4444] transition-colors p-1.5 rounded-lg hover:bg-[#FEF2F2]">
+            <button 
+              onClick={logout}
+              className="ml-auto text-[#64748B] hover:text-[#EF4444] transition-colors p-1.5 rounded-lg hover:bg-[#FEF2F2]"
+            >
               <LogOut className="w-4 h-4" />
             </button>
           </div>
         )}
         {isCollapsed && (
           <div className="flex flex-col gap-4 items-center">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop&crop=face" 
-                alt="Dr. Nada Salah"
-                className="w-full h-full object-cover"
-              />
+            <div 
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+              style={{ 
+                backgroundColor: `${primaryColor}15`,
+              }}
+            >
+              <span 
+                className="text-[14px] font-bold"
+                style={{ color: primaryColor }}
+              >
+                {getInitials()}
+              </span>
             </div>
-            <button className="text-[#64748B] hover:text-[#EF4444] transition-colors p-2.5 rounded-xl hover:bg-[#FEF2F2]">
+            <button 
+              onClick={logout}
+              className="text-[#64748B] hover:text-[#EF4444] transition-colors p-2.5 rounded-xl hover:bg-[#FEF2F2]"
+            >
               <LogOut className="w-5 h-5" />
             </button>
           </div>
@@ -146,7 +215,8 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
       {/* Sidebar toggle button */}
       <button
         onClick={onToggle}
-        className="absolute right-[-14px] top-[100px] w-7 h-7 bg-white rounded-full border border-[#E5E7EB] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-110 active:scale-95 transition-all text-[#4F46E5] z-[60]"
+        className="absolute right-[-14px] top-[100px] w-7 h-7 bg-white rounded-full border border-[#E5E7EB] flex items-center justify-center shadow-md hover:shadow-lg hover:scale-110 active:scale-95 transition-all z-[60]"
+        style={{ color: primaryColor }}
       >
         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>

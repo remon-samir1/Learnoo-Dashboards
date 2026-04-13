@@ -49,12 +49,19 @@ import type {
   // Live Room types
   LiveRoom,
   CreateLiveRoomRequest,
+  UpdateLiveRoomRequest,
   // Note types
   Note,
   CreateNoteRequest,
   // Post types
   Post,
   CreatePostRequest,
+  // Social Link types
+  SocialLink,
+  CreateSocialLinkRequest,
+  // Comment types
+  Comment,
+  CreateCommentRequest,
   // Quiz types
   Quiz,
   CreateQuizRequest,
@@ -75,6 +82,9 @@ import type {
   DashboardStats,
   ActivityData,
   RecentActivityItem,
+  // Platform Feature types
+  PlatformFeature,
+  UpdatePlatformFeatureRequest,
 } from '@/src/types';
 
 // ============================================
@@ -123,6 +133,19 @@ function buildUrl(path: string): string {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    // Handle unauthorized errors - redirect to login
+    if (response.status === 401 || response.status === 403) {
+      // Clear auth cookies
+      Cookies.remove('token');
+      Cookies.remove('user_role');
+      Cookies.remove('user_data');
+      
+      // Redirect to login if in browser
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+    
     const errorData = await response.json().catch(() => ({}));
     throw new ApiError(
       response.status,
@@ -229,25 +252,33 @@ async function del<T>(path: string): Promise<T> {
 
 function buildFormData(data: Record<string, unknown>): FormData {
   const formData = new FormData();
-  
+
   Object.entries(data).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
-    
+
     if (value instanceof File) {
       formData.append(key, value);
     } else if (Array.isArray(value)) {
       value.forEach((item) => {
         if (item instanceof File) {
-          formData.append(`${key}[]`, item);
+          formData.append(`${key}[${index}]`, item);
+        } else if (typeof item === 'boolean') {
+          formData.append(`${key}[${index}]`, item ? '1' : '0');
+        } else if (typeof item === 'number') {
+          formData.append(`${key}[${index}]`, String(item));
         } else {
           formData.append(`${key}[]`, String(item));
         }
       });
+    } else if (typeof value === 'boolean') {
+      formData.append(key, value ? '1' : '0');
+    } else if (typeof value === 'number') {
+      formData.append(key, String(value));
     } else {
       formData.append(key, String(value));
     }
   });
-  
+
   return formData;
 }
 
@@ -529,7 +560,7 @@ export const liveRoomsApi = {
   create: (data: CreateLiveRoomRequest) =>
     post<ApiResponse<LiveRoom>>('/v1/live-room', data),
 
-  update: (id: number, data: Partial<CreateLiveRoomRequest>) =>
+  update: (id: number, data: UpdateLiveRoomRequest) =>
     put<ApiResponse<LiveRoom>>(`/v1/live-room/${id}`, data),
 
   delete: (id: number) => del<ApiResponse<LiveRoom>>(`/v1/live-room/${id}`),
@@ -573,6 +604,20 @@ export const postsApi = {
   },
 
   delete: (id: number) => del<ApiResponse<Post>>(`/v1/post/${id}`),
+};
+
+// ============================================
+// Comments API (uses same endpoint as posts with parent_id)
+// ============================================
+
+export const commentsApi = {
+  list: (parentId: number) => get<ApiListResponse<Comment>>('/v1/post', { parent_id: parentId }),
+
+  create: (parentId: number, data: CreateCommentRequest) =>
+    post<ApiResponse<Comment>>('/v1/post', { ...data, parent_id: parentId }),
+
+  delete: (commentId: number) =>
+    del<ApiResponse<Comment>>(`/v1/post/${commentId}`),
 };
 
 // ============================================
@@ -642,7 +687,7 @@ export const universitiesApi = {
   update: (id: number, data: CreateUniversityRequest) =>
     put<ApiResponse<University>>(`/v1/university/${id}`, data),
 
-  delete: (id: number) => del<ApiResponse<University>>(`/v1/university/${id}`),
+  delete: (id: number) => del<void>(`/v1/university/${id}`),
 };
 
 // ============================================
@@ -686,6 +731,35 @@ export const studentsApi = {
   },
 
   delete: (id: string) => del<ApiResponse<Student>>(`/v1/student/${id}`),
+
+  resetPassword: (id: string, password: string) => {
+    const formData = new FormData();
+    formData.append('password', password);
+    return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData);
+  },
+};
+
+// ============================================
+// Social Links API
+// ============================================
+
+export const socialLinksApi = {
+  list: () => get<ApiListResponse<SocialLink>>('/v1/social-link'),
+
+  get: (id: number) => get<ApiResponse<SocialLink>>(`/v1/social-link/${id}`),
+
+  create: (data: CreateSocialLinkRequest) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    return postMultipart<ApiResponse<SocialLink>>('/v1/social-link', formData);
+  },
+
+  update: (id: number, data: Partial<CreateSocialLinkRequest>) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    return putMultipart<ApiResponse<SocialLink>>(`/v1/social-link/${id}`, formData);
+  },
+
+  delete: (id: number) =>
+    del<ApiResponse<SocialLink>>(`/v1/social-link/${id}`),
 };
 
 // ============================================
@@ -714,6 +788,24 @@ export const dashboardApi = {
     get<ApiResponse<RecentActivityItem[]>>('/v1/dashboard/recent-activity', params),
 };
 
+// ============================================
+// Platform Feature API (General Settings)
+// ============================================
+
+export const platformFeatureApi = {
+  get: () => get<ApiResponse<PlatformFeature[]>>('/v1/feature'),
+
+  storeOrUpdate: (data: UpdatePlatformFeatureRequest) =>
+    post<ApiResponse<PlatformFeature>>('/v1/feature/store-or-update', data),
+
+  storeOrUpdateFile: (key: string, file: File) => {
+    const formData = new FormData();
+    formData.append('key', key);
+    formData.append('value', file);
+    return postMultipart<ApiResponse<PlatformFeature[]>>('/v1/feature/store-or-update', formData);
+  },
+};
+
 
 // ============================================
 // Export all APIs
@@ -724,6 +816,8 @@ export const api = {
   centers: centersApi,
   chapters: chaptersApi,
   codes: codesApi,
+  socialLinks: socialLinksApi,
+  comments: commentsApi,
   courses: coursesApi,
   departments: departmentsApi,
   discussions: discussionsApi,
@@ -743,6 +837,7 @@ export const api = {
   students: studentsApi,
   search: searchApi,
   dashboard: dashboardApi,
+  platformFeature: platformFeatureApi,
 };
 
 export default api;

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 import Cookies from 'js-cookie';
 import type { User, AuthMeta, LoginRequest, RegisterRequest } from '@/src/types';
 import { authApi, ApiError } from '@/src/lib/api';
@@ -297,25 +298,30 @@ export function initializeAuthStore() {
 // Export individual hooks for convenience
 // ============================================
 
+// Stable selector hooks with shallow equality to prevent infinite loops
 export function useAuth() {
-  return useAuthStore((state) => ({
-    user: state.user,
-    token: state.token,
-    isAuthenticated: state.isAuthenticated,
-    isLoading: state.isLoading,
-    error: state.error,
-    isAdmin: state.isAdmin(),
-    isDoctor: state.isDoctor(),
-    userRole: state.getUserRole(),
-  }));
+  return useAuthStore(
+    useShallow((state) => ({
+      user: state.user,
+      token: state.token,
+      isAuthenticated: state.isAuthenticated,
+      isLoading: state.isLoading,
+      error: state.error,
+      isAdmin: state.isAdmin(),
+      isDoctor: state.isDoctor(),
+      userRole: state.getUserRole(),
+    }))
+  );
 }
 
 export function useAuthActions() {
-  return useAuthStore((state) => ({
-    login: state.login,
-    register: state.register,
-    logout: state.logout,
-    fetchCurrentUser: state.fetchCurrentUser,
-    clearError: state.clearError,
-  }));
+  return useAuthStore(
+    useShallow((state) => ({
+      login: state.login,
+      register: state.register,
+      logout: state.logout,
+      fetchCurrentUser: state.fetchCurrentUser,
+      clearError: state.clearError,
+    }))
+  );
 }
