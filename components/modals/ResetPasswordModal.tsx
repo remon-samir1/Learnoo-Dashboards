@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, ShieldAlert, Copy, Check } from 'lucide-react';
 
 interface ResetPasswordModalProps {
@@ -22,6 +23,8 @@ export default function ResetPasswordModal({
   isLoading = false,
   error = null
 }: ResetPasswordModalProps) {
+  const t = useTranslations('students.modals.resetPassword');
+  const tc = useTranslations('common');
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -45,7 +48,7 @@ export default function ResetPasswordModal({
       <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="px-8 py-6 border-b border-[#F1F5F9] flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[#1E293B]">Reset Password</h2>
+          <h2 className="text-xl font-bold text-[#1E293B]">{t('title')}</h2>
           <button 
             onClick={onClose}
             className="p-2 text-[#94A3B8] hover:text-[#EF4444] hover:bg-red-50 rounded-xl transition-all"
@@ -63,13 +66,11 @@ export default function ResetPasswordModal({
             <p className="text-[13.5px] leading-relaxed text-[#475569]">
               {isConfirmMode ? (
                 <>
-                  You are about to reset the password for <span className="font-bold text-[#1E293B]">{studentName}</span>.
-                  A new temporary password will be generated.
+                  {t('description')} <span className="font-bold text-[#1E293B]">{studentName}</span>.
                 </>
               ) : (
                 <>
-                  Password has been reset for <span className="font-bold text-[#1E293B]">{studentName}</span>.
-                  Please copy and share the new temporary password securely.
+                  {t('passwordResetMessage')} <span className="font-bold text-[#1E293B]">{studentName}</span>.
                 </>
               )}
             </p>
@@ -83,7 +84,7 @@ export default function ResetPasswordModal({
 
           {!isConfirmMode && generatedPassword && (
             <div className="flex flex-col gap-3">
-              <label className="text-[13px] font-bold text-[#64748B] uppercase tracking-wider">Generated Password (Admin View Only):</label>
+              <label className="text-[13px] font-bold text-[#64748B] uppercase tracking-wider">{t('newPassword')}</label>
               <div className="bg-[#F4F7FF] border border-indigo-100 rounded-2xl p-6 flex items-center justify-between group">
                 <span className="text-2xl font-mono font-bold text-[#4F46E5] tracking-widest">{generatedPassword}</span>
                 <button
@@ -104,7 +105,7 @@ export default function ResetPasswordModal({
             disabled={isLoading}
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-white hover:shadow-sm transition-all disabled:opacity-50"
           >
-            {isConfirmMode ? 'Cancel' : 'Close'}
+            {isConfirmMode ? tc('cancel') : tc('close')}
           </button>
           {isConfirmMode && (
             <button
@@ -113,7 +114,7 @@ export default function ResetPasswordModal({
               className="px-8 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center gap-2"
             >
               {isLoading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-              Confirm Reset
+              {t('confirm')}
             </button>
           )}
         </div>

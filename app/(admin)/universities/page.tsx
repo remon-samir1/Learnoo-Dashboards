@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useUniversities, useDeleteUniversity } from '@/src/hooks/useUniversities';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { SearchFilter } from '@/src/components/admin/SearchFilter';
@@ -9,6 +10,7 @@ import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import type { University } from '@/src/types';
 
 export default function UniversitiesPage() {
+  const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedUniversity, setSelectedUniversity] = useState<University | null>(null);
@@ -44,12 +46,12 @@ export default function UniversitiesPage() {
   const columns: Column<University>[] = [
     {
       key: 'name',
-      header: 'Name',
+      header: t('universities.columns.name'),
       render: (item) => item.attributes.name,
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t('universities.columns.created'),
       render: (item) => item.attributes.created_at
         ? new Date(item.attributes.created_at).toLocaleDateString()
         : '-',
@@ -60,18 +62,18 @@ export default function UniversitiesPage() {
     return (
       <div className="flex flex-col gap-8">
         <AdminPageHeader
-          title="Universities Management"
-          description="Manage universities and institutions"
-          actionLabel="Add University"
+          title={t('universities.pageTitle')}
+          description={t('universities.pageDescription')}
+          actionLabel={t('universities.addUniversity')}
           actionHref="/universities/add"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="text-red-600">Failed to load universities: {error}</p>
+          <p className="text-red-600">{t('universities.loadError')}: {error}</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Retry
+            {t('universities.retry')}
           </button>
         </div>
       </div>
@@ -81,14 +83,14 @@ export default function UniversitiesPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <AdminPageHeader
-        title="Universities Management"
-        description="Manage universities and institutions"
-        actionLabel="Add University"
+        title={t('universities.pageTitle')}
+        description={t('universities.pageDescription')}
+        actionLabel={t('universities.addUniversity')}
         actionHref="/universities/add"
       />
 
       <SearchFilter
-        searchPlaceholder="Search universities..."
+        searchPlaceholder={t('universities.searchPlaceholder')}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -100,7 +102,7 @@ export default function UniversitiesPage() {
         keyExtractor={(item) => item.id}
         onDelete={handleDelete}
         editHref={(item) => `/universities/${item.id}/edit`}
-        emptyMessage="No universities found. Create your first university!"
+        emptyMessage={t('universities.noUniversities')}
       />
 
       <DeleteModal
@@ -110,7 +112,7 @@ export default function UniversitiesPage() {
           setSelectedUniversity(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete University"
+        title={t('universities.deleteTitle')}
         itemName={selectedUniversity?.attributes.name || ''}
         isLoading={isDeleting}
       />

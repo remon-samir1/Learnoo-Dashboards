@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Edit2,
@@ -38,6 +39,7 @@ function getInitials(firstName: string | null | undefined, lastName: string | nu
 }
 
 export default function StudentProfilePage() {
+  const t = useTranslations();
   const params = useParams();
   const studentId = params.id as string;
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -117,12 +119,12 @@ export default function StudentProfilePage() {
   if (error || !student) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-red-500">Failed to load student data</p>
+        <p className="text-red-500">{t('students.form.view.loadError')}</p>
         <Link
           href="/students"
           className="px-4 py-2 bg-[#2137D6] text-white rounded-lg text-sm font-medium"
         >
-          Back to Students
+          {t('students.form.view.backToStudents')}
         </Link>
       </div>
     );
@@ -142,9 +144,9 @@ export default function StudentProfilePage() {
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold text-[#1E293B]">{student.name}</h1>
             <div className="flex items-center gap-3 text-[12px] text-[#64748B] mt-0.5">
-              <span className="font-medium">Student ID: <span className="font-bold text-[#1E293B] uppercase">{student.id}</span></span>
+              <span className="font-medium">{t('students.form.view.studentId')}: <span className="font-bold text-[#1E293B] uppercase">{student.id}</span></span>
               <span className="w-1 h-1 bg-[#CBD5E1] rounded-full"></span>
-              <span>Last active <span className="font-bold text-[#1E293B]">{student.lastActive}</span></span>
+              <span>{t('students.form.view.lastActive')} <span className="font-bold text-[#1E293B]">{student.lastActive}</span></span>
             </div>
           </div>
         </div>
@@ -177,15 +179,15 @@ export default function StudentProfilePage() {
               <div className="p-1.5 bg-indigo-50 rounded-lg">
                 <User className="w-4 h-4 text-[#4F46E5]" />
               </div>
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Personal Information</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.personal')}</h2>
             </div>
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-y-10 gap-x-12">
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">Full Name</span>
+                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.fullName')}</span>
                 <span className="text-[15px] font-bold text-[#1E293B]">{student.name}</span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">Status</span>
+                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.status')}</span>
                 <span className={`inline-flex w-fit px-3 py-1 text-[10px] font-bold rounded-lg border uppercase ${
                     student.status === 1
                       ? 'bg-[#EBFDF5] text-[#10B981] border-emerald-100'
@@ -201,7 +203,7 @@ export default function StudentProfilePage() {
                   <Mail className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-[#94A3B8] uppercase">Email</span>
+                  <span className="text-[11px] font-bold text-[#94A3B8] uppercase">{t('students.form.view.fields.email')}</span>
                   <span className="text-[14px] font-semibold text-[#475569]">{student.email}</span>
                 </div>
               </div>
@@ -210,7 +212,7 @@ export default function StudentProfilePage() {
                   <Phone className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-[#94A3B8] uppercase">Phone</span>
+                  <span className="text-[11px] font-bold text-[#94A3B8] uppercase">{t('students.form.view.fields.phone')}</span>
                   <span className="text-[14px] font-semibold text-[#475569]">{student.phone}</span>
                 </div>
               </div>
@@ -219,7 +221,7 @@ export default function StudentProfilePage() {
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-bold text-[#94A3B8] uppercase">Joined</span>
+                  <span className="text-[11px] font-bold text-[#94A3B8] uppercase">{t('students.form.view.fields.joined')}</span>
                   <span className="text-[14px] font-semibold text-[#475569]">{student.joined}</span>
                 </div>
               </div>
@@ -232,15 +234,15 @@ export default function StudentProfilePage() {
               <div className="p-1.5 bg-indigo-50 rounded-lg">
                 <GraduationCap className="w-4 h-4 text-[#4F46E5]" />
               </div>
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Academic Information</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.academic')}</h2>
             </div>
             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">University</span>
+                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.university')}</span>
                 <span className="text-[15px] font-bold text-[#1E293B]">{student.university}</span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">Faculty</span>
+                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.faculty')}</span>
                 <span className="text-[15px] font-bold text-[#1E293B]">{student.faculty}</span>
               </div>
             </div>
@@ -252,7 +254,7 @@ export default function StudentProfilePage() {
               <div className="p-1.5 bg-indigo-50 rounded-lg">
                 <BookOpen className="w-4 h-4 text-[#4F46E5]" />
               </div>
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Enrolled Courses</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.enrolledCourses')}</h2>
             </div>
             <div className="p-6 flex flex-col gap-5">
               {student.enrolledCourses.length > 0 ? (
@@ -281,18 +283,18 @@ export default function StudentProfilePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-[11px] text-[#64748B]">
-                        <span><strong className="text-[#1E293B]">{stats.lectures || 0}</strong> Lectures</span>
+                        <span><strong className="text-[#1E293B]">{stats.lectures || 0}</strong> {t('students.form.view.fields.lectures')}</span>
                         <span className="w-1 h-1 bg-[#CBD5E1] rounded-full"></span>
-                        <span><strong className="text-[#1E293B]">{stats.chapters || 0}</strong> Chapters</span>
+                        <span><strong className="text-[#1E293B]">{stats.chapters || 0}</strong> {t('students.form.view.fields.chapters')}</span>
                         <span className="w-1 h-1 bg-[#CBD5E1] rounded-full"></span>
-                        <span><strong className="text-[#1E293B]">{stats.exams || 0}</strong> Exams</span>
+                        <span><strong className="text-[#1E293B]">{stats.exams || 0}</strong> {t('students.form.view.fields.exams')}</span>
                       </div>
                     </div>
                   );
                 })
               ) : (
                 <div className="text-center py-8 text-[#94A3B8]">
-                  No enrolled courses found
+                  {t('students.form.view.noCourses')}
                 </div>
               )}
             </div>
@@ -304,16 +306,16 @@ export default function StudentProfilePage() {
               <div className="p-1.5 bg-indigo-50 rounded-lg">
                 <ClipboardList className="w-4 h-4 text-[#4F46E5]" />
               </div>
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Exam Results</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.examResults')}</h2>
             </div>
             <div className="overflow-x-auto p-4">
               {student.exams.length > 0 ? (
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
-                      <th className="px-6 py-4 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">Exam</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">Score</th>
-                      <th className="px-6 py-4 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">{t('students.form.view.fields.exam')}</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">{t('students.form.view.fields.score')}</th>
+                      <th className="px-6 py-4 text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider">{t('students.form.view.fields.date')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#F1F5F9]">
@@ -345,7 +347,7 @@ export default function StudentProfilePage() {
                 </table>
               ) : (
                 <div className="text-center py-8 text-[#94A3B8]">
-                  No exam results found
+                  {t('students.form.view.noExams')}
                 </div>
               )}
             </div>
@@ -357,7 +359,7 @@ export default function StudentProfilePage() {
               <div className="p-1.5 bg-orange-50 rounded-lg">
                 <ShieldCheck className="w-4 h-4 text-orange-600" />
               </div>
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Security & Account Access</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.security')}</h2>
             </div>
             <div className="p-8 flex flex-col gap-4">
               <button
@@ -366,7 +368,7 @@ export default function StudentProfilePage() {
                 className="w-fit flex items-center gap-2.5 text-[#4F46E5] hover:bg-indigo-50 px-5 py-2.5 rounded-xl border border-indigo-100 font-bold transition-all disabled:opacity-50"
               >
                 {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
-                Reset Password
+                {t('students.form.view.fields.resetPassword')}
               </button>
             </div>
           </section>
@@ -381,7 +383,7 @@ export default function StudentProfilePage() {
               <div className="p-1.5 bg-indigo-50 rounded-lg">
                 <Building2 className="w-4 h-4 text-[#4F46E5]" />
               </div>
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Centers</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.centers')}</h2>
             </div>
             <div className="p-6 flex flex-col gap-3">
               {student.centers.length > 0 ? (
@@ -393,7 +395,7 @@ export default function StudentProfilePage() {
                 ))
               ) : (
                 <div className="p-4 bg-[#F8FAFC] border border-[#F1F5F9] rounded-2xl text-[#94A3B8] text-sm">
-                  No centers assigned
+                  {t('students.form.view.noCenters')}
                 </div>
               )}
             </div>
@@ -403,34 +405,34 @@ export default function StudentProfilePage() {
           <section className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-[#F1F5F9] flex items-center gap-2">
               <Layout className="w-4 h-4 text-[#4F46E5]" />
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Activity Summary</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.activity')}</h2>
             </div>
             <div className="p-6 flex flex-col gap-5">
               <div className="flex items-center justify-between py-2 border-b border-[#F1F5F9]/50 last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500"><BookOpen className="w-4 h-4" /></div>
-                  <span className="text-[14px] font-medium text-[#64748B]">Notes Created</span>
+                  <span className="text-[14px] font-medium text-[#64748B]">{t('students.form.view.fields.notesCreated')}</span>
                 </div>
                 <span className="text-base font-bold text-[#1E293B]">{student.activity.notesCreated}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-[#F1F5F9]/50 last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500"><Globe className="w-4 h-4" /></div>
-                  <span className="text-[14px] font-medium text-[#64748B]">Downloads</span>
+                  <span className="text-[14px] font-medium text-[#64748B]">{t('students.form.view.fields.downloads')}</span>
                 </div>
                 <span className="text-base font-bold text-[#1E293B]">{student.activity.downloads}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-[#F1F5F9]/50 last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500"><Clock className="w-4 h-4" /></div>
-                  <span className="text-[14px] font-medium text-[#64748B]">Live Attendance</span>
+                  <span className="text-[14px] font-medium text-[#64748B]">{t('students.form.view.fields.liveAttendance')}</span>
                 </div>
                 <span className="text-base font-bold text-[#1E293B]">{student.activity.liveAttendance}</span>
               </div>
               <div className="flex items-center justify-between py-2 border-b border-[#F1F5F9]/50 last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500"><Smartphone className="w-4 h-4" /></div>
-                  <span className="text-[14px] font-medium text-[#64748B]">Community Posts</span>
+                  <span className="text-[14px] font-medium text-[#64748B]">{t('students.form.view.fields.communityPosts')}</span>
                 </div>
                 <span className="text-base font-bold text-[#1E293B]">{student.activity.communityPosts}</span>
               </div>
@@ -441,15 +443,15 @@ export default function StudentProfilePage() {
           <section className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm overflow-hidden">
             <div className="px-6 py-5 border-b border-[#F1F5F9] flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-[#4F46E5]" />
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Device & Access</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.device')}</h2>
             </div>
             <div className="p-6 flex flex-col gap-6">
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">Device</span>
+                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.device')}</span>
                 <span className="text-[14px] font-bold text-[#1E293B]">{student.device.name}</span>
               </div>
               <div className="flex flex-col gap-1.5">
-                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">Last IP</span>
+                <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.lastIp')}</span>
                 <span className="text-[14px] font-bold text-[#1E293B]">{student.device.lastIp}</span>
               </div>
             </div>

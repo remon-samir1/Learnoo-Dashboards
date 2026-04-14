@@ -1,17 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Loader2, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCreateLibrary } from '@/src/hooks/useLibraries';
 import { useCourses } from '@/src/hooks/useCourses';
 
-const MATERIAL_TYPES = [
-  { value: 'booklet', label: 'Booklet' },
-  { value: 'reference', label: 'Reference' },
-  { value: 'guide', label: 'Guide' }
-];
+export default function AddLibraryItemPage() {
+  const t = useTranslations();
+  const router = useRouter();
+  const { mutate: createLibrary, isLoading } = useCreateLibrary();
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
 function getPreviewUrl(path: string | null): string {
   if (!path) return '';
@@ -21,10 +22,6 @@ function getPreviewUrl(path: string | null): string {
   return path;
 }
 
-export default function AddLibraryItemPage() {
-  const router = useRouter();
-  const { mutate: createLibrary, isLoading } = useCreateLibrary();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState('');
@@ -38,14 +35,20 @@ export default function AddLibraryItemPage() {
   const [price, setPrice] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const MATERIAL_TYPES = [
+    { value: 'booklet', label: t('electronicLibrary.filters.booklet') },
+    { value: 'reference', label: t('electronicLibrary.filters.reference') },
+    { value: 'guide', label: t('electronicLibrary.filters.guide') }
+  ];
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    if (!title.trim()) newErrors.title = 'Title is required';
-    if (!description.trim()) newErrors.description = 'Description is required';
-    if (!courseId) newErrors.courseId = 'Course is required';
-    if (!price.trim() || isNaN(parseFloat(price))) newErrors.price = 'Valid price is required';
-    if (!coverImage) newErrors.coverImage = 'Cover image is required';
-    if (attachments.length === 0) newErrors.attachment = 'Attachment file is required';
+    if (!title.trim()) newErrors.title = t('electronicLibrary.add.fields.titleRequired');
+    if (!description.trim()) newErrors.description = t('electronicLibrary.add.fields.descriptionRequired');
+    if (!courseId) newErrors.courseId = t('electronicLibrary.add.fields.courseRequired');
+    if (!price.trim() || isNaN(parseFloat(price))) newErrors.price = t('electronicLibrary.add.fields.priceRequired');
+    if (!coverImage) newErrors.coverImage = t('electronicLibrary.add.fields.coverImageRequired');
+    if (attachments.length === 0) newErrors.attachment = t('electronicLibrary.add.fields.attachmentRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -98,22 +101,22 @@ export default function AddLibraryItemPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Add Library Item</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Add a new book or material to the electronic library and send a notification to students</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('electronicLibrary.add.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('electronicLibrary.add.pageDescription')}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Item Details Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-6">
-          <h2 className="text-base font-bold text-[#1E293B]">Item Details</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.add.sections.itemDetails')}</h2>
           
           {/* Title */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Title <span className="text-[#EF4444]">*</span></label>
+            <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.title')} <span className="text-[#EF4444]">*</span></label>
             <input 
               type="text" 
-              placeholder="e.g., Math Reference Guide"
+              placeholder={t('electronicLibrary.add.fields.titlePlaceholder')}
               className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] ${errors.title ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -123,9 +126,9 @@ export default function AddLibraryItemPage() {
 
           {/* Description */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Description <span className="text-[#EF4444]">*</span></label>
+            <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.description')} <span className="text-[#EF4444]">*</span></label>
             <textarea 
-              placeholder="Describe the item..."
+              placeholder={t('electronicLibrary.add.fields.descriptionPlaceholder')}
               rows={4}
               className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] resize-none ${errors.description ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
               value={description}
@@ -137,7 +140,7 @@ export default function AddLibraryItemPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Course */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Course <span className="text-[#EF4444]">*</span></label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.course')} <span className="text-[#EF4444]">*</span></label>
               <div className="relative">
                 <select 
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer ${errors.courseId ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
@@ -145,7 +148,7 @@ export default function AddLibraryItemPage() {
                   onChange={(e) => setCourseId(e.target.value)}
                   disabled={isLoadingCourses}
                 >
-                  <option value="">Select Course</option>
+                  <option value="">{t('electronicLibrary.add.fields.selectCourse')}</option>
                   {courses?.map((course) => (
                     <option key={course.id} value={course.id}>{course.attributes.title}</option>
                   ))}
@@ -157,7 +160,7 @@ export default function AddLibraryItemPage() {
 
             {/* Material Type */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Material Type</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.materialType')}</label>
               <div className="relative">
                 <select 
                   className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
@@ -175,11 +178,11 @@ export default function AddLibraryItemPage() {
 
           {/* Price */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Price <span className="text-[#EF4444]">*</span></label>
+            <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.price')} <span className="text-[#EF4444]">*</span></label>
             <input 
               type="number" 
               step="0.01"
-              placeholder="19.99"
+              placeholder={t('electronicLibrary.add.fields.pricePlaceholder')}
               className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] ${errors.price ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
               value={price}
               onChange={(e) => setPrice(e.target.value)}
@@ -190,7 +193,7 @@ export default function AddLibraryItemPage() {
 
         {/* Cover Image Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-4">
-          <h2 className="text-base font-bold text-[#1E293B]">Cover Image</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.add.sections.coverImage')}</h2>
           <div className="flex flex-col gap-4">
             {/* Preview */}
             {coverImagePreview && (
@@ -215,7 +218,7 @@ export default function AddLibraryItemPage() {
             
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Upload Cover Image</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.uploadCoverImage')}</label>
               <div className="relative">
                 <input 
                   type="file" 
@@ -228,18 +231,18 @@ export default function AddLibraryItemPage() {
                   htmlFor="coverImageUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
-                  {coverImage ? coverImage.name : 'Click to upload image'}
+                  {coverImage ? coverImage.name : t('electronicLibrary.add.fields.clickToUploadImage')}
                 </label>
               </div>
               {errors.coverImage && <p className="text-xs text-[#EF4444]">{errors.coverImage}</p>}
-              <p className="text-xs text-[#94A3B8]">Supported formats: JPG, PNG, WebP</p>
+              <p className="text-xs text-[#94A3B8]">{t('electronicLibrary.add.fields.supportedFormats')}</p>
             </div>
           </div>
         </section>
 
         {/* Attachment Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-4">
-          <h2 className="text-base font-bold text-[#1E293B]">Attachment File</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.add.sections.attachment')}</h2>
           <div className="flex flex-col gap-4">
             {/* Selected File Display */}
             {attachments.map((file, index) => (
@@ -260,7 +263,7 @@ export default function AddLibraryItemPage() {
             
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Upload File</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.uploadFile')}</label>
               <div className="relative">
                 <input 
                   type="file" 
@@ -272,24 +275,24 @@ export default function AddLibraryItemPage() {
                   htmlFor="attachmentUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
-                  {attachments.length > 0 ? 'Change file' : 'Click to upload file'}
+                  {attachments.length > 0 ? t('electronicLibrary.add.fields.changeFile') : t('electronicLibrary.add.fields.clickToUploadFile')}
                 </label>
               </div>
               {errors.attachment && <p className="text-xs text-[#EF4444]">{errors.attachment}</p>}
-              <p className="text-xs text-[#94A3B8]">PDF, DOC, DOCX, or any file type</p>
+              <p className="text-xs text-[#94A3B8]">{t('electronicLibrary.add.fields.fileTypes')}</p>
             </div>
           </div>
         </section>
 
         {/* Settings Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-6">
-          <h2 className="text-base font-bold text-[#1E293B]">Settings</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.add.sections.settings')}</h2>
           
           {/* Code Activation */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-[14px] font-bold text-[#1E293B]">Code Activation Required</span>
-              <span className="text-[13px] text-[#64748B]">Students need a code to access this item</span>
+              <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.add.settings.codeActivation')}</span>
+              <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.add.settings.codeActivationDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -305,8 +308,8 @@ export default function AddLibraryItemPage() {
           {/* Publish Status */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-[14px] font-bold text-[#1E293B]">Publish Item</span>
-              <span className="text-[13px] text-[#64748B]">Make this item visible to students</span>
+              <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.add.settings.publishItem')}</span>
+              <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.add.settings.publishItemDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -327,7 +330,7 @@ export default function AddLibraryItemPage() {
             onClick={() => router.push('/electronic-library')}
             className="px-6 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-all"
           >
-            Cancel
+            {t('electronicLibrary.add.buttons.cancel')}
           </button>
           <button 
             type="submit"
@@ -337,10 +340,10 @@ export default function AddLibraryItemPage() {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Adding...
+                {t('electronicLibrary.add.buttons.adding')}
               </>
             ) : (
-              'Add to Library'
+              t('electronicLibrary.add.buttons.addToLibrary')
             )}
           </button>
         </div>

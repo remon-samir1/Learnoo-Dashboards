@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Eye, Edit2, Trash2, Video, BookOpen, FileText } from 'lucide-react';
 
 interface CourseCardProps {
@@ -30,6 +33,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   onEdit,
   onDelete
 }) => {
+  const t = useTranslations('courses');
+  
   const statusColors = {
     ACTIVE: 'bg-green-100 text-green-700',
     DRAFT: 'bg-amber-100 text-amber-700',
@@ -42,6 +47,17 @@ export const CourseCard: React.FC<CourseCardProps> = ({
     Declined: 'bg-orange-100 text-orange-700'
   };
 
+  const statusLabels: Record<string, string> = {
+    ACTIVE: t('status.active'),
+    DRAFT: t('status.draft')
+  };
+
+  const approvalLabels: Record<string, string> = {
+    Approved: t('approval.approved'),
+    Pending: t('approval.pending'),
+    Declined: t('approval.declined')
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-[#F1F5F9] overflow-hidden shadow-sm hover:shadow-md transition-all group">
       <div
@@ -52,11 +68,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           <div className="absolute top-3 right-3 flex flex-col gap-1 items-end">
             <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${statusColors[status]}`}>
-              {status}
+              {statusLabels[status]}
             </span>
             {approval && (
               <span className={`px-2 py-1 rounded-md text-[10px] font-bold ${approvalColors[approval]}`}>
-                {approval}
+                {approvalLabels[approval]}
               </span>
             )}
           </div>
@@ -75,17 +91,17 @@ export const CourseCard: React.FC<CourseCardProps> = ({
           <div className="flex flex-col items-center gap-1 border-r border-[#F1F5F9]">
             <Video className="w-4 h-4 text-[#94A3B8]" />
             <span className="text-[11px] font-bold text-[#1E293B]">{lectures}</span>
-            <span className="text-[9px] text-[#94A3B8]">Lectures</span>
+            <span className="text-[9px] text-[#94A3B8]">{t('card.lectures')}</span>
           </div>
           <div className="flex flex-col items-center gap-1 border-r border-[#F1F5F9]">
             <BookOpen className="w-4 h-4 text-[#94A3B8]" />
             <span className="text-[11px] font-bold text-[#1E293B]">{notes}</span>
-            <span className="text-[9px] text-[#94A3B8]">Notes</span>
+            <span className="text-[9px] text-[#94A3B8]">{t('card.notes')}</span>
           </div>
           <div className="flex flex-col items-center gap-1">
             <FileText className="w-4 h-4 text-[#94A3B8]" />
             <span className="text-[11px] font-bold text-[#1E293B]">{exams}</span>
-            <span className="text-[9px] text-[#94A3B8]">Exams</span>
+            <span className="text-[9px] text-[#94A3B8]">{t('card.exams')}</span>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { Plus, Search, ChevronDown, Loader2, Eye, Edit2, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -23,10 +24,11 @@ function getMaterialTypeColor(type: string): string {
 }
 
 export default function ElectronicLibraryPage() {
+  const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [materialTypeFilter, setMaterialTypeFilter] = useState('All Types');
-  const [courseFilter, setCourseFilter] = useState('All Courses');
+  const [materialTypeFilter, setMaterialTypeFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState('all');
 
   // Debounce search
   useEffect(() => {
@@ -46,10 +48,10 @@ export default function ElectronicLibraryPage() {
         item.attributes.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         item.attributes.description?.toLowerCase().includes(debouncedSearch.toLowerCase());
       
-      const matchesType = materialTypeFilter === 'All Types' ||
-        item.attributes.material_type === materialTypeFilter.toLowerCase();
+      const matchesType = materialTypeFilter === 'all' ||
+        item.attributes.material_type === materialTypeFilter;
       
-      const matchesCourse = courseFilter === 'All Courses' ||
+      const matchesCourse = courseFilter === 'all' ||
         String(item.attributes.course_id) === courseFilter;
       
       return matchesSearch && matchesType && matchesCourse;
@@ -57,7 +59,7 @@ export default function ElectronicLibraryPage() {
   }, [libraries, debouncedSearch, materialTypeFilter, courseFilter]);
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this library item?')) return;
+    if (!confirm(t('electronicLibrary.deleteConfirm'))) return;
     try {
       await deleteLibrary(id);
       await refetch();
@@ -71,15 +73,15 @@ export default function ElectronicLibraryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Electronic Library</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Manage digital books, materials, and pricing.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('electronicLibrary.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('electronicLibrary.pageDescription')}</p>
         </div>
         <Link 
           href="/electronic-library/add"
           className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
         >
           <Plus className="w-4 h-4" />
-          Add Item
+          {t('electronicLibrary.addItem')}
         </Link>
       </div>
 
@@ -89,7 +91,7 @@ export default function ElectronicLibraryPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
           <input 
             type="text" 
-            placeholder="Search library items..." 
+            placeholder={t('electronicLibrary.searchPlaceholder')} 
             className="w-full pl-11 pr-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -102,10 +104,10 @@ export default function ElectronicLibraryPage() {
               onChange={(e) => setMaterialTypeFilter(e.target.value)}
               className="appearance-none pl-4 pr-10 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#475569] font-medium focus:outline-none cursor-pointer"
             >
-              <option>All Types</option>
-              <option>Booklet</option>
-              <option>Reference</option>
-              <option>Guide</option>
+              <option value="all">{t('electronicLibrary.filters.allTypes')}</option>
+              <option value="booklet">{t('electronicLibrary.filters.booklet')}</option>
+              <option value="reference">{t('electronicLibrary.filters.reference')}</option>
+              <option value="guide">{t('electronicLibrary.filters.guide')}</option>
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
           </div>
@@ -116,7 +118,7 @@ export default function ElectronicLibraryPage() {
               disabled={isLoadingCourses}
               className="appearance-none pl-4 pr-10 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#475569] font-medium focus:outline-none cursor-pointer disabled:opacity-50"
             >
-              <option>All Courses</option>
+              <option value="all">{t('electronicLibrary.filters.allCourses')}</option>
               {courses?.map((course) => (
                 <option key={course.id} value={course.id}>{course.attributes.title}</option>
               ))}
@@ -136,14 +138,14 @@ export default function ElectronicLibraryPage() {
       {/* Error State */}
       {!isLoading && error && (
         <div className="text-center py-12 text-[#EF4444]">
-          Failed to load library items. Please try again.
+          {t('electronicLibrary.loadError')}
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && !error && filteredLibraries.length === 0 && (
         <div className="text-center py-12 text-[#64748B]">
-          No library items found.
+          {t('electronicLibrary.noItems')}
         </div>
       )}
 
@@ -163,7 +165,7 @@ export default function ElectronicLibraryPage() {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full text-[#94A3B8]">
-                    No Image
+                    {t('electronicLibrary.card.noImage')}
                   </div>
                 )}
                 {/* Status Badge */}
@@ -172,7 +174,7 @@ export default function ElectronicLibraryPage() {
                     ? 'bg-[#EBFDF5] text-[#10B981]'
                     : 'bg-[#F1F5F9] text-[#64748B]'
                 }`}>
-                  {item.attributes.is_publish ? 'Published' : 'Draft'}
+                  {item.attributes.is_publish ? t('electronicLibrary.status.published') : t('electronicLibrary.status.draft')}
                 </span>
                 {/* Type Badge */}
                 <span className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wide ${getMaterialTypeColor(item.attributes.material_type)}`}>
@@ -197,14 +199,14 @@ export default function ElectronicLibraryPage() {
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-[#64748B] hover:text-[#4F46E5] hover:bg-[#EEF2FF] rounded-lg transition-all"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    View
+                    {t('electronicLibrary.card.view')}
                   </Link>
                   <Link 
                     href={`/electronic-library/${item.id}/edit`}
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-[#64748B] hover:text-[#4F46E5] hover:bg-[#EEF2FF] rounded-lg transition-all"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
-                    Edit
+                    {t('electronicLibrary.card.edit')}
                   </Link>
                   <button 
                     onClick={() => handleDelete(parseInt(item.id))}
@@ -212,7 +214,7 @@ export default function ElectronicLibraryPage() {
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-[#64748B] hover:text-[#EF4444] hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Delete
+                    {t('electronicLibrary.card.delete')}
                   </button>
                 </div>
               </div>

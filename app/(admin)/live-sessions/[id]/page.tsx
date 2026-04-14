@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, Users, Settings as SettingsIcon, Clock, Video, Loader2, Disc, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
 import StatCard from '@/components/StatCard';
@@ -42,7 +43,7 @@ function formatDateTime(dateString: string): string {
   });
 }
 
-function getCourseTitle(room: LiveRoom): string {
+function getCourseTitle(room: LiveRoom, t: any): string {
   // First check if course is in attributes (list endpoint format)
   if (room.attributes.course?.data?.attributes?.title) {
     return room.attributes.course.data.attributes.title;
@@ -55,10 +56,10 @@ function getCourseTitle(room: LiveRoom): string {
       return String(course.attributes.title);
     }
   }
-  return 'No Course';
+  return t('liveSessions.card.noCourse');
 }
 
-function getInstructorName(room: LiveRoom): string {
+function getInstructorName(room: LiveRoom, t: any): string {
   // First check if user is in attributes (list endpoint format)
   if (room.attributes.user?.data?.attributes?.full_name) {
     return room.attributes.user.data.attributes.full_name;
@@ -74,10 +75,11 @@ function getInstructorName(room: LiveRoom): string {
       return `${user.attributes.first_name || ''} ${user.attributes.last_name || ''}`.trim();
     }
   }
-  return 'Unknown';
+  return t('liveSessions.card.unknownInstructor');
 }
 
 export default function SessionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations();
   const { id } = use(params);
   const [loading, setLoading] = useState(true);
   const [liveRoom, setLiveRoom] = useState<LiveRoom | null>(null);
@@ -89,7 +91,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         setLiveRoom(response.data);
       } catch (error) {
         console.error('Error fetching live room:', error);
-        toast.error('Failed to load session details');
+        toast.error(t('liveSessions.error'));
       } finally {
         setLoading(false);
       }
@@ -109,10 +111,10 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
   if (!liveRoom) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <p className="text-[#64748B]">Session not found</p>
+        <p className="text-[#64748B]">{t('liveSessions.detail.sessionNotFound')}</p>
         <Link href="/live-sessions">
           <button className="px-4 py-2 bg-[#2563EB] text-white rounded-xl text-sm font-bold">
-            Back to Sessions
+            {t('liveSessions.detail.backToSessions')}
           </button>
         </Link>
       </div>
@@ -140,7 +142,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                 status === 'UPCOMING' ? 'bg-[#DBEAFE] text-[#2563EB]' :
                 'bg-[#F1F5F9] text-[#64748B]'
               }`}>
-                {status}
+                {t(`liveSessions.status.${status.toLowerCase()}`)}
               </span>
             </div>
             <div className="flex items-center gap-4 mt-1 text-[13px] text-[#64748B]">
@@ -151,7 +153,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
         <Link href={`/live-sessions/${id}/settings`}>
           <button className="bg-white border border-[#E2E8F0] text-[#1E293B] px-4 py-2.5 rounded-xl font-bold text-[14px] flex items-center gap-2 hover:bg-[#F8FAFC] transition-all">
             <SettingsIcon className="w-4 h-4" />
-            Settings
+            {t('liveSessions.detail.settings')}
           </button>
         </Link>
       </div>
@@ -159,14 +161,14 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
         <StatCard
-          label="Max Students"
+          label={t('liveSessions.detail.maxStudents')}
           value={String(attrs.max_students)}
           icon={<Users className="w-6 h-6" />}
           iconColor="text-[#7C3AED]"
         />
         <StatCard
-          label="Max Join Time"
-          value={attrs.max_join_time ? `${attrs.max_join_time}m` : 'Anytime'}
+          label={t('liveSessions.detail.maxJoinTime')}
+          value={attrs.max_join_time ? `${attrs.max_join_time}m` : t('liveSessions.detail.anytime')}
           icon={<Clock className="w-6 h-6" />}
           iconColor="text-[#EA580C]"
         />
@@ -179,33 +181,33 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
             <h2 className="text-[16px] font-bold text-[#1E293B] mb-6 flex items-center gap-2">
               <Video className="w-5 h-5 text-[#2563EB]" />
-              Session Info
+              {t('liveSessions.detail.sessionInfo')}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8">
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">Title</span>
+                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">{t('liveSessions.detail.labels.title')}</span>
                 <span className="text-[14px] font-bold text-[#1E293B]">{attrs.title}</span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">Course</span>
-                <span className="text-[14px] font-bold text-[#1E293B]">{getCourseTitle(liveRoom)}</span>
+                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">{t('liveSessions.detail.labels.course')}</span>
+                <span className="text-[14px] font-bold text-[#1E293B]">{getCourseTitle(liveRoom, t)}</span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">Instructor</span>
-                <span className="text-[14px] font-bold text-[#1E293B]">{getInstructorName(liveRoom)}</span>
+                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">{t('liveSessions.detail.labels.instructor')}</span>
+                <span className="text-[14px] font-bold text-[#1E293B]">{getInstructorName(liveRoom, t)}</span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">Description</span>
+                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">{t('liveSessions.detail.labels.description')}</span>
                 <span className="text-[14px] font-bold text-[#1E293B]">{attrs.description || '-'}</span>
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">Start Time</span>
+                <span className="text-[12px] font-bold text-[#94A3B8] uppercase">{t('liveSessions.detail.labels.startTime')}</span>
                 <span className="text-[14px] font-bold text-[#1E293B]">{formatDateTime(attrs.started_at)}</span>
               </div>
               {attrs.ended_at && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-[12px] font-bold text-[#94A3B8] uppercase">End Time</span>
+                  <span className="text-[12px] font-bold text-[#94A3B8] uppercase">{t('liveSessions.detail.labels.endTime')}</span>
                   <span className="text-[14px] font-bold text-[#1E293B]">{formatDateTime(attrs.ended_at)}</span>
                 </div>
               )}
@@ -215,7 +217,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           {/* Features Card */}
           <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
             <h2 className="text-[16px] font-bold text-[#1E293B] mb-6 flex items-center gap-2">
-              Features
+              {t('liveSessions.detail.features')}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -225,7 +227,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                  <div className="flex items-center gap-3">
                    <MessageCircle className={`w-4 h-4 ${attrs.enable_chat ? 'text-[#10B981]' : 'text-[#94A3B8]'}`} />
                    <span className={`text-[13px] font-bold ${attrs.enable_chat ? 'text-[#166534]' : 'text-[#64748B]'}`}>
-                     Chat {attrs.enable_chat ? 'Enabled' : 'Disabled'}
+                     {t(attrs.enable_chat ? 'liveSessions.detail.chatEnabled' : 'liveSessions.detail.chatDisabled')}
                    </span>
                  </div>
               </div>
@@ -235,7 +237,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
                  <div className="flex items-center gap-3">
                    <Disc className={`w-4 h-4 ${attrs.enable_recording ? 'text-[#EF4444]' : 'text-[#94A3B8]'}`} />
                    <span className={`text-[13px] font-bold ${attrs.enable_recording ? 'text-[#991B1B]' : 'text-[#64748B]'}`}>
-                     Recording {attrs.enable_recording ? 'Enabled' : 'Disabled'}
+                     {t(attrs.enable_recording ? 'liveSessions.detail.recordingEnabled' : 'liveSessions.detail.recordingDisabled')}
                    </span>
                  </div>
               </div>

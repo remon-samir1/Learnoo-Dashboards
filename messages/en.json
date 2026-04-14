@@ -1,0 +1,1401 @@
+{
+  "app": {
+    "name": "Learnoo Admin",
+    "tagline": "Pro Instructor"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "status": "Status",
+    "actions": "Actions",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "add": "Add",
+    "create": "Create",
+    "update": "Update",
+    "submit": "Submit",
+    "back": "Back to sign in",
+    "next": "Next",
+    "previous": "Previous",
+    "soon": "Soon",
+    "comingSoon": "Coming Soon",
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "suspended": "Suspended",
+    "showing": "Showing",
+    "to": "to",
+    "of": "of",
+    "results": "results",
+    "noResults": "No results found",
+    "notFound": "Not found",
+    "unknown": "Unknown",
+    "na": "N/A",
+    "mainMenu": "Main Menu",
+    "logout": "Logout",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "welcome": "Welcome",
+    "dashboard": "Dashboard"
+  },
+  "auth": {
+    "login": {
+      "title": "Learnoo Admin",
+      "subtitle": "Sign in to manage your platform",
+      "email": "Email Address",
+      "password": "Password",
+      "emailPlaceholder": "admin@learnoo.com",
+      "passwordPlaceholder": "Enter your password",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "signIn": "Sign In",
+      "signingIn": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create account",
+      "errors": {
+        "missingFields": "Please enter both email and password",
+        "loginFailed": "Login failed",
+        "noToken": "No token received",
+        "noPermission": "You do not have permission to access this platform"
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot Password",
+      "subtitle": "Enter your email to reset your password",
+      "email": "Email Address",
+      "submit": "Reset Password",
+      "backToLogin": "Back to Login"
+    },
+    "createAccount": {
+      "title": "Create Account",
+      "subtitle": "Register to access the platform",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Create Account",
+      "haveAccount": "Already have an account?",
+      "login": "Login"
+    },
+    "verification": {
+      "title": "Verification Code",
+      "subtitle": "Enter the code sent to your email",
+      "code": "Verification Code",
+      "verify": "Verify",
+      "resend": "Resend Code"
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your new password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "submit": "Reset Password"
+    }
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "academicStructure": "Academic Structure",
+    "universities": "Universities",
+    "faculties": "Faculties",
+    "centers": "Centers",
+    "departments": "Departments",
+    "students": "Students",
+    "activation": "Activation",
+    "myCourses": "My Courses",
+    "contentManager": "Content Manager",
+    "liveSessions": "Live Sessions",
+    "examsAndQA": "Exams & Q&A",
+    "community": "Community",
+    "notesSummaries": "Notes & Summaries",
+    "electronicLibrary": "Electronic Library",
+    "notifications": "Notifications",
+    "downloads": "Downloads",
+    "profileSettings": "Profile & Settings",
+    "featureControl": "Feature Control",
+    "adminDashboard": "Admin Dashboard",
+    "doctorDashboard": "Doctor Dashboard"
+  },
+  "header": {
+    "titles": {
+      "dashboard": "Dashboard Overview",
+      "students": "Students Management",
+      "courses": "My Courses",
+      "centers": "Centers",
+      "departments": "Departments",
+      "faculties": "Faculties",
+      "universities": "Universities",
+      "levels": "Levels",
+      "lectures": "Lectures",
+      "chapters": "Chapters",
+      "exams": "Exams & Q&A",
+      "contentManager": "Content Manager",
+      "community": "Community",
+      "electronicLibrary": "Electronic Library",
+      "notesSummaries": "Notes & Summaries",
+      "liveSessions": "Live Sessions",
+      "notifications": "Notifications",
+      "downloads": "Downloads",
+      "settings": "Settings",
+      "platformSettings": "Platform Settings",
+      "featureControl": "Feature Control",
+      "featureControlPanel": "Feature Control Panel",
+      "create": "Create",
+      "edit": "Edit",
+      "details": "Details",
+      "liveRoom": "Live Room",
+      "activation": "Activation"
+    }
+  },
+  "students": {
+    "pageTitle": "Students Management",
+    "pageDescription": "Manage student accounts, access, and details.",
+    "addStudent": "Add Student",
+    "studentCode": "Student Code",
+    "nameContact": "Name & Contact",
+    "university": "University",
+    "centers": "Centers",
+    "status": "Status",
+    "actions": "Actions",
+    "searchPlaceholder": "Search by name or email...",
+    "allStatuses": "All Statuses",
+    "noPhone": "No phone",
+    "viewProfile": "View Profile",
+    "resetPassword": "Reset Password",
+    "editStudent": "Edit Student",
+    "deleteStudent": "Delete Student",
+    "deleteConfirm": "Are you sure you want to delete this student?",
+    "noStudents": "No students found. Add your first student!",
+    "statusLabels": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "suspended": "Suspended"
+    },
+    "modals": {
+      "resetPassword": {
+        "title": "Reset Password",
+        "description": "You are about to reset the password for",
+        "passwordResetMessage": "Password has been reset for",
+        "newPassword": "Generated Password (Admin View Only):",
+        "close": "Close",
+        "confirm": "Confirm Reset",
+        "error": "Failed to reset password. Please try again."
+      }
+    },
+    "form": {
+      "addTitle": "Add New Student",
+      "addDescription": "Create a new student account and assign courses.",
+      "editTitle": "Edit Student",
+      "editDescription": "Update student account details and course assignments.",
+      "sections": {
+        "personal": "Personal Information",
+        "academic": "Academic Information",
+        "centers": "Centers & Courses",
+        "profileImage": "Profile Image",
+        "accountStatus": "Account Status"
+      },
+      "fields": {
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "phone": "Phone Number",
+        "email": "Email Address",
+        "password": "Password",
+        "passwordOptional": "Password (Leave blank to keep current)",
+        "university": "University",
+        "faculty": "Faculty",
+        "centers": "Centers (Multiple Selection)",
+        "courses": "Assigned Courses (Multiple Selection)",
+        "status": "Status",
+        "profileImage": "Profile Image",
+        "selectUniversity": "Select University",
+        "selectFaculty": "Select Faculty",
+        "selectCenter": "Select Center",
+        "selectCourse": "Select Course",
+        "noCentersSelected": "No centers selected",
+        "noCoursesSelected": "No courses selected",
+        "placeholders": {
+          "firstName": "Ahmed",
+          "lastName": "Ali",
+          "phone": "+20 100 123 4567",
+          "email": "student@university.edu",
+          "password": "********"
+        }
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Create Student",
+        "update": "Update Student",
+        "creating": "Creating...",
+        "updating": "Updating..."
+      },
+      "view": {
+        "studentId": "Student ID",
+        "lastActive": "Last active",
+        "editStudent": "Edit Student",
+        "sections": {
+          "personal": "Personal Information",
+          "academic": "Academic Information",
+          "enrolledCourses": "Enrolled Courses",
+          "examResults": "Exam Results",
+          "security": "Security & Account Access",
+          "centers": "Centers",
+          "activity": "Activity Summary",
+          "device": "Device & Access"
+        },
+        "fields": {
+          "fullName": "Full Name",
+          "status": "Status",
+          "email": "Email",
+          "phone": "Phone",
+          "joined": "Joined",
+          "university": "University",
+          "faculty": "Faculty",
+          "lectures": "Lectures",
+          "chapters": "Chapters",
+          "exams": "Exams",
+          "exam": "Exam",
+          "score": "Score",
+          "date": "Date",
+          "notesCreated": "Notes Created",
+          "downloads": "Downloads",
+          "liveAttendance": "Live Attendance",
+          "communityPosts": "Community Posts",
+          "device": "Device",
+          "lastIp": "Last IP",
+          "resetPassword": "Reset Password"
+        },
+        "noCourses": "No enrolled courses found",
+        "noExams": "No exam results found",
+        "noCenters": "No centers assigned",
+        "loadError": "Failed to load student data",
+        "backToStudents": "Back to Students"
+      }
+    },
+    "import": {
+      "selectFile": "Choose File",
+      "uploading": "Uploading...",
+      "success": "Success",
+      "failed": "Failed"
+    },
+    "openFile": "Open File"
+  },
+  "dashboard": {
+    "stats": {
+      "totalStudents": "Total Students",
+      "activeCourses": "Active Courses",
+      "liveSessionsToday": "Live Sessions Today",
+      "notesCreated": "Notes Created",
+      "monthlyRevenue": "Monthly Revenue",
+      "communityPosts": "Community Posts"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "addStudent": "Add Student",
+      "addCourse": "Add Course",
+      "liveSession": "Live Session",
+      "notify": "Notify",
+      "addToLibrary": "Add to Library"
+    }
+  },
+  "courses": {
+    "pageTitle": "Courses Management",
+    "pageDescription": "Create and manage courses, assign instructors and centers.",
+    "createCourse": "Create Course",
+    "searchPlaceholder": "Search courses...",
+    "allStatuses": "All Statuses",
+    "allApprovals": "All Approvals",
+    "active": "Active",
+    "draft": "Draft",
+    "approved": "Approved",
+    "pending": "Pending",
+    "declined": "Declined",
+    "noCourses": "No courses found. Create your first course!",
+    "deleteConfirm": "Are you sure you want to delete this course?",
+    "deleteSuccess": "Course deleted successfully",
+    "deleteError": "Failed to delete course",
+    "status": {
+      "active": "ACTIVE",
+      "draft": "DRAFT"
+    },
+    "approval": {
+      "approved": "Approved",
+      "pending": "Pending",
+      "declined": "Declined"
+    },
+    "card": {
+      "lectures": "lectures",
+      "notes": "notes",
+      "exams": "exams",
+      "noInstructor": "No Instructor",
+      "noCenter": "No Center",
+      "untitled": "Untitled Course"
+    },
+    "form": {
+      "addTitle": "Add New Course",
+      "addDescription": "Create a new course and assign instructors and centers.",
+      "editTitle": "Edit Course",
+      "editDescription": "Update course details and settings.",
+      "sections": {
+        "courseInfo": "Course Information",
+        "academicInfo": "Academic Information",
+        "pricingSettings": "Pricing & Settings",
+        "thumbnail": "Course Thumbnail"
+      },
+      "fields": {
+        "title": "Course Title",
+        "subtitle": "Subtitle",
+        "description": "Description",
+        "objectives": "Objectives",
+        "department": "Department",
+        "price": "Price (EGP)",
+        "maxViews": "Max Views Per Student",
+        "visibility": "Visibility",
+        "status": "Status"
+      },
+      "placeholders": {
+        "title": "Physics 101: Mechanics",
+        "subtitle": "Introduction to Classical Mechanics",
+        "description": "Enter course description...",
+        "objectives": "Enter course objectives and learning outcomes...",
+        "price": "0",
+        "maxViews": "10"
+      },
+      "selectDepartment": "Select Department",
+      "loadingDepartments": "Loading departments...",
+      "public": "Public",
+      "private": "Private",
+      "thumbnailHint": "Click to upload thumbnail",
+      "thumbnailFormats": "PNG, JPG up to 5MB",
+      "selectedFile": "Selected",
+      "buttons": {
+        "cancel": "Cancel",
+        "create": "Create Course",
+        "update": "Update Course",
+        "creating": "Creating...",
+        "updating": "Updating..."
+      }
+    },
+    "view": {
+      "loading": "Loading course details...",
+      "error": "Error Loading Course",
+      "notFound": "Course not found",
+      "backToCourses": "Back to Courses",
+      "manageContent": "Manage Content",
+      "editCourse": "Edit Course",
+      "active": "Active",
+      "inactive": "Inactive",
+      "sections": {
+        "description": "Description",
+        "objectives": "Objectives",
+        "lecturesContent": "Lectures & Content",
+        "performance": "Performance",
+        "courseDetails": "Course Details",
+        "activation": "Course Activation"
+      },
+      "stats": {
+        "lectures": "Lectures",
+        "chapters": "Chapters",
+        "notes": "Notes",
+        "exams": "Exams",
+        "students": "Students"
+      },
+      "labels": {
+        "price": "Price",
+        "visibility": "Visibility",
+        "maxViews": "Max Views",
+        "createdAt": "Created At",
+        "perStudent": "per student"
+      },
+      "noLectures": "No lectures available.",
+      "viewDetails": "View Details",
+      "activationTabs": {
+        "byCode": "By Code",
+        "preactivation": "Pre-activation"
+      },
+      "availableCodes": "Available Codes",
+      "generateCodes": "Generate Activation Codes",
+      "selectStudent": "Select Student",
+      "searchStudents": "Search students...",
+      "noStudentsFound": "No students found",
+      "activate": "Activate",
+      "activating": "Activating...",
+      "preactivation": {
+        "title": "Pre-activation File",
+        "description": "Upload a file with phone numbers",
+        "selectFile": "Select a file first",
+        "numbersReady": "phone numbers ready for upload",
+        "upload": "Upload Pre-activation",
+        "clear": "Clear",
+        "success": "Processed pre-activations",
+        "failed": "Failed to upload pre-activation file"
+      }
+    },
+    "messages": {
+      "pleaseUploadThumbnail": "Please upload a course thumbnail",
+      "pleaseSelectDepartment": "Please select a department",
+      "courseCreated": "Course created successfully!",
+      "courseUpdated": "Course updated successfully!",
+      "pleaseSelectImage": "Please select an image file (PNG, JPG, JPEG)",
+      "imageSizeError": "Image size must be less than 5MB",
+      "imageSelected": "Image selected successfully",
+      "selectCodeAndStudent": "Please select both a code and a student",
+      "courseActivated": "Course activated successfully!",
+      "codeCopied": "Code copied to clipboard"
+    }
+  },
+  "centers": {
+    "pageTitle": "Centers Management",
+    "pageDescription": "Manage physical and virtual centers",
+    "addCenter": "Add Center",
+    "searchPlaceholder": "Search centers...",
+    "centerName": "Center Name",
+    "parent": "Parent (Faculty)",
+    "created": "Created",
+    "noCenters": "No centers found",
+    "deleteConfirm": "Are you sure you want to delete this center?",
+    "loadError": "Failed to load centers",
+    "retry": "Retry",
+    "form": {
+      "addTitle": "Add New Center",
+      "editTitle": "Edit Center",
+      "addDescription": "Create a new physical or virtual center",
+      "editDescription": "Update center information",
+      "sectionTitle": "Center Information",
+      "nameLabel": "Center Name",
+      "namePlaceholder": "e.g., Main Center, Dokki",
+      "parentFacultyLabel": "Parent Faculty",
+      "selectFaculty": "Select Faculty"
+    },
+    "loading": "Loading center...",
+    "notFound": "Center not found"
+  },
+  "contentManager": {
+    "pageTitle": "Content Manager",
+    "pageDescription": "Manage course structure, upload videos, and configure lecture settings.",
+    "courseStructure": "Course Structure",
+    "loadingLectures": "Loading lectures...",
+    "loadingChapters": "Loading chapters...",
+    "addLecture": "Add Lecture",
+    "addChapter": "Add Chapter",
+    "locked": "Locked",
+    "published": "Published",
+    "lectureId": "Lecture ID",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "videoContent": "Video Content",
+    "addVideo": "Add Video",
+    "changeVideo": "Change Video",
+    "noVideo": "No video content available",
+    "addVideoHint": "Add a video attachment to display content here",
+    "thumbnail": "Thumbnail",
+    "add": "Add",
+    "change": "Change",
+    "replace": "Replace",
+    "noThumbnail": "No thumbnail set",
+    "removeThumbnail": "Remove Thumbnail",
+    "undoRemove": "Undo Remove",
+    "chapterSettings": "Chapter Settings",
+    "freePreview": "Free Preview",
+    "freePreviewDescription": "Allow students to watch this chapter without enrolling.",
+    "maxViews": "Max Views",
+    "maxViewsDescription": "Set the maximum number of views allowed for this chapter.",
+    "attachments": "Attachments & Resources",
+    "noAttachments": "No new attachments to upload.",
+    "chapterActivation": "Chapter Activation",
+    "selectChapter": "Select a Chapter",
+    "selectChapterHint": "Select a chapter from the structure tree to view and manage its content and settings.",
+    "modal": {
+      "addLecture": "Add New Lecture",
+      "addChapter": "Add New Chapter",
+      "title": "Title",
+      "description": "Description",
+      "duration": "Duration (e.g. 45:00)",
+      "thumbnailImage": "Thumbnail Image",
+      "videoFile": "Video File",
+      "otherAttachments": "Other Attachments",
+      "selectImage": "Select image file",
+      "selectVideo": "Select video file",
+      "selectFiles": "Select files",
+      "filesSelected": "{count} files selected",
+      "cancel": "Cancel",
+      "createLecture": "Create Lecture",
+      "createChapter": "Create Chapter",
+      "creating": "Creating..."
+    },
+    "messages": {
+      "lectureCreated": "Lecture created successfully",
+      "lectureCreateFailed": "Failed to create lecture",
+      "chapterCreated": "Chapter created successfully",
+      "chapterCreateFailed": "Failed to create chapter",
+      "chapterUpdated": "Chapter updated successfully",
+      "chapterUpdateFailed": "Failed to update chapter",
+      "chapterDeleted": "Chapter deleted successfully",
+      "chapterDeleteFailed": "Failed to delete chapter",
+      "lectureDeleted": "Lecture deleted successfully",
+      "lectureDeleteFailed": "Failed to delete lecture",
+      "deleteChapterConfirm": "Are you sure you want to delete this chapter?",
+      "deleteLectureConfirm": "Are you sure you want to delete this lecture?"
+    }
+  },
+  "activation": {
+    "pageTitle": "Activation Management",
+    "pageDescription": "Manage activation codes for courses, chapters, and library items",
+    "generateCodes": "Generate Codes",
+    "tabs": {
+      "allCodes": "All Codes",
+      "assignToUser": "Assign to User",
+      "studentHistory": "Student History"
+    },
+    "columns": {
+      "code": "Code",
+      "type": "Type",
+      "item": "Item",
+      "status": "Status",
+      "created": "Created"
+    },
+    "status": {
+      "used": "Used",
+      "available": "Available",
+      "all": "All",
+      "allStatus": "All Status"
+    },
+    "types": {
+      "course": "Course",
+      "chapter": "Chapter",
+      "library": "Library",
+      "allTypes": "All Types"
+    },
+    "filters": {
+      "searchPlaceholder": "Search activation codes...",
+      "allItems": "All Items"
+    },
+    "actions": {
+      "copyCode": "Copy code",
+      "cleanInvalid": "Clean Invalid",
+      "cleaning": "Cleaning...",
+      "assign": "Assign to User",
+      "assigning": "Assigning...",
+      "clearSelection": "Clear Selection"
+    },
+    "messages": {
+      "noOrphanedCodes": "No orphaned codes found. All codes are valid!",
+      "orphanedCodesRemoved": "orphaned code(s) removed successfully",
+      "failedRemoveOrphaned": "Failed to remove some orphaned codes",
+      "codeCopied": "Code copied to clipboard",
+      "selectStudentAndCode": "Please select both a student and a code",
+      "codeNotFound": "Code not found",
+      "codeAssigned": "Code assigned successfully!",
+      "noCodesFound": "No activation codes found. Generate your first codes!",
+      "noStudentsFound": "No students found",
+      "noAvailableCodes": "No available codes to assign. All codes have been used.",
+      "generateNewCodes": "Generate new codes",
+      "noCodesMatchSearch": "No codes match your search.",
+      "clearSearch": "Clear search",
+      "noCodesAvailable": "No activation codes available.",
+      "generateCodesLink": "Generate codes",
+      "studentNoCodes": "This student has not used any activation codes yet.",
+      "codesGenerated": "code(s) generated successfully!",
+      "selectItem": "Please select an item"
+    },
+    "sections": {
+      "selectStudent": "Select Student",
+      "selectCode": "Select Activation Code",
+      "searchStudents": "Search students by name or email...",
+      "searchCodes": "Search by code..."
+    },
+    "generate": {
+      "title": "Generate Activation Codes",
+      "description": "Create new activation codes for courses, chapters, or library items.",
+      "sectionTitle": "Code Configuration",
+      "codeType": "Code Type",
+      "assignedItem": "Assigned Item",
+      "quantity": "Quantity",
+      "quantityHint": "Generate up to 100 codes at once",
+      "selectType": "Select",
+      "generatedCodes": "Generated Codes",
+      "cancel": "Cancel",
+      "generate": "Generate Codes",
+      "generating": "Generating...",
+      "generateAndDownload": "Generate & Download",
+      "downloaded": "Codes downloaded as Excel"
+    },
+    "assign": {
+      "title": "Assign Code to User",
+      "description": "Assign activation codes to students for course/chapter/library access."
+    },
+    "edit": {
+      "title": "Edit Activation Code",
+      "description": "Update code details and assignment.",
+      "sectionTitle": "Code Details",
+      "codeLabel": "Code",
+      "codeHint": "Unique activation code",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "loadingCode": "Loading code data...",
+      "loadingItems": "Loading items...",
+      "notFound": "Code not found",
+      "back": "Back to Activation",
+      "current": "Current",
+      "codeUpdated": "Code updated successfully!"
+    },
+    "delete": {
+      "title": "Delete Activation Code"
+    },
+    "history": {
+      "usedCodes": "Used Codes",
+      "codeCount": "code(s) used"
+    }
+  },
+  "featureControl": {
+    "description": "Instantly toggle platform features on or off. Changes apply immediately to all students.",
+    "buttons": {
+      "reset": "Reset",
+      "save": "Save Changes",
+      "saving": "Saving..."
+    },
+    "toast": {
+      "saveSuccess": "Feature settings saved successfully!",
+      "saveError": "Failed to save feature settings",
+      "resetSuccess": "Changes reset to saved values"
+    },
+    "categories": {
+      "auth": {
+        "title": "Authentication & Security",
+        "description": "Manage how students access the platform."
+      },
+      "library": {
+        "title": "Library Features",
+        "description": "Control electronic library access."
+      },
+      "experience": {
+        "title": "Student Experience",
+        "description": "Toggle UI elements in the student app."
+      }
+    },
+    "features": {
+      "feature_otp_verification": {
+        "name": "Enable OTP Verification",
+        "description": "Require One-Time Password for student login."
+      },
+      "feature_login_without_otp": {
+        "name": "Allow Login Without OTP",
+        "description": "Fallback for students who cannot receive SMS."
+      },
+      "feature_electronic_library": {
+        "name": "Enable Electronic Library",
+        "description": "Show the library tab to students."
+      },
+      "feature_library_purchases": {
+        "name": "Enable Purchases",
+        "description": "Allow students to buy premium materials."
+      },
+      "feature_continue_watching": {
+        "name": "Enable Continue Watching",
+        "description": "Show recently watched lectures on home."
+      },
+      "feature_profile_editing": {
+        "name": "Enable Profile Editing",
+        "description": "Allow students to change their details."
+      }
+    }
+  },
+  "liveSessions": {
+    "pageTitle": "Live Sessions",
+    "pageDescription": "Schedule and manage live streaming sessions and interactions.",
+    "scheduleSession": "Schedule Session",
+    "searchPlaceholder": "Search live sessions...",
+    "noSessions": "No live sessions found. Schedule your first session!",
+    "loading": "Loading live sessions...",
+    "error": "Failed to load live sessions",
+    "deleteConfirm": "Are you sure you want to delete this session?",
+    "deleteSuccess": "Session deleted successfully",
+    "deleteError": "Failed to delete session",
+    "status": {
+      "live": "LIVE",
+      "upcoming": "UPCOMING",
+      "ended": "ENDED"
+    },
+    "time": {
+      "today": "Today",
+      "tomorrow": "Tomorrow"
+    },
+    "card": {
+      "noCourse": "No Course",
+      "unknownInstructor": "Unknown Instructor",
+      "chatOn": "Chat On",
+      "chatOff": "Chat Off",
+      "recordingOn": "Recording On",
+      "recordingOff": "Recording Off",
+      "start": "Start",
+      "end": "End",
+      "details": "Details",
+      "settings": "Settings",
+      "delete": "Delete"
+    },
+    "detail": {
+      "backToSessions": "Back to Sessions",
+      "sessionNotFound": "Session not found",
+      "settings": "Settings",
+      "maxStudents": "Max Students",
+      "maxJoinTime": "Max Join Time",
+      "anytime": "Anytime",
+      "sessionInfo": "Session Info",
+      "features": "Features",
+      "chatEnabled": "Chat Enabled",
+      "chatDisabled": "Chat Disabled",
+      "recordingEnabled": "Recording Enabled",
+      "recordingDisabled": "Recording Disabled",
+      "labels": {
+        "title": "Title",
+        "course": "Course",
+        "instructor": "Instructor",
+        "description": "Description",
+        "startTime": "Start Time",
+        "endTime": "End Time"
+      }
+    },
+    "schedule": {
+      "pageTitle": "Schedule Live Session",
+      "pageDescription": "Create and configure a new live streaming session.",
+      "sessionDetails": "Session Details",
+      "sessionTitle": "Session Title",
+      "titlePlaceholder": "e.g., Physics 101: Q&A Session",
+      "course": "Course",
+      "loadingCourses": "Loading courses...",
+      "selectCourse": "Select Course",
+      "startTime": "Start Time",
+      "maxStudents": "Max Students (0 for unlimited)",
+      "maxJoinTime": "Max Join Time (minutes after start)",
+      "maxJoinTimeHint": "Students can join within this time after session starts. 0 = anytime.",
+      "description": "Description",
+      "descriptionPlaceholder": "Provide a brief description of the session...",
+      "quickHelp": "Quick Help",
+      "helpText": "Make sure all details are correct. All session settings can be adjusted later through the session settings page.",
+      "helpItems": {
+        "notify": "Students will be notified",
+        "links": "Session links generated automatically",
+        "recording": "Recording available post-session"
+      },
+      "scheduleButton": "Schedule Session",
+      "scheduling": "Scheduling...",
+      "cancel": "Cancel",
+      "validation": {
+        "fillRequired": "Please fill in course, title, and start time"
+      },
+      "success": "Session scheduled successfully!",
+      "error": "Failed to schedule session"
+    },
+    "settings": {
+      "pageTitle": "Session Settings",
+      "pageDescription": "Configure features for this live session.",
+      "communication": "Communication",
+      "recordingPlayback": "Recording & Playback",
+      "enableChat": "Enable Chat",
+      "enableChatDescription": "Allow real-time text chat during the session",
+      "enableRecording": "Enable Recording",
+      "enableRecordingDescription": "Automatically record and save the session to the library",
+      "backToSession": "Back to Session",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "saveSuccess": "Settings saved successfully",
+      "saveError": "Failed to save settings",
+      "loadError": "Failed to load session settings"
+    }
+  },
+  "exams": {
+    "pageTitle": "Exams & Quizzes",
+    "pageDescription": "Manage assessments and quizzes",
+    "createExam": "Create Exam",
+    "searchPlaceholder": "Search exams...",
+    "columns": {
+      "title": "Title",
+      "type": "Type",
+      "chapter": "Chapter",
+      "duration": "Duration",
+      "questions": "Questions",
+      "status": "Status",
+      "visibility": "Visibility"
+    },
+    "status": {
+      "active": "Active",
+      "draft": "Draft"
+    },
+    "visibility": {
+      "public": "Public",
+      "private": "Private"
+    },
+    "noExams": "No exams found. Create your first exam!",
+    "deleteConfirm": "Are you sure you want to delete this exam?",
+    "deleteSuccess": "Exam deleted successfully!",
+    "minutes": "mins",
+    "questions": "Qs",
+    "create": {
+      "pageTitle": "Create New Exam",
+      "pageDescription": "Design and configure your assessment",
+      "backToExams": "Back to Exams",
+      "examTitle": "Exam Title",
+      "titlePlaceholder": "e.g., Midterm Physics Exam",
+      "examType": "Exam Type",
+      "exam": "Exam",
+      "homework": "Homework",
+      "course": "Course",
+      "loading": "Loading...",
+      "selectCourse": "Select Course",
+      "chapter": "Chapter",
+      "selectChapter": "Select Chapter",
+      "duration": "Duration (min)",
+      "totalMarks": "Total Marks",
+      "passingMarks": "Passing Marks (%)",
+      "maxAttempts": "Max Attempts",
+      "availability": "Availability",
+      "startTime": "Start Time",
+      "endTime": "End Time (Optional)",
+      "visibility": "Visibility",
+      "public": "Public",
+      "private": "Private",
+      "questionsSection": "Questions",
+      "addQuestion": "Add Question",
+      "question": "Question",
+      "questionPlaceholder": "Enter your question here...",
+      "questionType": "Question Type",
+      "singleChoice": "Single Choice",
+      "multipleChoice": "Multiple Choice",
+      "trueFalse": "True / False",
+      "shortAnswer": "Short Answer",
+      "score": "Score",
+      "questionText": "Question Text",
+      "enableAutoCorrection": "Enable auto-correction",
+      "answers": "Answers",
+      "answer": "Answer",
+      "addAnswer": "Add Answer",
+      "removeQuestion": "Remove Question",
+      "expectedAnswer": "Expected Answer (for reference)",
+      "expectedAnswerPlaceholder": "Enter the expected answer for reference...",
+      "markCorrectHint": "Click the checkbox to mark the correct answer",
+      "multipleAllowed": "s (multiple allowed)",
+      "cancel": "Cancel",
+      "createExam": "Create Exam",
+      "creating": "Creating...",
+      "validation": {
+        "titleRequired": "Please enter an exam title",
+        "courseRequired": "Please select a course",
+        "durationRequired": "Please enter a valid duration",
+        "marksRequired": "Please enter total marks",
+        "questionsRequired": "Please add at least one question",
+        "questionTextRequired": "Please enter question text for question",
+        "answersRequired": "Please add at least 2 answers for question",
+        "correctAnswerRequired": "Please mark at least one correct answer for question"
+      },
+      "success": "Exam created successfully!",
+      "error": "Failed to create exam"
+    },
+    "edit": {
+      "pageTitle": "Edit Exam",
+      "pageDescription": "Modify your assessment",
+      "backToExams": "Back to Exams",
+      "loading": "Loading exam data...",
+      "notFound": "Exam not found",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes",
+      "saving": "Saving...",
+      "success": "Exam updated successfully!",
+      "error": "Failed to update exam"
+    }
+  },
+  "notesSummaries": {
+    "pageTitle": "Notes & Summaries",
+    "pageDescription": "Manage instructor notes and student-created summaries.",
+    "searchPlaceholder": "Search...",
+    "addNote": "Add Note",
+    "filters": {
+      "allTypes": "All Types",
+      "summary": "Summary",
+      "highlight": "Highlight",
+      "keyPoint": "Key Point",
+      "importantNotice": "Important Notice"
+    },
+    "table": {
+      "title": "Title",
+      "type": "Type",
+      "courseId": "Course ID",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Draft"
+    },
+    "untitledNote": "Untitled Note",
+    "na": "N/A",
+    "loading": "Loading...",
+    "loadError": "Failed to load notes. Please try again.",
+    "noNotes": "No notes found.",
+    "deleteConfirm": "Are you sure you want to delete this note?",
+    "create": {
+      "pageTitle": "Add New Note",
+      "pageDescription": "Create a new note or summary.",
+      "titleLabel": "Title",
+      "titleRequired": "Title is required",
+      "titlePlaceholder": "Enter note title",
+      "typeLabel": "Type",
+      "typeRequired": "Type is required",
+      "courseLabel": "Course",
+      "coursePlaceholder": "Select a course (optional)",
+      "loadingCourses": "Loading courses...",
+      "linkedLectureLabel": "Linked Lecture",
+      "linkedLecturePlaceholder": "Enter linked lecture (optional)",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Enter note content...",
+      "charactersCount": "{count} characters",
+      "publishImmediately": "Publish immediately",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createNote": "Create Note"
+    },
+    "editNote": {
+      "pageTitle": "Edit Note",
+      "pageDescription": "Update note details and content.",
+      "loadError": "Failed to load note. Please try again.",
+      "backToNotes": "Back to Notes",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter note title",
+      "typeLabel": "Type",
+      "courseLabel": "Course",
+      "coursePlaceholder": "Select a course (optional)",
+      "loadingCourses": "Loading courses...",
+      "linkedLectureLabel": "Linked Lecture",
+      "linkedLecturePlaceholder": "Enter linked lecture (optional)",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Enter note content...",
+      "charactersCount": "{count} characters",
+      "published": "Published",
+      "cancel": "Cancel",
+      "saving": "Saving...",
+      "saveChanges": "Save Changes"
+    },
+    "detail": {
+      "deleteConfirm": "Are you sure you want to delete this note?",
+      "loadError": "Failed to load note. Please try again.",
+      "backToNotes": "Back to Notes",
+      "edit": "Edit",
+      "delete": "Delete",
+      "content": "Content",
+      "details": "Details",
+      "type": "Type",
+      "courseId": "Course ID",
+      "linkedLecture": "Linked Lecture",
+      "date": "Date",
+      "status": "Status"
+    }
+  },
+  "community": {
+    "pageTitle": "Community Moderation",
+    "pageDescription": "Review and moderate student posts and comments.",
+    "filters": {
+      "all": "All Posts",
+      "draft": "Draft",
+      "published": "Published"
+    },
+    "socialLinks": {
+      "title": "Social Links",
+      "allCourses": "All Courses",
+      "addLink": "Add Link",
+      "noLinks": "No social links yet. Click \"Add Link\" to create one.",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "modal": {
+        "edit": "Edit Social Link",
+        "add": "Add Social Link",
+        "course": "Course",
+        "selectCourse": "Select a course",
+        "icon": "Icon",
+        "linkUrl": "Link URL",
+        "title": "Title",
+        "linkTitlePlaceholder": "Link title",
+        "subtitle": "Subtitle",
+        "linkSubtitlePlaceholder": "Link subtitle",
+        "color": "Color",
+        "status": "Status",
+        "update": "Update",
+        "create": "Create",
+        "cancel": "Cancel"
+      }
+    },
+    "posts": {
+      "noPosts": "No posts found.",
+      "unknownUser": "Unknown",
+      "comments": "Comments",
+      "reactions": "reactions",
+      "you": "You: ",
+      "timeAgo": {
+        "justNow": "just now",
+        "minAgo": "{minutes} min ago",
+        "hourAgo": "{hours} hour{plural}",
+        "dayAgo": "{days} day{plural}",
+        "today": "Today"
+      },
+      "status": {
+        "published": "published",
+        "draft": "draft"
+      },
+      "type": {
+        "post": "post",
+        "question": "question",
+        "summary": "summary"
+      },
+      "editForm": {
+        "titlePlaceholder": "Title",
+        "contentPlaceholder": "Content",
+        "save": "Save",
+        "cancel": "Cancel"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "publish": "Publish",
+        "unpublish": "Unpublish",
+        "delete": "Delete"
+      }
+    },
+    "postDetails": {
+      "pageTitle": "Post Details",
+      "pageDescription": "Community moderation view",
+      "backToCommunity": "Back to Community",
+      "loading": "Loading post...",
+      "loadError": "Failed to load post.",
+      "retry": "Retry",
+      "edit": "Edit",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "deletePost": "Delete Post",
+      "save": "Save",
+      "cancel": "Cancel",
+      "titlePlaceholder": "Title",
+      "contentPlaceholder": "Content",
+      "reactions": "reactions",
+      "you": "You: ",
+      "commentsSection": "Comments",
+      "noComments": "No comments yet. Be the first to comment!",
+      "replyPlaceholder": "Reply as admin...",
+      "postReply": "Post Reply as Admin",
+      "deleteComment": "Delete",
+      "moderationHistory": "Moderation History",
+      "flaggedByStudent": "Flagged by student"
+    },
+    "confirmations": {
+      "deletePost": "Are you sure you want to delete this post?",
+      "publishPost": "Are you sure you want to publish \"{title}\"?",
+      "unpublishPost": "Are you sure you want to unpublish \"{title}\"?",
+      "deleteComment": "Are you sure you want to delete this comment?",
+      "deleteSocialLink": "Are you sure you want to delete this social link?"
+    },
+    "notifications": {
+      "postDeleted": "Post deleted successfully!",
+      "postPublished": "Post published successfully!",
+      "postUnpublished": "Post unpublished successfully!",
+      "postUpdated": "Post updated successfully!",
+      "socialLinkCreated": "Social link created successfully!",
+      "socialLinkUpdated": "Social link updated successfully!",
+      "socialLinkDeleted": "Social link deleted successfully!"
+    }
+  },
+  "universities": {
+    "pageTitle": "Universities Management",
+    "pageDescription": "Manage universities and institutions",
+    "addUniversity": "Add University",
+    "editUniversity": "Edit University",
+    "searchPlaceholder": "Search universities...",
+    "columns": {
+      "name": "Name",
+      "created": "Created"
+    },
+    "form": {
+      "addTitle": "Add New University",
+      "editTitle": "Edit University",
+      "addDescription": "Create a new university or institution",
+      "editDescription": "Update university information",
+      "sectionTitle": "University Information",
+      "nameLabel": "University Name",
+      "namePlaceholder": "e.g., Cairo University",
+      "nameRequired": "University name is required"
+    },
+    "loading": "Loading university...",
+    "notFound": "University not found",
+    "noUniversities": "No universities found. Create your first university!",
+    "deleteConfirm": "Are you sure you want to delete this university?",
+    "deleteTitle": "Delete University",
+    "loadError": "Failed to load universities",
+    "retry": "Retry",
+    "back": "Back to Universities"
+  },
+  "faculties": {
+    "pageTitle": "Faculties Management",
+    "pageDescription": "Manage faculties and colleges",
+    "addFaculty": "Add Faculty",
+    "editFaculty": "Edit Faculty",
+    "searchPlaceholder": "Search faculties...",
+    "allUniversities": "All Universities",
+    "columns": {
+      "name": "Name",
+      "university": "University",
+      "created": "Created"
+    },
+    "form": {
+      "addTitle": "Add New Faculty",
+      "editTitle": "Edit Faculty",
+      "addDescription": "Create a new faculty or college",
+      "editDescription": "Update faculty information",
+      "sectionTitle": "Faculty Information",
+      "nameLabel": "Faculty Name",
+      "namePlaceholder": "e.g., Faculty of Engineering",
+      "universityLabel": "University",
+      "selectUniversity": "Select University"
+    },
+    "loading": "Loading faculty...",
+    "notFound": "Faculty not found",
+    "noFaculties": "No faculties found. Create your first faculty!",
+    "deleteConfirm": "Are you sure you want to delete this faculty?",
+    "deleteTitle": "Delete Faculty",
+    "loadError": "Failed to load faculties",
+    "retry": "Retry",
+    "back": "Back to Faculties"
+  },
+  "departments": {
+    "pageTitle": "Departments Management",
+    "pageDescription": "Manage departments and categories",
+    "addDepartment": "Add Department",
+    "editDepartment": "Edit Department",
+    "searchPlaceholder": "Search departments...",
+    "allFaculties": "All Faculties",
+    "columns": {
+      "image": "Image",
+      "name": "Name",
+      "parent": "Parent (Center)",
+      "stats": "Stats",
+      "created": "Created"
+    },
+    "stats": {
+      "courses": "Courses",
+      "students": "Students"
+    },
+    "form": {
+      "addTitle": "Add New Department",
+      "editTitle": "Edit Department",
+      "addDescription": "Create a new department or course category",
+      "editDescription": "Update department details and category information",
+      "sectionTitle": "Department Information",
+      "imageLabel": "Department Image",
+      "nameLabel": "Department Name",
+      "namePlaceholder": "e.g., Medicine",
+      "centerLabel": "Center",
+      "selectCenter": "Select Center"
+    },
+    "loading": "Loading department...",
+    "notFound": "Department not found",
+    "noDepartments": "No departments found. Create your first department!",
+    "deleteTitle": "Delete Department",
+    "loadError": "Failed to load departments",
+    "retry": "Retry",
+    "back": "Back to Departments"
+  },
+  "language": {
+    "switcher": "Language",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "platformSettings": {
+    "pageDescription": "Manage your platform's core configuration and preferences.",
+    "generalSettings": {
+      "title": "General Settings",
+      "description": "Platform name, timezone, and basic configuration."
+    },
+    "branding": {
+      "title": "Branding",
+      "description": "Logos, colors, and visual identity."
+    },
+    "notifications": {
+      "title": "Notifications Settings",
+      "description": "Email templates and push notification defaults."
+    },
+    "languageRegion": {
+      "title": "Language & Region",
+      "description": "Default language, date formats, and currency."
+    },
+    "termsPrivacy": {
+      "title": "Terms & Privacy",
+      "description": "Manage terms of service and privacy policy text."
+    },
+    "soon": "Soon"
+  },
+  "electronicLibrary": {
+    "pageTitle": "Electronic Library",
+    "pageDescription": "Manage digital books, materials, and pricing.",
+    "addItem": "Add Item",
+    "searchPlaceholder": "Search library items...",
+    "filters": {
+      "allTypes": "All Types",
+      "allCourses": "All Courses",
+      "booklet": "Booklet",
+      "reference": "Reference",
+      "guide": "Guide"
+    },
+    "status": {
+      "published": "Published",
+      "draft": "Draft"
+    },
+    "card": {
+      "noImage": "No Image",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "deleteConfirm": "Are you sure you want to delete this library item?",
+    "deleteSuccess": "Library item deleted successfully",
+    "deleteError": "Failed to delete library item",
+    "noItems": "No library items found.",
+    "loadError": "Failed to load library items. Please try again.",
+    "backToLibrary": "Back to Library",
+    "add": {
+      "pageTitle": "Add Library Item",
+      "pageDescription": "Add a new book or material to the electronic library and send a notification to students",
+      "sections": {
+        "itemDetails": "Item Details",
+        "coverImage": "Cover Image",
+        "attachment": "Attachment File",
+        "settings": "Settings"
+      },
+      "fields": {
+        "title": "Title",
+        "titleRequired": "Title is required",
+        "titlePlaceholder": "e.g., Math Reference Guide",
+        "description": "Description",
+        "descriptionRequired": "Description is required",
+        "descriptionPlaceholder": "Describe the item...",
+        "course": "Course",
+        "courseRequired": "Course is required",
+        "selectCourse": "Select Course",
+        "loadingCourses": "Loading courses...",
+        "materialType": "Material Type",
+        "price": "Price",
+        "priceRequired": "Valid price is required",
+        "pricePlaceholder": "19.99",
+        "uploadCoverImage": "Upload Cover Image",
+        "coverImageRequired": "Cover image is required",
+        "clickToUploadImage": "Click to upload image",
+        "supportedFormats": "Supported formats: JPG, PNG, WebP",
+        "uploadFile": "Upload File",
+        "attachmentRequired": "Attachment file is required",
+        "clickToUploadFile": "Click to upload file",
+        "changeFile": "Change file",
+        "fileTypes": "PDF, DOC, DOCX, or any file type"
+      },
+      "settings": {
+        "codeActivation": "Code Activation Required",
+        "codeActivationDescription": "Students need a code to access this item",
+        "publishItem": "Publish Item",
+        "publishItemDescription": "Make this item visible to students"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "adding": "Adding...",
+        "addToLibrary": "Add to Library"
+      }
+    },
+    "edit": {
+      "pageTitle": "Edit Library Item",
+      "pageDescription": "Update library item details",
+      "sections": {
+        "itemDetails": "Item Details",
+        "coverImage": "Cover Image",
+        "attachment": "Attachment File",
+        "settings": "Settings"
+      },
+      "fields": {
+        "title": "Title",
+        "description": "Description",
+        "course": "Course",
+        "selectCourse": "Select Course",
+        "loadingCourses": "Loading courses...",
+        "materialType": "Material Type",
+        "price": "Price",
+        "uploadNewCoverImage": "Upload New Cover Image",
+        "clickToUploadNewImage": "Click to upload new image",
+        "supportedFormats": "Supported formats: JPG, PNG, WebP",
+        "uploadNewFile": "Upload New File",
+        "clickToUploadNewFile": "Click to upload new file",
+        "changeFile": "Change file"
+      },
+      "settings": {
+        "codeActivation": "Code Activation Required",
+        "codeActivationDescription": "Students need a code to access this item",
+        "publishItem": "Publish Item",
+        "publishItemDescription": "Make this item visible to students"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "saveChanges": "Save Changes"
+      }
+    },
+    "detail": {
+      "loading": "Loading library item...",
+      "loadError": "Failed to load library item. Please try again.",
+      "edit": "Edit",
+      "delete": "Delete",
+      "noCoverImage": "No Cover Image",
+      "sections": {
+        "itemDetails": "Item Details",
+        "libraryActivation": "Library Activation"
+      },
+      "fields": {
+        "description": "Description",
+        "courseId": "Course ID",
+        "codeActivation": "Code Activation Required",
+        "yes": "Yes",
+        "no": "No",
+        "attachments": "Attachments",
+        "createdDate": "Created Date",
+        "lastUpdated": "Last Updated"
+      },
+      "activation": {
+        "tabs": {
+          "byCode": "By Code",
+          "preactivation": "Pre-activation"
+        },
+        "availableCodes": "Available Codes",
+        "noAvailableCodes": "No available codes. Generate codes first.",
+        "selectStudent": "Select Student",
+        "searchStudents": "Search students...",
+        "noStudentsFound": "No students found",
+        "activate": "Activate Library Item",
+        "activating": "Activating...",
+        "howItWorks": "How it works:",
+        "preactivationDescription": "Upload phone numbers, and we will generate unique codes and immediately activate them for matching students.",
+        "uploadPhoneNumbers": "Upload Phone Numbers",
+        "supportedFormats": "Supported: .txt, .csv (one phone per line)",
+        "chooseFile": "Choose File",
+        "phoneNumbers": "Phone Numbers",
+        "clear": "Clear",
+        "uploadAndProcess": "Upload & Process",
+        "uploading": "Uploading...",
+        "preactivationResults": "Pre-activation Results:",
+        "success": "Success",
+        "failed": "Failed"
+      }
+    }
+  }
+}

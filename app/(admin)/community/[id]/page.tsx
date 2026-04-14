@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Check, Trash, MessageSquare, Flag, X, Loader2, Edit2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -8,7 +9,7 @@ import { usePost, useUpdatePost, useDeletePost } from '@/src/hooks/usePosts';
 import { useCreateComment, useDeleteComment } from '@/src/hooks/useComments';
 import type { Post } from '@/src/types';
 
-function getTimeAgo(dateString: string): string {
+function getTimeAgo(dateString: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   if (!dateString) return '-';
   const date = new Date(dateString);
   const now = new Date();
@@ -17,10 +18,10 @@ function getTimeAgo(dateString: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins} min ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  if (diffMins < 1) return t('community.posts.timeAgo.justNow');
+  if (diffMins < 60) return t('community.posts.timeAgo.minAgo', { minutes: diffMins });
+  if (diffHours < 24) return t('community.posts.timeAgo.hourAgo', { hours: diffHours, plural: diffHours > 1 ? 's' : '' });
+  if (diffDays < 7) return t('community.posts.timeAgo.dayAgo', { days: diffDays, plural: diffDays > 1 ? 's' : '' });
   return date.toLocaleDateString();
 }
 
@@ -42,10 +43,11 @@ function getTypeColor(type: string): string {
 }
 
 export default function PostDetailsPage() {
+  const t = useTranslations();
   const params = useParams();
   const router = useRouter();
   const postId = params.id as string;
-  
+
   const { data: post, isLoading, error, refetch: refetchPost } = usePost(parseInt(postId));
   const { mutate: updatePost } = useUpdatePost();
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
@@ -70,43 +72,43 @@ export default function PostDetailsPage() {
   if (error || !post) {
     return (
       <div className="text-center py-24 text-[#64748B]">
-        Failed to load post. <button onClick={refetchPost} className="text-[#2137D6] hover:underline">Retry</button>
+        {t('community.postDetails.loadError')} <button onClick={refetchPost} className="text-[#2137D6] hover:underline">{t('community.postDetails.retry')}</button>
       </div>
     );
   }
 
   const user = post.attributes.user?.data.attributes;
   const userInitial = user?.first_name?.[0] || user?.full_name?.[0] || '?';
-  const userName = user?.full_name || user?.first_name || 'Unknown';
+  const userName = user?.full_name || user?.first_name || t('community.posts.unknownUser');
 
   const handlePublish = async () => {
-    if (!confirm('Are you sure you want to publish this post?')) return;
+    if (!confirm(t('community.confirmations.publishPost', { title: post.attributes.title }))) return;
     try {
       await updatePost(parseInt(postId), { status: 'published' });
       await refetchPost();
-      alert('Post published!');
+      alert(t('community.notifications.postPublished'));
     } catch {
       await refetchPost();
     }
   };
 
   const handleUnpublish = async () => {
-    if (!confirm('Are you sure you want to unpublish this post?')) return;
+    if (!confirm(t('community.confirmations.unpublishPost', { title: post.attributes.title }))) return;
     try {
       await updatePost(parseInt(postId), { status: 'draft' });
       await refetchPost();
-      alert('Post unpublished!');
+      alert(t('community.notifications.postUnpublished'));
     } catch {
       await refetchPost();
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
+    if (!confirm(t('community.confirmations.deletePost'))) return;
     try {
       await deletePost(parseInt(postId));
       router.push('/community');
-      alert('Post deleted!');
+      alert(t('community.notifications.postDeleted'));
     } catch {
       await refetchPost();
     }
@@ -130,7 +132,7 @@ export default function PostDetailsPage() {
       });
       await refetchPost();
       setIsEditing(false);
-      alert('Post updated!');
+      alert(t('community.notifications.postUpdated'));
     } catch {
       await refetchPost();
     }
@@ -141,19 +143,17 @@ export default function PostDetailsPage() {
     try {
       await createComment(parseInt(postId), { parent_id: parseInt(postId), content: reply });
       setReply('');
-      await refetchPost(); // Refresh post to get updated children
-      alert('Comment posted!');
+      await refetchPost();
     } catch {
       await refetchPost();
     }
   };
 
   const handleDeleteComment = async (commentId: number) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
+    if (!confirm(t('community.confirmations.deleteComment'))) return;
     try {
       await deleteComment(commentId);
-      await refetchPost(); // Refresh post to get updated children
-      alert('Comment deleted!');
+      await refetchPost();
     } catch {
       await refetchPost();
     }
@@ -171,45 +171,45 @@ export default function PostDetailsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[#1E293B]">Post Details</h1>
-            <p className="text-[13px] font-semibold text-[#64748B] mt-1">Community moderation view</p>
+            <h1 className="text-2xl font-bold text-[#1E293B]">{t('community.postDetails.pageTitle')}</h1>
+            <p className="text-[13px] font-semibold text-[#64748B] mt-1">{t('community.postDetails.pageDescription')}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {!isEditing && (
-            <button 
+            <button
               onClick={startEdit}
               className="flex items-center gap-1.5 px-5 py-2.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#475569] rounded-xl text-sm font-bold transition-all shadow-sm"
             >
               <Edit2 className="w-[18px] h-[18px]" />
-              Edit
+              {t('community.postDetails.edit')}
             </button>
           )}
           {post.attributes.status === 'draft' ? (
-            <button 
+            <button
               onClick={handlePublish}
               className="flex items-center gap-1.5 px-5 py-2.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#1E293B] rounded-xl text-sm font-bold transition-all shadow-sm"
             >
               <Check className="w-[18px] h-[18px]" />
-              Publish
+              {t('community.postDetails.publish')}
             </button>
           ) : (
-            <button 
+            <button
               onClick={handleUnpublish}
               className="flex items-center gap-1.5 px-5 py-2.5 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#64748B] rounded-xl text-sm font-bold transition-all shadow-sm"
             >
               <X className="w-[18px] h-[18px]" />
-              Unpublish
+              {t('community.postDetails.unpublish')}
             </button>
           )}
-          <button 
+          <button
             onClick={handleDelete}
             disabled={isDeleting}
             className="flex items-center gap-1.5 px-5 py-2.5 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-xl text-sm font-bold transition-all shadow-sm shadow-red-200 disabled:opacity-50"
           >
             <Trash className="w-[18px] h-[18px]" />
-            Delete Post
+            {t('community.postDetails.deletePost')}
           </button>
         </div>
       </div>
@@ -230,13 +230,13 @@ export default function PostDetailsPage() {
                 <div className="flex flex-wrap items-center gap-3 mb-4">
                   <span className="text-[16px] font-bold text-[#1E293B]">{userName}</span>
                   <span className="text-[13px] font-semibold text-[#94A3B8]">
-                    {getTimeAgo(post.attributes.created_at || '')}
+                    {getTimeAgo(post.attributes.created_at || '', t)}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${getTypeColor(post.attributes.type)}`}>
-                    {post.attributes.type}
+                    {t(`community.posts.type.${post.attributes.type}`)}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wide ${getStatusColor(post.attributes.status)}`}>
-                    {post.attributes.status}
+                    {t(`community.posts.status.${post.attributes.status}`)}
                   </span>
                   {post.attributes.tags.map(tag => (
                     <span key={tag} className="px-2 py-0.5 bg-[#F1F5F9] text-[#64748B] rounded text-[10px]">
@@ -252,38 +252,38 @@ export default function PostDetailsPage() {
                       value={editForm.title}
                       onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                       className="w-full px-4 py-2 border border-[#E2E8F0] rounded-lg text-[15px] font-medium text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
-                      placeholder="Title"
+                      placeholder={t('community.postDetails.titlePlaceholder')}
                     />
                     <textarea
                       value={editForm.content}
                       onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
                       rows={4}
                       className="w-full px-4 py-2 border border-[#E2E8F0] rounded-lg text-[15px] text-[#475569] focus:outline-none focus:ring-2 focus:ring-[#2137D6] resize-none"
-                      placeholder="Content"
+                      placeholder={t('community.postDetails.contentPlaceholder')}
                     />
                     <select
                       value={editForm.type}
                       onChange={(e) => setEditForm({ ...editForm, type: e.target.value as 'post' | 'question' | 'summary' })}
                       className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-sm text-[#475569] focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
                     >
-                      <option value="post">Post</option>
-                      <option value="question">Question</option>
-                      <option value="summary">Summary</option>
+                      <option value="post">{t('community.posts.type.post')}</option>
+                      <option value="question">{t('community.posts.type.question')}</option>
+                      <option value="summary">{t('community.posts.type.summary')}</option>
                     </select>
                     <div className="flex gap-3">
-                      <button 
+                      <button
                         onClick={handleUpdate}
                         className="flex items-center gap-1.5 px-4 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-xl text-sm font-bold transition-all"
                       >
                         <Check className="w-4 h-4" />
-                        Save
+                        {t('community.postDetails.save')}
                       </button>
-                      <button 
+                      <button
                         onClick={() => setIsEditing(false)}
                         className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
                       >
                         <X className="w-4 h-4" />
-                        Cancel
+                        {t('community.postDetails.cancel')}
                       </button>
                     </div>
                   </div>
@@ -295,11 +295,11 @@ export default function PostDetailsPage() {
                     </p>
                     <div className="flex items-center gap-6 mt-4">
                       <span className="flex items-center gap-1 text-[13px] text-[#64748B]">
-                        {post.attributes.reactions_count} reactions
+                        {post.attributes.reactions_count} {t('community.postDetails.reactions')}
                       </span>
                       {post.attributes.user_reaction && (
                         <span className="text-[13px] text-[#2137D6]">
-                          You: {post.attributes.user_reaction}
+                          {t('community.postDetails.you')}{post.attributes.user_reaction}
                         </span>
                       )}
                     </div>
@@ -314,7 +314,7 @@ export default function PostDetailsPage() {
             <div className="flex items-center gap-3">
               <MessageSquare className="w-5 h-5 text-[#2137D6]" />
               <h2 className="text-lg font-bold text-[#1E293B]">
-                Comments ({post?.attributes.comments_count || comments?.length || 0})
+                {t('community.postDetails.commentsSection')} ({post?.attributes.comments_count || comments?.length || 0})
               </h2>
             </div>
             
@@ -322,7 +322,7 @@ export default function PostDetailsPage() {
               {comments?.map((comment) => {
                 const commentUser = comment.attributes.user?.data.attributes;
                 const commentUserInitial = commentUser?.first_name?.[0] || commentUser?.full_name?.[0] || '?';
-                const commentUserName = commentUser?.full_name || commentUser?.first_name || 'Unknown';
+                const commentUserName = commentUser?.full_name || commentUser?.first_name || t('community.posts.unknownUser');
                 const isInstructor = commentUser?.role === 'Admin' || commentUser?.role === 'Instructor';
 
                 return (
@@ -339,7 +339,7 @@ export default function PostDetailsPage() {
                           </span>
                         )}
                         <span className="text-[12px] font-semibold text-[#94A3B8]">
-                          {getTimeAgo(comment.attributes.created_at || '')}
+                          {getTimeAgo(comment.attributes.created_at || '', t)}
                         </span>
                       </div>
                       <p className="text-[14px] leading-relaxed text-[#475569]">
@@ -350,7 +350,7 @@ export default function PostDetailsPage() {
                         disabled={isDeletingComment}
                         className="mt-2 text-[12px] text-[#EF4444] hover:text-[#DC2626] font-medium self-start disabled:opacity-50"
                       >
-                        Delete
+                        {t('community.postDetails.deleteComment')}
                       </button>
                     </div>
                   </div>
@@ -359,27 +359,27 @@ export default function PostDetailsPage() {
 
               {(!comments || comments.length === 0) && (
                 <div className="text-center py-8 text-[#64748B]">
-                  No comments yet. Be the first to comment!
+                  {t('community.postDetails.noComments')}
                 </div>
               )}
             </div>
 
             {/* Admin Reply */}
             <div className="mt-2 flex flex-col gap-3">
-              <textarea 
-                rows={3} 
-                placeholder="Reply as admin..." 
+              <textarea
+                rows={3}
+                placeholder={t('community.postDetails.replyPlaceholder')}
                 className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-[14px] focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
               />
               <div className="flex justify-start">
-                 <button 
+                 <button
                    onClick={handlePostComment}
                    disabled={!reply.trim()}
                    className="px-6 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-sm shadow-blue-200 disabled:opacity-50"
                  >
-                   Post Reply as Admin
+                   {t('community.postDetails.postReply')}
                  </button>
               </div>
             </div>
@@ -394,17 +394,17 @@ export default function PostDetailsPage() {
           <div className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <Flag className="w-5 h-5 text-[#EF4444]" />
-              <h2 className="text-lg font-bold text-[#1E293B]">Moderation History</h2>
+              <h2 className="text-lg font-bold text-[#1E293B]">{t('community.postDetails.moderationHistory')}</h2>
             </div>
-            
+
             <div className="flex flex-col gap-3">
               <div className="bg-[#F8FAFC] border border-[#F1F5F9] rounded-xl p-4 flex flex-col gap-1.5">
-                <span className="text-[14px] font-bold text-[#1E293B]">Flagged by student</span>
+                <span className="text-[14px] font-bold text-[#1E293B]">{t('community.postDetails.flaggedByStudent')}</span>
                 <span className="text-[12px] font-medium text-[#64748B]">by Omar Tariq - 2 hours ago</span>
               </div>
-              
+
               <div className="bg-[#F8FAFC] border border-[#F1F5F9] rounded-xl p-4 flex flex-col gap-1.5">
-                <span className="text-[14px] font-bold text-[#1E293B]">Flagged by student</span>
+                <span className="text-[14px] font-bold text-[#1E293B]">{t('community.postDetails.flaggedByStudent')}</span>
                 <span className="text-[12px] font-medium text-[#64748B]">by Sara Ibrahim - 1.5 hours ago</span>
               </div>
             </div>

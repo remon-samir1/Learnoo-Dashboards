@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import AuthPageLayout from '../components/AuthLayout';
 
 export default function CreateAccountPage() {
+  const t = useTranslations('auth.createAccount');
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -19,12 +21,12 @@ export default function CreateAccountPage() {
 
   return (
     <AuthPageLayout
-      title="Create Admin Account"
-      subtitle="Get started with Learnoo Admin"
+      title={t('title')}
+      subtitle={t('subtitle')}
     >
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">Full Name</label>
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('firstName')}</label>
           <input
             type="text"
             name="fullName"
@@ -36,7 +38,7 @@ export default function CreateAccountPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">Work Email</label>
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('email')}</label>
           <input
             type="email"
             name="email"
@@ -48,7 +50,7 @@ export default function CreateAccountPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">Phone Number</label>
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('lastName')}</label>
           <input
             type="tel"
             name="phone"
@@ -60,7 +62,7 @@ export default function CreateAccountPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">Password</label>
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('password')}</label>
           <input
             type="password"
             name="password"
@@ -72,7 +74,7 @@ export default function CreateAccountPage() {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">Confirm Password</label>
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('confirmPassword')}</label>
           <input
             type="password"
             name="confirmPassword"
@@ -83,12 +85,12 @@ export default function CreateAccountPage() {
           />
         </div>
 
-        <button className="w-full h-9 bg-primary border-none rounded-lg font-sans font-medium text-[11.9px] leading-5 text-white cursor-pointer hover:opacity-90 active:scale-[0.99] transition-all mt-1">Create Account</button>
+        <button className="w-full h-9 bg-primary border-none rounded-lg font-sans font-medium text-[11.9px] leading-5 text-white cursor-pointer hover:opacity-90 active:scale-[0.99] transition-all mt-1">{t('submit')}</button>
 
         <p className="font-sans text-xs leading-5 text-text-muted text-center">
-          Already have an account?{' '}
+          {t('haveAccount')}{' '}
           <Link href="/login" virtual-link-type="internal" className="font-sans font-medium text-xs text-primary hover:opacity-80 transition-opacity">
-            Sign in
+            {t('login')}
           </Link>
         </p>
       </div>

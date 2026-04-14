@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
   Users,
@@ -47,38 +48,41 @@ interface MenuItem {
   children?: MenuItem[];
 }
 
-const menuItems: MenuItem[] = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+const getMenuItems = (t: (key: string) => string): MenuItem[] => [
+  { name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' },
   {
-    name: 'Academic Structure',
+    name: t('sidebar.academicStructure'),
     icon: School,
     children: [
-      { name: 'Universities', icon: Building2, path: '/universities' },
-      { name: 'Faculties', icon: GraduationCap, path: '/faculties' },
-      { name: 'Centers', icon: Users, path: '/centers' },
-      { name: 'Departments', icon: Library, path: '/departments' },
+      { name: t('sidebar.universities'), icon: Building2, path: '/universities' },
+      { name: t('sidebar.faculties'), icon: GraduationCap, path: '/faculties' },
+      { name: t('sidebar.centers'), icon: Users, path: '/centers' },
+      { name: t('sidebar.departments'), icon: Library, path: '/departments' },
     ],
   },
-  { name: 'Students', icon: Users2, path: '/students' },
-  { name: 'Activation', icon: Power, path: '/activation' },
-  { name: 'My Courses', icon: BookOpen, path: '/courses' },
-  { name: 'Content Manager', icon: FileEdit, path: '/content-manager' },
-  { name: 'Live Sessions', icon: Video, path: '/live-sessions' },
-  { name: 'Exams & Q&A', icon: ClipboardList, path: '/exams' },
-  { name: 'Community', icon: MessageSquare, path: '/community' },
-  { name: 'Notes & Summaries', icon: StickyNote, path: '/notes-summaries' },
-  { name: 'Electronic Library', icon: BookOpen, path: '/electronic-library' },
-  { name: 'Notifications', icon: Bell, path: '/notifications', comingSoon: true },
-  { name: 'Downloads', icon: Download, path: '/downloads', comingSoon: true },
-  { name: 'Profile & Settings', icon: Settings, path: '/settings' },
-  { name: 'Feature Control', icon: ShieldCheck, path: '/feature-control' },
+  { name: t('sidebar.students'), icon: Users2, path: '/students' },
+  { name: t('sidebar.activation'), icon: Power, path: '/activation' },
+  { name: t('sidebar.myCourses'), icon: BookOpen, path: '/courses' },
+  { name: t('sidebar.contentManager'), icon: FileEdit, path: '/content-manager' },
+  { name: t('sidebar.liveSessions'), icon: Video, path: '/live-sessions' },
+  { name: t('sidebar.examsAndQA'), icon: ClipboardList, path: '/exams' },
+  { name: t('sidebar.community'), icon: MessageSquare, path: '/community' },
+  { name: t('sidebar.notesSummaries'), icon: StickyNote, path: '/notes-summaries' },
+  { name: t('sidebar.electronicLibrary'), icon: BookOpen, path: '/electronic-library' },
+  { name: t('sidebar.notifications'), icon: Bell, path: '/notifications', comingSoon: true },
+  { name: t('sidebar.downloads'), icon: Download, path: '/downloads', comingSoon: true },
+  { name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' },
+  { name: t('sidebar.featureControl'), icon: ShieldCheck, path: '/feature-control' },
 ];
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
+  const t = useTranslations();
   const pathname = usePathname();
   const { user, fullName, role } = useCurrentUser();
   const { data: features } = usePlatformFeature();
   const [openDropdowns, setOpenDropdowns] = React.useState<Record<string, boolean>>({});
+
+  const menuItems = getMenuItems(t);
 
   // Initialize auth store from cookies on mount
   useEffect(() => {
@@ -114,8 +118,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   // Get role display text
   const getRoleDisplay = () => {
-    if (role === 'Admin') return 'Admin Dashboard';
-    if (role === 'Doctor') return 'Doctor Dashboard';
+    if (role === 'Admin') return t('sidebar.adminDashboard');
+    if (role === 'Doctor') return t('sidebar.doctorDashboard');
     return role || 'User';
   };
 
@@ -208,7 +212,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             </span>
             {item.comingSoon && (
               <span className="px-1.5 py-0.5 text-[9px] font-semibold bg-[#FEF3C7] text-[#D97706] rounded-full">
-                Soon
+                {t('common.soon')}
               </span>
             )}
           </div>
@@ -259,7 +263,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       {/* Navigation Menu */}
       <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-hide flex flex-col gap-1">
         {!isCollapsed && (
-          <p className="text-[10px] font-bold tracking-[1.5px] text-[#94A3B8] uppercase px-3 mb-4">MAIN MENU</p>
+          <p className="text-[10px] font-bold tracking-[1.5px] text-[#94A3B8] uppercase px-3 mb-4">{t('common.mainMenu')}</p>
         )}
         <nav className="flex flex-col gap-1.5">
           {menuItems.map((item) => renderMenuItem(item))}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, MessageCircle, Video, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
@@ -9,6 +10,7 @@ import { api } from '@/src/lib/api';
 import type { LiveRoom } from '@/src/types';
 
 export default function SessionSettingsPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations();
   const { id } = use(params);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,7 +31,7 @@ export default function SessionSettingsPage({ params }: { params: Promise<{ id: 
         });
       } catch (error) {
         console.error('Error fetching live room:', error);
-        toast.error('Failed to load session settings');
+        toast.error(t('liveSessions.settings.loadError'));
       } finally {
         setLoading(false);
       }
@@ -49,10 +51,10 @@ export default function SessionSettingsPage({ params }: { params: Promise<{ id: 
         enable_chat: settings.enable_chat,
         enable_recording: settings.enable_recording,
       });
-      toast.success('Settings saved successfully');
+      toast.success(t('liveSessions.settings.saveSuccess'));
     } catch (error) {
       console.error('Error saving settings:', error);
-      toast.error('Failed to save settings');
+      toast.error(t('liveSessions.settings.saveError'));
     } finally {
       setSaving(false);
     }
@@ -77,8 +79,8 @@ export default function SessionSettingsPage({ params }: { params: Promise<{ id: 
             </button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-[#1E293B]">Session Settings</h1>
-            <p className="text-[#64748B] text-[14px]">Configure features for this live session.</p>
+            <h1 className="text-2xl font-bold text-[#1E293B]">{t('liveSessions.settings.pageTitle')}</h1>
+            <p className="text-[#64748B] text-[14px]">{t('liveSessions.settings.pageDescription')}</p>
           </div>
         </div>
       </div>
@@ -88,13 +90,13 @@ export default function SessionSettingsPage({ params }: { params: Promise<{ id: 
         <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
           <h2 className="text-[16px] font-bold text-[#1E293B] mb-6 flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-[#2563EB]" />
-            Communication
+            {t('liveSessions.settings.communication')}
           </h2>
-          
+
           <div className="flex flex-col">
-            <FeatureToggle 
-              label="Enable Chat" 
-              description="Allow real-time text chat during the session"
+            <FeatureToggle
+              label={t('liveSessions.settings.enableChat')}
+              description={t('liveSessions.settings.enableChatDescription')}
               enabled={settings.enable_chat}
               onChange={() => handleToggle('enable_chat')}
             />
@@ -105,13 +107,13 @@ export default function SessionSettingsPage({ params }: { params: Promise<{ id: 
         <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
           <h2 className="text-[16px] font-bold text-[#1E293B] mb-6 flex items-center gap-2">
             <Video className="w-5 h-5 text-[#7C3AED]" />
-            Recording & Playback
+            {t('liveSessions.settings.recordingPlayback')}
           </h2>
-          
+
           <div className="flex flex-col">
-            <FeatureToggle 
-              label="Enable Recording" 
-              description="Automatically record and save the session to the library"
+            <FeatureToggle
+              label={t('liveSessions.settings.enableRecording')}
+              description={t('liveSessions.settings.enableRecordingDescription')}
               enabled={settings.enable_recording}
               onChange={() => handleToggle('enable_recording')}
             />
@@ -122,7 +124,7 @@ export default function SessionSettingsPage({ params }: { params: Promise<{ id: 
         <div className="flex items-center justify-end gap-4 mt-4">
           <Link href={`/live-sessions/${id}`}>
             <button className="px-6 py-2.5 bg-white border border-[#E2E8F0] text-[#64748B] rounded-xl font-bold text-[14px] hover:bg-[#F8FAFC] transition-all">
-              Back to Session
+              {t('liveSessions.settings.backToSession')}
             </button>
           </Link>
           <button 
@@ -131,7 +133,7 @@ export default function SessionSettingsPage({ params }: { params: Promise<{ id: 
             className="px-6 py-2.5 bg-[#2563EB] text-white rounded-xl font-bold text-[14px] hover:bg-[#1D4ED8] transition-all shadow-md shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? t('liveSessions.settings.saving') : t('liveSessions.settings.saveChanges')}
           </button>
         </div>
       </div>

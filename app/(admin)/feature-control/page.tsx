@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ShieldCheck,
   Library,
@@ -28,42 +29,42 @@ interface FeatureCategory {
   features: Feature[];
 }
 
-// Default feature configurations (used when no saved values exist)
-const defaultCategories: FeatureCategory[] = [
+// Feature configurations structure (titles and descriptions use translations)
+const getCategoryConfig = (t: (key: string) => string): FeatureCategory[] => [
   {
     id: 'auth',
-    title: 'Authentication & Security',
-    description: 'Manage how students access the platform.',
+    title: t('featureControl.categories.auth.title'),
+    description: t('featureControl.categories.auth.description'),
     icon: ShieldCheck,
     iconColor: '#4F46E5',
     iconBg: '#EEF2FF',
     features: [
-      { id: 'feature_otp_verification', name: 'Enable OTP Verification', description: 'Require One-Time Password for student login.', enabled: true },
-      { id: 'feature_login_without_otp', name: 'Allow Login Without OTP', description: 'Fallback for students who cannot receive SMS.', enabled: false },
+      { id: 'feature_otp_verification', name: t('featureControl.features.feature_otp_verification.name'), description: t('featureControl.features.feature_otp_verification.description'), enabled: true },
+      { id: 'feature_login_without_otp', name: t('featureControl.features.feature_login_without_otp.name'), description: t('featureControl.features.feature_login_without_otp.description'), enabled: false },
     ]
   },
   {
     id: 'library',
-    title: 'Library Features',
-    description: 'Control electronic library access.',
+    title: t('featureControl.categories.library.title'),
+    description: t('featureControl.categories.library.description'),
     icon: Library,
     iconColor: '#10B981',
     iconBg: '#ECFDF5',
     features: [
-      { id: 'feature_electronic_library', name: 'Enable Electronic Library', description: 'Show the library tab to students.', enabled: true },
-      { id: 'feature_library_purchases', name: 'Enable Purchases', description: 'Allow students to buy premium materials.', enabled: true },
+      { id: 'feature_electronic_library', name: t('featureControl.features.feature_electronic_library.name'), description: t('featureControl.features.feature_electronic_library.description'), enabled: true },
+      { id: 'feature_library_purchases', name: t('featureControl.features.feature_library_purchases.name'), description: t('featureControl.features.feature_library_purchases.description'), enabled: true },
     ]
   },
   {
     id: 'experience',
-    title: 'Student Experience',
-    description: 'Toggle UI elements in the student app.',
+    title: t('featureControl.categories.experience.title'),
+    description: t('featureControl.categories.experience.description'),
     icon: Laptop,
     iconColor: '#6366F1',
     iconBg: '#EEF2FF',
     features: [
-      { id: 'feature_continue_watching', name: 'Enable Continue Watching', description: 'Show recently watched lectures on home.', enabled: true },
-      { id: 'feature_profile_editing', name: 'Enable Profile Editing', description: 'Allow students to change their details.', enabled: true },
+      { id: 'feature_continue_watching', name: t('featureControl.features.feature_continue_watching.name'), description: t('featureControl.features.feature_continue_watching.description'), enabled: true },
+      { id: 'feature_profile_editing', name: t('featureControl.features.feature_profile_editing.name'), description: t('featureControl.features.feature_profile_editing.description'), enabled: true },
     ]
   }
 ];
@@ -85,10 +86,11 @@ const Switch = ({ enabled, onChange, disabled }: { enabled: boolean; onChange: (
 );
 
 export default function FeatureControlPage() {
+  const t = useTranslations();
   const { data: features, isLoading } = usePlatformFeature();
   const updateFeature = useUpdatePlatformFeature();
 
-  const [categories, setCategories] = useState<FeatureCategory[]>(defaultCategories);
+  const [categories, setCategories] = useState<FeatureCategory[]>(getCategoryConfig(t));
   const [hasChanges, setHasChanges] = useState(false);
 
   // Helper to get feature value by key
@@ -101,18 +103,25 @@ export default function FeatureControlPage() {
   // Load saved feature values from backend
   useEffect(() => {
     if (features) {
-      setCategories(prev => prev.map(cat => ({
-        ...cat,
-        features: cat.features.map(feat => {
-          const savedValue = getFeatureValue(feat.id);
+      setCategories(prev => {
+        // Re-apply translations to ensure they're current
+        const baseCategories = getCategoryConfig(t);
+        return baseCategories.map(baseCat => {
+          const prevCat = prev.find(c => c.id === baseCat.id);
           return {
-            ...feat,
-            enabled: savedValue === '1' || savedValue === 'true'
+            ...baseCat,
+            features: baseCat.features.map(baseFeat => {
+              const savedValue = getFeatureValue(baseFeat.id);
+              return {
+                ...baseFeat,
+                enabled: savedValue === '1' || savedValue === 'true'
+              };
+            })
           };
-        })
-      })));
+        });
+      });
     }
-  }, [features, getFeatureValue]);
+  }, [features, getFeatureValue, t]);
 
   const toggleFeature = (categoryId: string, featureId: string) => {
     setCategories(prev => prev.map(cat => {
@@ -148,16 +157,17 @@ export default function FeatureControlPage() {
 
     try {
       await Promise.all(requests);
-      toast.success('Feature settings saved successfully!');
+      toast.success(t('featureControl.toast.saveSuccess'));
       setHasChanges(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to save feature settings');
+      toast.error(error instanceof Error ? error.message : t('featureControl.toast.saveError'));
     }
   };
 
   const handleReset = () => {
     if (features) {
-      setCategories(prev => prev.map(cat => ({
+      const baseCategories = getCategoryConfig(t);
+      setCategories(baseCategories.map(cat => ({
         ...cat,
         features: cat.features.map(feat => {
           const savedValue = getFeatureValue(feat.id);
@@ -168,10 +178,10 @@ export default function FeatureControlPage() {
         })
       })));
     } else {
-      setCategories(defaultCategories);
+      setCategories(getCategoryConfig(t));
     }
     setHasChanges(false);
-    toast.success('Changes reset to saved values');
+    toast.success(t('featureControl.toast.resetSuccess'));
   };
 
   return (
@@ -180,8 +190,8 @@ export default function FeatureControlPage() {
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold text-[#1E293B]">Feature Control Panel</h1>
-          <p className="text-sm text-[#64748B]">Instantly toggle platform features on or off. Changes apply immediately to all students.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('header.titles.featureControl')}</h1>
+          <p className="text-sm text-[#64748B]">{t('featureControl.description')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -190,7 +200,7 @@ export default function FeatureControlPage() {
             className="flex items-center gap-2 px-4 py-2.5 text-[14px] font-semibold text-[#4B5563] bg-white border border-[#EEEEEE] hover:bg-[#F9FAFB] rounded-xl transition-colors hover:border-[#D1D5DB] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-4 h-4" />
-            Reset
+            {t('featureControl.buttons.reset')}
           </button>
           <button
             onClick={handleSave}
@@ -198,7 +208,7 @@ export default function FeatureControlPage() {
             className="flex items-center gap-2 px-5 py-2.5 text-[14px] font-semibold text-white bg-[#2137D6] hover:bg-[#1C2EB8] rounded-xl transition-colors shadow-md shadow-[#2137D6]/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
-            {updateFeature.isPending ? 'Saving...' : 'Save Changes'}
+            {updateFeature.isPending ? t('featureControl.buttons.saving') : t('featureControl.buttons.save')}
           </button>
         </div>
       </div>

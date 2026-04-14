@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter, useParams } from 'next/navigation';
 import { Building2, Loader2 } from 'lucide-react';
 import { useUniversity, useUpdateUniversity } from '@/src/hooks/useUniversities';
 import { EntityForm, FormSection, FormInput } from '@/src/components/admin/EntityForm';
 
 export default function EditUniversityPage() {
+  const t = useTranslations();
   const router = useRouter();
   const params = useParams();
   const universityId = parseInt(params.id as string);
@@ -43,7 +45,7 @@ export default function EditUniversityPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
-        <p className="mt-4 text-[#64748B]">Loading university...</p>
+        <p className="mt-4 text-[#64748B]">{t('universities.loading')}</p>
       </div>
     );
   }
@@ -51,27 +53,27 @@ export default function EditUniversityPage() {
   if (!university) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <p className="text-[#64748B]">University not found</p>
+        <p className="text-[#64748B]">{t('universities.notFound')}</p>
       </div>
     );
   }
 
   return (
     <EntityForm
-      title="Edit University"
-      description="Update university information"
+      title={t('universities.form.editTitle')}
+      description={t('universities.form.editDescription')}
       backHref="/universities"
       onSubmit={handleSubmit}
       isLoading={isUpdating}
       error={error}
     >
-      <FormSection title="University Information" icon={<Building2 className="w-4 h-4" />}>
+      <FormSection title={t('universities.form.sectionTitle')} icon={<Building2 className="w-4 h-4" />}>
         <FormInput
-          label="University Name"
+          label={t('universities.form.nameLabel')}
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Cairo University"
+          placeholder={t('universities.form.namePlaceholder')}
           className="md:col-span-2"
         />
       </FormSection>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Power, Search, Plus, ChevronDown, Loader2, Trash2, Copy, CheckCircle, List, UserPlus, History, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
@@ -18,6 +19,7 @@ import toast from 'react-hot-toast';
 type TabType = 'codes' | 'assign' | 'history';
 
 export default function ActivationPage() {
+  const t = useTranslations();
   const [activeTab, setActiveTab] = useState<TabType>('codes');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All Types');
@@ -82,7 +84,7 @@ export default function ActivationPage() {
     });
 
     if (orphanedCodes.length === 0) {
-      toast.success('No orphaned codes found. All codes are valid!');
+      toast.success(t('activation.messages.noOrphanedCodes'));
       setIsRefreshing(false);
       return;
     }
@@ -93,10 +95,10 @@ export default function ActivationPage() {
 
     try {
       await Promise.all(deletePromises);
-      toast.success(`${orphanedCodes.length} orphaned code(s) removed successfully`);
+      toast.success(`${orphanedCodes.length} ${t('activation.messages.orphanedCodesRemoved')}`);
       refetch();
     } catch {
-      toast.error('Failed to remove some orphaned codes');
+      toast.error(t('activation.messages.failedRemoveOrphaned'));
     } finally {
       setIsRefreshing(false);
     }
@@ -105,20 +107,20 @@ export default function ActivationPage() {
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
-    toast.success('Code copied to clipboard');
+    toast.success(t('activation.messages.codeCopied'));
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !selectedCodeId) {
-      toast.error('Please select both a student and a code');
+      toast.error(t('activation.messages.selectStudentAndCode'));
       return;
     }
 
     const code = codes?.find((c) => c.id === selectedCodeId);
     if (!code) {
-      toast.error('Code not found');
+      toast.error(t('activation.messages.codeNotFound'));
       return;
     }
 
@@ -137,7 +139,7 @@ export default function ActivationPage() {
       });
       const student = students?.data?.find((s: Student) => s.id === selectedStudent);
       setAssignSuccessMessage(`Code "${code.attributes.code}" successfully assigned to ${student?.attributes.first_name || ''} ${student?.attributes.last_name || 'student'}!`);
-      toast.success('Code assigned successfully!');
+      toast.success(t('activation.messages.codeAssigned'));
       setSelectedStudent('');
       setSelectedCodeId('');
       setTimeout(() => setAssignSuccessMessage(''), 5000);
@@ -148,9 +150,9 @@ export default function ActivationPage() {
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      'App\\Models\\Course': 'Course',
-      'App\\Models\\Chapter': 'Chapter',
-      'App\\Models\\Library': 'Library',
+      'App\\Models\\Course': t('activation.types.course'),
+      'App\\Models\\Chapter': t('activation.types.chapter'),
+      'App\\Models\\Library': t('activation.types.library'),
     };
     return labels[type] || type;
   };
@@ -210,7 +212,7 @@ export default function ActivationPage() {
   const columns: Column<Code>[] = [
     {
       key: 'code',
-      header: 'Code',
+      header: t('activation.columns.code'),
       render: (item) => (
         <div className="flex items-center gap-2">
           <span className="font-mono font-medium text-[#1E293B]">{item.attributes.code}</span>
@@ -220,7 +222,7 @@ export default function ActivationPage() {
               handleCopyCode(item.attributes.code);
             }}
             className="p-1 hover:bg-[#EEF2FF] rounded transition-colors"
-            title="Copy code"
+            title={t('activation.actions.copyCode')}
           >
             {copiedCode === item.attributes.code ? (
               <CheckCircle className="w-4 h-4 text-green-500" />
@@ -233,7 +235,7 @@ export default function ActivationPage() {
     },
     {
       key: 'type',
-      header: 'Type',
+      header: t('activation.columns.type'),
       render: (item) => (
         <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getTypeColor(item.attributes.codeable_type)}`}>
           {getTypeLabel(item.attributes.codeable_type)}
@@ -242,7 +244,7 @@ export default function ActivationPage() {
     },
     {
       key: 'item',
-      header: 'Item',
+      header: t('activation.columns.item'),
       render: (item) => (
         <div className="flex flex-col">
           <span className="text-sm font-medium text-[#1E293B] truncate max-w-[200px]">
@@ -254,20 +256,20 @@ export default function ActivationPage() {
     },
     {
       key: 'is_used',
-      header: 'Status',
+      header: t('activation.columns.status'),
       render: (item) => (
         <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-          item.attributes.is_used 
-            ? 'bg-red-100 text-red-700' 
+          item.attributes.is_used
+            ? 'bg-red-100 text-red-700'
             : 'bg-green-100 text-green-700'
         }`}>
-          {item.attributes.is_used ? 'Used' : 'Available'}
+          {item.attributes.is_used ? t('activation.status.used') : t('activation.status.available')}
         </span>
       ),
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t('activation.columns.created'),
       render: (item) =>
         item.attributes.created_at
           ? new Date(item.attributes.created_at).toLocaleDateString()
@@ -279,18 +281,18 @@ export default function ActivationPage() {
     return (
       <div className="flex flex-col gap-8 pb-12">
         <AdminPageHeader
-          title="Activation Management"
-          description="Manage activation codes for courses, chapters, and library items"
-          actionLabel="Generate Codes"
+          title={t('activation.pageTitle')}
+          description={t('activation.pageDescription')}
+          actionLabel={t('activation.generateCodes')}
           actionHref="/activation/generate"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="text-red-600">Failed to load activation codes: {error}</p>
+          <p className="text-red-600">{t('activation.messages.loadError')}: {error}</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Retry
+            {t('common.retry')}
           </button>
         </div>
       </div>
@@ -315,9 +317,9 @@ export default function ActivationPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <AdminPageHeader
-        title="Activation Management"
-        description="Manage activation codes for courses, chapters, and library items"
-        actionLabel="Generate Codes"
+        title={t('activation.pageTitle')}
+        description={t('activation.pageDescription')}
+        actionLabel={t('activation.generateCodes')}
         actionHref="/activation/generate"
       />
 
@@ -332,7 +334,7 @@ export default function ActivationPage() {
           }`}
         >
           <List className="w-4 h-4" />
-          All Codes
+          {t('activation.tabs.allCodes')}
         </button>
         <button
           onClick={() => setActiveTab('assign')}
@@ -343,7 +345,7 @@ export default function ActivationPage() {
           }`}
         >
           <UserPlus className="w-4 h-4" />
-          Assign to User
+          {t('activation.tabs.assignToUser')}
         </button>
         <button
           onClick={() => setActiveTab('history')}
@@ -354,7 +356,7 @@ export default function ActivationPage() {
           }`}
         >
           <History className="w-4 h-4" />
-          Student History
+          {t('activation.tabs.studentHistory')}
         </button>
       </div>
 
@@ -363,17 +365,17 @@ export default function ActivationPage() {
         <>
           <div className="flex items-center justify-between">
             <SearchFilter
-            searchPlaceholder="Search activation codes..."
+            searchPlaceholder={t('activation.filters.searchPlaceholder')}
             searchValue={searchQuery}
             onSearchChange={setSearchQuery}
             filters={[
               {
                 key: 'type',
-                label: 'All Types',
+                label: t('activation.types.allTypes'),
                 options: [
-                  { value: 'Course', label: 'Course' },
-                  { value: 'Chapter', label: 'Chapter' },
-                  { value: 'Library', label: 'Library' },
+                  { value: 'Course', label: t('activation.types.course') },
+                  { value: 'Chapter', label: t('activation.types.chapter') },
+                  { value: 'Library', label: t('activation.types.library') },
                 ],
                 value: typeFilter === 'All Types' ? '' : typeFilter,
                 onChange: (val) => {
@@ -383,17 +385,17 @@ export default function ActivationPage() {
               },
               ...(typeFilter !== 'All Types' && getItemOptions().length > 0 ? [{
                 key: 'item',
-                label: 'All Items',
+                label: t('activation.filters.allItems'),
                 options: getItemOptions(),
                 value: itemFilter === 'All Items' ? '' : itemFilter,
                 onChange: (val: string) => setItemFilter(val || 'All Items'),
               }] : []),
               {
                 key: 'status',
-                label: 'All Status',
+                label: t('activation.status.allStatus'),
                 options: [
-                  { value: 'Used', label: 'Used' },
-                  { value: 'Available', label: 'Available' },
+                  { value: 'Used', label: t('activation.status.used') },
+                  { value: 'Available', label: t('activation.status.available') },
                 ],
                 value: statusFilter === 'All' ? '' : statusFilter,
                 onChange: (val) => setStatusFilter(val || 'All'),
@@ -409,12 +411,12 @@ export default function ActivationPage() {
               {isRefreshing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Cleaning...
+                  {t('activation.actions.cleaning')}
                 </>
               ) : (
                 <>
                   <RefreshCw className="w-4 h-4" />
-                  Clean Invalid
+                  {t('activation.actions.cleanInvalid')}
                 </>
               )}
             </button>
@@ -427,7 +429,7 @@ export default function ActivationPage() {
             keyExtractor={(item) => item.id}
             onDelete={handleDelete}
             editHref={(item) => `/activation/${item.id}/edit`}
-            emptyMessage="No activation codes found. Generate your first codes!"
+            emptyMessage={t('activation.messages.noCodesFound')}
           />
         </>
       )}
@@ -438,14 +440,14 @@ export default function ActivationPage() {
           {/* Student Selection */}
           <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Select Student</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('activation.sections.selectStudent')}</h2>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                 <input
                   type="text"
-                  placeholder="Search students by name or email..."
+                  placeholder={t('activation.sections.searchStudents')}
                   className="w-full pl-11 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                   value={studentSearch}
                   onChange={(e) => setStudentSearch(e.target.value)}
@@ -455,7 +457,7 @@ export default function ActivationPage() {
               <div className="max-h-64 overflow-y-auto border border-[#E2E8F0] rounded-xl">
                 {isLoadingStudents ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-[#2137D6]" />
+                    <Loader2 className="w-6 h-6 text-[#2137D6] animate-spin" />
                   </div>
                 ) : filteredStudents && filteredStudents.length > 0 ? (
                   <div className="divide-y divide-[#E2E8F0]">
@@ -485,7 +487,7 @@ export default function ActivationPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-[#64748B]">
-                    No students found
+                    {t('activation.messages.noStudentsFound')}
                   </div>
                 )}
               </div>
@@ -495,7 +497,7 @@ export default function ActivationPage() {
           {/* Code Selection */}
           <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Select Activation Code</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('activation.sections.selectCode')}</h2>
             </div>
             <div className="p-6">
               {/* Code Search */}
@@ -504,7 +506,7 @@ export default function ActivationPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                   <input
                     type="text"
-                    placeholder="Search by code..."
+                    placeholder={t('activation.sections.searchCodes')}
                     value={codeSearch}
                     onChange={(e) => setCodeSearch(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
@@ -565,13 +567,13 @@ export default function ActivationPage() {
                     <div className="text-center py-8 text-[#64748B]">
                       {availableCodes.length === 0 ? (
                         <>
-                          No available codes to assign. All codes have been used.{' '}
-                          <Link href="/activation/generate" className="text-[#2137D6] hover:underline">Generate new codes</Link>
+                          {t('activation.messages.noAvailableCodes')}{' '}
+                          <Link href="/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateNewCodes')}</Link>
                         </>
                       ) : (
                         <>
-                          No codes match your search.{' '}
-                          <button type="button" onClick={() => setCodeSearch('')} className="text-[#2137D6] hover:underline">Clear search</button>
+                          {t('activation.messages.noCodesMatchSearch')}{' '}
+                          <button type="button" onClick={() => setCodeSearch('')} className="text-[#2137D6] hover:underline">{t('activation.messages.clearSearch')}</button>
                         </>
                       )}
                     </div>
@@ -579,7 +581,7 @@ export default function ActivationPage() {
                 })()
               ) : (
                 <div className="text-center py-8 text-[#64748B]">
-                  No activation codes available. <Link href="/activation/generate" className="text-[#2137D6] hover:underline">Generate codes</Link>
+                  {t('activation.messages.noCodesAvailable')} <Link href="/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateCodesLink')}</Link>
                 </div>
               )}
             </div>
@@ -603,12 +605,12 @@ export default function ActivationPage() {
               {isAssigning ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Assigning...
+                  {t('activation.actions.assigning')}
                 </>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  Assign to User
+                  {t('activation.actions.assign')}
                 </>
               )}
             </button>
@@ -622,14 +624,14 @@ export default function ActivationPage() {
           {/* Student Selection */}
           <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Select Student</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('activation.sections.selectStudent')}</h2>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                 <input
                   type="text"
-                  placeholder="Search students by name or email..."
+                  placeholder={t('activation.sections.searchStudents')}
                   className="w-full pl-11 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                   value={historyStudentSearch}
                   onChange={(e) => setHistoryStudentSearch(e.target.value)}
@@ -660,7 +662,7 @@ export default function ActivationPage() {
                         </div>
                         {(student.attributes.used_codes?.length || 0) > 0 && (
                           <span className="px-2 py-0.5 bg-[#2137D6]/10 text-[#2137D6] text-xs font-medium rounded-full">
-                            {student.attributes.used_codes?.length} code{student.attributes.used_codes?.length !== 1 ? 's' : ''}
+                            {student.attributes.used_codes?.length} {t('activation.history.codeCount')}
                           </span>
                         )}
                       </button>
@@ -668,7 +670,7 @@ export default function ActivationPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-[#64748B]">
-                    No students found
+                    {t('activation.messages.noStudentsFound')}
                   </div>
                 )}
               </div>
@@ -681,17 +683,17 @@ export default function ActivationPage() {
               <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">
-                    {selectedHistoryStudent.attributes.first_name} {selectedHistoryStudent.attributes.last_name}'s Used Codes
+                    {selectedHistoryStudent.attributes.first_name} {selectedHistoryStudent.attributes.last_name} - {t('activation.history.usedCodes')}
                   </h2>
                   <p className="text-xs text-[#64748B] mt-1">
-                    {selectedHistoryStudent.attributes.used_codes?.length || 0} code(s) used
+                    {selectedHistoryStudent.attributes.used_codes?.length || 0} {t('activation.history.codeCount')}
                   </p>
                 </div>
                 <button
                   onClick={() => setSelectedHistoryStudent(null)}
                   className="text-xs text-[#64748B] hover:text-[#EF4444]"
                 >
-                  Clear Selection
+                  {t('activation.actions.clearSelection')}
                 </button>
               </div>
               <div className="p-6">
@@ -706,9 +708,9 @@ export default function ActivationPage() {
                           <p className="font-mono font-medium text-[#1E293B]">{code.attributes.code}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                              code.attributes.codeable_type === 'App\\Models\\Course'
+                              code.attributes.codeable_type === 'App\Models\Course'
                                 ? 'bg-blue-100 text-blue-700'
-                                : code.attributes.codeable_type === 'App\\Models\\Chapter'
+                                : code.attributes.codeable_type === 'App\Models\Chapter'
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-purple-100 text-purple-700'
                             }`}>
@@ -720,12 +722,12 @@ export default function ActivationPage() {
                           </div>
                         </div>
                         <span className="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-medium rounded-full">
-                          Used
+                          {t('activation.status.used')}
                         </span>
                         <button
                           onClick={() => handleCopyCode(code.attributes.code)}
                           className="p-1.5 hover:bg-[#EEF2FF] rounded-lg transition-colors"
-                          title="Copy code"
+                          title={t('activation.actions.copyCode')}
                         >
                           {copiedCode === code.attributes.code ? (
                             <CheckCircle className="w-4 h-4 text-green-500" />
@@ -738,7 +740,7 @@ export default function ActivationPage() {
                   </div>
                 ) : (
                   <div className="text-center py-8 text-[#64748B]">
-                    <p>This student has not used any activation codes yet.</p>
+                    <p>{t('activation.messages.studentNoCodes')}</p>
                   </div>
                 )}
               </div>
@@ -754,7 +756,7 @@ export default function ActivationPage() {
           setSelectedCode(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Activation Code"
+        title={t('activation.delete.title')}
         itemName={selectedCode?.attributes.code || ''}
         isLoading={isDeleting}
       />
