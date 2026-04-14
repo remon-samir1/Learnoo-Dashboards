@@ -161,6 +161,7 @@ export default function ContentManagerPage() {
 
   const handleCreateLecture = async () => {
     if (!selectedCourse) return;
+    setIsCreatingLecture(true);
     try {
       await api.lectures.create({
         course_id: Number(selectedCourse.id),
@@ -1091,7 +1092,8 @@ export default function ContentManagerPage() {
               </button>
               <button
                 onClick={handleCreateLecture}
-                className="flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100"
+                disabled={isCreatingLecture}
+                className={`flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 ${isCreatingLecture ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 {t('contentManager.modal.createLecture')}
               </button>
