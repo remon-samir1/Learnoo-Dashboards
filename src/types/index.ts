@@ -1014,6 +1014,7 @@ export const getStudentStatusStyles = (status: StudentStatus | undefined): { bg:
 
 export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
   student_id?: string;
+  student_code?: string;
   full_name?: string;
   status?: StudentStatus;
   joined?: string;

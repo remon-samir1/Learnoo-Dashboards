@@ -157,6 +157,7 @@ export default function StudentsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-[#F8FAFC] border-b border-[#F1F5F9]">
+                    <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">Student Code</th>
                     <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">Name & Contact</th>
                     <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">University</th>
                     <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">Centers</th>
@@ -166,13 +167,16 @@ export default function StudentsPage() {
                 </thead>
                 <tbody className="divide-y divide-[#F1F5F9]">
                   {students.map((student: Student) => {
-                    const { first_name, last_name, full_name, email, phone, status, university, centers } = student.attributes;
+                    const { first_name, last_name, full_name, email, phone, status, university, centers, student_code } = student.attributes;
                     const displayName = full_name || `${first_name || ''} ${last_name || ''}`.trim() || 'Unknown';
                     const universityName = university?.data?.attributes?.name || 'N/A';
                     const centersNames = centers?.map(c => c.attributes?.name || 'Unknown').join(', ') || 'N/A';
 
                     return (
                       <tr key={student.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-mono font-medium text-[#475569]">{student_code || '-'}</span>
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center border border-indigo-50 shadow-sm">
@@ -252,16 +256,56 @@ export default function StudentsPage() {
               <p className="text-[13px] text-[#64748B]">
                 Showing <span className="font-bold text-[#1E293B]">{meta?.from || 0} to {meta?.to || 0}</span> of <span className="font-bold text-[#1E293B]">{meta?.total || 0}</span> results
               </p>
-              <div className="flex gap-2">
-                <button 
-                  className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#64748B] hover:bg-white transition-all disabled:opacity-50"
+              <div className="flex items-center gap-1.5">
+                {/* Previous Button */}
+                <button
+                  className="px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#64748B] hover:bg-white hover:border-[#2137D6] hover:text-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#E2E8F0] disabled:hover:text-[#64748B]"
                   disabled={page <= 1}
                   onClick={() => setPage(page - 1)}
                 >
                   Previous
                 </button>
-                <button 
-                  className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#64748B] hover:bg-white transition-all disabled:opacity-50"
+
+                {/* Page Numbers */}
+                {(() => {
+                  const totalPages = meta?.last_page || 1;
+                  const currentPage = page;
+                  const pages: (number | string)[] = [];
+
+                  if (totalPages <= 7) {
+                    for (let i = 1; i <= totalPages; i++) pages.push(i);
+                  } else {
+                    if (currentPage <= 3) {
+                      pages.push(1, 2, 3, 4, '...', totalPages);
+                    } else if (currentPage >= totalPages - 2) {
+                      pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                    } else {
+                      pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+                    }
+                  }
+
+                  return pages.map((p, i) => (
+                    p === '...' ? (
+                      <span key={`ellipsis-${i}`} className="px-2 text-[#94A3B8]">...</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p as number)}
+                        className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                          currentPage === p
+                            ? 'bg-[#2137D6] text-white shadow-md'
+                            : 'border border-[#E2E8F0] text-[#64748B] hover:bg-white hover:border-[#2137D6] hover:text-[#2137D6]'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  ));
+                })()}
+
+                {/* Next Button */}
+                <button
+                  className="px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#64748B] hover:bg-white hover:border-[#2137D6] hover:text-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#E2E8F0] disabled:hover:text-[#64748B]"
                   disabled={page >= (meta?.last_page || 1)}
                   onClick={() => setPage(page + 1)}
                 >
