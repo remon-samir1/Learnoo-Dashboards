@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Building2 } from 'lucide-react';
 import { useCreateUniversity } from '@/src/hooks/useUniversities';
 import { EntityForm, FormSection, FormInput } from '@/src/components/admin/EntityForm';
 
 export default function AddUniversityPage() {
+  const t = useTranslations();
   const router = useRouter();
   const { mutate: createUniversity, isLoading, error } = useCreateUniversity();
   
@@ -29,20 +31,20 @@ export default function AddUniversityPage() {
 
   return (
     <EntityForm
-      title="Add New University"
-      description="Create a new university or institution"
+      title={t('universities.form.addTitle')}
+      description={t('universities.form.addDescription')}
       backHref="/universities"
       onSubmit={handleSubmit}
       isLoading={isLoading}
       error={error}
     >
-      <FormSection title="University Information" icon={<Building2 className="w-4 h-4" />}>
+      <FormSection title={t('universities.form.sectionTitle')} icon={<Building2 className="w-4 h-4" />}>
         <FormInput
-          label="University Name"
+          label={t('universities.form.nameLabel')}
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Cairo University"
+          placeholder={t('universities.form.namePlaceholder')}
           className="md:col-span-2"
         />
       </FormSection>

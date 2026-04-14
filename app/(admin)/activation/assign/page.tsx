@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, UserPlus, Loader2, CheckCircle, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useActivateCode, useCodes } from '@/src/hooks';
@@ -9,6 +10,7 @@ import type { Student } from '@/src/types';
 import toast from 'react-hot-toast';
 
 export default function AssignCodePage() {
+  const t = useTranslations();
   const { mutate: activateCode, isLoading: isActivating } = useActivateCode();
   const { data: students, isLoading: isLoadingStudents } = useStudents();
   const { data: codes, isLoading: isLoadingCodes } = useCodes();
@@ -21,13 +23,13 @@ export default function AssignCodePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !selectedCode) {
-      toast.error('Please select both a student and a code');
+      toast.error(t('activation.messages.selectStudentAndCode'));
       return;
     }
 
     const code = codes?.find((c) => c.id === selectedCode);
     if (!code) {
-      toast.error('Code not found');
+      toast.error(t('activation.messages.codeNotFound'));
       return;
     }
 
@@ -44,10 +46,10 @@ export default function AssignCodePage() {
         item_type: itemType,
         user_id: selectedStudent,
       });
-      setSuccessMessage(`Code successfully assigned to student!`);
+      setSuccessMessage(t('activation.messages.codeAssigned'));
       setSelectedStudent('');
       setSelectedCode('');
-      toast.success('Code assigned successfully!');
+      toast.success(t('activation.messages.codeAssigned'));
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch {
       // Error handled by hook
@@ -69,9 +71,9 @@ export default function AssignCodePage() {
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      'App\\Models\\Course': 'Course',
-      'App\\Models\\Chapter': 'Chapter',
-      'App\\Models\\Library': 'Library',
+      'App\\Models\\Course': t('activation.types.course'),
+      'App\\Models\\Chapter': t('activation.types.chapter'),
+      'App\\Models\\Library': t('activation.types.library'),
     };
     return labels[type] || type;
   };
@@ -87,8 +89,8 @@ export default function AssignCodePage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Assign Code to User</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Assign activation codes to students for course/chapter/library access.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('activation.assign.title')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('activation.assign.description')}</p>
         </div>
       </div>
 
@@ -103,7 +105,7 @@ export default function AssignCodePage() {
         {/* Student Selection */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Select Student</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('activation.sections.selectStudent')}</h2>
           </div>
           <div className="p-6 flex flex-col gap-4">
             {/* Search */}
@@ -111,7 +113,7 @@ export default function AssignCodePage() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
               <input
                 type="text"
-                placeholder="Search students by name or email..."
+                placeholder={t('activation.sections.searchStudents')}
                 className="w-full pl-11 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                 value={studentSearch}
                 onChange={(e) => setStudentSearch(e.target.value)}
@@ -152,7 +154,7 @@ export default function AssignCodePage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-[#64748B]">
-                  No students found
+                  {t('activation.messages.noStudentsFound')}
                 </div>
               )}
             </div>
@@ -162,7 +164,7 @@ export default function AssignCodePage() {
         {/* Code Selection */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Select Activation Code</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('activation.sections.selectCode')}</h2>
           </div>
           <div className="p-6">
             {isLoadingCodes ? (
@@ -208,7 +210,7 @@ export default function AssignCodePage() {
               </div>
             ) : (
               <div className="text-center py-8 text-[#64748B]">
-                No activation codes available. <Link href="/activation/generate" className="text-[#2137D6] hover:underline">Generate codes</Link>
+                {t('activation.messages.noCodesAvailable')} <Link href="/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateCodesLink')}</Link>
               </div>
             )}
           </div>
@@ -220,7 +222,7 @@ export default function AssignCodePage() {
             href="/activation"
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all"
           >
-            Cancel
+            {t('activation.generate.cancel')}
           </Link>
           <button
             type="submit"
@@ -230,12 +232,12 @@ export default function AssignCodePage() {
             {isActivating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Assigning...
+                {t('activation.actions.assigning')}
               </>
             ) : (
               <>
                 <UserPlus className="w-4 h-4" />
-                Assign to User
+                {t('activation.actions.assign')}
               </>
             )}
           </button>

@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Plus,
   Trash2,
   ChevronDown,
-  Info,
-  HelpCircle,
   Clock,
   Calendar,
   FileText,
@@ -53,6 +52,7 @@ interface ExamDetails {
 }
 
 export default function CreateExamPage() {
+  const t = useTranslations('exams');
   const router = useRouter();
   const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
@@ -225,14 +225,14 @@ export default function CreateExamPage() {
       const createdQuiz = await createQuiz(quizData);
 
       if (!createdQuiz) {
-        throw new Error('Failed to create exam');
+        throw new Error(t('create.error'));
       }
 
       // Success - redirect to exams page
       router.push('/exams');
     } catch (error) {
       console.error('Error creating exam:', error);
-      alert('Failed to create exam. Please try again.');
+      alert(t('create.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -249,8 +249,8 @@ export default function CreateExamPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Create New Exam</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Build an exam with questions and answers.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('create.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('create.pageDescription')}</p>
         </div>
       </div>
 
@@ -259,15 +259,15 @@ export default function CreateExamPage() {
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
             <FileText className="w-4 h-4 text-[#2137D6]" />
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Exam Details</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('create.examTitle')}</h2>
           </div>
           <div className="p-6 flex flex-col gap-6">
             {/* Title */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Exam Title <span className="text-[#EF4444]">*</span></label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('create.examTitle')} <span className="text-[#EF4444]">*</span></label>
               <input
                 type="text"
-                placeholder="e.g., Midterm: Mechanics"
+                placeholder={t('create.titlePlaceholder')}
                 className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={examDetails.title}
                 onChange={(e) => setExamDetails({...examDetails, title: e.target.value})}
@@ -278,21 +278,21 @@ export default function CreateExamPage() {
             {/* Type, Course, Chapter */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex flex-col gap-2 relative">
-                <label className="text-[13px] font-bold text-[#475569]">Exam Type <span className="text-[#EF4444]">*</span></label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.examType')} <span className="text-[#EF4444]">*</span></label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                   value={examDetails.type}
                   onChange={(e) => setExamDetails({...examDetails, type: e.target.value as 'exam' | 'homework'})}
                   required
                 >
-                  <option value="exam">Exam</option>
-                  <option value="homework">Homework</option>
+                  <option value="exam">{t('create.exam')}</option>
+                  <option value="homework">{t('create.homework')}</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
               </div>
 
               <div className="flex flex-col gap-2 relative">
-                <label className="text-[13px] font-bold text-[#475569]">Course <span className="text-[#EF4444]">*</span></label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={examDetails.course}
@@ -300,7 +300,7 @@ export default function CreateExamPage() {
                   required
                   disabled={coursesLoading}
                 >
-                  <option value="">{coursesLoading ? 'Loading...' : 'Select Course'}</option>
+                  <option value="">{coursesLoading ? t('create.loading') : t('create.selectCourse')}</option>
                   {courses?.map((course) => (
                     <option key={course.id} value={course.id}>
                       {course.attributes.title}
@@ -312,14 +312,14 @@ export default function CreateExamPage() {
               </div>
 
               <div className="flex flex-col gap-2 relative">
-                <label className="text-[13px] font-bold text-[#475569]">Chapter</label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.chapter')}</label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={examDetails.chapter}
                   onChange={(e) => setExamDetails({...examDetails, chapter: e.target.value})}
                   disabled={chaptersLoading}
                 >
-                  <option value="">{chaptersLoading ? 'Loading...' : 'Select Chapter'}</option>
+                  <option value="">{chaptersLoading ? t('create.loading') : t('create.selectChapter')}</option>
                   {filteredChapters?.map((chapter) => (
                     <option key={chapter.id} value={chapter.id}>
                       {chapter.attributes.title}
@@ -334,7 +334,7 @@ export default function CreateExamPage() {
             {/* Duration, Marks, Attempts */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">Duration (min) <span className="text-[#EF4444]">*</span></label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.duration')} <span className="text-[#EF4444]">*</span></label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                   <input
@@ -349,7 +349,7 @@ export default function CreateExamPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">Total Marks <span className="text-[#EF4444]">*</span></label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.totalMarks')} <span className="text-[#EF4444]">*</span></label>
                 <div className="relative">
                   <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                   <input
@@ -364,7 +364,7 @@ export default function CreateExamPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">Passing Marks (%)</label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.passingMarks')}</label>
                 <div className="relative">
                   <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                   <input
@@ -379,7 +379,7 @@ export default function CreateExamPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">Max Attempts</label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.maxAttempts')}</label>
                 <div className="relative">
                   <RotateCcw className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                   <input
@@ -396,7 +396,7 @@ export default function CreateExamPage() {
             {/* Start/End Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">Start Time</label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.startTime')}</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                   <input
@@ -409,7 +409,7 @@ export default function CreateExamPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">End Time</label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.endTime')}</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                   <input
@@ -425,21 +425,21 @@ export default function CreateExamPage() {
             {/* Status & Published */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2 relative">
-                <label className="text-[13px] font-bold text-[#475569]">Status <span className="text-[#EF4444]">*</span></label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('status.label')} <span className="text-[#EF4444]">*</span></label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                   value={examDetails.status}
                   onChange={(e) => setExamDetails({...examDetails, status: e.target.value as 'Draft' | 'Active'})}
                   required
                 >
-                  <option value="Draft">Draft</option>
-                  <option value="Active">Active</option>
+                  <option value="Draft">{t('status.draft')}</option>
+                  <option value="Active">{t('status.active')}</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">Visibility</label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.visibility')}</label>
                 <div className="flex items-center gap-3 px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
                   <input
                     type="checkbox"
@@ -449,7 +449,7 @@ export default function CreateExamPage() {
                     onChange={(e) => setExamDetails({...examDetails, is_public: e.target.checked})}
                   />
                   <label htmlFor="is_public" className="text-sm text-[#475569] cursor-pointer">
-                    Publish exam immediately
+                    {t('create.public')}
                   </label>
                 </div>
               </div>
@@ -463,9 +463,12 @@ export default function CreateExamPage() {
             <section key={q.id} className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-[#1E293B]">Question {index + 1}</h3>
+                  <h3 className="text-sm font-bold text-[#1E293B]">{t('create.question')} {index + 1}</h3>
                   <span className="text-xs px-2 py-1 bg-[#E0E7FF] text-[#2137D6] rounded-full">
-                    {q.type.replace('_', ' ')}
+                    {q.type === 'single_choice' ? t('create.singleChoice') :
+                     q.type === 'multiple_choice' ? t('create.multipleChoice') :
+                     q.type === 'true_false' ? t('create.trueFalse') :
+                     t('create.shortAnswer')}
                   </span>
                 </div>
                 {questions.length > 1 && (
@@ -482,22 +485,22 @@ export default function CreateExamPage() {
                 {/* Question Type & Score & Auto-correct */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-2 relative">
-                    <label className="text-[13px] font-bold text-[#475569]">Question Type</label>
+                    <label className="text-[13px] font-bold text-[#475569]">{t('create.questionType')}</label>
                     <select
                       className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                       value={q.type}
                       onChange={(e) => updateQuestion(q.id, { type: e.target.value as Question['type'] })}
                     >
-                      <option value="single_choice">Single Choice</option>
-                      <option value="multiple_choice">Multiple Choice</option>
-                      <option value="true_false">True / False</option>
-                      <option value="short_answer">Short Answer</option>
+                      <option value="single_choice">{t('create.singleChoice')}</option>
+                      <option value="multiple_choice">{t('create.multipleChoice')}</option>
+                      <option value="true_false">{t('create.trueFalse')}</option>
+                      <option value="short_answer">{t('create.shortAnswer')}</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#475569]">Score</label>
+                    <label className="text-[13px] font-bold text-[#475569]">{t('create.score')}</label>
                     <input
                       type="number"
                       min="0"
@@ -518,7 +521,7 @@ export default function CreateExamPage() {
                         onChange={(e) => updateQuestion(q.id, { autoCorrect: e.target.checked })}
                       />
                       <label htmlFor={`autoCorrect-${q.id}`} className="text-sm text-[#475569] cursor-pointer">
-                        Enable auto-correction
+                        {t('create.enableAutoCorrection')}
                       </label>
                     </div>
                   </div>
@@ -526,10 +529,10 @@ export default function CreateExamPage() {
 
                 {/* Question Text */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#475569]">Question Text <span className="text-[#EF4444]">*</span></label>
+                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')} <span className="text-[#EF4444]">*</span></label>
                   <input
                     type="text"
-                    placeholder="Enter the question..."
+                    placeholder={t('create.questionPlaceholder')}
                     className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                     value={q.text}
                     onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
@@ -541,7 +544,7 @@ export default function CreateExamPage() {
                 {q.type !== 'short_answer' && (
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
-                      <label className="text-[13px] font-bold text-[#475569]">Answers</label>
+                      <label className="text-[13px] font-bold text-[#475569]">{t('create.answers')}</label>
                       {q.type !== 'true_false' && (
                         <button
                           type="button"
@@ -549,7 +552,7 @@ export default function CreateExamPage() {
                           className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2137D6] bg-[#E0E7FF] rounded-lg hover:bg-[#C7D2FF] transition-all"
                         >
                           <Plus className="w-3 h-3" />
-                          Add Answer
+                          {t('create.addAnswer')}
                         </button>
                       )}
                     </div>
@@ -574,7 +577,7 @@ export default function CreateExamPage() {
                           </button>
                           <input
                             type="text"
-                            placeholder={`Answer ${ansIndex + 1}`}
+                            placeholder={`${t('create.answer')} ${ansIndex + 1}`}
                             className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                             value={answer.text}
                             onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
@@ -594,8 +597,8 @@ export default function CreateExamPage() {
                     </div>
 
                     <p className="text-xs text-[#64748B]">
-                      Click the checkbox to mark the correct answer
-                      {q.type === 'multiple_choice' && 's (multiple allowed)'}
+                      {t('create.markCorrectHint')}
+                      {q.type === 'multiple_choice' && t('create.multipleAllowed')}
                     </p>
                   </div>
                 )}
@@ -603,9 +606,9 @@ export default function CreateExamPage() {
                 {/* Short Answer Expected Response */}
                 {q.type === 'short_answer' && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#475569]">Expected Answer (for reference)</label>
+                    <label className="text-[13px] font-bold text-[#475569]">{t('create.expectedAnswer')}</label>
                     <textarea
-                      placeholder="Enter the expected answer for reference..."
+                      placeholder={t('create.expectedAnswerPlaceholder')}
                       rows={3}
                       className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
                       value={q.answers[0]?.text || ''}
@@ -625,13 +628,13 @@ export default function CreateExamPage() {
         </div>
 
         {/* Add Question Button */}
-        <button 
+        <button
           type="button"
           onClick={addQuestion}
           className="flex items-center gap-2 px-6 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#1E293B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all w-fit"
         >
           <Plus className="w-4 h-4" />
-          Add Question
+          {t('create.addQuestion')}
         </button>
 
         {/* Action Buttons */}
@@ -642,7 +645,7 @@ export default function CreateExamPage() {
             disabled={isSubmitting}
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Cancel
+            {t('create.cancel')}
           </button>
           <button
             type="submit"
@@ -652,7 +655,7 @@ export default function CreateExamPage() {
             {(isSubmitting || isCreatingQuiz) && (
               <Loader2 className="w-4 h-4 animate-spin" />
             )}
-            {isSubmitting || isCreatingQuiz ? 'Creating...' : 'Create Exam'}
+            {isSubmitting || isCreatingQuiz ? t('create.creating') : t('create.createExam')}
           </button>
         </div>
       </form>

@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import Cookies, { CookieAttributes } from '@/lib/cookies';
 import AuthPageLayout from '../components/AuthLayout';
 
 export default function LoginPage() {
+  const t = useTranslations('auth.login');
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
@@ -16,17 +18,17 @@ export default function LoginPage() {
 
   return (
     <AuthPageLayout
-      title="Learnoo Admin"
-      subtitle="Sign in to manage your platform"
+      title={t('title')}
+      subtitle={t('subtitle')}
     >
       <div className="flex flex-col gap-6">
         {/* Email */}
         <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">Email Address</label>
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('email')}</label>
           <input
             type="email"
             className="w-full h-10 px-3 py-[9px] bg-white border border-border-color shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-sans text-sm leading-5 text-text-main outline-none focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)] transition-colors placeholder:text-text-placeholder"
-            placeholder="admin@learnoo.com"
+            placeholder={t('emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -34,11 +36,11 @@ export default function LoginPage() {
 
         {/* Password */}
         <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">Password</label>
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('password')}</label>
           <input
             type="password"
             className="w-full h-10 px-3 py-[9px] bg-white border border-border-color shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-sans text-sm leading-5 text-text-main outline-none focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)] transition-colors placeholder:text-text-placeholder"
-            placeholder="Enter your password"
+            placeholder={t('passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -53,10 +55,10 @@ export default function LoginPage() {
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
             />
-            <span>Remember me</span>
+            <span>{t('rememberMe')}</span>
           </label>
           <Link href="/forgot-password" virtual-link-type="internal" className="font-sans font-medium text-[11.9px] leading-5 text-primary hover:opacity-80 transition-opacity">
-            Forgot password?
+            {t('forgotPassword')}
           </Link>
         </div>
 
@@ -72,14 +74,14 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full h-9 bg-primary border-none rounded-lg font-sans font-medium text-[11.9px] leading-5 text-white cursor-pointer hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? t('signingIn') : t('signIn')}
         </button>
 
         {/* Create account */}
         <p className="font-sans text-xs leading-5 text-text-muted text-center">
-          Don&apos;t have an account?{' '}
+          {t('noAccount')}{' '}
           <Link href="/create-account" virtual-link-type="internal" className="font-sans font-medium text-xs text-primary hover:opacity-80 transition-opacity">
-            Create account
+            {t('createAccount')}
           </Link>
         </p>
       </div>
@@ -88,7 +90,7 @@ export default function LoginPage() {
 
   async function handleLogin() {
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError(t('errors.missingFields'));
       return;
     }
 
@@ -112,14 +114,14 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.message || t('errors.loginFailed'));
       }
 
       const userRole = data.data?.attributes?.role;
       const token = data.meta?.token;
 
       if (!token) {
-        throw new Error('No token received');
+        throw new Error(t('errors.noToken'));
       }
 
       // Save token in cookies
@@ -139,7 +141,7 @@ export default function LoginPage() {
       } else if (userRole === 'Doctor') {
         router.push('/doctor/dashboard');
       } else {
-        setError('You do not have permission to access this platform');
+        setError(t('errors.noPermission'));
         // Clear cookies if role is not authorized
         Cookies.remove('token');
         Cookies.remove('user_role');

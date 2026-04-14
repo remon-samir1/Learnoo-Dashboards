@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCenters, useDeleteCenter } from '@/src/hooks/useCenters';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { SearchFilter } from '@/src/components/admin/SearchFilter';
@@ -10,6 +11,7 @@ import { Building2 } from 'lucide-react';
 import type { Center } from '@/src/types';
 
 export default function CentersPage() {
+  const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
@@ -42,7 +44,7 @@ export default function CentersPage() {
   const columns: Column<Center>[] = [
     {
       key: 'name',
-      header: 'Center Name',
+      header: t('centers.centerName'),
       render: (item) => (
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[#EEF2FF] rounded-xl flex items-center justify-center border border-indigo-50 shadow-sm">
@@ -54,12 +56,12 @@ export default function CentersPage() {
     },
     {
       key: 'parent',
-      header: 'Parent (Faculty)',
+      header: t('centers.parent'),
       render: (item) => item.parent?.data?.attributes?.name || '-',
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t('centers.created'),
       render: (item) => item.created_at
         ? new Date(item.created_at).toLocaleDateString()
         : '-',
@@ -70,18 +72,18 @@ export default function CentersPage() {
     return (
       <div className="flex flex-col gap-8">
         <AdminPageHeader
-          title="Centers Management"
-          description="Manage physical and virtual centers"
-          actionLabel="Add Center"
+          title={t('centers.pageTitle')}
+          description={t('centers.pageDescription')}
+          actionLabel={t('centers.addCenter')}
           actionHref="/centers/add"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="text-red-600">Failed to load centers: {error}</p>
+          <p className="text-red-600">{t('centers.loadError')}: {error}</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Retry
+            {t('centers.retry')}
           </button>
         </div>
       </div>
@@ -91,14 +93,14 @@ export default function CentersPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <AdminPageHeader
-        title="Centers Management"
-        description="Manage physical and virtual centers"
-        actionLabel="Add Center"
+        title={t('centers.pageTitle')}
+        description={t('centers.pageDescription')}
+        actionLabel={t('centers.addCenter')}
         actionHref="/centers/add"
       />
 
       <SearchFilter
-        searchPlaceholder="Search centers..."
+        searchPlaceholder={t('centers.searchPlaceholder')}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -110,7 +112,7 @@ export default function CentersPage() {
         keyExtractor={(item) => item.id}
         onDelete={handleDelete}
         editHref={(item) => `/centers/${item.id}/edit`}
-        emptyMessage="No centers found. Create your first center!"
+        emptyMessage={t('centers.noCenters')}
       />
 
       <DeleteModal
@@ -120,7 +122,7 @@ export default function CentersPage() {
           setSelectedCenter(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Center"
+        title={t('centers.pageTitle')}
         itemName={selectedCenter?.name || ''}
         isLoading={isDeleting}
       />

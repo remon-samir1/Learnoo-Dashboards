@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ClipboardList,
   Plus,
@@ -19,6 +20,7 @@ import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import type { Quiz } from '@/src/types';
 
 export default function ExamsPage() {
+  const t = useTranslations();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
 
@@ -55,7 +57,7 @@ export default function ExamsPage() {
       await deleteQuiz(parseInt(deletedId));
       await refetch();
 
-      alert('Exam deleted successfully!');
+      alert(t('exams.deleteSuccess'));
     } catch {
       // Restore on error
       await refetch();
@@ -71,38 +73,38 @@ export default function ExamsPage() {
   const columns: Column<Quiz>[] = [
     {
       key: 'title',
-      header: 'Title',
+      header: t('exams.columns.title'),
       render: (item) => item.attributes.title,
     },
     {
       key: 'type',
-      header: 'Type',
+      header: t('exams.columns.type'),
       render: (item) => (
         <span className="capitalize">{item.attributes.type}</span>
       ),
     },
     {
       key: 'chapter',
-      header: 'Chapter',
+      header: t('exams.columns.chapter'),
       render: (item) => getChapterName(item.attributes.chapter_id),
     },
     {
       key: 'duration',
-      header: 'Duration',
-      render: (item) => `${item.attributes.duration} mins`,
+      header: t('exams.columns.duration'),
+      render: (item) => `${item.attributes.duration} ${t('exams.minutes')}`,
     },
     {
       key: 'questions',
-      header: 'Questions',
+      header: t('exams.columns.questions'),
       render: (item) => (
         <span className="text-sm text-[#475569]">
-          {item.attributes.questions?.length || 0} Qs
+          {item.attributes.questions?.length || 0} {t('exams.questions')}
         </span>
       ),
     },
     {
       key: 'status',
-      header: 'Status',
+      header: t('exams.columns.status'),
       render: (item) => (
         <button
           onClick={async () => {
@@ -120,13 +122,13 @@ export default function ExamsPage() {
             : 'bg-[#F1F5F9] text-[#64748B]'
             }`}
         >
-          {item.attributes.status === 'active' ? 'Active' : 'Draft'}
+          {item.attributes.status === 'active' ? t('exams.status.active') : t('exams.status.draft')}
         </button>
       ),
     },
     {
       key: 'visibility',
-      header: 'Visibility',
+      header: t('exams.columns.visibility'),
       render: (item) => (
         <button
           onClick={async () => {
@@ -144,7 +146,7 @@ export default function ExamsPage() {
             : 'bg-[#F1F5F9] text-[#64748B]'
             }`}
         >
-          {item.attributes.is_public ? 'Public' : 'Private'}
+          {item.attributes.is_public ? t('exams.visibility.public') : t('exams.visibility.private')}
         </button>
       ),
     }
@@ -153,9 +155,9 @@ export default function ExamsPage() {
   return (
     <div className="flex flex-col gap-6 pb-12">
       <AdminPageHeader
-        title="Exams & Quizzes"
-        description="Manage assessments and quizzes"
-        actionLabel="Create Exam"
+        title={t('exams.pageTitle')}
+        description={t('exams.pageDescription')}
+        actionLabel={t('exams.createExam')}
         actionHref="/exams/create"
       />
 
@@ -168,7 +170,7 @@ export default function ExamsPage() {
           keyExtractor={(item) => item.id}
           onDelete={handleDelete}
           editHref={(item) => `/exams/edit/${item.id}`}
-          emptyMessage="No exams found. Create your first exam!"
+          emptyMessage={t('exams.noExams')}
         />
         <DeleteModal
           isOpen={deleteModalOpen}
@@ -177,7 +179,7 @@ export default function ExamsPage() {
             setSelectedQuiz(null);
           }}
           onConfirm={handleConfirmDelete}
-          title="Delete Exam"
+          title={t('exams.pageTitle')}
           itemName={selectedQuiz?.attributes.title || ''}
           isLoading={isDeleting}
         />

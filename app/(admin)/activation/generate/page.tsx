@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Plus, Loader2, Copy, CheckCircle, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -10,16 +11,20 @@ import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
 import toast from 'react-hot-toast';
 
-const CODE_TYPES = [
-  { value: 'App\\Models\\Course', label: 'Course' },
-  { value: 'App\\Models\\Chapter', label: 'Chapter' },
-  { value: 'App\\Models\\Library', label: 'Library' },
-];
+function useCodeTypes(t: any) {
+  return [
+    { value: 'App\\Models\\Course', label: t('activation.types.course') },
+    { value: 'App\\Models\\Chapter', label: t('activation.types.chapter') },
+    { value: 'App\\Models\\Library', label: t('activation.types.library') },
+  ];
+}
 
 function GenerateCodeForm() {
+  const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { mutate: createCode, isLoading } = useCreateCode();
+  const CODE_TYPES = useCodeTypes(t);
   const { data: courses } = useCourses();
   const { data: chapters } = useChapters();
   const { data: libraries } = useLibraries();
@@ -74,7 +79,7 @@ function GenerateCodeForm() {
   const handleSubmit = async (e: React.FormEvent, shouldDownload = false) => {
     e.preventDefault();
     if (!itemId) {
-      toast.error('Please select an item');
+      toast.error(t('activation.messages.selectItem'));
       return;
     }
 
@@ -94,7 +99,7 @@ function GenerateCodeForm() {
       if (result && Array.isArray(result)) {
         const returnedCodes = result.map((c) => c.attributes.code);
         setGeneratedCodes(returnedCodes);
-        toast.success(`${quantity} code(s) generated successfully!`);
+        toast.success(`${quantity} ${t('activation.messages.codesGenerated')}`);
 
         if (shouldDownload) {
           handleDownload(returnedCodes);
@@ -108,7 +113,7 @@ function GenerateCodeForm() {
   const handleCopy = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
     setCopiedIndex(index);
-    toast.success('Code copied to clipboard');
+    toast.success(t('activation.messages.codeCopied'));
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
@@ -124,7 +129,7 @@ function GenerateCodeForm() {
 
       const date = new Date().toISOString().split('T')[0];
       XLSX.writeFile(workbook, `activation-codes-${date}.xlsx`);
-      toast.success('Codes downloaded as Excel');
+      toast.success(t('activation.generate.downloaded'));
     });
   };
 
@@ -141,8 +146,8 @@ function GenerateCodeForm() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Generate Activation Codes</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Create new activation codes for courses, chapters, or library items.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('activation.generate.title')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('activation.generate.description')}</p>
         </div>
       </div>
 
@@ -150,12 +155,12 @@ function GenerateCodeForm() {
         {/* Configuration Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Code Configuration</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('activation.generate.sectionTitle')}</h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Type */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Code Type <span className="text-red-500">*</span></label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('activation.generate.codeType')} <span className="text-red-500">*</span></label>
               <select
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 value={codeType}
@@ -173,14 +178,14 @@ function GenerateCodeForm() {
 
             {/* Item */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Assigned Item <span className="text-red-500">*</span></label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('activation.generate.assignedItem')} <span className="text-red-500">*</span></label>
               <select
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 value={itemId}
                 onChange={(e) => setItemId(e.target.value)}
                 required
               >
-                <option value="">Select {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
+                <option value="">{t('activation.generate.selectType')} {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
                 {items.map((item: any) => (
                   <option key={item.id} value={item.id}>
                     {item.attributes.title || item.attributes.name || `Item ${item.id}`}
@@ -191,7 +196,7 @@ function GenerateCodeForm() {
 
             {/* Quantity */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Quantity <span className="text-red-500">*</span></label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('activation.generate.quantity')} <span className="text-red-500">*</span></label>
               <input
                 type="number"
                 min={1}
@@ -201,7 +206,7 @@ function GenerateCodeForm() {
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
                 required
               />
-              <p className="text-xs text-[#94A3B8]">Generate up to 100 codes at once</p>
+              <p className="text-xs text-[#94A3B8]">{t('activation.generate.quantityHint')}</p>
             </div>
           </div>
         </section>
@@ -212,7 +217,7 @@ function GenerateCodeForm() {
             href="/activation"
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all"
           >
-            Cancel
+            {t('activation.generate.cancel')}
           </Link>
           <button
             type="button"
@@ -223,12 +228,12 @@ function GenerateCodeForm() {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Generating...
+                {t('activation.generate.generating')}
               </>
             ) : (
               <>
                 <Download className="w-4 h-4" />
-                Generate & Download
+                {t('activation.generate.generateAndDownload')}
               </>
             )}
           </button>
@@ -240,12 +245,12 @@ function GenerateCodeForm() {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Generating...
+                {t('activation.generate.generating')}
               </>
             ) : (
               <>
                 <Plus className="w-4 h-4" />
-                Generate Codes
+                {t('activation.generate.generate')}
               </>
             )}
           </button>
@@ -257,7 +262,7 @@ function GenerateCodeForm() {
             <div className="px-6 py-4 border-b border-[#F1F5F9] bg-green-50/50">
               <h2 className="text-sm font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle className="w-4 h-4" />
-                Generated Codes ({generatedCodes.length})
+                {t('activation.generate.generatedCodes')} ({generatedCodes.length})
               </h2>
             </div>
             <div className="p-6">
@@ -272,7 +277,7 @@ function GenerateCodeForm() {
                       type="button"
                       onClick={() => handleCopy(code, index)}
                       className="p-1.5 hover:bg-[#EEF2FF] rounded-lg transition-colors"
-                      title="Copy code"
+                      title={t('activation.actions.copyCode')}
                     >
                       {copiedIndex === index ? (
                         <CheckCircle className="w-4 h-4 text-green-500" />

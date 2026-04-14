@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Video, MessageCircle, Play, Square, Settings as SettingsIcon, Info, Disc, Trash2 } from 'lucide-react';
 
 interface LiveSessionCardProps {
@@ -34,6 +35,7 @@ export default function LiveSessionCard({
   onSettings,
   onDelete
 }: LiveSessionCardProps) {
+  const t = useTranslations();
   const isLive = status === 'LIVE';
   const isUpcoming = status === 'UPCOMING';
   const isEnded = status === 'ENDED';
@@ -49,11 +51,11 @@ export default function LiveSessionCard({
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-3 mb-2">
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase ${
-            isLive ? 'bg-[#EF4444] text-white' : 
-            isUpcoming ? 'bg-[#DBEAFE] text-[#2563EB]' : 
+            isLive ? 'bg-[#EF4444] text-white' :
+            isUpcoming ? 'bg-[#DBEAFE] text-[#2563EB]' :
             'bg-[#F1F5F9] text-[#64748B]'
           }`}>
-            {status}
+            {t(`liveSessions.status.${status.toLowerCase()}`)}
           </span>
           <span className="text-[13px] font-medium text-[#1E293B]">{time}</span>
           {duration && <span className="text-[13px] text-[#64748B]">• {duration}</span>}
@@ -72,11 +74,11 @@ export default function LiveSessionCard({
         <div className="flex flex-wrap items-center gap-4 mt-4">
           <div className="flex items-center gap-1.5 text-[12px] font-medium">
             <MessageCircle className={`w-4 h-4 ${enable_chat ? 'text-[#10B981]' : 'text-[#94A3B8]'}`} />
-            <span className={enable_chat ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>Chat {enable_chat ? 'On' : 'Off'}</span>
+            <span className={enable_chat ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>{t(enable_chat ? 'liveSessions.card.chatOn' : 'liveSessions.card.chatOff')}</span>
           </div>
           <div className="flex items-center gap-1.5 text-[12px] font-medium">
             <Disc className={`w-4 h-4 ${enable_recording ? 'text-[#EF4444]' : 'text-[#94A3B8]'}`} />
-            <span className={enable_recording ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>Recording {enable_recording ? 'On' : 'Off'}</span>
+            <span className={enable_recording ? 'text-[#1E293B]' : 'text-[#94A3B8]'}>{t(enable_recording ? 'liveSessions.card.recordingOn' : 'liveSessions.card.recordingOff')}</span>
           </div>
         </div>
       </div>
@@ -84,45 +86,45 @@ export default function LiveSessionCard({
       {/* Action Buttons */}
       <div className="flex flex-col gap-2 w-full md:w-[140px]">
         {isLive && (
-          <button 
+          <button
             onClick={onEnd}
             className="w-full py-2 bg-[#EF4444] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#DC2626] transition-colors"
           >
             <Square className="w-4 h-4 fill-current" />
-            End
+            {t('liveSessions.card.end')}
           </button>
         )}
         {isUpcoming && (
-          <button 
+          <button
             onClick={onStart}
             className="w-full py-2 bg-[#2563EB] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#1D4ED8] transition-colors"
           >
             <Play className="w-4 h-4 fill-current" />
-            Start
+            {t('liveSessions.card.start')}
           </button>
         )}
         {(isUpcoming || isLive || isEnded) && (
-          <button 
+          <button
             onClick={onDetails}
             className="w-full py-2 bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#F8FAFC] transition-colors"
           >
             <Info className="w-4 h-4" />
-            Details
+            {t('liveSessions.card.details')}
           </button>
         )}
-        <button 
+        <button
           onClick={onSettings}
           className="w-full py-2 bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#F8FAFC] transition-colors"
         >
           <SettingsIcon className="w-4 h-4" />
-          Settings
+          {t('liveSessions.card.settings')}
         </button>
-        <button 
+        <button
           onClick={onDelete}
           className="w-full py-2 bg-white border border-[#E2E8F0] text-[#EF4444] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] hover:border-[#EF4444] transition-colors"
         >
           <Trash2 className="w-4 h-4" />
-          Delete
+          {t('liveSessions.card.delete')}
         </button>
       </div>
     </div>

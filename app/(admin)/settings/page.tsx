@@ -1,40 +1,41 @@
+'use client';
+
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import SettingsCard from '@/components/settings/SettingsCard';
 
 export default function PlatformSettingsPage() {
+  const t = useTranslations('header.titles');
+  const tSettings = useTranslations('platformSettings');
+
   const settingsCategories = [
     {
       icon: 'Settings' as const,
-      title: 'General Settings',
-      description: 'Platform name, timezone, and basic configuration.',
+      titleKey: 'generalSettings',
       href: '/settings/general'
     },
     {
       icon: 'Palette' as const,
-      title: 'Branding',
-      description: 'Logos, colors, and visual identity.',
+      titleKey: 'branding',
       href: '/settings/branding'
     },
     {
       icon: 'Bell' as const,
-      title: 'Notifications Settings',
-      description: 'Email templates and push notification defaults.',
+      titleKey: 'notifications',
       href: '/settings/notifications',
       soon: true,
       disabled: true
     },
     {
       icon: 'Globe' as const,
-      title: 'Language & Region',
-      description: 'Default language, date formats, and currency.',
+      titleKey: 'languageRegion',
       href: '/settings/language',
       soon: true,
       disabled: true
     },
     {
       icon: 'FileText' as const,
-      title: 'Terms & Privacy',
-      description: 'Manage terms of service and privacy policy text.',
+      titleKey: 'termsPrivacy',
       href: '/settings/terms'
     }
   ];
@@ -43,8 +44,8 @@ export default function PlatformSettingsPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-[22px] font-bold text-[#111827]">Platform Settings</h1>
-        <p className="text-[14px] text-[#6B7280] mt-2">Manage your platform's core configuration and preferences.</p>
+        <h1 className="text-[22px] font-bold text-[#111827]">{t('platformSettings')}</h1>
+        <p className="text-[14px] text-[#6B7280] mt-2">{tSettings('pageDescription')}</p>
       </div>
 
       {/* Grid */}
@@ -53,11 +54,12 @@ export default function PlatformSettingsPage() {
           <SettingsCard
             key={index}
             icon={category.icon}
-            title={category.title}
-            description={category.description}
+            title={tSettings(`${category.titleKey}.title`)}
+            description={tSettings(`${category.titleKey}.description`)}
             href={category.href}
             soon={category.soon}
             disabled={category.disabled}
+            soonLabel={tSettings('soon')}
           />
         ))}
       </div>

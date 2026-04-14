@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Plus, Search, ChevronDown } from 'lucide-react';
 import { CourseCard } from '@/components/CourseCard';
 import Link from 'next/link';
@@ -10,7 +11,7 @@ import type { Course } from '@/src/types';
 import toast from 'react-hot-toast';
 
 // Helper function to transform API course data to CourseCard props
-function transformCourseToCardProps(course: Course) {
+function transformCourseToCardProps(course: Course, t: (key: string) => string) {
   const attrs = course.attributes;
   // Status: 0 = draft, 1 = active
   const statusMap: { [key: number]: 'ACTIVE' | 'DRAFT' } = {
@@ -26,12 +27,12 @@ function transformCourseToCardProps(course: Course) {
   return {
     id: parseInt(course.id),
     image: attrs.thumbnail || 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop&q=60',
-    title: attrs.title || 'Untitled Course',
-    instructor: attrs.instructor?.data?.attributes?.full_name || 'No Instructor',
+    title: attrs.title || t('courses.card.untitled'),
+    instructor: attrs.instructor?.data?.attributes?.full_name || t('courses.card.noInstructor'),
     center: attrs.category?.data?.attributes?.name
       || attrs.center?.data?.attributes?.name
       || attrs.department?.data?.attributes?.name
-      || 'No Center',
+      || t('courses.card.noCenter'),
     status: statusMap[attrs.status] || 'DRAFT',
     approval: approvalMap[attrs.approval],
     lectures: attrs.stats?.lectures || 0,
@@ -41,20 +42,21 @@ function transformCourseToCardProps(course: Course) {
 }
 
 export default function CoursesPage() {
+  const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All Statuses');
-  const [approvalFilter, setApprovalFilter] = useState('All Approvals');
+  const [statusFilter, setStatusFilter] = useState(t('courses.allStatuses'));
+  const [approvalFilter, setApprovalFilter] = useState(t('courses.allApprovals'));
   const { data: courses, isLoading, error, refetch } = useCourses({});
   const { mutate: deleteCourse } = useDeleteCourse();
 
   const handleDelete = async (courseId: number) => {
-    if (!confirm('Are you sure you want to delete this course?')) return;
+    if (!confirm(t('courses.deleteConfirm'))) return;
     try {
       await deleteCourse(courseId);
-      toast.success('Course deleted successfully');
+      toast.success(t('courses.deleteSuccess'));
       refetch();
     } catch {
-      toast.error('Failed to delete course');
+      toast.error(t('courses.deleteError'));
     }
   };
 
@@ -63,15 +65,15 @@ export default function CoursesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Courses Management</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Create and manage courses, assign instructors and centers.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('courses.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('courses.pageDescription')}</p>
         </div>
         <Link
           href="/courses/add"
           className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
         >
           <Plus className="w-4 h-4" />
-          Create Course
+          {t('courses.createCourse')}
         </Link>
       </div>
 
@@ -81,7 +83,7 @@ export default function CoursesPage() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
           <input
             type="text"
-            placeholder="Search courses..."
+            placeholder={t('courses.searchPlaceholder')}
             className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -94,10 +96,10 @@ export default function CoursesPage() {
               value={approvalFilter}
               onChange={(e) => setApprovalFilter(e.target.value)}
             >
-              <option>All Approvals</option>
-              <option>Approved</option>
-              <option>Pending</option>
-              <option>Declined</option>
+              <option>{t('courses.allApprovals')}</option>
+              <option>{t('courses.approved')}</option>
+              <option>{t('courses.pending')}</option>
+              <option>{t('courses.declined')}</option>
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
           </div>
@@ -107,9 +109,9 @@ export default function CoursesPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option>All Statuses</option>
-              <option>Active</option>
-              <option>Draft</option>
+              <option>{t('courses.allStatuses')}</option>
+              <option>{t('courses.active')}</option>
+              <option>{t('courses.draft')}</option>
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
           </div>
@@ -129,24 +131,24 @@ export default function CoursesPage() {
           </>
         ) : error ? (
           <div className="col-span-full text-center py-12 text-red-500">
-            Failed to load courses: {error}
+            {t('common.error')}: {error}
           </div>
         ) : courses && courses.length > 0 ? (
           courses
             .filter((course) => {
-              if (statusFilter === 'All Statuses') return true;
+              if (statusFilter === t('courses.allStatuses')) return true;
               const statusMap: { [key: number]: string } = { 0: 'Draft', 1: 'Active' };
               const courseStatus = statusMap[course.attributes.status] || 'Draft';
               return courseStatus === statusFilter;
             })
             .filter((course) => {
-              if (approvalFilter === 'All Approvals') return true;
+              if (approvalFilter === t('courses.allApprovals')) return true;
               const approvalMap: { [key: number]: string } = { 0: 'Pending', 1: 'Approved', 2: 'Declined' };
               const courseApproval = approvalMap[course.attributes.approval] || 'Pending';
               return courseApproval === approvalFilter;
             })
             .map((course) => {
-              const cardProps = transformCourseToCardProps(course);
+              const cardProps = transformCourseToCardProps(course, t);
               return (
                 <CourseCard
                   key={course.id}
@@ -159,7 +161,7 @@ export default function CoursesPage() {
             })
         ) : (
           <div className="col-span-full text-center py-12 text-[#64748B]">
-            No courses found. Create your first course!
+            {t('courses.noCourses')}
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const userRole = request.cookies.get('user_role')?.value;
+  const locale = request.cookies.get('locale')?.value || 'en';
   
   const { pathname } = request.nextUrl;
 

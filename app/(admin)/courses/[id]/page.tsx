@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Video,
@@ -31,6 +32,7 @@ import { useStudents } from '@/src/hooks/useStudents';
 import toast from 'react-hot-toast';
 
 export default function CourseDetailPage() {
+  const t = useTranslations();
   const { id } = useParams();
   const courseId = Number(id);
 
@@ -72,13 +74,13 @@ export default function CourseDetailPage() {
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
     setCopiedCode(code);
-    toast.success('Code copied to clipboard');
+    toast.success(t('courses.messages.codeCopied'));
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
   const handleActivate = async () => {
     if (!selectedCode || !selectedStudent) {
-      toast.error('Please select both a code and a student');
+      toast.error(t('courses.messages.selectCodeAndStudent'));
       return;
     }
 
@@ -92,7 +94,7 @@ export default function CourseDetailPage() {
         item_type: 'course',
         user_id: selectedStudent,
       });
-      toast.success('Course activated successfully!');
+      toast.success(t('courses.messages.courseActivated'));
       setSelectedCode('');
       setSelectedStudent('');
       setStudentSearch('');
@@ -119,7 +121,7 @@ export default function CourseDetailPage() {
         .filter((n) => n.length > 0);
       setPreactivationNumbers(numbers);
       setPreactivationResults(null);
-      toast.success(`${numbers.length} phone numbers ready for upload`);
+      toast.success(`${numbers.length} ${t('courses.view.preactivation.numbersReady')}`);
     };
     reader.readAsText(file);
   };
@@ -135,7 +137,7 @@ export default function CourseDetailPage() {
   const handlePreactivationUpload = async () => {
     const file = preactivationFileRef.current?.files?.[0];
     if (!file) {
-      toast.error('Please select a file first');
+      toast.error(t('courses.view.preactivation.selectFile'));
       return;
     }
 
@@ -146,7 +148,7 @@ export default function CourseDetailPage() {
         failed: preactivationNumbers.length - (result.data.count || 0),
         count: result.data.count || 0
       });
-      toast.success(result.data.message || `Processed ${result.data.count} pre-activations`);
+      toast.success(result.data.message || `${t('courses.view.preactivation.success')} ${result.data.count}`);
       refetchCodes();
       // Clear the file after successful upload
       if (preactivationFileRef.current) {
@@ -154,7 +156,7 @@ export default function CourseDetailPage() {
       }
       setPreactivationNumbers([]);
     } catch {
-      toast.error('Failed to upload pre-activation file');
+      toast.error(t('courses.view.preactivation.failed'));
     }
   };
   
@@ -169,7 +171,7 @@ export default function CourseDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
-        <p className="text-[#64748B] font-medium">Loading course details...</p>
+        <p className="text-[#64748B] font-medium">{t('courses.view.loading')}</p>
       </div>
     );
   }
@@ -178,14 +180,14 @@ export default function CourseDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <div className="p-4 bg-red-50 rounded-2xl border border-red-100 text-red-600 max-w-md text-center">
-          <p className="font-bold mb-1">Error Loading Course</p>
-          <p className="text-sm">{courseError || "Course not found"}</p>
+          <p className="font-bold mb-1">{t('courses.view.error')}</p>
+          <p className="text-sm">{courseError || t('courses.view.notFound')}</p>
         </div>
-        <Link 
+        <Link
           href="/courses"
           className="px-6 py-2 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-all"
         >
-          Back to Courses
+          {t('courses.view.backToCourses')}
         </Link>
       </div>
     );
@@ -208,7 +210,7 @@ export default function CourseDetailPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-[#1E293B]">{attributes.title}</h1>
               <span className={`px-2 py-1 ${attributes.status === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'} rounded-md text-[10px] font-bold uppercase tracking-wider`}>
-                {attributes.status === 1 ? 'Active' : 'Inactive'}
+                {attributes.status === 1 ? t('courses.view.active') : t('courses.view.inactive')}
               </span>
             </div>
             <p className="text-sm text-[#64748B] mt-0.5">
@@ -221,46 +223,46 @@ export default function CourseDetailPage() {
             href="/content-manager"
             className="px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#475569] rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-all"
           >
-            Manage Content
+            {t('courses.view.manageContent')}
           </Link>
-          <Link 
+          <Link
             href={`/courses/${id}/edit`}
             className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
           >
             <Edit3 className="w-4 h-4" />
-            Edit Course
+            {t('courses.view.editCourse')}
           </Link>
         </div>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <StatCard icon={Layers} value={attributes.stats?.lectures?.toString() || "0"} label="Lectures" />
-        <StatCard icon={Video} value={attributes.stats?.chapters?.toString() || "0"} label="Chapters" />
-        <StatCard icon={BookOpen} value={attributes.stats?.notes?.toString() || "0"} label="Notes" />
-        <StatCard icon={FileText} value={attributes.stats?.exams?.toString() || "0"} label="Exams" />
-        <StatCard icon={Users} value={attributes.stats?.students?.toString() || "0"} label="Students" />
+        <StatCard icon={Layers} value={attributes.stats?.lectures?.toString() || "0"} label={t('courses.view.stats.lectures')} />
+        <StatCard icon={Video} value={attributes.stats?.chapters?.toString() || "0"} label={t('courses.view.stats.chapters')} />
+        <StatCard icon={BookOpen} value={attributes.stats?.notes?.toString() || "0"} label={t('courses.view.stats.notes')} />
+        <StatCard icon={FileText} value={attributes.stats?.exams?.toString() || "0"} label={t('courses.view.stats.exams')} />
+        <StatCard icon={Users} value={attributes.stats?.students?.toString() || "0"} label={t('courses.view.stats.students')} />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Main Content */}
         <div className="flex-1 flex flex-col gap-6">
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1E293B] mb-4">Description</h2>
+            <h2 className="text-lg font-bold text-[#1E293B] mb-4">{t('courses.view.sections.description')}</h2>
             <p className="text-sm text-[#64748B] leading-relaxed whitespace-pre-wrap">
               {attributes.description}
             </p>
           </section>
 
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1E293B] mb-4">Objectives</h2>
+            <h2 className="text-lg font-bold text-[#1E293B] mb-4">{t('courses.view.sections.objectives')}</h2>
             <p className="text-sm text-[#64748B] leading-relaxed whitespace-pre-wrap">
               {attributes.objectives}
             </p>
           </section>
 
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-[#1E293B] mb-6">Lectures & Content</h2>
+            <h2 className="text-lg font-bold text-[#1E293B] mb-6">{t('courses.view.sections.lecturesContent')}</h2>
             <div className="flex flex-col gap-3">
               {attributes.lectures && attributes.lectures.length > 0 ? (
                 attributes.lectures.map((lecture: any, idx: number) => (
@@ -275,12 +277,12 @@ export default function CourseDetailPage() {
                       </div>
                     </div>
                     <button className="px-3 py-1 bg-white border border-[#E2E8F0] rounded-lg text-[10px] font-bold text-[#64748B] hover:border-[#2137D6] hover:text-[#2137D6] transition-colors">
-                      View Details
+                      {t('courses.view.viewDetails')}
                     </button>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-[#94A3B8]">No lectures available.</p>
+                <p className="text-sm text-[#94A3B8]">{t('courses.view.noLectures')}</p>
               )}
             </div>
           </section>
@@ -292,11 +294,11 @@ export default function CourseDetailPage() {
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <BarChart3 className="w-4 h-4 text-[#2137D6]" />
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Performance</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('courses.view.sections.performance')}</h2>
             </div>
             <div className="flex flex-col gap-6">
-              <ProgressBar label="Avg. Score" value={0} colorClass="bg-[#10B981]" />
-              <ProgressBar label="Completion Rate" value={0} colorClass="bg-[#2137D6]" />
+              <ProgressBar label={t('courses.view.stats.lectures')} value={0} colorClass="bg-[#10B981]" />
+              <ProgressBar label={t('courses.view.stats.chapters')} value={0} colorClass="bg-[#2137D6]" />
             </div>
           </section>
 
@@ -304,23 +306,23 @@ export default function CourseDetailPage() {
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
             <div className="flex items-center gap-2 mb-6">
               <ClipboardList className="w-4 h-4 text-[#2137D6]" />
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Course Details</h2>
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('courses.view.sections.courseDetails')}</h2>
             </div>
             <div className="flex flex-col gap-4">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">Price</p>
+                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">{t('courses.view.labels.price')}</p>
                 <p className="text-xs font-bold text-[#475569] mt-1">{attributes.price} EGP</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">Visibility</p>
+                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">{t('courses.view.labels.visibility')}</p>
                 <p className="text-xs font-bold text-[#475569] mt-1 capitalize">{attributes.visibility}</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">Max Views</p>
-                <p className="text-xs font-bold text-[#475569] mt-1">{attributes.max_views_per_student} per student</p>
+                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">{t('courses.view.labels.maxViews')}</p>
+                <p className="text-xs font-bold text-[#475569] mt-1">{attributes.max_views_per_student} {t('courses.view.labels.perStudent')}</p>
               </div>
                <div>
-                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">Created At</p>
+                <p className="text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">{t('courses.view.labels.createdAt')}</p>
                 <p className="text-xs font-bold text-[#475569] mt-1">
                   {attributes.created_at ? new Date(attributes.created_at).toLocaleDateString() : 'N/A'}
                 </p>
@@ -333,12 +335,12 @@ export default function CourseDetailPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Power className="w-4 h-4 text-[#2137D6]" />
-                <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Course Activation</h2>
+                <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('courses.view.sections.activation')}</h2>
               </div>
               <Link
                 href={`/activation/generate?course_id=${courseId}`}
                 className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
-                title="Generate Activation Codes"
+                title={t('courses.view.generateCodes')}
               >
                 <Plus className="w-4 h-4" />
               </Link>
@@ -354,7 +356,7 @@ export default function CourseDetailPage() {
                     : 'text-[#64748B] hover:text-[#1E293B]'
                 }`}
               >
-                By Code
+                {t('courses.view.activationTabs.byCode')}
               </button>
               <button
                 onClick={() => setActivationTab('preactivation')}
@@ -364,7 +366,7 @@ export default function CourseDetailPage() {
                     : 'text-[#64748B] hover:text-[#1E293B]'
                 }`}
               >
-                Pre-activation
+                {t('courses.view.activationTabs.preactivation')}
               </button>
             </div>
 
@@ -372,7 +374,7 @@ export default function CourseDetailPage() {
               <div className="flex flex-col gap-4">
                 {/* Available Codes */}
                 <div>
-                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Available Codes ({courseCodes.length})</label>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('courses.view.availableCodes')} ({courseCodes.length})</label>
                   {codesLoading ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
@@ -412,18 +414,18 @@ export default function CourseDetailPage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-[#94A3B8] italic">No available codes. Generate codes first.</p>
+                    <p className="text-xs text-[#94A3B8] italic">{t('activation.messages.noCodesAvailable')}</p>
                   )}
                 </div>
 
                 {/* Student Selection */}
                 <div>
-                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Select Student</label>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('courses.view.selectStudent')}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                     <input
                       type="text"
-                      placeholder="Search students..."
+                      placeholder={t('courses.view.searchStudents')}
                       value={studentSearch}
                       onChange={(e) => setStudentSearch(e.target.value)}
                       className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
@@ -459,7 +461,7 @@ export default function CourseDetailPage() {
                           </label>
                         ))
                       ) : (
-                        <p className="text-xs text-[#94A3B8] italic">No students found</p>
+                        <p className="text-xs text-[#94A3B8] italic">{t('courses.view.noStudentsFound')}</p>
                       )}
                     </div>
                   )}
@@ -474,12 +476,12 @@ export default function CourseDetailPage() {
                   {isActivating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Activating...
+                      {t('courses.view.activating')}
                     </>
                   ) : (
                     <>
                       <Power className="w-4 h-4" />
-                      Activate Course
+                      {t('courses.view.activate')}
                     </>
                   )}
                 </button>
@@ -488,13 +490,13 @@ export default function CourseDetailPage() {
               <div className="flex flex-col gap-4">
                 <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
                   <p className="text-xs text-[#2137D6]">
-                    <span className="font-bold">How it works:</span> Upload phone numbers, and we will generate unique codes and immediately activate them for matching students.
+                    <span className="font-bold">{t('courses.view.preactivation.title')}:</span> {t('courses.view.preactivation.description')}
                   </p>
                 </div>
 
                 {/* File Upload */}
                 <div>
-                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Upload Phone Numbers</label>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('courses.view.preactivation.title')}</label>
                   <p className="text-[10px] text-[#94A3B8] mb-2">Supported: .txt, .csv (one phone per line)</p>
                   <input
                     ref={preactivationFileRef}
@@ -508,7 +510,7 @@ export default function CourseDetailPage() {
                     className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
                   >
                     <Upload className="w-4 h-4" />
-                    Choose File
+                    {t('students.import.selectFile')}
                   </button>
                 </div>
 
@@ -516,13 +518,13 @@ export default function CourseDetailPage() {
                 {preactivationNumbers.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-bold text-[#64748B]">Phone Numbers ({preactivationNumbers.length})</label>
+                      <label className="text-xs font-bold text-[#64748B]">{t('courses.view.preactivation.title')} ({preactivationNumbers.length})</label>
                       <button
                         onClick={clearPreactivationNumbers}
                         className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
                       >
                         <X className="w-3 h-3" />
-                        Clear
+                        {t('courses.view.preactivation.clear')}
                       </button>
                     </div>
                     <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
@@ -549,12 +551,12 @@ export default function CourseDetailPage() {
                   {isUploadingPreActivation ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Uploading...
+                      {t('students.import.uploading')}
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4" />
-                      Upload & Process {preactivationNumbers.length > 0 && `(${preactivationNumbers.length})`}
+                      {t('courses.view.preactivation.upload')} {preactivationNumbers.length > 0 && `(${preactivationNumbers.length})`}
                     </>
                   )}
                 </button>
@@ -562,16 +564,16 @@ export default function CourseDetailPage() {
                 {/* Pre-activation Results */}
                 {preactivationResults && (
                   <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                    <p className="text-xs font-bold text-[#1E293B] mb-2">Pre-activation Results:</p>
+                    <p className="text-xs font-bold text-[#1E293B] mb-2">{t('courses.view.preactivation.title')}:</p>
                     <div className="flex items-center gap-4 mb-3">
                       <span className="text-xs text-green-600 flex items-center gap-1">
                         <CheckCircle className="w-3.5 h-3.5" />
-                        Success: {preactivationResults.success}
+                        {t('students.import.success')}: {preactivationResults.success}
                       </span>
                       {preactivationResults.failed > 0 && (
                         <span className="text-xs text-red-600 flex items-center gap-1">
                           <X className="w-3.5 h-3.5" />
-                          Failed: {preactivationResults.failed}
+                          {t('students.import.failed')}: {preactivationResults.failed}
                         </span>
                       )}
                     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useDepartments, useDeleteDepartment } from '@/src/hooks/useDepartments';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { GraduationCap } from 'lucide-react';
@@ -11,6 +12,7 @@ import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import type { Department } from '@/src/types';
 
 export default function DepartmentsPage() {
+  const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFaculty, setSelectedFaculty] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -61,7 +63,7 @@ export default function DepartmentsPage() {
   const columns: Column<Department>[] = [
     {
       key: 'image',
-      header: 'Image',
+      header: t('departments.columns.image'),
       render: (item) => (
         <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
           {item.attributes.image ? (
@@ -78,27 +80,27 @@ export default function DepartmentsPage() {
     },
     {
       key: 'name',
-      header: 'Name',
+      header: t('departments.columns.name'),
       render: (item) => item.attributes.name,
     },
     {
       key: 'parent',
-      header: 'Parent (Center)',
+      header: t('departments.columns.parent'),
       render: (item) => getParentName(item),
     },
     {
       key: 'stats',
-      header: 'Stats',
+      header: t('departments.columns.stats'),
       render: (item) => (
         <div className="flex gap-4 text-xs">
-          <span className="text-blue-600 font-medium">{item.attributes.stats?.courses || 0} Courses</span>
-          <span className="text-green-600 font-medium">{item.attributes.stats?.students || 0} Students</span>
+          <span className="text-blue-600 font-medium">{item.attributes.stats?.courses || 0} {t('departments.stats.courses')}</span>
+          <span className="text-green-600 font-medium">{item.attributes.stats?.students || 0} {t('departments.stats.students')}</span>
         </div>
       ),
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t('departments.columns.created'),
       render: (item) => item.attributes.created_at 
         ? new Date(item.attributes.created_at).toLocaleDateString() 
         : '-',
@@ -109,18 +111,18 @@ export default function DepartmentsPage() {
     return (
       <div className="flex flex-col gap-8">
         <AdminPageHeader
-          title="Departments Management"
-          description="Manage departments and categories"
-          actionLabel="Add Department"
+          title={t('departments.pageTitle')}
+          description={t('departments.pageDescription')}
+          actionLabel={t('departments.addDepartment')}
           actionHref="/departments/add"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="text-red-600">Failed to load departments: {error}</p>
+          <p className="text-red-600">{t('departments.loadError')}: {error}</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Retry
+            {t('departments.retry')}
           </button>
         </div>
       </div>
@@ -130,20 +132,20 @@ export default function DepartmentsPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <AdminPageHeader
-        title="Departments Management"
-        description="Manage departments and categories"
-        actionLabel="Add Department"
+        title={t('departments.pageTitle')}
+        description={t('departments.pageDescription')}
+        actionLabel={t('departments.addDepartment')}
         actionHref="/departments/add"
       />
 
       <SearchFilter
-        searchPlaceholder="Search departments..."
+        searchPlaceholder={t('departments.searchPlaceholder')}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={[
           {
             key: 'faculty',
-            label: 'All Faculties',
+            label: t('departments.allFaculties'),
             options: facultyOptions,
             value: selectedFaculty,
             onChange: setSelectedFaculty,
@@ -158,7 +160,7 @@ export default function DepartmentsPage() {
         keyExtractor={(item) => item.id}
         onDelete={handleDelete}
         editHref={(item) => `/departments/${item.id}/edit`}
-        emptyMessage="No departments found. Create your first department!"
+        emptyMessage={t('departments.noDepartments')}
       />
 
       <DeleteModal
@@ -167,8 +169,8 @@ export default function DepartmentsPage() {
           setDeleteModalOpen(false);
           setSelectedDepartment(null);
         }}
-        onConfirm= { handleConfirmDelete }
-        title="Delete Department"
+        onConfirm={handleConfirmDelete}
+        title={t('departments.deleteTitle')}
         itemName={selectedDepartment?.attributes.name || ''}
         isLoading={isDeleting}
       />

@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { GraduationCap } from 'lucide-react';
 import { useCreateDepartment } from '@/src/hooks/useDepartments';
@@ -8,6 +9,7 @@ import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components
 import { FileUpload } from '@/components/FileUpload';
 
 export default function AddDepartmentPage() {
+  const t = useTranslations();
   const router = useRouter();
   const { mutate: createDepartment, isLoading, error } = useCreateDepartment();
   const { data: centers, isLoading: isLoadingCenters } = useCenters();
@@ -40,35 +42,35 @@ export default function AddDepartmentPage() {
 
   return (
     <EntityForm
-      title="Add New Department"
-      description="Create a new department or course category"
+      title={t('departments.form.addTitle')}
+      description={t('departments.form.addDescription')}
       backHref="/departments"
       onSubmit={handleSubmit}
       isLoading={isLoading || isLoadingCenters}
       error={error}
     >
-      <FormSection title="Department Information" icon={<GraduationCap className="w-4 h-4" />}>
+      <FormSection title={t('departments.form.sectionTitle')} icon={<GraduationCap className="w-4 h-4" />}>
         <div className="md:col-span-2 flex justify-center mb-6">
           <FileUpload
-            label="Department Image"
+            label={t('departments.form.imageLabel')}
             onFileSelect={(file) => setFormData({ ...formData, image: file })}
             previewUrl={formData.image ? URL.createObjectURL(formData.image) : undefined}
           />
         </div>
 
         <FormInput
-          label="Department Name"
+          label={t('departments.form.nameLabel')}
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Medicine"
+          placeholder={t('departments.form.namePlaceholder')}
         />
         <FormSelect
-          label="Center"
+          label={t('departments.form.centerLabel')}
           required
           value={formData.faculty_id}
           onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
-          options={[{ value: '', label: 'Select Center' }, ...centerOptions]}
+          options={[{ value: '', label: t('departments.form.selectCenter') }, ...centerOptions]}
           className="md:col-span-2"
         />
       </FormSection>

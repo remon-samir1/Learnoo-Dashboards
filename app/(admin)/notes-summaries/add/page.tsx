@@ -1,20 +1,24 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, FileText, Loader2, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCreateNote } from '@/src/hooks/useNotes';
 import { useCourses } from '@/src/hooks/useCourses';
 
-const NOTE_TYPES = [
-  { value: 'summary', label: 'Summary' },
-  { value: 'highlight', label: 'Highlight' },
-  { value: 'key_point', label: 'Key Point' },
-  { value: 'important_notice', label: 'Important Notice' }
-];
+function getNoteTypes(t: (key: string) => string) {
+  return [
+    { value: 'summary', label: t('filters.summary') },
+    { value: 'highlight', label: t('filters.highlight') },
+    { value: 'key_point', label: t('filters.keyPoint') },
+    { value: 'important_notice', label: t('filters.importantNotice') }
+  ];
+}
 
 export default function AddNotePage() {
+  const t = useTranslations('notesSummaries');
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [type, setType] = useState('summary');
@@ -26,16 +30,17 @@ export default function AddNotePage() {
 
   const { mutate: createNote, isLoading } = useCreateNote();
   const { data: courses, isLoading: isLoadingCourses } = useCourses();
+  const NOTE_TYPES = getNoteTypes(t);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     
     if (!title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = t('create.titleRequired');
     }
-    
+
     if (!type.trim()) {
-      newErrors.type = 'Type is required';
+      newErrors.type = t('create.typeRequired');
     }
     
     setErrors(newErrors);
@@ -74,8 +79,8 @@ export default function AddNotePage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Add New Note</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Create a new note or summary.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('create.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('create.pageDescription')}</p>
         </div>
       </div>
 
@@ -84,13 +89,13 @@ export default function AddNotePage() {
           {/* Title */}
           <div>
             <label className="block text-sm font-semibold text-[#475569] mb-2">
-              Title <span className="text-[#EF4444]">*</span>
+              {t('create.titleLabel')} <span className="text-[#EF4444]">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter note title"
+              placeholder={t('create.titlePlaceholder')}
               className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${
                 errors.title ? 'border-[#EF4444]' : 'border-[#E2E8F0]'
               }`}
@@ -103,7 +108,7 @@ export default function AddNotePage() {
           {/* Type */}
           <div>
             <label className="block text-sm font-semibold text-[#475569] mb-2">
-              Type <span className="text-[#EF4444]">*</span>
+              {t('create.typeLabel')} <span className="text-[#EF4444]">*</span>
             </label>
             <select
               value={type}
@@ -124,7 +129,7 @@ export default function AddNotePage() {
           {/* Course */}
           <div>
             <label className="block text-sm font-semibold text-[#475569] mb-2">
-              Course
+              {t('create.courseLabel')}
             </label>
             <div className="relative">
               <select
@@ -133,7 +138,7 @@ export default function AddNotePage() {
                 disabled={isLoadingCourses}
                 className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
               >
-                <option value="">Select a course (optional)</option>
+                <option value="">{t('create.coursePlaceholder')}</option>
                 {courses?.map((course) => (
                   <option key={course.id} value={course.id}>
                     {course.attributes.title}
@@ -143,20 +148,20 @@ export default function AddNotePage() {
               <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
             </div>
             {isLoadingCourses && (
-              <p className="mt-1 text-xs text-[#94A3B8]">Loading courses...</p>
+              <p className="mt-1 text-xs text-[#94A3B8]">{t('create.loadingCourses')}</p>
             )}
           </div>
 
           {/* Linked Lecture */}
           <div>
             <label className="block text-sm font-semibold text-[#475569] mb-2">
-              Linked Lecture
+              {t('create.linkedLectureLabel')}
             </label>
             <input
               type="text"
               value={linkedLecture}
               onChange={(e) => setLinkedLecture(e.target.value)}
-              placeholder="Enter linked lecture (optional)"
+              placeholder={t('create.linkedLecturePlaceholder')}
               className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
             />
           </div>
@@ -164,20 +169,20 @@ export default function AddNotePage() {
           {/* Content */}
           <div>
             <label className="block text-sm font-semibold text-[#475569] mb-2">
-              Content
+              {t('create.contentLabel')}
             </label>
             <div className="relative">
               <FileText className="absolute left-4 top-4 w-5 h-5 text-[#94A3B8]" />
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Enter note content..."
+                placeholder={t('create.contentPlaceholder')}
                 rows={8}
                 className="w-full pl-12 pr-4 py-4 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
               />
             </div>
             <p className="mt-2 text-xs text-[#94A3B8]">
-              {content.length} characters
+              {t('create.charactersCount', { count: content.length })}
             </p>
           </div>
 
@@ -191,7 +196,7 @@ export default function AddNotePage() {
               className="w-5 h-5 rounded border-[#E2E8F0] text-[#2137D6] focus:ring-[#2137D6]"
             />
             <label htmlFor="isPublish" className="text-sm font-semibold text-[#475569]">
-              Publish immediately
+              {t('create.publishImmediately')}
             </label>
           </div>
         </div>
@@ -202,7 +207,7 @@ export default function AddNotePage() {
             href="/notes-summaries"
             className="px-5 py-2.5 text-sm font-bold text-[#64748B] hover:text-[#1E293B] transition-colors"
           >
-            Cancel
+            {t('create.cancel')}
           </Link>
           <div className="flex items-center gap-3">
             <button
@@ -213,10 +218,10 @@ export default function AddNotePage() {
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating...
+                  {t('create.creating')}
                 </>
               ) : (
-                'Create Note'
+                t('create.createNote')
               )}
             </button>
           </div>

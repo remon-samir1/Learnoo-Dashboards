@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { 
   ArrowLeft, 
   Save, 
@@ -26,6 +27,7 @@ import type { CreateStudentRequest, StudentStatus } from '@/src/types';
 import { StudentStatusLabels } from '@/src/types';
 
 export default function AddStudentPage() {
+  const t = useTranslations();
   const router = useRouter();
   
   // Queries
@@ -127,8 +129,8 @@ export default function AddStudentPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Add New Student</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Create a new student account and assign courses.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('students.form.addTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('students.form.addDescription')}</p>
         </div>
       </div>
 
@@ -143,14 +145,14 @@ export default function AddStudentPage() {
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
             <Info className="w-4 h-4 text-[#4F46E5]" />
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Personal Information</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.personal')}</h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">First Name</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.firstName')}</label>
               <input 
                 type="text" 
-                placeholder="Ahmed"
+                placeholder={t('students.form.fields.placeholders.firstName')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.first_name}
                 onChange={(e) => setFormData({...formData, first_name: e.target.value})}
@@ -158,10 +160,10 @@ export default function AddStudentPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Last Name</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.lastName')}</label>
               <input 
                 type="text" 
-                placeholder="Ali"
+                placeholder={t('students.form.fields.placeholders.lastName')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.last_name}
                 onChange={(e) => setFormData({...formData, last_name: e.target.value})}
@@ -169,10 +171,10 @@ export default function AddStudentPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Phone Number</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.phone')}</label>
               <input 
                 type="text" 
-                placeholder="+20 100 123 4567"
+                placeholder={t('students.form.fields.placeholders.phone')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.phone}
                 onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -180,10 +182,10 @@ export default function AddStudentPage() {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Email Address</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.email')}</label>
               <input 
                 type="email" 
-                placeholder="student@university.edu"
+                placeholder={t('students.form.fields.placeholders.email')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -191,10 +193,10 @@ export default function AddStudentPage() {
               />
             </div>
             <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-[13px] font-bold text-[#475569]">Password</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.password')}</label>
               <input 
                 type="password" 
-                placeholder="********"
+                placeholder={t('students.form.fields.placeholders.password')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -208,18 +210,18 @@ export default function AddStudentPage() {
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
             <GraduationCap className="w-4 h-4 text-[#4F46E5]" />
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Academic Information</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.academic')}</h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2 relative">
-              <label className="text-[13px] font-bold text-[#475569]">University</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.university')}</label>
               <select 
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 value={formData.university_id}
                 onChange={(e) => setFormData({...formData, university_id: e.target.value})}
                 required
               >
-                <option value="">Select University</option>
+                <option value="">{t('students.form.fields.selectUniversity')}</option>
                 {universities?.map((uni: any) => (
                   <option key={uni.id} value={uni.id}>{uni.attributes.name}</option>
                 ))}
@@ -231,14 +233,14 @@ export default function AddStudentPage() {
               )}
             </div>
             <div className="flex flex-col gap-2 relative">
-              <label className="text-[13px] font-bold text-[#475569]">Faculty</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.faculty')}</label>
               <select 
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 value={formData.faculty_id}
                 onChange={(e) => setFormData({...formData, faculty_id: e.target.value})}
                 required
               >
-                <option value="">Select Faculty</option>
+                <option value="">{t('students.form.fields.selectFaculty')}</option>
                 {faculties?.map((fac: any) => (
                   <option key={fac.id} value={fac.id}>{fac.attributes.name}</option>
                 ))}
@@ -256,17 +258,17 @@ export default function AddStudentPage() {
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-[#4F46E5]" />
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Centers & Courses</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.centers')}</h2>
           </div>
           <div className="p-6 flex flex-col gap-6">
              <div className="flex flex-col gap-2 relative">
-              <label className="text-[13px] font-bold text-[#475569]">Centers (Multiple Selection)</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.centers')}</label>
               <select 
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 onChange={handleCenterChange}
                 value=""
               >
-                <option value="">Select Center</option>
+                <option value="">{t('students.form.fields.selectCenter')}</option>
                 {centersData?.map((center: any) => (
                   <option key={center.id} value={center.id}>{center.name}</option>
                 ))}
@@ -290,19 +292,19 @@ export default function AddStudentPage() {
                          </button>
                       </div>
                     ))}
-                    {selectedCenters.length === 0 && <span className="text-sm text-[#94A3B8]">No centers selected</span>}
+                    {selectedCenters.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCentersSelected')}</span>}
                  </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2 relative">
-              <label className="text-[13px] font-bold text-[#475569]">Assigned Courses (Multiple Selection)</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.courses')}</label>
               <select 
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 onChange={handleCourseChange}
                 value=""
               >
-                <option value="">Select Course</option>
+                <option value="">{t('students.form.fields.selectCourse')}</option>
                 {coursesData?.map((course: any) => (
                   <option key={course.id} value={course.id}>{course.attributes.title}</option>
                 ))}
@@ -326,7 +328,7 @@ export default function AddStudentPage() {
                          </button>
                       </div>
                     ))}
-                    {selectedCourses.length === 0 && <span className="text-sm text-[#94A3B8]">No courses selected</span>}
+                    {selectedCourses.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCoursesSelected')}</span>}
                  </div>
               </div>
             </div>
@@ -336,11 +338,11 @@ export default function AddStudentPage() {
         {/* Profile Image Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Profile Image</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.profileImage')}</h2>
           </div>
           <div className="p-6">
             <FileUpload 
-              label="Profile Image" 
+              label={t('students.form.fields.profileImage')} 
               onFileSelect={(file) => setFormData({...formData, image: file})}
             />
           </div>
@@ -350,11 +352,11 @@ export default function AddStudentPage() {
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#4F46E5]" />
-            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Account Status</h2>
+            <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.accountStatus')}</h2>
           </div>
           <div className="p-6">
             <div className="flex flex-col gap-2 relative max-w-md">
-              <label className="text-[13px] font-bold text-[#475569]">Status</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.status')}</label>
               <select
                 className={`w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer font-bold ${
                   formData.status === 1 ? 'text-[#10B981]' : formData.status === 0 ? 'text-red-500' : 'text-orange-500'
@@ -378,7 +380,7 @@ export default function AddStudentPage() {
             onClick={() => router.push('/students')}
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all shadow-sm"
           >
-            Cancel
+            {t('students.form.buttons.cancel')}
           </button>
           <button 
             type="submit"
@@ -386,7 +388,7 @@ export default function AddStudentPage() {
             className="px-8 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isCreating ? 'Creating...' : 'Create Student'}
+            {isCreating ? t('students.form.buttons.creating') : t('students.form.buttons.create')}
           </button>
         </div>
       </form>

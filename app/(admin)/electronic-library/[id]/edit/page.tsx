@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Save, Loader2, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -8,11 +9,11 @@ import { useLibrary, useUpdateLibrary } from '@/src/hooks/useLibraries';
 import { useCourses } from '@/src/hooks/useCourses';
 import type { Attachment } from '@/src/types';
 
-const MATERIAL_TYPES = [
-  { value: 'booklet', label: 'Booklet' },
-  { value: 'reference', label: 'Reference' },
-  { value: 'guide', label: 'Guide' }
-];
+export default function EditLibraryItemPage() {
+  const t = useTranslations();
+  const router = useRouter();
+  const params = useParams();
+  const libraryId = parseInt(params.id as string);
 
 function getPreviewUrl(path: string | null): string {
   if (!path) return '';
@@ -22,10 +23,6 @@ function getPreviewUrl(path: string | null): string {
   return path;
 }
 
-export default function EditLibraryItemPage() {
-  const router = useRouter();
-  const params = useParams();
-  const libraryId = parseInt(params.id as string);
 
   const { data: library, isLoading: isLoadingLibrary, error } = useLibrary(libraryId);
   const { mutate: updateLibrary, isLoading: isUpdating } = useUpdateLibrary();
@@ -42,6 +39,12 @@ export default function EditLibraryItemPage() {
   const [codeActivation, setCodeActivation] = useState(false);
   const [isPublish, setIsPublish] = useState(false);
   const [price, setPrice] = useState('');
+
+  const MATERIAL_TYPES = [
+    { value: 'booklet', label: t('electronicLibrary.filters.booklet') },
+    { value: 'reference', label: t('electronicLibrary.filters.reference') },
+    { value: 'guide', label: t('electronicLibrary.filters.guide') }
+  ];
 
   // Populate form when data loads
   useEffect(() => {
@@ -106,13 +109,13 @@ export default function EditLibraryItemPage() {
   if (error || !library) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-[#EF4444]">Failed to load library item. Please try again.</p>
+        <p className="text-[#EF4444]">{t('electronicLibrary.detail.loadError')}</p>
         <Link 
           href="/electronic-library"
           className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Library
+          {t('electronicLibrary.backToLibrary')}
         </Link>
       </div>
     );
@@ -129,19 +132,19 @@ export default function EditLibraryItemPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Edit Library Item</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">Update library item details</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('electronicLibrary.edit.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('electronicLibrary.edit.pageDescription')}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Item Details Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-6">
-          <h2 className="text-base font-bold text-[#1E293B]">Item Details</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.edit.sections.itemDetails')}</h2>
           
           {/* Title */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Title <span className="text-[#EF4444]">*</span></label>
+            <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.title')} <span className="text-[#EF4444]">*</span></label>
             <input 
               type="text" 
               className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all"
@@ -153,7 +156,7 @@ export default function EditLibraryItemPage() {
 
           {/* Description */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Description</label>
+            <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.description')}</label>
             <textarea 
               rows={4}
               className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all resize-none"
@@ -165,7 +168,7 @@ export default function EditLibraryItemPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Course */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Course</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.course')}</label>
               <div className="relative">
                 <select 
                   className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer disabled:opacity-50"
@@ -173,7 +176,7 @@ export default function EditLibraryItemPage() {
                   onChange={(e) => setCourseId(e.target.value)}
                   disabled={isLoadingCourses}
                 >
-                  <option value="">Select Course</option>
+                  <option value="">{t('electronicLibrary.edit.fields.selectCourse')}</option>
                   {courses?.map((course) => (
                     <option key={course.id} value={course.id}>{course.attributes.title}</option>
                   ))}
@@ -184,7 +187,7 @@ export default function EditLibraryItemPage() {
 
             {/* Material Type */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Material Type</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.materialType')}</label>
               <div className="relative">
                 <select 
                   className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
@@ -202,7 +205,7 @@ export default function EditLibraryItemPage() {
 
           {/* Price */}
           <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-[#475569]">Price</label>
+            <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.price')}</label>
             <input 
               type="number" 
               step="0.01"
@@ -215,7 +218,7 @@ export default function EditLibraryItemPage() {
 
         {/* Cover Image Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-4">
-          <h2 className="text-base font-bold text-[#1E293B]">Cover Image</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.edit.sections.coverImage')}</h2>
           <div className="flex flex-col gap-4">
             {/* Preview */}
             {coverImagePreview && (
@@ -240,7 +243,7 @@ export default function EditLibraryItemPage() {
             
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Upload New Cover Image</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.uploadNewCoverImage')}</label>
               <div className="relative">
                 <input 
                   type="file" 
@@ -253,17 +256,17 @@ export default function EditLibraryItemPage() {
                   htmlFor="coverImageUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
-                  {coverImage ? coverImage.name : 'Click to upload new image'}
+                  {coverImage ? coverImage.name : t('electronicLibrary.edit.fields.clickToUploadNewImage')}
                 </label>
               </div>
-              <p className="text-xs text-[#94A3B8]">Supported formats: JPG, PNG, WebP</p>
+              <p className="text-xs text-[#94A3B8]">{t('electronicLibrary.edit.fields.supportedFormats')}</p>
             </div>
           </div>
         </section>
 
         {/* Attachment Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-4">
-          <h2 className="text-base font-bold text-[#1E293B]">Attachment File</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.edit.sections.attachment')}</h2>
           <div className="flex flex-col gap-4">
             {/* Existing Attachments Display */}
             {existingAttachments.length > 0 && attachments.length === 0 && (
@@ -303,7 +306,7 @@ export default function EditLibraryItemPage() {
             
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">Upload New File</label>
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.uploadNewFile')}</label>
               <div className="relative">
                 <input 
                   type="file" 
@@ -315,23 +318,23 @@ export default function EditLibraryItemPage() {
                   htmlFor="attachmentUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
-                  {attachments.length > 0 ? 'Change file' : 'Click to upload new file'}
+                  {attachments.length > 0 ? t('electronicLibrary.edit.fields.changeFile') : t('electronicLibrary.edit.fields.clickToUploadNewFile')}
                 </label>
               </div>
-              <p className="text-xs text-[#94A3B8]">PDF, DOC, DOCX, or any file type</p>
+              <p className="text-xs text-[#94A3B8]">{t('electronicLibrary.add.fields.fileTypes')}</p>
             </div>
           </div>
         </section>
 
         {/* Settings Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-6">
-          <h2 className="text-base font-bold text-[#1E293B]">Settings</h2>
+          <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.edit.sections.settings')}</h2>
           
           {/* Code Activation */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-[14px] font-bold text-[#1E293B]">Code Activation Required</span>
-              <span className="text-[13px] text-[#64748B]">Students need a code to access this item</span>
+              <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.edit.settings.codeActivation')}</span>
+              <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.edit.settings.codeActivationDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -347,8 +350,8 @@ export default function EditLibraryItemPage() {
           {/* Publish Status */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-[14px] font-bold text-[#1E293B]">Publish Item</span>
-              <span className="text-[13px] text-[#64748B]">Make this item visible to students</span>
+              <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.edit.settings.publishItem')}</span>
+              <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.edit.settings.publishItemDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -368,7 +371,7 @@ export default function EditLibraryItemPage() {
             href={`/electronic-library/${libraryId}`}
             className="px-6 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-all"
           >
-            Cancel
+            {t('electronicLibrary.edit.buttons.cancel')}
           </Link>
           <button 
             type="submit"
@@ -378,12 +381,12 @@ export default function EditLibraryItemPage() {
             {isUpdating ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
+                {t('electronicLibrary.edit.buttons.saving')}
               </>
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                Save Changes
+                {t('electronicLibrary.edit.buttons.saveChanges')}
               </>
             )}
           </button>

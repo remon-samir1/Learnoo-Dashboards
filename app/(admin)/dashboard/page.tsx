@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import StatCard from '@/components/StatCard';
 import QuickAction from '@/components/QuickAction';
 import ActivityChart from '@/components/dashboard/ActivityChart';
@@ -10,6 +11,8 @@ import { useDashboardStats, useActivityData, useEngagementData, useRecentActivit
 import { StatCardSkeleton, QuickActionSkeleton, ChartSkeleton, ActivityItemSkeleton, Skeleton } from '@/src/components/ui/Skeleton';
 
 export default function DashboardPage() {
+  const t = useTranslations('dashboard');
+  const tc = useTranslations('common');
   const { data: statsResponse, isLoading: statsLoading } = useDashboardStats({});
   const { data: activityResponse, isLoading: activityLoading } = useActivityData('week', {});
   const { data: engagementResponse, isLoading: engagementLoading } = useEngagementData('week', {});
@@ -36,7 +39,7 @@ export default function DashboardPage() {
         ) : (
           <>
             <StatCard
-              label="Total Students"
+              label={t('stats.totalStudents')}
               value={stats?.total_students?.value?.toLocaleString() || '0'}
               trend={stats?.total_students?.trend === 'up' ? `+${stats?.total_students?.growth}%` : stats?.total_students?.growth ? `-${stats?.total_students?.growth}%` : undefined}
               icon={
@@ -46,7 +49,7 @@ export default function DashboardPage() {
               }
             />
             <StatCard
-              label="Active Courses"
+              label={t('stats.activeCourses')}
               value={stats?.active_courses?.value?.toString() || '0'}
               trend={stats?.active_courses?.growth ? `+${stats?.active_courses?.growth}` : undefined}
               icon={
@@ -56,7 +59,7 @@ export default function DashboardPage() {
               }
             />
             <StatCard
-              label="Live Sessions Today"
+              label={t('stats.liveSessionsToday')}
               value={stats?.live_sessions_today?.value?.toString() || '0'}
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2137D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -65,7 +68,7 @@ export default function DashboardPage() {
               }
             />
             <StatCard
-              label="Notes Created"
+              label={t('stats.notesCreated')}
               value={stats?.notes_created?.value?.toLocaleString() || '0'}
               trend={stats?.notes_created?.growth ? `+${stats?.notes_created?.growth}%` : undefined}
               icon={
@@ -75,7 +78,7 @@ export default function DashboardPage() {
               }
             />
             <StatCard
-              label="Monthly Revenue"
+              label={t('stats.monthlyRevenue')}
               value={`EGP ${stats?.monthly_revenue?.value?.toLocaleString() || '0'}`}
               trend={stats?.monthly_revenue?.growth ? `+${stats?.monthly_revenue?.growth}%` : undefined}
               icon={
@@ -85,7 +88,7 @@ export default function DashboardPage() {
               }
             />
             <StatCard
-              label="Community Posts"
+              label={t('stats.communityPosts')}
               value={stats?.community_posts?.value?.toLocaleString() || '0'}
               trend={stats?.community_posts?.growth ? `+${stats?.community_posts?.growth}%` : undefined}
               icon={
@@ -100,10 +103,10 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <section className="flex flex-col gap-4">
-        <h3 className="text-[15.3px] font-medium text-[#111827]">Quick Actions</h3>
+        <h3 className="text-[15.3px] font-medium text-[#111827]">{t('quickActions.title')}</h3>
         <div className="flex flex-wrap gap-4">
           <QuickAction 
-            label="Add Student" 
+            label={t('quickActions.addStudent')} 
             bgColor="bg-white" 
             iconBgColor="bg-[#F4F5FD]" 
             iconColor="#2137D6" 
@@ -111,7 +114,7 @@ export default function DashboardPage() {
             href="/students/add"
           />
           <QuickAction 
-            label="Add Course" 
+            label={t('quickActions.addCourse')} 
             bgColor="bg-white" 
             iconBgColor="bg-[#E8F9F0]" 
             iconColor="#2FBF71" 
@@ -119,7 +122,7 @@ export default function DashboardPage() {
             href="/courses/add"
           />
           <QuickAction 
-            label="Live Session" 
+            label={t('quickActions.liveSession')} 
             bgColor="bg-white" 
             iconBgColor="bg-[#FEF1F1]" 
             iconColor="#EF7373" 
@@ -127,7 +130,7 @@ export default function DashboardPage() {
             href="/live-sessions"
           />
           <QuickAction 
-            label="Notify" 
+            label={t('quickActions.notify')} 
             bgColor="bg-white" 
             iconBgColor="bg-[#F8FAFC]" 
             iconColor="#777774" 
@@ -135,7 +138,7 @@ export default function DashboardPage() {
             href="/notifications"
           />
           <QuickAction 
-            label="Add to Library" 
+            label={t('quickActions.addToLibrary')} 
             bgColor="bg-white" 
             iconBgColor="bg-[#E8F9F0]" 
             iconColor="#2FBF71" 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Edit, Trash2, BookOpen, DollarSign, Calendar, Eye, Lock, Power, Upload, CheckCircle, Search, X, Plus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,6 +26,7 @@ function getMaterialTypeColor(type: string): string {
 }
 
 export default function LibraryDetailPage() {
+  const t = useTranslations();
   const router = useRouter();
   const params = useParams();
   const libraryId = parseInt(params.id as string);
@@ -72,7 +74,7 @@ export default function LibraryDetailPage() {
         item_type: 'library',
         user_id: String(selectedLibraryStudent),
       });
-      toast.success('Library item activated successfully!');
+      toast.success(t('activation.messages.codeAssigned'));
       setSelectedLibraryCode('');
       setSelectedLibraryStudent('');
       setLibraryStudentSearch('');
@@ -98,7 +100,7 @@ export default function LibraryDetailPage() {
         .filter((n) => n.length > 0);
       setLibraryPreactivationNumbers(numbers);
       setLibraryPreactivationResults(null);
-      toast.success(`${numbers.length} phone numbers ready for upload`);
+      toast.success(`${numbers.length} ${t('courses.view.preactivation.numbersReady')}`);
     };
     reader.readAsText(file);
   };
@@ -114,7 +116,7 @@ export default function LibraryDetailPage() {
   const handleLibraryPreactivationUpload = async () => {
     const file = libraryFileInputRef.current?.files?.[0];
     if (!file) {
-      toast.error('Please select a file first');
+      toast.error(t('courses.view.preactivation.selectFile'));
       return;
     }
 
@@ -125,19 +127,19 @@ export default function LibraryDetailPage() {
         failed: libraryPreactivationNumbers.length - (result.data.count || 0),
         count: result.data.count || 0
       });
-      toast.success(result.data.message || `Processed ${result.data.count} pre-activations`);
+      toast.success(result.data.message || `${t('courses.view.preactivation.success')} ${result.data.count}`);
       refetchCodes();
       if (libraryFileInputRef.current) {
         libraryFileInputRef.current.value = '';
       }
       setLibraryPreactivationNumbers([]);
     } catch {
-      toast.error('Failed to upload pre-activation file');
+      toast.error(t('courses.view.preactivation.failed'));
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this library item?')) return;
+    if (!confirm(t('electronicLibrary.deleteConfirm'))) return;
     try {
       await deleteLibrary(libraryId);
       router.push('/electronic-library');
@@ -157,13 +159,13 @@ export default function LibraryDetailPage() {
   if (error || !library) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-[#EF4444]">Failed to load library item. Please try again.</p>
+        <p className="text-[#EF4444]">{t('electronicLibrary.detail.loadError')}</p>
         <Link 
           href="/electronic-library"
           className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Library
+          {t('electronicLibrary.backToLibrary')}
         </Link>
       </div>
     );
@@ -196,7 +198,7 @@ export default function LibraryDetailPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-all"
           >
             <Edit className="w-4 h-4" />
-            Edit
+            {t('electronicLibrary.detail.edit')}
           </Link>
           <button 
             onClick={handleDelete}
@@ -204,7 +206,7 @@ export default function LibraryDetailPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-red-200 disabled:opacity-50"
           >
             <Trash2 className="w-4 h-4" />
-            Delete
+            {t('electronicLibrary.detail.delete')}
           </button>
         </div>
       </div>
@@ -235,7 +237,7 @@ export default function LibraryDetailPage() {
                     ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100'
                     : 'bg-[#F1F5F9] text-[#64748B] border border-slate-200'
                 }`}>
-                  {library.attributes.is_publish ? 'Published' : 'Draft'}
+                  {library.attributes.is_publish ? t('electronicLibrary.status.published') : t('electronicLibrary.status.draft')}
                 </span>
               </div>
             </div>
@@ -245,7 +247,7 @@ export default function LibraryDetailPage() {
         {/* Right Column - Details */}
         <div className="flex-1">
           <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6">
-            <h2 className="text-base font-bold text-[#1E293B] mb-6">Item Details</h2>
+            <h2 className="text-base font-bold text-[#1E293B] mb-6">{t('electronicLibrary.detail.sections.itemDetails')}</h2>
             
             <div className="flex flex-col gap-6">
               {/* Description */}
@@ -254,7 +256,7 @@ export default function LibraryDetailPage() {
                   <BookOpen className="w-5 h-5 text-[#4F46E5]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[12px] text-[#64748B]">Description</span>
+                  <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.detail.fields.description')}</span>
                   <span className="text-sm text-[#1E293B] leading-relaxed">{library.attributes.description}</span>
                 </div>
               </div>
@@ -265,7 +267,7 @@ export default function LibraryDetailPage() {
                   <DollarSign className="w-5 h-5 text-[#10B981]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[12px] text-[#64748B]">Course ID</span>
+                  <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.detail.fields.courseId')}</span>
                   <span className="text-sm font-bold text-[#1E293B]">{library.attributes.course_id}</span>
                 </div>
               </div>
@@ -276,8 +278,8 @@ export default function LibraryDetailPage() {
                   <Lock className="w-5 h-5 text-[#D97706]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[12px] text-[#64748B]">Code Activation Required</span>
-                  <span className="text-sm font-bold text-[#1E293B]">{library.attributes.code_activation ? 'Yes' : 'No'}</span>
+                  <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.detail.fields.codeActivation')}</span>
+                  <span className="text-sm font-bold text-[#1E293B]">{library.attributes.code_activation ? t('electronicLibrary.detail.fields.yes') : t('electronicLibrary.detail.fields.no')}</span>
                 </div>
               </div>
 
@@ -291,7 +293,7 @@ export default function LibraryDetailPage() {
                       </svg>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[12px] text-[#64748B]">Attachments</span>
+                      <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.detail.fields.attachments')}</span>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 pl-14">
@@ -322,7 +324,7 @@ export default function LibraryDetailPage() {
                   <Calendar className="w-5 h-5 text-[#F59E0B]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[12px] text-[#64748B]">Created Date</span>
+                  <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.detail.fields.createdDate')}</span>
                   <span className="text-sm font-bold text-[#1E293B]">{formatDate(library.attributes.created_at)}</span>
                 </div>
               </div>
@@ -333,7 +335,7 @@ export default function LibraryDetailPage() {
                   <Eye className="w-5 h-5 text-[#64748B]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[12px] text-[#64748B]">Last Updated</span>
+                  <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.detail.fields.lastUpdated')}</span>
                   <span className="text-sm font-bold text-[#1E293B]">{formatDate(library.attributes.updated_at)}</span>
                 </div>
               </div>
@@ -345,7 +347,7 @@ export default function LibraryDetailPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Power className="w-4 h-4 text-[#2137D6]" />
-                <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Library Activation</h2>
+                <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('electronicLibrary.detail.sections.libraryActivation')}</h2>
               </div>
               <Link
                 href={`/activation/generate?library_id=${libraryId}`}
@@ -366,7 +368,7 @@ export default function LibraryDetailPage() {
                     : 'text-[#64748B] hover:text-[#1E293B]'
                 }`}
               >
-                By Code
+                {t('electronicLibrary.detail.activation.tabs.byCode')}
               </button>
               <button
                 onClick={() => setLibraryActivationTab('preactivation')}
@@ -376,7 +378,7 @@ export default function LibraryDetailPage() {
                     : 'text-[#64748B] hover:text-[#1E293B]'
                 }`}
               >
-                Pre-activation
+                {t('electronicLibrary.detail.activation.tabs.preactivation')}
               </button>
             </div>
 
@@ -384,7 +386,7 @@ export default function LibraryDetailPage() {
               <div className="flex flex-col gap-4">
                 {/* Available Codes */}
                 <div>
-                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Available Codes ({libraryCodes.length})</label>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('electronicLibrary.detail.activation.availableCodes')} ({libraryCodes.length})</label>
                   {libraryCodes.length > 0 ? (
                     <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-2">
                       <div className="flex flex-wrap gap-2">
@@ -404,18 +406,18 @@ export default function LibraryDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-[#94A3B8]">No available codes. Generate codes first.</p>
+                    <p className="text-xs text-[#94A3B8]">{t('electronicLibrary.detail.activation.noAvailableCodes')}</p>
                   )}
                 </div>
 
                 {/* Student Selection */}
                 <div>
-                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Select Student</label>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('electronicLibrary.detail.activation.selectStudent')}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                     <input
                       type="text"
-                      placeholder="Search students..."
+                      placeholder={t('electronicLibrary.detail.activation.searchStudents')}
                       value={libraryStudentSearch}
                       onChange={(e) => setLibraryStudentSearch(e.target.value)}
                       className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
@@ -451,7 +453,7 @@ export default function LibraryDetailPage() {
                           </label>
                         ))
                       ) : (
-                        <p className="text-xs text-[#94A3B8] italic">No students found</p>
+                        <p className="text-xs text-[#94A3B8] italic">{t('electronicLibrary.detail.activation.noStudentsFound')}</p>
                       )}
                     </div>
                   )}
@@ -466,12 +468,12 @@ export default function LibraryDetailPage() {
                   {isActivatingLibrary ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Activating...
+                      {t('electronicLibrary.detail.activation.activating')}
                     </>
                   ) : (
                     <>
                       <Power className="w-4 h-4" />
-                      Activate Library Item
+                      {t('electronicLibrary.detail.activation.activate')}
                     </>
                   )}
                 </button>
@@ -480,14 +482,14 @@ export default function LibraryDetailPage() {
               <div className="flex flex-col gap-4">
                 <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
                   <p className="text-xs text-[#2137D6]">
-                    <span className="font-bold">How it works:</span> Upload phone numbers, and we will generate unique codes and immediately activate them for matching students.
+                    <span className="font-bold">{t('electronicLibrary.detail.activation.howItWorks')}</span> {t('electronicLibrary.detail.activation.preactivationDescription')}
                   </p>
                 </div>
 
                 {/* File Upload */}
                 <div>
-                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Upload Phone Numbers</label>
-                  <p className="text-[10px] text-[#94A3B8] mb-2">Supported: .txt, .csv (one phone per line)</p>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('electronicLibrary.detail.activation.uploadPhoneNumbers')}</label>
+                  <p className="text-[10px] text-[#94A3B8] mb-2">{t('electronicLibrary.detail.activation.supportedFormats')}</p>
                   <input
                     ref={libraryFileInputRef}
                     type="file"
@@ -500,7 +502,7 @@ export default function LibraryDetailPage() {
                     className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
                   >
                     <Upload className="w-4 h-4" />
-                    Choose File
+                    {t('electronicLibrary.detail.activation.chooseFile')}
                   </button>
                 </div>
 
@@ -508,13 +510,13 @@ export default function LibraryDetailPage() {
                 {libraryPreactivationNumbers.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-bold text-[#64748B]">Phone Numbers ({libraryPreactivationNumbers.length})</label>
+                      <label className="text-xs font-bold text-[#64748B]">{t('electronicLibrary.detail.activation.phoneNumbers')} ({libraryPreactivationNumbers.length})</label>
                       <button
                         onClick={clearLibraryPreactivationNumbers}
                         className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
                       >
                         <X className="w-3 h-3" />
-                        Clear
+                        {t('electronicLibrary.detail.activation.clear')}
                       </button>
                     </div>
                     <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
@@ -541,12 +543,12 @@ export default function LibraryDetailPage() {
                   {isUploadingLibraryPreActivation ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Uploading...
+                      {t('electronicLibrary.detail.activation.uploading')}
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4" />
-                      Upload & Process {libraryPreactivationNumbers.length > 0 && `(${libraryPreactivationNumbers.length})`}
+                      {t('electronicLibrary.detail.activation.uploadAndProcess')} {libraryPreactivationNumbers.length > 0 && `(${libraryPreactivationNumbers.length})`}
                     </>
                   )}
                 </button>
@@ -554,16 +556,16 @@ export default function LibraryDetailPage() {
                 {/* Pre-activation Results */}
                 {libraryPreactivationResults && (
                   <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                    <p className="text-xs font-bold text-[#1E293B] mb-2">Pre-activation Results:</p>
+                    <p className="text-xs font-bold text-[#1E293B] mb-2">{t('electronicLibrary.detail.activation.preactivationResults')}</p>
                     <div className="flex items-center gap-4">
                       <span className="text-xs text-green-600 flex items-center gap-1">
                         <CheckCircle className="w-3.5 h-3.5" />
-                        Success: {libraryPreactivationResults.success}
+                        {t('electronicLibrary.detail.activation.success')}: {libraryPreactivationResults.success}
                       </span>
                       {libraryPreactivationResults.failed > 0 && (
                         <span className="text-xs text-red-600 flex items-center gap-1">
                           <X className="w-3.5 h-3.5" />
-                          Failed: {libraryPreactivationResults.failed}
+                          {t('electronicLibrary.detail.activation.failed')}: {libraryPreactivationResults.failed}
                         </span>
                       )}
                     </div>

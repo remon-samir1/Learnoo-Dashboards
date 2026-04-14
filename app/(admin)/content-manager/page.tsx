@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   FileEdit, Plus, ChevronRight, ChevronDown, Video, Play, Settings, Trash2,
   FileText, Link as LinkIcon, Save, Eye, Building2, BookOpen, Loader2, X,
@@ -15,6 +16,7 @@ import type { Course, Lecture, Chapter } from '@/src/types';
 import { toast } from 'react-hot-toast';
 
 export default function ContentManagerPage() {
+  const t = useTranslations();
   const { data: coursesData, isLoading: coursesLoading, refetch: refetchCourses } = useCourses();
   const [courses, setCourses] = useState<Course[]>([]);
 
@@ -166,15 +168,13 @@ export default function ContentManagerPage() {
         title: addLectureData.title,
         description: addLectureData.description,
       });
-      toast.success("Lecture created successfully");
+      toast.success(t('contentManager.messages.lectureCreated'));
       setIsAddLectureModalOpen(false);
       setAddLectureData({ title: '', description: '' });
       // Refresh courses to get updated nested data
       await refetchCourses();
     } catch (error) {
-      toast.error("Failed to create lecture");
-    } finally {
-      setIsCreatingLecture(false);
+      toast.error(t('contentManager.messages.lectureCreateFailed'));
     }
   };
 
@@ -191,7 +191,7 @@ export default function ContentManagerPage() {
         is_free_preview: addChapterData.is_free_preview,
         attachments: addChapterData.attachments,
       });
-      toast.success("Chapter created successfully");
+      toast.success(t('contentManager.messages.chapterCreated'));
       setIsAddChapterModalOpen(false);
       setAddChapterData({
         title: '',
@@ -204,7 +204,7 @@ export default function ContentManagerPage() {
       // Refresh courses to get updated nested data
       await refetchCourses();
     } catch (error) {
-      toast.error("Failed to create chapter");
+      toast.error(t('contentManager.messages.chapterCreateFailed'));
     } finally {
       setIsCreatingChapter(false);
     }
@@ -224,7 +224,7 @@ export default function ContentManagerPage() {
         video: pendingVideo || undefined,
         attachments: pendingAttachments.length > 0 ? pendingAttachments : undefined,
       });
-      toast.success("Chapter updated successfully");
+      toast.success(t('contentManager.messages.chapterUpdated'));
       // Reset pending
       setPendingAttachments([]);
       setPendingThumbnail(null);
@@ -233,30 +233,30 @@ export default function ContentManagerPage() {
       // Refresh courses to get updated nested data
       await refetchCourses();
     } catch (error) {
-      toast.error("Failed to update chapter");
+      toast.error(t('contentManager.messages.chapterUpdateFailed'));
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleDeleteChapter = async (chapterId: string) => {
-    if (!confirm("Are you sure you want to delete this chapter?")) return;
+    if (!confirm(t('contentManager.messages.deleteChapterConfirm'))) return;
     try {
       await api.chapters.delete(Number(chapterId));
-      toast.success("Chapter deleted successfully");
+      toast.success(t('contentManager.messages.chapterDeleted'));
       if (selectedChapter?.id === chapterId) setSelectedChapter(null);
       // Refresh courses to get updated nested data
       await refetchCourses();
     } catch (error) {
-      toast.error("Failed to delete chapter");
+      toast.error(t('contentManager.messages.chapterDeleteFailed'));
     }
   };
 
   const handleDeleteLecture = async (lectureId: string) => {
-    if (!confirm("Are you sure you want to delete this lecture?")) return;
+    if (!confirm(t('contentManager.messages.deleteLectureConfirm'))) return;
     try {
       await api.lectures.delete(Number(lectureId));
-      toast.success("Lecture deleted successfully");
+      toast.success(t('contentManager.messages.lectureDeleted'));
       if (selectedLecture?.id === lectureId) {
         setSelectedLecture(null);
         setSelectedChapter(null);
@@ -264,7 +264,7 @@ export default function ContentManagerPage() {
       // Refresh courses to get updated nested data
       await refetchCourses();
     } catch (error) {
-      toast.error("Failed to delete lecture");
+      toast.error(t('contentManager.messages.lectureDeleteFailed'));
     }
   };
 
@@ -392,8 +392,8 @@ export default function ContentManagerPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Content Manager</h1>
-          <p className="text-sm text-[#64748B] mt-1">Manage course structure, upload videos, and configure lecture settings.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('contentManager.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-1">{t('contentManager.pageDescription')}</p>
         </div>
       </div>
 
@@ -401,7 +401,7 @@ export default function ContentManagerPage() {
         {/* Left Panel: Course Structure */}
         <div className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm p-6 flex flex-col gap-6 self-start sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
           <div className="flex items-center justify-between">
-            <h2 className="text-[17px] font-bold text-[#1E293B]">Course Structure</h2>
+            <h2 className="text-[17px] font-bold text-[#1E293B]">{t('contentManager.courseStructure')}</h2>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -420,7 +420,7 @@ export default function ContentManagerPage() {
                   <div className="pl-4 flex flex-col gap-1 mt-1">
                     {loadingLectures.has(course.id) ? (
                       <div className="p-2 text-xs text-[#94A3B8] italic flex items-center gap-2">
-                        <Loader2 className="w-3 h-3 animate-spin" /> Loading lectures...
+                        <Loader2 className="w-3 h-3 animate-spin" /> {t('contentManager.loadingLectures')}
                       </div>
                     ) : (
                       <>
@@ -456,7 +456,7 @@ export default function ContentManagerPage() {
                               <div className="pl-6 flex flex-col gap-1">
                                 {loadingChapters.has(`${course.id}-${lecture.id}`) ? (
                                   <div className="p-2 text-xs text-[#94A3B8] italic flex items-center gap-2">
-                                    <Loader2 className="w-3 h-3 animate-spin" /> Loading chapters...
+                                    <Loader2 className="w-3 h-3 animate-spin" /> {t('contentManager.loadingChapters')}
                                   </div>
                                 ) : (
                                   <>
@@ -474,7 +474,7 @@ export default function ContentManagerPage() {
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
                                           {chapter.attributes.is_locked && (
-                                            <span className="px-1.5 py-0.5 bg-[#FEF3C7] text-[#D97706] text-[9px] font-bold rounded">Locked</span>
+                                            <span className="px-1.5 py-0.5 bg-[#FEF3C7] text-[#D97706] text-[9px] font-bold rounded">{t('contentManager.locked')}</span>
                                           )}
                                           <button
                                             onClick={(e) => {
@@ -496,7 +496,7 @@ export default function ContentManagerPage() {
                                       className="flex items-center gap-2 p-2 text-[#4F46E5] hover:bg-indigo-50 rounded-xl transition-all mt-1"
                                     >
                                       <Plus className="w-4 h-4" />
-                                      <span className="text-[12px] font-bold">Add Chapter</span>
+                                      <span className="text-[12px] font-bold">{t('contentManager.addChapter')}</span>
                                     </button>
                                   </>
                                 )}
@@ -512,7 +512,7 @@ export default function ContentManagerPage() {
                           className="flex items-center gap-2 p-2 text-[#4F46E5] hover:bg-indigo-50 rounded-xl transition-all mt-1"
                         >
                           <Plus className="w-4 h-4" />
-                          <span className="text-[12px] font-bold">Add Lecture</span>
+                          <span className="text-[12px] font-bold">{t('contentManager.addLecture')}</span>
                         </button>
                       </>
                     )}
@@ -533,12 +533,12 @@ export default function ContentManagerPage() {
                   <div className="flex items-center gap-3">
                     <span className={`px-2 py-0.5 text-[10px] font-bold rounded border uppercase tracking-tighter ${!selectedChapter.attributes.is_locked ? 'bg-[#EBFDF5] text-[#10B981] border-emerald-100' : 'bg-[#FFF7ED] text-[#F97316] border-orange-100'
                       }`}>
-                      {selectedChapter.attributes.is_locked ? 'Locked' : 'Published'}
+                      {selectedChapter.attributes.is_locked ? t('contentManager.locked') : t('contentManager.published')}
                     </span>
                     <span className="text-[11px] font-bold text-[#94A3B8]">{selectedChapter.attributes.duration}</span>
                   </div>
                   <h2 className="text-xl font-bold text-[#1E293B]">{selectedChapter.attributes.title}</h2>
-                  <p className="text-[12px] text-[#64748B]">Lecture ID: {selectedChapter.attributes.lecture_id}</p>
+                  <p className="text-[12px] text-[#64748B]">{t('contentManager.lectureId')}: {selectedChapter.attributes.lecture_id}</p>
                 </div>
                 <button
                   onClick={handleUpdateChapter}
@@ -546,7 +546,7 @@ export default function ContentManagerPage() {
                   className={`px-6 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center gap-2 ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
                   {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                  {isUpdating ? t('contentManager.saving') : t('contentManager.saveChanges')}
                 </button>
               </div>
 
@@ -555,14 +555,14 @@ export default function ContentManagerPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Video className="w-5 h-5 text-[#4F46E5]" />
-                    <h3 className="text-[15px] font-bold text-[#1E293B]">Video Content</h3>
+                    <h3 className="text-[15px] font-bold text-[#1E293B]">{t('contentManager.videoContent')}</h3>
                   </div>
                   <button
                     onClick={() => modalVideoInputRef.current?.click()}
                     className="px-4 py-1.5 bg-[#4F46E5] text-white rounded-xl text-[12px] font-bold hover:bg-[#3730a3] transition-all flex items-center gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    {pendingVideo ? "Change Video" : "Add Video"}
+                    {pendingVideo ? t('contentManager.changeVideo') : t('contentManager.addVideo')}
                   </button>
                   <input
                     type="file"
@@ -620,9 +620,9 @@ export default function ContentManagerPage() {
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                   </svg>
                                   <p class="text-[#64748B] text-sm">${firstAttachment.attributes?.title || 'Attachment'}</p>
-                                  <a href="${filePath}" target="_blank" rel="noopener noreferrer" 
+                                  <a href="${filePath}" target="_blank" rel="noopener noreferrer"
                                      class="px-4 py-2 bg-[#4F46E5] text-white rounded-lg text-sm font-bold hover:bg-[#3730a3] transition-all">
-                                    Open File
+                                    ${t('contentManager.openFile')}
                                   </a>
                                 </div>
                               `;
@@ -634,14 +634,14 @@ export default function ContentManagerPage() {
                   ) : (
                     <div className="w-full h-full bg-[#F8FAFC] flex flex-col items-center justify-center gap-3">
                       <Video className="w-16 h-16 text-[#94A3B8]" />
-                      <p className="text-[#64748B] text-sm">No video content available</p>
-                      <p className="text-[#94A3B8] text-xs">Add a video attachment to display content here</p>
+                      <p className="text-[#64748B] text-sm">{t('contentManager.noVideo')}</p>
+                      <p className="text-[#94A3B8] text-xs">{t('contentManager.addVideoHint')}</p>
                       <button
                         onClick={() => modalVideoInputRef.current?.click()}
                         className="mt-2 px-4 py-2 bg-[#4F46E5] text-white rounded-xl text-[12px] font-bold hover:bg-[#3730a3] transition-all flex items-center gap-1.5"
                       >
                         <Plus className="w-3.5 h-3.5" />
-                        Add Video Content
+                        {t('contentManager.addVideo')}
                       </button>
                     </div>
                   )}
@@ -653,13 +653,13 @@ export default function ContentManagerPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="w-5 h-5 text-[#4F46E5]" />
-                    <h3 className="text-[15px] font-bold text-[#1E293B]">Thumbnail</h3>
+                    <h3 className="text-[15px] font-bold text-[#1E293B]">{t('contentManager.thumbnail')}</h3>
                   </div>
                   <button
                     onClick={() => modalThumbnailInputRef.current?.click()}
                     className="px-4 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[12px] font-bold text-[#64748B] hover:text-[#4F46E5] transition-all"
                   >
-                    {pendingThumbnail ? "Change" : (selectedChapter.attributes.thumbnail && !removeThumbnail) ? "Replace" : "Add"}
+                    {pendingThumbnail ? t('contentManager.change') : (selectedChapter.attributes.thumbnail && !removeThumbnail) ? t('contentManager.replace') : t('contentManager.add')}
                   </button>
                   <input
                     type="file"
@@ -689,7 +689,7 @@ export default function ContentManagerPage() {
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2">
                       <FileText className="w-12 h-12 text-[#94A3B8]" />
-                      <p className="text-[#94A3B8] text-sm">No thumbnail set</p>
+                      <p className="text-[#94A3B8] text-sm">{t('contentManager.noThumbnail')}</p>
                     </div>
                   )}
                 </div>
@@ -702,7 +702,7 @@ export default function ContentManagerPage() {
                     className="self-start px-4 py-2 bg-[#EF4444]/10 text-[#EF4444] rounded-xl text-[12px] font-bold hover:bg-[#EF4444]/20 transition-all flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Remove Thumbnail
+                    {t('contentManager.removeThumbnail')}
                   </button>
                 )}
                 {removeThumbnail && (
@@ -713,7 +713,7 @@ export default function ContentManagerPage() {
                     className="self-start px-4 py-2 bg-[#4F46E5]/10 text-[#4F46E5] rounded-xl text-[12px] font-bold hover:bg-[#4F46E5]/20 transition-all flex items-center gap-2"
                   >
                     <Settings className="w-4 h-4" />
-                    Undo Remove
+                    {t('contentManager.undoRemove')}
                   </button>
                 )}
               </div>
@@ -722,14 +722,14 @@ export default function ContentManagerPage() {
               <div className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm p-8 flex flex-col gap-8">
                 <div className="flex items-center gap-2">
                   <Settings className="w-5 h-5 text-[#4F46E5]" />
-                  <h3 className="text-[15px] font-bold text-[#1E293B]">Chapter Settings</h3>
+                  <h3 className="text-[15px] font-bold text-[#1E293B]">{t('contentManager.chapterSettings')}</h3>
                 </div>
 
                 <div className="grid grid-cols-1 gap-8">
                   <div className="flex items-center justify-between group">
                     <div className="flex flex-col gap-0.5">
-                      <p className="text-[13px] font-bold text-[#1E293B]">Free Preview</p>
-                      <p className="text-[12px] text-[#94A3B8]">Allow students to watch this chapter without enrolling.</p>
+                      <p className="text-[13px] font-bold text-[#1E293B]">{t('contentManager.freePreview')}</p>
+                      <p className="text-[12px] text-[#94A3B8]">{t('contentManager.freePreviewDescription')}</p>
                     </div>
                     <div
                       onClick={handleToggleFreePreview}
@@ -741,8 +741,8 @@ export default function ContentManagerPage() {
 
                   <div className="flex items-center justify-between group">
                     <div className="flex flex-col gap-0.5">
-                      <p className="text-[13px] font-bold text-[#1E293B]">Max Views</p>
-                      <p className="text-[12px] text-[#94A3B8]">Set the maximum number of views allowed for this chapter.</p>
+                      <p className="text-[13px] font-bold text-[#1E293B]">{t('contentManager.maxViews')}</p>
+                      <p className="text-[12px] text-[#94A3B8]">{t('contentManager.maxViewsDescription')}</p>
                     </div>
                     <input
                       type="number"
@@ -766,14 +766,14 @@ export default function ContentManagerPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="w-5 h-5 text-[#4F46E5]" />
-                    <h3 className="text-[15px] font-bold text-[#1E293B]">Attachments & Resources</h3>
+                    <h3 className="text-[15px] font-bold text-[#1E293B]">{t('contentManager.attachments')}</h3>
                   </div>
                   <button
                     onClick={() => attachmentInputRef.current?.click()}
                     className="px-4 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[12px] font-bold text-[#64748B] hover:text-[#4F46E5] transition-all flex items-center gap-1.5"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    Add
+                    {t('contentManager.add')}
                   </button>
                   <input
                     type="file"
@@ -789,7 +789,7 @@ export default function ContentManagerPage() {
 
                 <div className="flex flex-col gap-3">
                   {pendingAttachments.length === 0 && (
-                    <p className="text-sm text-[#94A3B8] italic">No new attachments to upload.</p>
+                    <p className="text-sm text-[#94A3B8] italic">{t('contentManager.noAttachments')}</p>
                   )}
                   {pendingAttachments.map((file, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-2xl border border-[#F1F5F9]">
@@ -813,12 +813,12 @@ export default function ContentManagerPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Power className="w-4 h-4 text-[#2137D6]" />
-                    <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">Chapter Activation</h2>
+                    <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('contentManager.chapterActivation')}</h2>
                   </div>
                   <Link
                     href={`/activation/generate?chapter_id=${selectedChapter.id}`}
                     className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
-                    title="Generate Activation Codes"
+                    title={t('courses.view.generateCodes')}
                   >
                     <Plus className="w-4 h-4" />
                   </Link>
@@ -834,7 +834,7 @@ export default function ContentManagerPage() {
                         : 'text-[#64748B] hover:text-[#1E293B]'
                     }`}
                   >
-                    By Code
+                    {t('courses.view.activationTabs.byCode')}
                   </button>
                   <button
                     onClick={() => setChapterActivationTab('preactivation')}
@@ -844,7 +844,7 @@ export default function ContentManagerPage() {
                         : 'text-[#64748B] hover:text-[#1E293B]'
                     }`}
                   >
-                    Pre-activation
+                    {t('courses.view.activationTabs.preactivation')}
                   </button>
                 </div>
 
@@ -852,7 +852,7 @@ export default function ContentManagerPage() {
                   <div className="flex flex-col gap-4">
                     {/* Available Codes */}
                     <div>
-                      <label className="text-xs font-bold text-[#64748B] mb-2 block">Available Codes ({chapterCodes.length})</label>
+                      <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('courses.view.availableCodes')} ({chapterCodes.length})</label>
                       {chapterCodes.length > 0 ? (
                         <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-2">
                           <div className="flex flex-wrap gap-2">
@@ -872,18 +872,18 @@ export default function ContentManagerPage() {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-xs text-[#94A3B8]">No available codes. Generate codes first.</p>
+                        <p className="text-xs text-[#94A3B8]">{t('activation.messages.noCodesAvailable')}</p>
                       )}
                     </div>
 
                     {/* Student Selection */}
                     <div>
-                      <label className="text-xs font-bold text-[#64748B] mb-2 block">Select Student</label>
+                      <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('courses.view.selectStudent')}</label>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                         <input
                           type="text"
-                          placeholder="Search students..."
+                          placeholder={t('courses.view.searchStudents')}
                           value={chapterStudentSearch}
                           onChange={(e) => setChapterStudentSearch(e.target.value)}
                           className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
@@ -919,7 +919,7 @@ export default function ContentManagerPage() {
                               </label>
                             ))
                           ) : (
-                            <p className="text-xs text-[#94A3B8] italic">No students found</p>
+                            <p className="text-xs text-[#94A3B8] italic">{t('courses.view.noStudentsFound')}</p>
                           )}
                         </div>
                       )}
@@ -934,12 +934,12 @@ export default function ContentManagerPage() {
                       {isActivatingChapter ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Activating...
+                          {t('courses.view.activating')}
                         </>
                       ) : (
                         <>
                           <Power className="w-4 h-4" />
-                          Activate Chapter
+                          {t('courses.view.activate')}
                         </>
                       )}
                     </button>
@@ -948,13 +948,13 @@ export default function ContentManagerPage() {
                   <div className="flex flex-col gap-4">
                     <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
                       <p className="text-xs text-[#2137D6]">
-                        <span className="font-bold">How it works:</span> Upload phone numbers, and we will generate unique codes and immediately activate them for matching students.
+                        <span className="font-bold">{t('courses.view.preactivation.title')}:</span> {t('courses.view.preactivation.description')}
                       </p>
                     </div>
 
                     {/* File Upload */}
                     <div>
-                      <label className="text-xs font-bold text-[#64748B] mb-2 block">Upload Phone Numbers</label>
+                      <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('courses.view.preactivation.title')}</label>
                       <p className="text-[10px] text-[#94A3B8] mb-2">Supported: .txt, .csv (one phone per line)</p>
                       <input
                         ref={chapterFileInputRef}
@@ -968,21 +968,20 @@ export default function ContentManagerPage() {
                         className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
                       >
                         <Upload className="w-4 h-4" />
-                        Choose File
+                        {t('students.import.selectFile')}
                       </button>
                     </div>
-
                     {/* Phone Numbers Preview */}
                     {chapterPreactivationNumbers.length > 0 && (
                       <div>
                         <div className="flex items-center justify-between mb-2">
-                          <label className="text-xs font-bold text-[#64748B]">Phone Numbers ({chapterPreactivationNumbers.length})</label>
+                          <label className="text-xs font-bold text-[#64748B]">{t('courses.view.preactivation.title')} ({chapterPreactivationNumbers.length})</label>
                           <button
                             onClick={clearChapterPreactivationNumbers}
                             className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
                           >
                             <X className="w-3 h-3" />
-                            Clear
+                            {t('courses.view.preactivation.clear')}
                           </button>
                         </div>
                         <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
@@ -1009,12 +1008,12 @@ export default function ContentManagerPage() {
                       {isUploadingChapterPreActivation ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Uploading...
+                          {t('students.import.uploading')}
                         </>
                       ) : (
                         <>
                           <Upload className="w-4 h-4" />
-                          Upload & Process {chapterPreactivationNumbers.length > 0 && `(${chapterPreactivationNumbers.length})`}
+                          {t('courses.view.preactivation.upload')} {chapterPreactivationNumbers.length > 0 && `(${chapterPreactivationNumbers.length})`}
                         </>
                       )}
                     </button>
@@ -1022,16 +1021,16 @@ export default function ContentManagerPage() {
                     {/* Pre-activation Results */}
                     {chapterPreactivationResults && (
                       <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                        <p className="text-xs font-bold text-[#1E293B] mb-2">Pre-activation Results:</p>
+                        <p className="text-xs font-bold text-[#1E293B] mb-2">{t('courses.view.preactivation.title')}:</p>
                         <div className="flex items-center gap-4">
                           <span className="text-xs text-green-600 flex items-center gap-1">
                             <CheckCircle className="w-3.5 h-3.5" />
-                            Success: {chapterPreactivationResults.success}
+                            {t('students.import.success')}: {chapterPreactivationResults.success}
                           </span>
                           {chapterPreactivationResults.failed > 0 && (
                             <span className="text-xs text-red-600 flex items-center gap-1">
                               <X className="w-3.5 h-3.5" />
-                              Failed: {chapterPreactivationResults.failed}
+                              {t('students.import.failed')}: {chapterPreactivationResults.failed}
                             </span>
                           )}
                         </div>
@@ -1047,8 +1046,8 @@ export default function ContentManagerPage() {
                 <Video className="w-8 h-8 text-[#94A3B8]" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-[#1E293B]">Select a Chapter</h3>
-                <p className="text-sm text-[#64748B] max-w-[280px]">Select a chapter from the structure tree to view and manage its content and settings.</p>
+                <h3 className="text-lg font-bold text-[#1E293B]">{t('contentManager.selectChapter')}</h3>
+                <p className="text-sm text-[#64748B] max-w-[280px]">{t('contentManager.selectChapterHint')}</p>
               </div>
             </div>
           )}
@@ -1060,27 +1059,27 @@ export default function ContentManagerPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 flex flex-col gap-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-[#1E293B]">Add New Lecture</h3>
+              <h3 className="text-xl font-bold text-[#1E293B]">{t('contentManager.modal.addLecture')}</h3>
               <button onClick={() => setIsAddLectureModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Title</label>
+                <label className="text-[13px] font-bold text-[#64748B]">{t('contentManager.modal.title')}</label>
                 <input
                   type="text"
                   value={addLectureData.title}
                   onChange={(e) => setAddLectureData({ ...addLectureData, title: e.target.value })}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all"
-                  placeholder="Enter lecture title"
+                  placeholder={t('contentManager.modal.title')}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Description</label>
+                <label className="text-[13px] font-bold text-[#64748B]">{t('contentManager.modal.description')}</label>
                 <textarea
                   value={addLectureData.description}
                   onChange={(e) => setAddLectureData({ ...addLectureData, description: e.target.value })}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all resize-none h-24"
-                  placeholder="Enter lecture description"
+                  placeholder={t('contentManager.modal.description')}
                 />
               </div>
             </div>
@@ -1089,15 +1088,14 @@ export default function ContentManagerPage() {
                 onClick={() => setIsAddLectureModalOpen(false)}
                 className="flex-1 px-6 py-3 bg-white border border-[#E2E8F0] rounded-2xl text-sm font-bold text-[#64748B] hover:bg-gray-50 transition-all"
               >
-                Cancel
+                {t('contentManager.modal.cancel')}
               </button>
               <button
                 onClick={handleCreateLecture}
                 disabled={isCreatingLecture}
                 className={`flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 ${isCreatingLecture ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                {isCreatingLecture ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {isCreatingLecture ? 'Creating...' : 'Create Lecture'}
+                {t('contentManager.modal.createLecture')}
               </button>
             </div>
           </div>
@@ -1109,23 +1107,23 @@ export default function ContentManagerPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 flex flex-col gap-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-[#1E293B]">Add New Chapter</h3>
+              <h3 className="text-xl font-bold text-[#1E293B]">{t('contentManager.modal.addChapter')}</h3>
               <button onClick={() => setIsAddChapterModalOpen(false)} className="p-1.5 hover:bg-gray-100 rounded-lg"><X className="w-5 h-5" /></button>
             </div>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Title</label>
+                <label className="text-[13px] font-bold text-[#64748B]">{t('contentManager.modal.title')}</label>
                 <input
                   type="text"
                   value={addChapterData.title}
                   onChange={(e) => setAddChapterData({ ...addChapterData, title: e.target.value })}
                   disabled={isCreatingChapter}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  placeholder="Enter chapter title"
+                  placeholder={t('contentManager.modal.title')}
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Duration (e.g. 45:00)</label>
+                <label className="text-[13px] font-bold text-[#64748B]">{t('contentManager.modal.duration')}</label>
                 <input
                   type="text"
                   value={addChapterData.duration}
@@ -1136,13 +1134,13 @@ export default function ContentManagerPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Thumbnail Image</label>
+                <label className="text-[13px] font-bold text-[#64748B]">{t('contentManager.modal.thumbnailImage')}</label>
                 <button
                   onClick={() => modalThumbnailInputRef.current?.click()}
                   disabled={isCreatingChapter}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {addChapterData.image ? addChapterData.image.name : "Select image file"}
+                  {addChapterData.image ? addChapterData.image.name : t('contentManager.modal.selectImage')}
                 </button>
                 <input
                   type="file"
@@ -1153,13 +1151,13 @@ export default function ContentManagerPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Video File</label>
+                <label className="text-[13px] font-bold text-[#64748B]">{t('contentManager.modal.videoFile')}</label>
                 <button
                   onClick={() => modalVideoInputRef.current?.click()}
                   disabled={isCreatingChapter}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {addChapterData.video ? addChapterData.video.name : "Select video file"}
+                  {addChapterData.video ? addChapterData.video.name : t('contentManager.modal.selectVideo')}
                 </button>
                 <input
                   type="file"
@@ -1170,13 +1168,13 @@ export default function ContentManagerPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-bold text-[#64748B]">Other Attachments</label>
+                <label className="text-[13px] font-bold text-[#64748B]">{t('contentManager.modal.otherAttachments')}</label>
                 <button
                   onClick={() => modalAttachmentInputRef.current?.click()}
                   disabled={isCreatingChapter}
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-left text-sm text-[#94A3B8] hover:bg-gray-50 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {addChapterData.attachments.length > 0 ? `${addChapterData.attachments.length} files selected` : "Select files"}
+                  {addChapterData.attachments.length > 0 ? t('contentManager.modal.filesSelected', { count: addChapterData.attachments.length }) : t('contentManager.modal.selectFiles')}
                 </button>
                 <input
                   type="file"
@@ -1187,7 +1185,7 @@ export default function ContentManagerPage() {
                 />
               </div>
               <div className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0]">
-                <span className={`text-[13px] font-bold ${isCreatingChapter ? 'text-[#94A3B8]' : 'text-[#1E293B]'}`}>Free Preview</span>
+                <span className={`text-[13px] font-bold ${isCreatingChapter ? 'text-[#94A3B8]' : 'text-[#1E293B]'}`}>{t('contentManager.freePreview')}</span>
                 <div
                   onClick={() => !isCreatingChapter && setAddChapterData({ ...addChapterData, is_free_preview: addChapterData.is_free_preview ? 0 : 1 })}
                   className={`w-12 h-6 rounded-full relative transition-colors ${addChapterData.is_free_preview ? 'bg-[#2137D6]' : 'bg-[#E2E8F0]'} ${isCreatingChapter ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
@@ -1201,7 +1199,7 @@ export default function ContentManagerPage() {
                 onClick={() => setIsAddChapterModalOpen(false)}
                 className="flex-1 px-6 py-3 bg-white border border-[#E2E8F0] rounded-2xl text-sm font-bold text-[#64748B] hover:bg-gray-50 transition-all"
               >
-                Cancel
+                {t('contentManager.modal.cancel')}
               </button>
               <button
                 onClick={handleCreateChapter}
@@ -1211,10 +1209,10 @@ export default function ContentManagerPage() {
                 {isCreatingChapter ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating...
+                    {t('contentManager.modal.creating')}
                   </>
                 ) : (
-                  "Create Chapter"
+                  t('contentManager.modal.createChapter')
                 )}
               </button>
             </div>

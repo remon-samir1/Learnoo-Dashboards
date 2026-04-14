@@ -28,9 +28,10 @@ interface SettingsCardProps {
   href: string;
   soon?: boolean;
   disabled?: boolean;
+  soonLabel?: string;
 }
 
-export default function SettingsCard({ icon, title, description, href, soon, disabled }: SettingsCardProps) {
+export default function SettingsCard({ icon, title, description, href, soon, disabled, soonLabel = 'Soon' }: SettingsCardProps) {
   const IconComponent = iconMap[icon];
   return (
     <Link 
@@ -46,7 +47,7 @@ export default function SettingsCard({ icon, title, description, href, soon, dis
           <h3 className={`text-[16px] font-semibold text-[#111827] ${disabled ? '' : 'group-hover:text-[#2137D6]'} transition-colors`}>{title}</h3>
           {soon && (
             <span className="px-2 py-0.5 text-[11px] font-medium text-[#2137D6] bg-[#2137D6]/10 rounded-full">
-              soon
+              {soonLabel}
             </span>
           )}
         </div>

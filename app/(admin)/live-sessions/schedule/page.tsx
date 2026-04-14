@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, ChangeEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { ChevronLeft, Info } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/src/lib/api';
@@ -9,6 +10,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
 export default function ScheduleSessionPage() {
+  const t = useTranslations();
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ export default function ScheduleSessionPage() {
         setCourses(response.data);
       } catch (error) {
         console.error('Error fetching courses:', error);
-        toast.error('Failed to load courses');
+        toast.error(t('courses.messages.loadError'));
       } finally {
         setIsFetchingCourses(false);
       }
@@ -45,7 +47,7 @@ export default function ScheduleSessionPage() {
 
   const handleSubmit = async () => {
     if (!formData.course_id || !formData.title || !formData.started_at) {
-      toast.error('Please fill in course, title, and start time');
+      toast.error(t('liveSessions.schedule.validation.fillRequired'));
       return;
     }
 
@@ -68,11 +70,11 @@ export default function ScheduleSessionPage() {
       };
 
       await api.liveRooms.create(requestData);
-      toast.success('Session scheduled successfully!');
+      toast.success(t('liveSessions.schedule.success'));
       router.push('/live-sessions');
     } catch (error: any) {
       console.error('Error scheduling session:', error);
-      toast.error(error.message || 'Failed to schedule session');
+      toast.error(error.message || t('liveSessions.schedule.error'));
     } finally {
       setLoading(false);
     }
@@ -88,8 +90,8 @@ export default function ScheduleSessionPage() {
           </button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Schedule Live Session</h1>
-          <p className="text-[#64748B] text-[14px]">Create and configure a new live streaming session.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('liveSessions.schedule.pageTitle')}</h1>
+          <p className="text-[#64748B] text-[14px]">{t('liveSessions.schedule.pageDescription')}</p>
         </div>
       </div>
 
@@ -99,26 +101,26 @@ export default function ScheduleSessionPage() {
           {/* Session Details Card */}
           <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
             <h2 className="text-[16px] font-bold text-[#1E293B] mb-6 flex items-center gap-2">
-              Session Details
+              {t('liveSessions.schedule.sessionDetails')}
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Session Title */}
               <div className="md:col-span-2 flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Session Title</label>
-                <input 
-                  type="text" 
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.sessionTitle')}</label>
+                <input
+                  type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="e.g., Physics 101: Q&A Session"
+                  placeholder={t('liveSessions.schedule.titlePlaceholder')}
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
                 />
               </div>
 
               {/* Course */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Course *</label>
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.course')} *</label>
                 <div className="relative">
                   <select 
                     name="course_id"
@@ -127,7 +129,7 @@ export default function ScheduleSessionPage() {
                     disabled={isFetchingCourses}
                     className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none appearance-none transition-all text-[14px] bg-white disabled:bg-gray-50"
                   >
-                    <option value="">{isFetchingCourses ? 'Loading courses...' : 'Select Course'}</option>
+                    <option value="">{isFetchingCourses ? t('liveSessions.schedule.loadingCourses') : t('liveSessions.schedule.selectCourse')}</option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
                         {course.attributes.title}
@@ -140,7 +142,7 @@ export default function ScheduleSessionPage() {
 
               {/* Start Time */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Start Time *</label>
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.startTime')} *</label>
                 <input 
                   type="datetime-local" 
                   name="started_at"
@@ -152,7 +154,7 @@ export default function ScheduleSessionPage() {
 
               {/* Max Students */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Max Students (0 for unlimited)</label>
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.maxStudents')}</label>
                 <input 
                   type="number" 
                   name="max_students"
@@ -164,9 +166,9 @@ export default function ScheduleSessionPage() {
 
               {/* Max Join Time */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Max Join Time (minutes after start)</label>
-                <input 
-                  type="number" 
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.maxJoinTime')}</label>
+                <input
+                  type="number"
                   name="max_join_time"
                   value={formData.max_join_time}
                   onChange={handleChange}
@@ -174,18 +176,18 @@ export default function ScheduleSessionPage() {
                   placeholder="15"
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
                 />
-                <p className="text-[11px] text-[#94A3B8]">Students can join within this time after session starts. 0 = anytime.</p>
+                <p className="text-[11px] text-[#94A3B8]">{t('liveSessions.schedule.maxJoinTimeHint')}</p>
               </div>
 
               {/* Description */}
               <div className="md:col-span-2 flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Description</label>
-                <textarea 
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.description')}</label>
+                <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
                   rows={4}
-                  placeholder="Provide a brief description of the session..."
+                  placeholder={t('liveSessions.schedule.descriptionPlaceholder')}
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px] resize-none"
                 />
               </div>
@@ -199,29 +201,29 @@ export default function ScheduleSessionPage() {
           <div className="bg-[#F8FAFF] border border-[#E0E7FF] rounded-2xl p-6 flex flex-col gap-4">
              <div className="flex items-center gap-3 text-[#2563EB] mb-2">
                 <Info className="w-5 h-5" />
-                <span className="font-bold text-[14px]">Quick Help</span>
+                <span className="font-bold text-[14px]">{t('liveSessions.schedule.quickHelp')}</span>
              </div>
              <p className="text-[12.5px] text-[#475569] leading-relaxed">
-               Make sure all details are correct. All session settings can be adjusted later through the session settings page.
+               {t('liveSessions.schedule.helpText')}
              </p>
              <ul className="text-[12.5px] text-[#475569] flex flex-col gap-2 mt-2">
-                <li className="flex items-center gap-2">• Students will be notified</li>
-                <li className="flex items-center gap-2">• Session links generated automatically</li>
-                <li className="flex items-center gap-2">• Recording available post-session</li>
+                <li className="flex items-center gap-2">• {t('liveSessions.schedule.helpItems.notify')}</li>
+                <li className="flex items-center gap-2">• {t('liveSessions.schedule.helpItems.links')}</li>
+                <li className="flex items-center gap-2">• {t('liveSessions.schedule.helpItems.recording')}</li>
              </ul>
           </div>
 
           <div className="flex flex-col gap-3">
-             <button 
+             <button
                onClick={handleSubmit}
                disabled={loading}
                className="w-full py-3.5 bg-[#2563EB] text-white rounded-xl font-bold text-[14px] hover:bg-[#1D4ED8] transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
              >
-               {loading ? 'Scheduling...' : 'Schedule Session'}
+               {loading ? t('liveSessions.schedule.scheduling') : t('liveSessions.schedule.scheduleButton')}
              </button>
              <Link href="/live-sessions">
                <button className="w-full py-3.5 bg-white border border-[#E2E8F0] text-[#64748B] rounded-xl font-bold text-[14px] hover:bg-[#F8FAFC] transition-all text-center">
-                 Cancel
+                 {t('liveSessions.schedule.cancel')}
                </button>
              </Link>
           </div>

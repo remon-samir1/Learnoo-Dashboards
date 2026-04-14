@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,7 +31,7 @@ function getSessionStatus(room: LiveRoom): 'LIVE' | 'UPCOMING' | 'ENDED' {
   }
 }
 
-function formatTime(dateString: string): string {
+function formatTime(dateString: string, t: any): string {
   const date = new Date(dateString);
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
@@ -38,8 +39,8 @@ function formatTime(dateString: string): string {
 
   const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-  if (isToday) return `Today, ${timeStr}`;
-  if (isTomorrow) return `Tomorrow, ${timeStr}`;
+  if (isToday) return `${t('liveSessions.time.today')}, ${timeStr}`;
+  if (isTomorrow) return `${t('liveSessions.time.tomorrow')}, ${timeStr}`;
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
@@ -61,6 +62,7 @@ function getDuration(startedAt: string, endedAt?: string | null): string {
 }
 
 export default function LiveSessionsPage() {
+  const t = useTranslations();
   const router = useRouter();
   const { data: liveRooms, isLoading, error, refetch } = useLiveRooms();
   const deleteMutation = useDeleteLiveRoom();
@@ -70,14 +72,14 @@ export default function LiveSessionsPage() {
   };
 
   const handleDelete = async (roomId: string) => {
-    if (!confirm('Are you sure you want to delete this session?')) return;
+    if (!confirm(t('liveSessions.deleteConfirm'))) return;
     try {
       await deleteMutation.mutate(Number(roomId));
-      toast.success('Session deleted successfully');
+      toast.success(t('liveSessions.deleteSuccess'));
       refetch();
     } catch (error) {
       console.error('Error deleting session:', error);
-      toast.error('Failed to delete session');
+      toast.error(t('liveSessions.deleteError'));
     }
   };
 
@@ -87,9 +89,9 @@ export default function LiveSessionsPage() {
       id: room.id,
       status: getSessionStatus(room),
       title: attrs.title,
-      course: attrs.course?.data?.attributes?.title || 'No Course',
-      instructor: attrs.user?.data?.attributes?.full_name || 'Unknown Instructor',
-      time: formatTime(attrs.started_at),
+      course: attrs.course?.data?.attributes?.title || t('liveSessions.card.noCourse'),
+      instructor: attrs.user?.data?.attributes?.full_name || t('liveSessions.card.unknownInstructor'),
+      time: formatTime(attrs.started_at, t),
       duration: getDuration(attrs.started_at, attrs.ended_at),
       enable_chat: attrs.enable_chat ?? true,
       enable_recording: attrs.enable_recording ?? false,
@@ -101,13 +103,13 @@ export default function LiveSessionsPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Live Sessions</h1>
-          <p className="text-[#64748B] mt-1 text-[14px]">Schedule and manage live streaming sessions and interactions.</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('liveSessions.pageTitle')}</h1>
+          <p className="text-[#64748B] mt-1 text-[14px]">{t('liveSessions.pageDescription')}</p>
         </div>
         <Link href="/live-sessions/schedule">
           <button className="bg-[#2563EB] text-white px-6 py-2.5 rounded-xl font-bold text-[14px] flex items-center gap-2 hover:bg-[#1D4ED8] transition-all shadow-md shadow-blue-200">
             <Plus className="w-5 h-5" />
-            Schedule Session
+            {t('liveSessions.scheduleSession')}
           </button>
         </Link>
       </div>
@@ -117,7 +119,7 @@ export default function LiveSessionsPage() {
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
         <input
           type="text"
-          placeholder="Search live sessions..."
+          placeholder={t('liveSessions.searchPlaceholder')}
           className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
         />
       </div>
@@ -132,7 +134,7 @@ export default function LiveSessionsPage() {
           </>
         ) : error ? (
           <div className="text-center py-12 text-red-500">
-            Failed to load live sessions: {error}
+            {t('liveSessions.error')}: {error}
           </div>
         ) : liveRooms && liveRooms.length > 0 ? (
           liveRooms.map((room) => {
@@ -151,7 +153,7 @@ export default function LiveSessionsPage() {
           })
         ) : (
           <div className="text-center py-12 text-[#64748B]">
-            No live sessions found. Schedule your first session!
+            {t('liveSessions.noSessions')}
           </div>
         )}
       </div>
