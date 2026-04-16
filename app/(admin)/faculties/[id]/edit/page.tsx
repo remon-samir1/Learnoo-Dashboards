@@ -7,6 +7,7 @@ import { GraduationCap, Loader2 } from 'lucide-react';
 import { useFaculty, useUpdateFaculty } from '@/src/hooks/useFaculties';
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
+import { FileUpload } from '@/components/FileUpload';
 
 export default function EditFacultyPage() {
   const t = useTranslations();
@@ -16,11 +17,13 @@ export default function EditFacultyPage() {
   
   const { data: faculty, isLoading: isLoadingFaculty } = useFaculty(facultyId);
   const { data: universities, isLoading: isLoadingUniversities } = useUniversities();
-  const { mutate: updateFaculty, isLoading: isUpdating, error } = useUpdateFaculty();
+  const { mutate: updateFaculty, isLoading: isUpdating, error, progress } = useUpdateFaculty();
   
   const [formData, setFormData] = useState({
     name: '',
     parent_id: '',
+    image: null as File | null,
+    existingImage: null as string | null,
   });
 
   useEffect(() => {
@@ -29,6 +32,8 @@ export default function EditFacultyPage() {
       setFormData({
         name: faculty.attributes.name,
         parent_id: parentId ? String(parentId) : '',
+        image: null,
+        existingImage: faculty.attributes.image,
       });
     }
   }, [faculty, universities]);
@@ -44,6 +49,7 @@ export default function EditFacultyPage() {
       await updateFaculty(facultyId, {
         name: formData.name,
         parent_id: parseInt(formData.parent_id),
+        image: formData.image || undefined,
       });
       router.push('/faculties');
     } catch {
@@ -83,6 +89,16 @@ export default function EditFacultyPage() {
       error={error}
     >
       <FormSection title={t('faculties.form.sectionTitle')} icon={<GraduationCap className="w-4 h-4" />}>
+        <div className="md:col-span-2 flex justify-center mb-6">
+          <FileUpload
+            label={t('faculties.form.imageLabel')}
+            onFileSelect={(file) => setFormData({ ...formData, image: file })}
+            previewUrl={formData.image ? URL.createObjectURL(formData.image) : (formData.existingImage || undefined)}
+            onClear={() => setFormData({ ...formData, image: null, existingImage: null })}
+            progress={isUpdating ? progress : undefined}
+          />
+        </div>
+
         <FormInput
           label={t('faculties.form.nameLabel')}
           required

@@ -157,7 +157,7 @@ export function FormSelect({ label, required, options, className = '', ...props 
     <FormField label={label} required={required} className="relative">
       <select
         {...props}
-        className={`w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer ${className}`}
+        className={`w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100 ${className}`}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useFaculties, useDeleteFaculty } from '@/src/hooks/useFaculties';
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
+import { GraduationCap } from 'lucide-react';
 import { SearchFilter } from '@/src/components/admin/SearchFilter';
 import { DataTable, Column } from '@/src/components/ui/DataTable';
 import { DeleteModal } from '@/src/components/ui/DeleteModal';
@@ -56,6 +57,23 @@ export default function FacultiesPage() {
   })) || [];
 
   const columns: Column<Faculty>[] = [
+    {
+      key: 'image',
+      header: t('faculties.columns.image'),
+      render: (item) => (
+        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+          {item.attributes.image ? (
+            <img
+              src={item.attributes.image}
+              alt={item.attributes.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <GraduationCap className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+      ),
+    },
     {
       key: 'name',
       header: t('faculties.columns.name'),

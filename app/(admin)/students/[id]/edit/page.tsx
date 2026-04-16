@@ -41,7 +41,7 @@ export default function EditStudentPage() {
   const { data: coursesData, isLoading: isCoursesLoading } = useCourses();
   
   // Mutation
-  const { mutate: updateStudent, isLoading: isUpdating, error: updateError } = useUpdateStudent();
+  const { mutate: updateStudent, isLoading: isUpdating, error: updateError, progress } = useUpdateStudent();
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -54,7 +54,8 @@ export default function EditStudentPage() {
     center_ids: [] as number[],
     course_ids: [] as number[],
     status: 1 as StudentStatus,
-    image: null as File | null
+    image: null as File | null,
+    existingImage: null as string | null,
   });
 
   const [selectedCenters, setSelectedCenters] = useState<any[]>([]);
@@ -70,12 +71,13 @@ export default function EditStudentPage() {
         phone: attrs.phone?.toString() || '',
         email: attrs.email || '',
         password: '', // Don't pre-fill password
-        university_id: attrs.university?.data?.id?.toString() || '',
-        faculty_id: attrs.faculty?.data?.id?.toString() || '',
+        university_id: attrs.university?.data?.id?.toString() ?? '',
+        faculty_id: attrs.faculty?.data?.id?.toString() ?? '',
         center_ids: attrs.centers?.map((c: any) => parseInt(c.id)) || [],
         course_ids: attrs.enrolled_courses?.map((c: any) => parseInt(c.id)) || [],
         status: parseStudentStatus(attrs.status),
-        image: null
+        image: null,
+        existingImage: attrs.image || null,
       });
 
       // Set selected centers with proper name from attributes
@@ -391,9 +393,12 @@ export default function EditStudentPage() {
             <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.profileImage')}</h2>
           </div>
           <div className="p-6">
-            <FileUpload 
-              label={t('students.form.fields.profileImage')} 
+            <FileUpload
+              label={t('students.form.fields.profileImage')}
               onFileSelect={(file) => setFormData({...formData, image: file})}
+              previewUrl={formData.image ? URL.createObjectURL(formData.image) : (formData.existingImage || undefined)}
+              onClear={() => setFormData({...formData, image: null, existingImage: null})}
+              progress={isUpdating ? progress : undefined}
             />
           </div>
         </section>

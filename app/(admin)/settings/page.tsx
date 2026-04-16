@@ -37,6 +37,11 @@ export default function PlatformSettingsPage() {
       icon: 'FileText' as const,
       titleKey: 'termsPrivacy',
       href: '/settings/terms'
+    },
+    {
+      icon: 'Image' as const,
+      titleKey: 'watermark',
+      href: '/settings/watermark'
     }
   ];
 

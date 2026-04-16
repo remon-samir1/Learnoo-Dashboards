@@ -86,6 +86,9 @@ import type {
   // Platform Feature types
   PlatformFeature,
   UpdatePlatformFeatureRequest,
+  // App Version types
+  AppVersion,
+  CreateAppVersionRequest,
 } from '@/src/types';
 
 // ============================================
@@ -132,21 +135,21 @@ function buildUrl(path: string): string {
   return `${baseUrl}${cleanPath}`;
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response, skipAuthRedirect: boolean = false): Promise<T> {
   if (!response.ok) {
-    // Handle unauthorized errors - redirect to login
-    if (response.status === 401 || response.status === 403) {
+    // Handle unauthorized errors - redirect to login (unless skipped)
+    if ((response.status === 401 || response.status === 403) && !skipAuthRedirect) {
       // Clear auth cookies
       Cookies.remove('token');
       Cookies.remove('user_role');
       Cookies.remove('user_data');
-      
+
       // Redirect to login if in browser
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }
     }
-    
+
     const errorData = await response.json().catch(() => ({}));
     throw new ApiError(
       response.status,
@@ -214,7 +217,60 @@ async function post<T>(path: string, data?: unknown, includeAuth: boolean = true
   return handleResponse<T>(response);
 }
 
-async function postMultipart<T>(path: string, formData: FormData): Promise<T> {
+async function postMultipart<T>(path: string, formData: FormData, onProgress?: (progress: number) => void): Promise<T> {
+  // Use XMLHttpRequest for progress tracking, fallback to fetch if no progress callback
+  if (onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const url = buildUrl(path);
+      const headers = createHeaders(true, true) as Record<string, string>;
+
+      xhr.open('POST', url, true);
+
+      // Set headers
+      Object.entries(headers).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          onProgress(progress);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = xhr.response ? JSON.parse(xhr.response) : undefined;
+            resolve(data as T);
+          } catch {
+            resolve(undefined as T);
+          }
+        } else {
+          try {
+            const errorData = xhr.response ? JSON.parse(xhr.response) : {};
+            reject(new ApiError(
+              xhr.status,
+              errorData.message || `HTTP ${xhr.status}: ${xhr.statusText}`,
+              errorData.errors
+            ));
+          } catch {
+            reject(new ApiError(xhr.status, `HTTP ${xhr.status}: ${xhr.statusText}`));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new ApiError(0, 'Network error occurred'));
+      });
+
+      xhr.send(formData);
+    });
+  }
+
+  // Fallback to fetch if no progress callback
   const response = await fetch(buildUrl(path), {
     method: 'POST',
     headers: createHeaders(true, true),
@@ -234,7 +290,60 @@ async function put<T>(path: string, data?: unknown, isMultipart: boolean = false
   return handleResponse<T>(response);
 }
 
-async function putMultipart<T>(path: string, formData: FormData): Promise<T> {
+async function putMultipart<T>(path: string, formData: FormData, onProgress?: (progress: number) => void): Promise<T> {
+  // Use XMLHttpRequest for progress tracking, fallback to fetch if no progress callback
+  if (onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const url = buildUrl(path);
+      const headers = createHeaders(true, true) as Record<string, string>;
+
+      xhr.open('PUT', url, true);
+
+      // Set headers
+      Object.entries(headers).forEach(([key, value]) => {
+        xhr.setRequestHeader(key, value);
+      });
+
+      // Track upload progress
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          onProgress(progress);
+        }
+      });
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = xhr.response ? JSON.parse(xhr.response) : undefined;
+            resolve(data as T);
+          } catch {
+            resolve(undefined as T);
+          }
+        } else {
+          try {
+            const errorData = xhr.response ? JSON.parse(xhr.response) : {};
+            reject(new ApiError(
+              xhr.status,
+              errorData.message || `HTTP ${xhr.status}: ${xhr.statusText}`,
+              errorData.errors
+            ));
+          } catch {
+            reject(new ApiError(xhr.status, `HTTP ${xhr.status}: ${xhr.statusText}`));
+          }
+        }
+      });
+
+      xhr.addEventListener('error', () => {
+        reject(new ApiError(0, 'Network error occurred'));
+      });
+
+      xhr.send(formData);
+    });
+  }
+
+  // Fallback to fetch if no progress callback
   return put<T>(path, formData, true);
 }
 
@@ -333,14 +442,14 @@ export const centersApi = {
 
   get: (id: number) => get<ApiResponse<Center>>(`/v1/center/${id}`),
 
-  create: (data: CreateCenterRequest) => {
+  create: (data: CreateCenterRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return postMultipart<ApiResponse<Center>>('/v1/center', formData);
+    return postMultipart<ApiResponse<Center>>('/v1/center', formData, onProgress);
   },
 
-  update: (id: number, data: Partial<CreateCenterRequest>) => {
+  update: (id: number, data: Partial<CreateCenterRequest>, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return putMultipart<ApiResponse<Center>>(`/v1/center/${id}`, formData);
+    return putMultipart<ApiResponse<Center>>(`/v1/center/${id}`, formData, onProgress);
   },
 
   delete: (id: number) => del<ApiResponse<Center>>(`/v1/center/${id}`),
@@ -355,17 +464,19 @@ export const chaptersApi = {
 
   get: (id: number) => get<ApiResponse<Chapter>>(`/v1/chapter/${id}`),
 
-  create: (data: CreateChapterRequest) => {
+  create: (data: CreateChapterRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return postMultipart<ApiResponse<Chapter>>('/v1/chapter', formData);
+    return postMultipart<ApiResponse<Chapter>>('/v1/chapter', formData, onProgress);
   },
 
-  update: (id: number, data: UpdateChapterRequest) => {
+  update: (id: number, data: UpdateChapterRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return putMultipart<ApiResponse<Chapter>>(`/v1/chapter/${id}`, formData);
+    return putMultipart<ApiResponse<Chapter>>(`/v1/chapter/${id}`, formData, onProgress);
   },
 
   delete: (id: number) => del<ApiResponse<Chapter>>(`/v1/chapter/${id}`),
+
+  copy: (id: number, lectureId?: number) => post<ApiResponse<Chapter>>(`/v1/chapter/${id}/copy`, { lecture_id: lectureId }),
 };
 
 // ============================================
@@ -437,14 +548,14 @@ export const coursesApi = {
 
   get: (id: number) => get<ApiResponse<Course>>(`/v1/course/${id}`),
 
-  create: (data: CreateCourseRequest) => {
+  create: (data: CreateCourseRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return postMultipart<ApiResponse<Course>>('/v1/course', formData);
+    return postMultipart<ApiResponse<Course>>('/v1/course', formData, onProgress);
   },
 
-  update: (id: number, data: UpdateCourseRequest) => {
+  update: (id: number, data: UpdateCourseRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return putMultipart<ApiResponse<Course>>(`/v1/course/${id}`, formData);
+    return putMultipart<ApiResponse<Course>>(`/v1/course/${id}`, formData, onProgress);
   },
 
   delete: (id: number) => del<ApiResponse<Course>>(`/v1/course/${id}`),
@@ -459,21 +570,14 @@ export const departmentsApi = {
 
   get: (id: number) => get<ApiResponse<Department>>(`/v1/department/${id}`),
 
-  create: (data: CreateDepartmentRequest) => {
+  create: (data: CreateDepartmentRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    // Map center_id to parent_id if needed by backend as per api-collection.yaml
-    if (data.center_id && !formData.has('parent_id')) {
-      formData.append('parent_id', String(data.center_id));
-    }
-    return postMultipart<ApiResponse<Department>>('/v1/department', formData);
+    return postMultipart<ApiResponse<Department>>('/v1/department', formData, onProgress);
   },
 
-  update: (id: number, data: Partial<CreateDepartmentRequest>) => {
+  update: (id: number, data: Partial<CreateDepartmentRequest>, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    if (data.center_id && !formData.has('parent_id')) {
-      formData.append('parent_id', String(data.center_id));
-    }
-    return putMultipart<ApiResponse<Department>>(`/v1/department/${id}`, formData);
+    return putMultipart<ApiResponse<Department>>(`/v1/department/${id}`, formData, onProgress);
   },
 
   delete: (id: number) => del<ApiResponse<Department>>(`/v1/department/${id}`),
@@ -506,11 +610,15 @@ export const facultiesApi = {
 
   get: (id: number) => get<ApiResponse<Faculty>>(`/v1/faculty/${id}`),
 
-  create: (data: CreateFacultyRequest) =>
-    post<ApiResponse<Faculty>>('/v1/faculty', data),
+  create: (data: CreateFacultyRequest, onProgress?: (progress: number) => void) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    return postMultipart<ApiResponse<Faculty>>('/v1/faculty', formData, onProgress);
+  },
 
-  update: (id: number, data: CreateFacultyRequest) =>
-    put<ApiResponse<Faculty>>(`/v1/faculty/${id}`, data),
+  update: (id: number, data: Partial<CreateFacultyRequest>, onProgress?: (progress: number) => void) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    return putMultipart<ApiResponse<Faculty>>(`/v1/faculty/${id}`, formData, onProgress);
+  },
 
   delete: (id: number) => del<ApiResponse<Faculty>>(`/v1/faculty/${id}`),
 };
@@ -574,14 +682,14 @@ export const librariesApi = {
 
   get: (id: number) => get<ApiResponse<Library>>(`/v1/library/${id}`),
 
-  create: (data: CreateLibraryRequest) => {
+  create: (data: CreateLibraryRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return postMultipart<ApiResponse<Library>>('/v1/library', formData);
+    return postMultipart<ApiResponse<Library>>('/v1/library', formData, onProgress);
   },
 
-  update: (id: number, data: Partial<CreateLibraryRequest>) => {
+  update: (id: number, data: Partial<CreateLibraryRequest>, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return putMultipart<ApiResponse<Library>>(`/v1/library/${id}`, formData);
+    return putMultipart<ApiResponse<Library>>(`/v1/library/${id}`, formData, onProgress);
   },
 
   delete: (id: number) => del<ApiResponse<Library>>(`/v1/library/${id}`),
@@ -720,11 +828,15 @@ export const universitiesApi = {
 
   get: (id: number) => get<ApiResponse<University>>(`/v1/university/${id}`),
 
-  create: (data: CreateUniversityRequest) =>
-    post<ApiResponse<University>>('/v1/university', data),
+  create: (data: CreateUniversityRequest, onProgress?: (progress: number) => void) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    return postMultipart<ApiResponse<University>>('/v1/university', formData, onProgress);
+  },
 
-  update: (id: number, data: CreateUniversityRequest) =>
-    put<ApiResponse<University>>(`/v1/university/${id}`, data),
+  update: (id: number, data: Partial<CreateUniversityRequest>, onProgress?: (progress: number) => void) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    return putMultipart<ApiResponse<University>>(`/v1/university/${id}`, formData, onProgress);
+  },
 
   delete: (id: number) => del<void>(`/v1/university/${id}`),
 };
@@ -759,14 +871,14 @@ export const studentsApi = {
 
   get: (id: string) => get<ApiResponse<Student>>(`/v1/student/${id}`),
 
-  create: (data: CreateStudentRequest) => {
+  create: (data: CreateStudentRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return postMultipart<ApiResponse<Student>>('/v1/student', formData);
+    return postMultipart<ApiResponse<Student>>('/v1/student', formData, onProgress);
   },
 
-  update: (id: string, data: Partial<CreateStudentRequest>) => {
+  update: (id: string, data: Partial<CreateStudentRequest>, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
-    return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData);
+    return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData, onProgress);
   },
 
   delete: (id: string) => del<ApiResponse<Student>>(`/v1/student/${id}`),
@@ -847,6 +959,118 @@ export const platformFeatureApi = {
 
 
 // ============================================
+// OTA Key Helper
+// ============================================
+
+const OTA_KEY_BASE = 'base64:O1SYbrWf/E2F55hMwxyybGti4nt8tfO9LM56/7G3MDk=';
+
+async function hashOTAKey(): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(OTA_KEY_BASE);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function createOTAHeaders(): Promise<HeadersInit> {
+  return hashOTAKey().then(hashedKey => ({
+    'Authorization': `Bearer ${getAuthToken() || ''}`,
+    'Accept': 'application/json',
+    'X-OTA-Key': hashedKey,
+  }));
+}
+
+// ============================================
+// App Versions API (OTA)
+// ============================================
+
+export const appVersionsApi = {
+  list: async () => {
+    const response = await fetch(buildUrl('/v1/ota'), {
+      method: 'GET',
+      headers: await createOTAHeaders(),
+    });
+    return handleResponse<ApiListResponse<AppVersion>>(response, true);
+  },
+
+  create: async (data: CreateAppVersionRequest, onProgress?: (progress: number) => void) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    // Use postMultipart for progress tracking, but need to use createOTAHeaders
+    if (onProgress) {
+      return new Promise<ApiResponse<AppVersion>>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const url = buildUrl('/v1/ota/upload');
+
+        xhr.open('POST', url, true);
+
+        // Set OTA headers
+        createOTAHeaders().then((headers) => {
+          Object.entries(headers).forEach(([key, value]) => {
+            if (value) xhr.setRequestHeader(key, value);
+          });
+
+          xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+              const progress = Math.round((event.loaded / event.total) * 100);
+              onProgress(progress);
+            }
+          });
+
+          xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                resolve(response as ApiResponse<AppVersion>);
+              } catch (e) {
+                reject(new Error('Invalid JSON response'));
+              }
+            } else {
+              try {
+                const error = JSON.parse(xhr.responseText);
+                reject(error);
+              } catch {
+                reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+              }
+            }
+          });
+
+          xhr.addEventListener('error', () => reject(new Error('Network error')));
+          xhr.addEventListener('abort', () => reject(new Error('Request aborted')));
+
+          xhr.send(formData);
+        });
+      });
+    }
+
+    // Fallback to fetch if no progress callback
+    const response = await fetch(buildUrl('/v1/ota/upload'), {
+      method: 'POST',
+      headers: await createOTAHeaders(),
+      body: formData,
+    });
+    return handleResponse<ApiResponse<AppVersion>>(response, true);
+  },
+
+  update: async (id: number, data: Partial<CreateAppVersionRequest>) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    const response = await fetch(buildUrl(`/v1/ota/${id}`), {
+      method: 'PUT',
+      headers: await createOTAHeaders(),
+      body: formData,
+    });
+    return handleResponse<ApiResponse<AppVersion>>(response, true);
+  },
+
+  delete: async (id: number) => {
+    const response = await fetch(buildUrl(`/v1/ota/${id}`), {
+      method: 'DELETE',
+      headers: await createOTAHeaders(),
+    });
+    return handleResponse<ApiResponse<AppVersion>>(response, true);
+  },
+};
+
+// ============================================
 // Export all APIs
 // ============================================
 
@@ -877,6 +1101,7 @@ export const api = {
   search: searchApi,
   dashboard: dashboardApi,
   platformFeature: platformFeatureApi,
+  appVersions: appVersionsApi,
 };
 
 export default api;

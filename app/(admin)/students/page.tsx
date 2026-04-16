@@ -182,9 +182,17 @@ export default function StudentsPage() {
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center border border-indigo-50 shadow-sm">
-                              <span className="text-sm font-bold text-[#4F46E5]">{getInitials(first_name, last_name)}</span>
-                            </div>
+                            {student.attributes.image ? (
+                              <img
+                                src={student.attributes.image}
+                                alt={displayName}
+                                className="w-10 h-10 rounded-full object-cover border border-indigo-50 shadow-sm"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-[#EEF2FF] rounded-full flex items-center justify-center border border-indigo-50 shadow-sm">
+                                <span className="text-sm font-bold text-[#4F46E5]">{getInitials(first_name, last_name)}</span>
+                              </div>
+                            )}
                             <div className="flex flex-col min-w-0">
                               <span className="text-sm font-bold text-[#1E293B]">{displayName}</span>
                               <span className="text-[12px] text-[#64748B] truncate">{email}</span>

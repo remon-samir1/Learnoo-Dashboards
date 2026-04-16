@@ -29,8 +29,19 @@ export default function EditCoursePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: course, isLoading: courseLoading, error: courseError } = useCourse(courseId);
-  const { mutate: updateCourse, isLoading: isUpdating, error: updateError } = useUpdateCourse();
+  const { mutate: updateCourse, isLoading: isUpdating, error: updateError, progress } = useUpdateCourse();
   const { data: departments, isLoading: departmentsLoading } = useDepartments();
+
+  // Filter only leaf departments (departments without children)
+  const leafDepartments = React.useMemo(() => {
+    if (!departments) return [];
+    const parentIds = new Set(
+      departments
+        .filter((d: Department) => d.attributes.parent?.data?.id)
+        .map((d: Department) => d.attributes.parent!.data.id)
+    );
+    return departments.filter((d: Department) => !parentIds.has(d.id));
+  }, [departments]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -238,7 +249,7 @@ export default function EditCoursePage() {
                 disabled={departmentsLoading}
               >
                 <option value="">{departmentsLoading ? t('courses.form.loadingDepartments') : t('courses.form.selectDepartment')}</option>
-                {departments?.map((dept: Department) => (
+                {leafDepartments?.map((dept: Department) => (
                   <option key={dept.id} value={dept.id}>{dept.attributes?.name}</option>
                 ))}
               </select>
@@ -384,6 +395,22 @@ export default function EditCoursePage() {
             {isUpdating ? t('courses.form.buttons.updating') : t('courses.form.buttons.update')}
           </button>
         </div>
+
+        {/* Upload Progress */}
+        {isUpdating && progress > 0 && (
+          <div className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm p-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold text-[#1E293B]">{t('courses.form.uploading')}</span>
+              <span className="text-sm font-bold text-[#2137D6]">{progress}%</span>
+            </div>
+            <div className="w-full bg-[#F1F5F9] rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-[#2137D6] h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

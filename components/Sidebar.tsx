@@ -26,7 +26,8 @@ import {
   ShieldCheck,
   Building2,
   School,
-  Power
+  Power,
+  Smartphone
 } from 'lucide-react';
 
 import Logo from '@/components/Logo';
@@ -73,6 +74,7 @@ const getMenuItems = (t: (key: string) => string): MenuItem[] => [
   { name: t('sidebar.downloads'), icon: Download, path: '/downloads', comingSoon: true },
   { name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' },
   { name: t('sidebar.featureControl'), icon: ShieldCheck, path: '/feature-control' },
+  { name: t('sidebar.otaUpload'), icon: Smartphone, path: '/ota-upload' },
 ];
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {

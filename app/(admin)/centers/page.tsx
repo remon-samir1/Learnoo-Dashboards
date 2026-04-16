@@ -43,15 +43,27 @@ export default function CentersPage() {
 
   const columns: Column<Center>[] = [
     {
+      key: 'image',
+      header: t('centers.columns.image'),
+      render: (item) => (
+        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+          {item.image ? (
+            <img
+              src={item.image}
+              alt={item.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <Building2 className="w-5 h-5 text-gray-400" />
+          )}
+        </div>
+      ),
+    },
+    {
       key: 'name',
       header: t('centers.centerName'),
       render: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#EEF2FF] rounded-xl flex items-center justify-center border border-indigo-50 shadow-sm">
-            <Building2 className="w-5 h-5 text-[#4F46E5]" />
-          </div>
-          <span className="text-sm font-bold text-[#1E293B]">{item.name}</span>
-        </div>
+        <span className="text-sm font-bold text-[#1E293B]">{item.name}</span>
       ),
     },
     {
