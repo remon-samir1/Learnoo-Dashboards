@@ -8,6 +8,7 @@ import {
   Bell, 
   Globe, 
   FileText,
+  Image,
   ChevronRight 
 } from 'lucide-react';
 
@@ -16,7 +17,8 @@ const iconMap = {
   Palette,
   Bell,
   Globe,
-  FileText
+  FileText,
+  Image
 };
 
 type IconName = keyof typeof iconMap;

@@ -12,6 +12,7 @@ import { api } from '@/src/lib/api';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
+import { useCreateChapter, useUpdateChapter, useCopyChapter } from '@/src/hooks/useChapters';
 import type { Course, Lecture, Chapter } from '@/src/types';
 import { toast } from 'react-hot-toast';
 
@@ -36,6 +37,8 @@ export default function ContentManagerPage() {
   // Modals state
   const [isAddLectureModalOpen, setIsAddLectureModalOpen] = useState(false);
   const [isAddChapterModalOpen, setIsAddChapterModalOpen] = useState(false);
+  const [isCopyChapterModalOpen, setIsCopyChapterModalOpen] = useState(false);
+  const [chapterToCopy, setChapterToCopy] = useState<Chapter | null>(null);
   const [addLectureData, setAddLectureData] = useState({ title: '', description: '' });
   const [addChapterData, setAddChapterData] = useState({
     title: '',
@@ -47,11 +50,14 @@ export default function ContentManagerPage() {
   });
 
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
+  const [removedAttachments, setRemovedAttachments] = useState<string[]>([]);
   const [pendingThumbnail, setPendingThumbnail] = useState<File | null>(null);
   const [removeThumbnail, setRemoveThumbnail] = useState(false);
   const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isCreatingChapter, setIsCreatingChapter] = useState(false);
+  const { mutate: createChapter, isLoading: isCreatingChapter, progress: createChapterProgress } = useCreateChapter();
+  const { mutate: updateChapter, isLoading: isUpdatingChapter, progress: updateChapterProgress } = useUpdateChapter();
+  const { mutate: copyChapter, isLoading: isCopyingChapter } = useCopyChapter();
 
   // Chapter Activation State
   const [chapterActivationTab, setChapterActivationTab] = useState<'code' | 'preactivation'>('code');
@@ -107,6 +113,15 @@ export default function ContentManagerPage() {
     }
   }, [coursesData]);
 
+  // Clear pending file states when selected chapter changes
+  useEffect(() => {
+    setPendingThumbnail(null);
+    setPendingVideo(null);
+    setPendingAttachments([]);
+    setRemovedAttachments([]);
+    setRemoveThumbnail(false);
+  }, [selectedChapter?.id]);
+
   const toggleCourse = (course: Course) => {
     const courseId = course.id;
     const newExpanded = new Set(expandedCourses);
@@ -157,11 +172,16 @@ export default function ContentManagerPage() {
 
   const selectChapter = (chapter: Chapter) => {
     setSelectedChapter(chapter);
+    // Clear any pending removals when switching chapters
+    setRemovedAttachments([]);
   };
 
   const handleCreateLecture = async () => {
     if (!selectedCourse) return;
-    setIsCreatingLecture(true);
+    if (!addLectureData.title.trim()) {
+      toast.error(t('contentManager.messages.titleRequired'));
+      return;
+    }
     try {
       await api.lectures.create({
         course_id: Number(selectedCourse.id),
@@ -180,9 +200,8 @@ export default function ContentManagerPage() {
 
   const handleCreateChapter = async () => {
     if (!selectedLecture || !selectedCourse) return;
-    setIsCreatingChapter(true);
     try {
-      await api.chapters.create({
+      await createChapter({
         lecture_id: Number(selectedLecture.id),
         title: addChapterData.title,
         duration: addChapterData.duration,
@@ -205,8 +224,6 @@ export default function ContentManagerPage() {
       await refetchCourses();
     } catch (error) {
       toast.error(t('contentManager.messages.chapterCreateFailed'));
-    } finally {
-      setIsCreatingChapter(false);
     }
   };
 
@@ -214,7 +231,7 @@ export default function ContentManagerPage() {
     if (!selectedChapter || !selectedCourse) return;
     setIsUpdating(true);
     try {
-      await api.chapters.update(Number(selectedChapter.id), {
+      await updateChapter(Number(selectedChapter.id), {
         lecture_id: Number(selectedChapter.attributes.lecture_id),
         title: selectedChapter.attributes.title,
         duration: selectedChapter.attributes.duration,
@@ -223,17 +240,19 @@ export default function ContentManagerPage() {
         thumbnail: removeThumbnail ? null : (pendingThumbnail || undefined),
         video: pendingVideo || undefined,
         attachments: pendingAttachments.length > 0 ? pendingAttachments : undefined,
+        removed_attachments: removedAttachments.length > 0 ? removedAttachments : undefined,
       });
       toast.success(t('contentManager.messages.chapterUpdated'));
-      // Reset pending
-      setPendingAttachments([]);
+      // Clear pending files after successful update
       setPendingThumbnail(null);
-      setRemoveThumbnail(false);
       setPendingVideo(null);
+      setPendingAttachments([]);
+      setRemovedAttachments([]);
+      setRemoveThumbnail(false);
       // Refresh courses to get updated nested data
       await refetchCourses();
     } catch (error) {
-      toast.error(t('contentManager.messages.chapterUpdateFailed'));
+      // Error is handled by the hook
     } finally {
       setIsUpdating(false);
     }
@@ -249,6 +268,25 @@ export default function ContentManagerPage() {
       await refetchCourses();
     } catch (error) {
       toast.error(t('contentManager.messages.chapterDeleteFailed'));
+    }
+  };
+
+  const handleCopyChapterClick = (chapter: Chapter) => {
+    setChapterToCopy(chapter);
+    setIsCopyChapterModalOpen(true);
+  };
+
+  const handleConfirmCopyChapter = async () => {
+    if (!chapterToCopy) return;
+    try {
+      await copyChapter(Number(chapterToCopy.id), Number(chapterToCopy.attributes.lecture_id));
+      toast.success(t('contentManager.messages.chapterCopied'));
+      setIsCopyChapterModalOpen(false);
+      setChapterToCopy(null);
+      // Refresh courses to get updated nested data
+      await refetchCourses();
+    } catch (error) {
+      toast.error(t('contentManager.messages.chapterCopyFailed'));
     }
   };
 
@@ -479,6 +517,16 @@ export default function ContentManagerPage() {
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
+                                              handleCopyChapterClick(chapter);
+                                            }}
+                                            className={`p-1 rounded hover:bg-black/10 transition-colors ${selectedChapter?.id === chapter.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 text-[#94A3B8]'}`}
+                                            title={t('contentManager.copyChapter')}
+                                          >
+                                            <Copy className="w-3.5 h-3.5" />
+                                          </button>
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
                                               handleDeleteChapter(chapter.id);
                                             }}
                                             className={`p-1 rounded hover:bg-black/10 transition-colors ${selectedChapter?.id === chapter.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 text-[#94A3B8]'}`}
@@ -542,13 +590,29 @@ export default function ContentManagerPage() {
                 </div>
                 <button
                   onClick={handleUpdateChapter}
-                  disabled={isUpdating}
-                  className={`px-6 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center gap-2 ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  disabled={isUpdating || isUpdatingChapter}
+                  className={`px-6 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center gap-2 ${(isUpdating || isUpdatingChapter) ? 'opacity-70 cursor-not-allowed' : ''}`}
                 >
-                  {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  {isUpdating ? t('contentManager.saving') : t('contentManager.saveChanges')}
+                  {(isUpdating || isUpdatingChapter) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {(isUpdating || isUpdatingChapter) ? t('contentManager.saving') : t('contentManager.saveChanges')}
                 </button>
               </div>
+
+              {/* Upload Progress */}
+              {(isUpdating || isUpdatingChapter) && updateChapterProgress > 0 && (
+                <div className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-bold text-[#1E293B]">{t('contentManager.uploading')}</span>
+                    <span className="text-sm font-bold text-[#2137D6]">{updateChapterProgress}%</span>
+                  </div>
+                  <div className="w-full bg-[#F1F5F9] rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="bg-[#2137D6] h-2.5 rounded-full transition-all duration-300"
+                      style={{ width: `${updateChapterProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Video Content - Uses first attachment */}
               <div className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm p-8 flex flex-col gap-6">
@@ -599,12 +663,12 @@ export default function ContentManagerPage() {
                     // Fall back to first attachment
                     (() => {
                       const firstAttachment = selectedChapter.attributes.attachments[0];
-                      const filePath = firstAttachment.attributes?.file_path || '';
-                      
+                      const filePath = firstAttachment.attributes?.path || '';
+
                       return (
-                        <video 
-                          src={filePath} 
-                          className="w-full h-full object-cover" 
+                        <video
+                          src={filePath}
+                          className="w-full h-full object-cover"
                           controls
                           poster={selectedChapter.attributes.thumbnail || undefined}
                           onError={(e) => {
@@ -619,7 +683,7 @@ export default function ContentManagerPage() {
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                                     <polyline points="14 2 14 8 20 8"></polyline>
                                   </svg>
-                                  <p class="text-[#64748B] text-sm">${firstAttachment.attributes?.title || 'Attachment'}</p>
+                                  <p class="text-[#64748B] text-sm">${firstAttachment.attributes?.name || 'Attachment'}</p>
                                   <a href="${filePath}" target="_blank" rel="noopener noreferrer"
                                      class="px-4 py-2 bg-[#4F46E5] text-white rounded-lg text-sm font-bold hover:bg-[#3730a3] transition-all">
                                     ${t('contentManager.openFile')}
@@ -788,14 +852,37 @@ export default function ContentManagerPage() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  {pendingAttachments.length === 0 && (
-                    <p className="text-sm text-[#94A3B8] italic">{t('contentManager.noAttachments')}</p>
-                  )}
+                  {/* Existing Attachments */}
+                  {selectedChapter.attributes.attachments?.filter(att => !removedAttachments.includes(att.id)).map((attachment) => (
+                    <div key={attachment.id} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-2xl border border-[#F1F5F9]">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-4 h-4 text-[#4F46E5]" />
+                        <div className="flex flex-col">
+                          <span className="text-[13px] font-medium text-[#1E293B]">{attachment.attributes.name || attachment.attributes.path?.split('/').pop() || 'Untitled'}</span>
+                          <button
+                            onClick={() => window.open(attachment.attributes.path, '_blank', 'noopener,noreferrer')}
+                            className="text-[11px] text-left text-[#64748B] hover:text-[#4F46E5] transition-colors cursor-pointer"
+                          >
+                            {t('contentManager.openFile')}
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setRemovedAttachments(prev => [...prev, attachment.id])}
+                        className="p-1 text-[#94A3B8] hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Pending New Attachments */}
                   {pendingAttachments.map((file, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-[#F8FAFC] rounded-2xl border border-[#F1F5F9]">
+                    <div key={`pending-${idx}`} className="flex items-center justify-between p-3 bg-[#EEF2FF] rounded-2xl border border-[#4F46E5]/20">
                       <div className="flex items-center gap-3">
                         <FileText className="w-4 h-4 text-[#4F46E5]" />
                         <span className="text-[13px] font-medium text-[#1E293B]">{file.name}</span>
+                        <span className="text-[11px] text-[#64748B] bg-[#4F46E5]/10 px-2 py-0.5 rounded-full">{t('contentManager.new')}</span>
                       </div>
                       <button
                         onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))}
@@ -805,6 +892,11 @@ export default function ContentManagerPage() {
                       </button>
                     </div>
                   ))}
+
+                  {/* Empty State */}
+                  {(!selectedChapter.attributes.attachments || selectedChapter.attributes.attachments.filter(att => !removedAttachments.includes(att.id)).length === 0) && pendingAttachments.length === 0 && (
+                    <p className="text-sm text-[#94A3B8] italic">{t('contentManager.noAttachments')}</p>
+                  )}
                 </div>
               </div>
 
@@ -1069,6 +1161,7 @@ export default function ContentManagerPage() {
                   type="text"
                   value={addLectureData.title}
                   onChange={(e) => setAddLectureData({ ...addLectureData, title: e.target.value })}
+                  required
                   className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/20 focus:border-[#4F46E5] transition-all"
                   placeholder={t('contentManager.modal.title')}
                 />
@@ -1092,8 +1185,8 @@ export default function ContentManagerPage() {
               </button>
               <button
                 onClick={handleCreateLecture}
-                disabled={isCreatingLecture}
-                className={`flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 ${isCreatingLecture ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={!addLectureData.title.trim()}
+                className="flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('contentManager.modal.createLecture')}
               </button>
@@ -1193,6 +1286,22 @@ export default function ContentManagerPage() {
                   <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${addChapterData.is_free_preview ? 'right-1' : 'left-1'}`}></div>
                 </div>
               </div>
+
+              {/* Upload Progress */}
+              {isCreatingChapter && createChapterProgress > 0 && (
+                <div className="p-4 bg-[#F8FAFC] rounded-2xl border border-[#E2E8F0]">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[13px] font-bold text-[#1E293B]">{t('contentManager.modal.uploading')}</span>
+                    <span className="text-[13px] font-bold text-[#2137D6]">{createChapterProgress}%</span>
+                  </div>
+                  <div className="w-full bg-[#E2E8F0] rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-[#2137D6] h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${createChapterProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex gap-3">
               <button
@@ -1213,6 +1322,54 @@ export default function ContentManagerPage() {
                   </>
                 ) : (
                   t('contentManager.modal.createChapter')
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Copy Chapter Confirmation Modal */}
+      {isCopyChapterModalOpen && chapterToCopy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-md p-8 flex flex-col gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center">
+                <Copy className="w-6 h-6 text-[#2137D6]" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-[#1E293B]">{t('contentManager.copyChapter')}</h3>
+                <p className="text-sm text-[#64748B]">{t('contentManager.copyChapterConfirm') || 'Are you sure you want to copy this chapter?'}</p>
+              </div>
+            </div>
+
+            <div className="bg-[#F8FAFC] rounded-xl p-4">
+              <p className="text-sm font-medium text-[#1E293B]">{chapterToCopy.attributes.title}</p>
+              <p className="text-xs text-[#64748B] mt-1">{t('contentManager.lectureId')}: {chapterToCopy.attributes.lecture_id}</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setIsCopyChapterModalOpen(false);
+                  setChapterToCopy(null);
+                }}
+                className="flex-1 px-6 py-3 bg-white border border-[#E2E8F0] rounded-2xl text-sm font-bold text-[#64748B] hover:bg-gray-50 transition-all"
+              >
+                {t('contentManager.modal.cancel')}
+              </button>
+              <button
+                onClick={handleConfirmCopyChapter}
+                disabled={isCopyingChapter}
+                className="flex-1 px-6 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-2xl text-sm font-bold transition-all shadow-md shadow-indigo-100 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isCopyingChapter ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t('contentManager.copying') || 'Copying...'}
+                  </>
+                ) : (
+                  t('contentManager.copyChapter')
                 )}
               </button>
             </div>

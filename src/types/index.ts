@@ -195,9 +195,12 @@ export interface ChapterAttributes {
     id: string;
     type: string;
     attributes: {
-      title?: string;
-      file_path: string;
-      mime_type?: string;
+      name?: string;
+      path?: string;
+      extension?: string;
+      size?: string;
+      downloadable?: boolean;
+      created_at?: string;
     };
   }>;
   discussions?: any[];
@@ -226,6 +229,7 @@ export interface UpdateChapterRequest {
   is_free_preview?: 0 | 1;
   max_views?: number;
   attachments?: File[];
+  removed_attachments?: string[];
 }
 
 // ============================================
@@ -417,7 +421,8 @@ export type Department = JsonApiData<DepartmentAttributes>;
 export interface CreateDepartmentRequest {
   name: string;
   image?: File;
-  center_id: number;
+  center_id?: number;
+  parent_id?: number | null;
 }
 
 // ============================================
@@ -480,6 +485,7 @@ export interface Faculty {
 export interface CreateFacultyRequest {
   name: string;
   parent_id: number;
+  image?: File;
 }
 
 // ============================================
@@ -932,6 +938,7 @@ export type QuizAnswer = JsonApiData<QuizAnswerAttributes>;
 export interface UniversityAttributes {
   name: string;
   code: string | null;
+  image: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -941,6 +948,7 @@ export type University = JsonApiData<UniversityAttributes>;
 export interface CreateUniversityRequest {
   name: string;
   code?: string;
+  image?: File;
 }
 
 // ============================================
@@ -1016,6 +1024,7 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
   student_id?: string;
   student_code?: string;
   full_name?: string;
+  image?: string | null;
   status?: StudentStatus;
   joined?: string;
   university?: {
@@ -1142,4 +1151,32 @@ export type PlatformFeaturesResponse = ApiListResponse<PlatformFeature>;
 export interface UpdatePlatformFeatureRequest {
   key: string;
   value: string;
+}
+
+// ============================================
+// App Version Types (OTA)
+// ============================================
+
+export interface AppVersionAttributes {
+  id: number;
+  version_name: string;
+  version_code: number;
+  release_notes: string | null;
+  download_url: string;
+  file_size: number;
+  file_size_human: string;
+  is_force_update: boolean;
+  released_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AppVersion = JsonApiData<AppVersionAttributes>;
+
+export interface CreateAppVersionRequest {
+  version_name: string;
+  version_code: number;
+  release_notes?: string;
+  apk_file: File;
+  is_force_update?: boolean;
 }

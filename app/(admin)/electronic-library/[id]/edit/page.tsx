@@ -25,7 +25,7 @@ function getPreviewUrl(path: string | null): string {
 
 
   const { data: library, isLoading: isLoadingLibrary, error } = useLibrary(libraryId);
-  const { mutate: updateLibrary, isLoading: isUpdating } = useUpdateLibrary();
+  const { mutate: updateLibrary, isLoading: isUpdating, progress } = useUpdateLibrary();
   const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
@@ -364,6 +364,22 @@ function getPreviewUrl(path: string | null): string {
             </label>
           </div>
         </section>
+
+        {/* Upload Progress */}
+        {isUpdating && progress > 0 && (
+          <div className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm p-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold text-[#1E293B]">{t('electronicLibrary.uploading')}</span>
+              <span className="text-sm font-bold text-[#2137D6]">{progress}%</span>
+            </div>
+            <div className="w-full bg-[#F1F5F9] rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-[#2137D6] h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 mt-2">

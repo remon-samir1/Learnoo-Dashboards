@@ -124,6 +124,7 @@
     "downloads": "التنزيلات",
     "profileSettings": "الملف الشخصي والإعدادات",
     "featureControl": "التحكم في الميزات",
+    "otaUpload": "رفع تحديثات الهواء",
     "adminDashboard": "لوحة تحكم المشرف",
     "doctorDashboard": "لوحة تحكم الدكتور"
   },
@@ -384,7 +385,8 @@
         "update": "تحديث الدورة",
         "creating": "جارٍ الإنشاء...",
         "updating": "جارٍ التحديث..."
-      }
+      },
+      "uploading": "جارٍ الرفع..."
     },
     "view": {
       "loading": "جارٍ تحميل تفاصيل الدورة...",
@@ -459,6 +461,12 @@
     "pageDescription": "إدارة المراكز الفعلية والافتراضية",
     "addCenter": "إضافة مركز",
     "searchPlaceholder": "البحث في المراكز...",
+    "columns": {
+      "image": "الصورة",
+      "name": "الاسم",
+      "parent": "الأب (الكلية)",
+      "created": "تاريخ الإنشاء"
+    },
     "centerName": "اسم المركز",
     "parent": "الأب (الكلية)",
     "created": "تاريخ الإنشاء",
@@ -472,6 +480,7 @@
       "addDescription": "إنشاء مركز فعلي أو افتراضي جديد",
       "editDescription": "تحديث معلومات المركز",
       "sectionTitle": "معلومات المركز",
+      "imageLabel": "صورة المركز",
       "nameLabel": "اسم المركز",
       "namePlaceholder": "مثال: المركز الرئيسي، الدقي",
       "parentFacultyLabel": "الكلية",
@@ -493,6 +502,7 @@
     "lectureId": "معرف المحاضرة",
     "saveChanges": "حفظ التغييرات",
     "saving": "جارٍ الحفظ...",
+    "uploading": "جارٍ الرفع...",
     "videoContent": "محتوى الفيديو",
     "addVideo": "إضافة فيديو",
     "changeVideo": "تغيير الفيديو",
@@ -511,7 +521,12 @@
     "maxViews": "الحد الأقصى للمشاهدات",
     "maxViewsDescription": "تعيين الحد الأقصى لعدد المشاهدات المسموح بها لهذا الفصل.",
     "attachments": "المرفقات والموارد",
-    "noAttachments": "لا توجد مرفقات جديدة للرفع.",
+    "noAttachments": "لا توجد مرفقات متاحة.",
+    "openFile": "فتح الملف",
+    "new": "جديد",
+    "copyChapter": "نسخ الفصل",
+    "copyChapterConfirm": "هل أنت متأكد من أنك تريد نسخ هذا الفصل؟",
+    "copying": "جارٍ النسخ...",
     "chapterActivation": "تفعيل الفصل",
     "selectChapter": "اختيار فصل",
     "selectChapterHint": "اختر فصلاً من شجرة الهيكل لعرض وإدارة محتواه وإعداداته.",
@@ -531,17 +546,21 @@
       "cancel": "إلغاء",
       "createLecture": "إنشاء محاضرة",
       "createChapter": "إنشاء فصل",
-      "creating": "جارٍ الإنشاء..."
+      "creating": "جارٍ الإنشاء...",
+      "uploading": "جارٍ الرفع..."
     },
     "messages": {
       "lectureCreated": "تم إنشاء المحاضرة بنجاح",
       "lectureCreateFailed": "فشل إنشاء المحاضرة",
+      "titleRequired": "الرجاء إدخال عنوان للمحاضرة",
       "chapterCreated": "تم إنشاء الفصل بنجاح",
       "chapterCreateFailed": "فشل إنشاء الفصل",
       "chapterUpdated": "تم تحديث الفصل بنجاح",
       "chapterUpdateFailed": "فشل تحديث الفصل",
       "chapterDeleted": "تم حذف الفصل بنجاح",
       "chapterDeleteFailed": "فشل حذف الفصل",
+      "chapterCopied": "تم نسخ الفصل بنجاح",
+      "chapterCopyFailed": "فشل نسخ الفصل",
       "lectureDeleted": "تم حذف المحاضرة بنجاح",
       "lectureDeleteFailed": "فشل حذف المحاضرة",
       "deleteChapterConfirm": "هل أنت متأكد من أنك تريد حذف هذا الفصل؟",
@@ -550,7 +569,7 @@
   },
   "activation": {
     "pageTitle": "إدارة التفعيل",
-    "pageDescription": "إدارة رموز التفعيل للدورات والفصول وعناصر المكتبة",
+    "pageDescription": "إدارة رموز التفعيل للدورات والفصول وعناصر المكتبة والغرف المباشرة والاختبارات",
     "generateCodes": "إنشاء رموز",
     "tabs": {
       "allCodes": "جميع الرموز",
@@ -574,6 +593,8 @@
       "course": "دورة",
       "chapter": "فصل",
       "library": "مكتبة",
+      "liveRoom": "غرفة مباشرة",
+      "quiz": "اختبار",
       "allTypes": "جميع الأنواع"
     },
     "filters": {
@@ -616,7 +637,7 @@
     },
     "generate": {
       "title": "إنشاء رموز التفعيل",
-      "description": "إنشاء رموز تفعيل جديدة للدورات والفصول أو عناصر المكتبة.",
+      "description": "إنشاء رموز تفعيل جديدة للدورات والفصول وعناصر المكتبة والغرف المباشرة والاختبارات.",
       "sectionTitle": "تكوين الرمز",
       "codeType": "نوع الرمز",
       "assignedItem": "العنصر المعين",
@@ -709,6 +730,60 @@
         "name": "تفعيل تعديل الملف الشخصي",
         "description": "السماح للطلاب بتغيير بياناتهم."
       }
+    }
+  },
+  "otaUpload": {
+    "pageTitle": "رفع تحديثات الهواء",
+    "pageDescription": "رفع إصدارات جديدة من التطبيق للتحديثات اللاسلكية",
+    "versionInfo": "معلومات الإصدار",
+    "versionName": "اسم الإصدار",
+    "versionNamePlaceholder": "مثال: 1.2.3",
+    "versionCode": "كود الإصدار",
+    "versionCodePlaceholder": "مثال: 123",
+    "versionCodeHint": "يجب أن يكون عدد صحيح موجب فريد أكبر من 0",
+    "apkFile": "ملف APK",
+    "apkFileRequired": "ملف APK مطلوب",
+    "apkFileSize": "الحد الأقصى لحجم الملف: غير محدود",
+    "dragDropHint": "اسحب وأسقط ملف APK هنا، أو انقر للتصفح",
+    "fileTypes": "ملفات .apk فقط (أي حجم)",
+    "selectedFile": "الملف المحدد",
+    "changeFile": "تغيير الملف",
+    "releaseNotes": "ملاحظات الإصدار (اختياري)",
+    "releaseNotesPlaceholder": "صف ما هو جديد في هذا الإصدار...",
+    "forceUpdate": "التحديث الإجباري",
+    "forceUpdateHint": "إذا تم تمكينه، سيُجبر المستخدمون على التحديث إلى هذا الإصدار قبل استخدام التطبيق.",
+    "uploadButton": "رفع APK",
+    "uploading": "جارٍ الرفع...",
+    "cancel": "إلغاء",
+    "saving": "جارٍ الحفظ...",
+    "saveChanges": "حفظ التغييرات",
+    "versionHistory": "تاريخ الإصدارات",
+    "noVersions": "لم يتم رفع أي إصدارات بعد",
+    "noVersionsHint": "ارفع إصدار APK الأول",
+    "code": "الكود",
+    "released": "تم الإصدار",
+    "edit": "تعديل الإصدار",
+    "editVersion": "تعديل الإصدار",
+    "download": "تحميل APK",
+    "delete": "حذف الإصدار",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذا الإصدار؟",
+    "validation": {
+      "versionNameRequired": "اسم الإصدار مطلوب",
+      "versionNameMaxLength": "اسم الإصدار يجب ألا يتجاوز {max} حرف",
+      "versionCodeRequired": "كود الإصدار مطلوب",
+      "versionCodeInvalid": "كود الإصدار يجب أن يكون عدد صحيح موجب",
+      "apkRequired": "يرجى اختيار ملف APK",
+      "apkInvalid": "يجب أن يكون الملف APK",
+      "apkSize": "حجم الملف يجب ألا يتجاوز {maxSize}"
+    },
+    "success": {
+      "uploaded": "تم رفع APK بنجاح",
+      "deleted": "تم حذف الإصدار بنجاح"
+    },
+    "error": {
+      "upload": "فشل رفع APK",
+      "delete": "فشل حذف الإصدار",
+      "load": "فشل تحميل الإصدارات"
     }
   },
   "liveSessions": {
@@ -1120,6 +1195,7 @@
     "editUniversity": "تعديل الجامعة",
     "searchPlaceholder": "البحث في الجامعات...",
     "columns": {
+      "image": "الصورة",
       "name": "الاسم",
       "created": "تاريخ الإنشاء"
     },
@@ -1129,9 +1205,12 @@
       "addDescription": "إنشاء جامعة أو مؤسسة جديدة",
       "editDescription": "تحديث معلومات الجامعة",
       "sectionTitle": "معلومات الجامعة",
+      "imageLabel": "صورة الجامعة",
       "nameLabel": "اسم الجامعة",
       "namePlaceholder": "مثال: جامعة القاهرة",
-      "nameRequired": "اسم الجامعة مطلوب"
+      "nameRequired": "اسم الجامعة مطلوب",
+      "codeLabel": "رمز الجامعة",
+      "codePlaceholder": "مثال: CU"
     },
     "loading": "جارٍ تحميل الجامعة...",
     "notFound": "الجامعة غير موجودة",
@@ -1150,6 +1229,7 @@
     "searchPlaceholder": "البحث في الكليات...",
     "allUniversities": "جميع الجامعات",
     "columns": {
+      "image": "الصورة",
       "name": "الاسم",
       "university": "الجامعة",
       "created": "تاريخ الإنشاء"
@@ -1160,6 +1240,7 @@
       "addDescription": "إنشاء كلية أو معهد جديد",
       "editDescription": "تحديث معلومات الكلية",
       "sectionTitle": "معلومات الكلية",
+      "imageLabel": "صورة الكلية",
       "nameLabel": "اسم الكلية",
       "namePlaceholder": "مثال: كلية الهندسة",
       "universityLabel": "الجامعة",
@@ -1201,21 +1282,94 @@
       "imageLabel": "صورة القسم",
       "nameLabel": "اسم القسم",
       "namePlaceholder": "مثال: الطب",
-      "centerLabel": "المركز",
-      "selectCenter": "اختر المركز"
+      "parentTypeLabel": "نوع الأب",
+      "selectParentType": "اختر نوع الأب",
+      "parentTypeCenter": "مركز",
+      "parentTypeDepartment": "قسم",
+      "parentLabel": "الأب",
+      "noParent": "لا يوجد أب (مستوى أعلى)"
+    },
+    "subDepartment": "قسم فرعي",
+    "filter": {
+      "typeLabel": "نوع القسم",
+      "allTypes": "جميع الأنواع",
+      "parentOnly": "المستوى الأعلى فقط",
+      "subOnly": "الأقسام الفرعية فقط",
+      "parentDepartmentLabel": "القسم الأب",
+      "allParentDepartments": "جميع الأقسام الأم"
     },
     "loading": "جارٍ تحميل القسم...",
     "notFound": "القسم غير موجود",
     "noDepartments": "لم يتم العثور على أقسام. أنشئ قسمك الأول!",
+    "noSearchResults": "لا توجد أقسام تطابق بحثك",
     "deleteTitle": "حذف القسم",
     "loadError": "فشل تحميل الأقسام",
     "retry": "إعادة المحاولة",
-    "back": "العودة إلى الأقسام"
+    "back": "العودة إلى الأقسام",
+    "tree": {
+      "expandAll": "توسيع الكل",
+      "collapseAll": "طي الكل",
+      "parentDepartment": "القسم الرئيسي"
+    }
   },
   "language": {
     "switcher": "اللغة",
     "english": "English",
     "arabic": "العربية"
+  },
+  "watermarkSettings": {
+    "pageTitle": "إعدادات العلامة المائية",
+    "pageDescription": "تكوين وإدارة العلامات المائية لمحتوى منصتك.",
+    "selectContentType": "اختر نوع المحتوى",
+    "selectContentTypeDesc": "اختر نوع المحتوى لتكوين إعدادات العلامة المائية له بشكل فردي",
+    "enableWatermark": "تفعيل العلامة المائية",
+    "enableWatermarkDesc": "إظهار العلامة المائية على صفحات المحتوى المحمي",
+    "watermarkText": "نص العلامة المائية",
+    "watermarkTextPlaceholder": "أدخل نص العلامة المائية (مثال: Learnoo)",
+    "watermarkTextDesc": "النص المعروض على الصفحات ذات العلامة المائية",
+    "useStudentId": "استخدام كود الطالب كعلامة مائية",
+    "useStudentIdDesc": "عرض كود الطالب الفريد على صفحات المحتوى بدلاً من النص المخصص",
+    "opacity": "الشفافية",
+    "opacityDesc": "تعديل وضوح العلامة المائية (10% - 50%)",
+    "rotation": "الدوران",
+    "rotationDesc": "زاوية نص العلامة المائية (-45° إلى 45°)",
+    "applyTo": "تطبيق العلامة المائية على",
+    "applyToChapters": "الفصول",
+    "applyToExams": "الاختبارات والاختبارات القصيرة",
+    "applyToLibrary": "المكتبة الإلكترونية",
+    "applyToVideos": "الفيديوهات المسجلة",
+    "applyToLiveStreams": "البث المباشر",
+    "applyToFiles": "المستندات والملفات",
+    "positionAndSize": "الموضع والحجم",
+    "position": "الموضع",
+    "positionDesc": "اختر مكان ظهور العلامة المائية على الشاشة",
+    "positionTopLeft": "أعلى اليسار",
+    "positionTopRight": "أعلى اليمين",
+    "positionBottomLeft": "أسفل اليسار",
+    "positionBottomRight": "أسفل اليمين",
+    "positionCenter": "الوسط",
+    "positionFull": "كامل الشاشة (متكرر)",
+    "size": "الحجم",
+    "sizeDesc": "اختر حجم نص العلامة المائية",
+    "sizeSmall": "صغير",
+    "sizeMedium": "متوسط",
+    "sizeLarge": "كبير",
+    "preview": "معاينة",
+    "previewSettings": "إعدادات المعاينة",
+    "previewNotSaved": "للمعاينة فقط - لا يتم الحفظ",
+    "useCustomPreviewText": "استخدام نص معاينة مخصص",
+    "useCustomPreviewTextDesc": "اختبار بنص مخصص لن يتم حفظه",
+    "previewTextPlaceholder": "أدخل نص المعاينة...",
+    "previewBackground": "خلفية المعاينة",
+    "previewSticky": "ثابت",
+    "backgroundLight": "فاتح",
+    "backgroundDark": "داكن",
+    "backgroundImage": "صورة",
+    "previewLightBackground": "معاينة الخلفية الفاتحة",
+    "previewDarkBackground": "معاينة الخلفية الداكنة",
+    "previewImageBackground": "معاينة خلفية الصورة/الفيديو",
+    "saveSuccess": "تم حفظ إعدادات العلامة المائية بنجاح",
+    "saveError": "فشل حفظ إعدادات العلامة المائية"
   },
   "platformSettings": {
     "pageDescription": "إدارة التكوين الأساسي والتفضيلات لمنصتك.",
@@ -1238,6 +1392,10 @@
     "termsPrivacy": {
       "title": "الشروط والخصوصية",
       "description": "إدارة نص شروط الخدمة وسياسة الخصوصية."
+    },
+    "watermark": {
+      "title": "إعدادات العلامة المائية",
+      "description": "تكوين العلامات المائية للفصول والاختبارات والمكتبة."
     },
     "soon": "قريباً"
   },
@@ -1269,6 +1427,7 @@
     "noItems": "لم يتم العثور على عناصر في المكتبة.",
     "loadError": "فشل تحميل عناصر المكتبة. يرجى المحاولة مرة أخرى.",
     "backToLibrary": "العودة إلى المكتبة",
+    "uploading": "جارٍ الرفع...",
     "add": {
       "pageTitle": "إضافة عنصر إلى المكتبة",
       "pageDescription": "إضافة كتاب أو مادة جديدة إلى المكتبة الإلكترونية وإرسال إشعار للطلاب",

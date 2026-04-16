@@ -9,6 +9,8 @@ import { useCreateCode } from '@/src/hooks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
+import { useLiveRooms } from '@/src/hooks/useLiveRooms';
+import { useQuizzes } from '@/src/hooks/useQuizzes';
 import toast from 'react-hot-toast';
 
 function useCodeTypes(t: any) {
@@ -16,6 +18,8 @@ function useCodeTypes(t: any) {
     { value: 'App\\Models\\Course', label: t('activation.types.course') },
     { value: 'App\\Models\\Chapter', label: t('activation.types.chapter') },
     { value: 'App\\Models\\Library', label: t('activation.types.library') },
+    { value: 'App\\Models\\LiveRoom', label: t('activation.types.liveRoom') },
+    { value: 'App\\Models\\Quiz', label: t('activation.types.quiz') },
   ];
 }
 
@@ -28,6 +32,8 @@ function GenerateCodeForm() {
   const { data: courses } = useCourses();
   const { data: chapters } = useChapters();
   const { data: libraries } = useLibraries();
+  const { data: liveRooms } = useLiveRooms();
+  const { data: quizzes } = useQuizzes();
 
   const [codeType, setCodeType] = useState('App\\Models\\Course');
   const [itemId, setItemId] = useState('');
@@ -40,6 +46,8 @@ function GenerateCodeForm() {
     const courseId = searchParams.get('course_id');
     const chapterId = searchParams.get('chapter_id');
     const libraryId = searchParams.get('library_id');
+    const liveRoomId = searchParams.get('live_room_id');
+    const quizId = searchParams.get('quiz_id');
 
     if (courseId) {
       setCodeType('App\\Models\\Course');
@@ -50,6 +58,12 @@ function GenerateCodeForm() {
     } else if (libraryId) {
       setCodeType('App\\Models\\Library');
       setItemId(libraryId);
+    } else if (liveRoomId) {
+      setCodeType('App\\Models\\LiveRoom');
+      setItemId(liveRoomId);
+    } else if (quizId) {
+      setCodeType('App\\Models\\Quiz');
+      setItemId(quizId);
     }
   }, [searchParams]);
 
@@ -61,6 +75,10 @@ function GenerateCodeForm() {
         return chapters || [];
       case 'App\\Models\\Library':
         return libraries || [];
+      case 'App\\Models\\LiveRoom':
+        return liveRooms || [];
+      case 'App\\Models\\Quiz':
+        return quizzes || [];
       default:
         return [];
     }
@@ -186,11 +204,21 @@ function GenerateCodeForm() {
                 required
               >
                 <option value="">{t('activation.generate.selectType')} {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
-                {items.map((item: any) => (
-                  <option key={item.id} value={item.id}>
-                    {item.attributes.title || item.attributes.name || `Item ${item.id}`}
-                  </option>
-                ))}
+                {items.map((item: any) => {
+                  // For chapters, show course name alongside chapter title
+                  let label = item.attributes.title || item.attributes.name || `Item ${item.id}`;
+                  if (codeType === 'App\\Models\\Chapter' && item.attributes.course_id && courses) {
+                    const course = courses.find((c: any) => parseInt(c.id) === item.attributes.course_id);
+                    if (course) {
+                      label = `${label} (${course.attributes.title})`;
+                    }
+                  }
+                  return (
+                    <option key={item.id} value={item.id}>
+                      {label}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 

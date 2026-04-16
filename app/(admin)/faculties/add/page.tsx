@@ -7,16 +7,18 @@ import { GraduationCap } from 'lucide-react';
 import { useCreateFaculty } from '@/src/hooks/useFaculties';
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
+import { FileUpload } from '@/components/FileUpload';
 
 export default function AddFacultyPage() {
   const t = useTranslations();
   const router = useRouter();
-  const { mutate: createFaculty, isLoading, error } = useCreateFaculty();
+  const { mutate: createFaculty, isLoading, error, progress } = useCreateFaculty();
   const { data: universities, isLoading: isLoadingUniversities } = useUniversities();
   
   const [formData, setFormData] = useState({
     name: '',
     parent_id: '',
+    image: null as File | null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +32,7 @@ export default function AddFacultyPage() {
       await createFaculty({
         name: formData.name,
         parent_id: parseInt(formData.parent_id),
+        image: formData.image || undefined,
       });
       router.push('/faculties');
     } catch {
@@ -52,6 +55,16 @@ export default function AddFacultyPage() {
       error={error}
     >
       <FormSection title={t('faculties.form.sectionTitle')} icon={<GraduationCap className="w-4 h-4" />}>
+        <div className="md:col-span-2 flex justify-center mb-6">
+          <FileUpload
+            label={t('faculties.form.imageLabel')}
+            onFileSelect={(file) => setFormData({ ...formData, image: file })}
+            previewUrl={formData.image ? URL.createObjectURL(formData.image) : undefined}
+            onClear={() => setFormData({ ...formData, image: null })}
+            progress={isLoading ? progress : undefined}
+          />
+        </div>
+
         <FormInput
           label={t('faculties.form.nameLabel')}
           required

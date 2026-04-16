@@ -1,6 +1,7 @@
-import { api } from '@/src/lib/api';
+import { useState, useCallback } from 'react';
+import { api, ApiError } from '@/src/lib/api';
 import type { Faculty, CreateFacultyRequest } from '@/src/types';
-import { createQueryHook, createMutationHook } from './index';
+import { createQueryHook, createMutationHook, MutationState } from './index';
 
 // ============================================
 // Faculties Hooks
@@ -16,14 +17,79 @@ export const useFaculty = createQueryHook(
   { enabled: true }
 );
 
-export const useCreateFaculty = createMutationHook(
-  (data: CreateFacultyRequest) => api.faculties.create(data).then(res => res.data)
-);
+// Custom mutation hook with progress support for file uploads
+export function useCreateFaculty() {
+  const [state, setState] = useState<MutationState<Faculty>>({
+    data: null,
+    isLoading: false,
+    error: null,
+    isError: false,
+    isSuccess: false,
+  });
+  const [progress, setProgress] = useState(0);
 
-export const useUpdateFaculty = createMutationHook(
-  (id: number, data: CreateFacultyRequest) => 
-    api.faculties.update(id, data).then(res => res.data)
-);
+  const mutate = useCallback(async (data: CreateFacultyRequest) => {
+    setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
+    setProgress(0);
+
+    try {
+      const result = await api.faculties.create(data, (p) => setProgress(p));
+      setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
+      setProgress(100);
+      return result.data;
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : 'An error occurred while creating the faculty';
+      setState({ data: null, isLoading: false, error: message, isError: true, isSuccess: false });
+      throw error;
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setState({ data: null, isLoading: false, error: null, isError: false, isSuccess: false });
+    setProgress(0);
+  }, []);
+
+  return { ...state, mutate, reset, progress };
+}
+
+// Custom mutation hook with progress support for file uploads (update)
+export function useUpdateFaculty() {
+  const [state, setState] = useState<MutationState<Faculty>>({
+    data: null,
+    isLoading: false,
+    error: null,
+    isError: false,
+    isSuccess: false,
+  });
+  const [progress, setProgress] = useState(0);
+
+  const mutate = useCallback(async (id: number, data: Partial<CreateFacultyRequest>) => {
+    setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
+    setProgress(0);
+
+    try {
+      const result = await api.faculties.update(id, data, (p) => setProgress(p));
+      setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
+      setProgress(100);
+      return result.data;
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : 'An error occurred while updating the faculty';
+      setState({ data: null, isLoading: false, error: message, isError: true, isSuccess: false });
+      throw error;
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setState({ data: null, isLoading: false, error: null, isError: false, isSuccess: false });
+    setProgress(0);
+  }, []);
+
+  return { ...state, mutate, reset, progress };
+}
 
 export const useDeleteFaculty = createMutationHook(
   (id: number) => api.faculties.delete(id).then(res => res.data)

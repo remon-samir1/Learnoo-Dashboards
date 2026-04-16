@@ -11,7 +11,7 @@ import { useCourses } from '@/src/hooks/useCourses';
 export default function AddLibraryItemPage() {
   const t = useTranslations();
   const router = useRouter();
-  const { mutate: createLibrary, isLoading } = useCreateLibrary();
+  const { mutate: createLibrary, isLoading, progress } = useCreateLibrary();
   const { data: courses, isLoading: isLoadingCourses } = useCourses();
 
 function getPreviewUrl(path: string | null): string {
@@ -323,6 +323,22 @@ function getPreviewUrl(path: string | null): string {
           </div>
         </section>
 
+        {/* Upload Progress */}
+        {isLoading && progress > 0 && (
+          <div className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm p-6">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-bold text-[#1E293B]">{t('electronicLibrary.uploading')}</span>
+              <span className="text-sm font-bold text-[#2137D6]">{progress}%</span>
+            </div>
+            <div className="w-full bg-[#F1F5F9] rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-[#2137D6] h-2.5 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 mt-2">
           <button 
@@ -332,7 +348,7 @@ function getPreviewUrl(path: string | null): string {
           >
             {t('electronicLibrary.add.buttons.cancel')}
           </button>
-          <button 
+          <button
             type="submit"
             disabled={isLoading}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50"

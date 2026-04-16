@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Building2, Loader2 } from 'lucide-react';
 import { useUniversity, useUpdateUniversity } from '@/src/hooks/useUniversities';
 import { EntityForm, FormSection, FormInput } from '@/src/components/admin/EntityForm';
+import { FileUpload } from '@/components/FileUpload';
 
 export default function EditUniversityPage() {
   const t = useTranslations();
@@ -14,16 +15,20 @@ export default function EditUniversityPage() {
   const universityId = parseInt(params.id as string);
   
   const { data: university, isLoading: isLoadingUniversity } = useUniversity(universityId);
-  const { mutate: updateUniversity, isLoading: isUpdating, error } = useUpdateUniversity();
+  const { mutate: updateUniversity, isLoading: isUpdating, error, progress } = useUpdateUniversity();
   
   const [formData, setFormData] = useState({
     name: '',
+    image: null as File | null,
+    existingImage: null as string | null,
   });
 
   useEffect(() => {
     if (university) {
       setFormData({
         name: university.attributes.name,
+        image: null,
+        existingImage: university.attributes.image,
       });
     }
   }, [university]);
@@ -34,6 +39,7 @@ export default function EditUniversityPage() {
     try {
       await updateUniversity(universityId, {
         name: formData.name,
+        image: formData.image || undefined,
       });
       router.push('/universities');
     } catch {
@@ -68,14 +74,25 @@ export default function EditUniversityPage() {
       error={error}
     >
       <FormSection title={t('universities.form.sectionTitle')} icon={<Building2 className="w-4 h-4" />}>
-        <FormInput
-          label={t('universities.form.nameLabel')}
-          required
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder={t('universities.form.namePlaceholder')}
-          className="md:col-span-2"
-        />
+        <div className="md:col-span-2 flex justify-center mb-6">
+          <FileUpload
+            label={t('universities.form.imageLabel')}
+            onFileSelect={(file) => setFormData({ ...formData, image: file })}
+            previewUrl={formData.image ? URL.createObjectURL(formData.image) : (formData.existingImage || undefined)}
+            onClear={() => setFormData({ ...formData, image: null, existingImage: null })}
+            progress={isUpdating ? progress : undefined}
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <FormInput
+            label={t('universities.form.nameLabel')}
+            required
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder={t('universities.form.namePlaceholder')}
+          />
+        </div>
       </FormSection>
     </EntityForm>
   );

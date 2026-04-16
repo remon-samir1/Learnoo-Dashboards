@@ -13,7 +13,9 @@ import { useStudents } from '@/src/hooks/useStudents';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
-import type { Code, Student, Course, Chapter, Library, ActivateCodeRequest } from '@/src/types';
+import { useLiveRooms } from '@/src/hooks/useLiveRooms';
+import { useQuizzes } from '@/src/hooks/useQuizzes';
+import type { Code, Student, Course, Chapter, Library, LiveRoom, Quiz, ActivateCodeRequest } from '@/src/types';
 import toast from 'react-hot-toast';
 
 type TabType = 'codes' | 'assign' | 'history';
@@ -48,6 +50,8 @@ export default function ActivationPage() {
   const { data: courses } = useCourses();
   const { data: chapters } = useChapters();
   const { data: libraries } = useLibraries();
+  const { data: liveRooms } = useLiveRooms();
+  const { data: quizzes } = useQuizzes();
 
   const handleDelete = (code: Code) => {
     setSelectedCode(code);
@@ -76,8 +80,8 @@ export default function ActivationPage() {
     // Identify codes that don't belong to anything
     codes.forEach((code) => {
       const itemName = getItemName(code.attributes.codeable_type, code.attributes.codeable_id);
-      // Check if the item name is a fallback (e.g., "Course #123", "Chapter #123", "Library #123")
-      const isOrphaned = /^(Course|Chapter|Library) #\d+$/.test(itemName);
+      // Check if the item name is a fallback (e.g., "Course #123", "Chapter #123", "Library #123", "Live Room #123", "Quiz #123")
+      const isOrphaned = /^(Course|Chapter|Library|Live Room|Quiz) #\d+$/.test(itemName);
       if (isOrphaned) {
         orphanedCodes.push(code);
       }
@@ -153,6 +157,8 @@ export default function ActivationPage() {
       'App\\Models\\Course': t('activation.types.course'),
       'App\\Models\\Chapter': t('activation.types.chapter'),
       'App\\Models\\Library': t('activation.types.library'),
+      'App\\Models\\LiveRoom': t('activation.types.liveRoom'),
+      'App\\Models\\Quiz': t('activation.types.quiz'),
     };
     return labels[type] || type;
   };
@@ -162,12 +168,14 @@ export default function ActivationPage() {
       'App\\Models\\Course': 'bg-blue-100 text-blue-700',
       'App\\Models\\Chapter': 'bg-green-100 text-green-700',
       'App\\Models\\Library': 'bg-purple-100 text-purple-700',
+      'App\\Models\\LiveRoom': 'bg-orange-100 text-orange-700',
+      'App\\Models\\Quiz': 'bg-pink-100 text-pink-700',
     };
     return colors[type] || 'bg-gray-100 text-gray-700';
   };
 
   const getItemName = (type: string, id: number) => {
-    let item: Course | Chapter | Library | undefined;
+    let item: Course | Chapter | Library | LiveRoom | Quiz | undefined;
     switch (type) {
       case 'App\\Models\\Course':
         item = courses?.find((c: Course) => parseInt(c.id) === id);
@@ -178,6 +186,12 @@ export default function ActivationPage() {
       case 'App\\Models\\Library':
         item = libraries?.find((l: Library) => parseInt(l.id) === id);
         return item?.attributes.title || `Library #${id}`;
+      case 'App\\Models\\LiveRoom':
+        item = liveRooms?.find((lr: LiveRoom) => parseInt(lr.id) === id);
+        return item?.attributes.title || `Live Room #${id}`;
+      case 'App\\Models\\Quiz':
+        item = quizzes?.find((q: Quiz) => parseInt(q.id) === id);
+        return item?.attributes.title || `Quiz #${id}`;
       default:
         return `Item #${id}`;
     }
@@ -193,6 +207,10 @@ export default function ActivationPage() {
         return chapters?.map((c) => ({ value: c.id, label: c.attributes.title })) || [];
       case 'Library':
         return libraries?.map((l) => ({ value: l.id, label: l.attributes.title })) || [];
+      case 'Live Room':
+        return liveRooms?.map((lr) => ({ value: lr.id, label: lr.attributes.title })) || [];
+      case 'Quiz':
+        return quizzes?.map((q) => ({ value: q.id, label: q.attributes.title })) || [];
       default:
         return [];
     }

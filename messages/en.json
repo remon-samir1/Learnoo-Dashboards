@@ -124,6 +124,7 @@
     "downloads": "Downloads",
     "profileSettings": "Profile & Settings",
     "featureControl": "Feature Control",
+    "otaUpload": "OTA Upload",
     "adminDashboard": "Admin Dashboard",
     "doctorDashboard": "Doctor Dashboard"
   },
@@ -384,7 +385,8 @@
         "update": "Update Course",
         "creating": "Creating...",
         "updating": "Updating..."
-      }
+      },
+      "uploading": "Uploading..."
     },
     "view": {
       "loading": "Loading course details...",
@@ -459,6 +461,12 @@
     "pageDescription": "Manage physical and virtual centers",
     "addCenter": "Add Center",
     "searchPlaceholder": "Search centers...",
+    "columns": {
+      "image": "Image",
+      "name": "Name",
+      "parent": "Parent (Faculty)",
+      "created": "Created"
+    },
     "centerName": "Center Name",
     "parent": "Parent (Faculty)",
     "created": "Created",
@@ -472,6 +480,7 @@
       "addDescription": "Create a new physical or virtual center",
       "editDescription": "Update center information",
       "sectionTitle": "Center Information",
+      "imageLabel": "Center Image",
       "nameLabel": "Center Name",
       "namePlaceholder": "e.g., Main Center, Dokki",
       "parentFacultyLabel": "Parent Faculty",
@@ -493,6 +502,7 @@
     "lectureId": "Lecture ID",
     "saveChanges": "Save Changes",
     "saving": "Saving...",
+    "uploading": "Uploading...",
     "videoContent": "Video Content",
     "addVideo": "Add Video",
     "changeVideo": "Change Video",
@@ -511,7 +521,12 @@
     "maxViews": "Max Views",
     "maxViewsDescription": "Set the maximum number of views allowed for this chapter.",
     "attachments": "Attachments & Resources",
-    "noAttachments": "No new attachments to upload.",
+    "noAttachments": "No attachments available.",
+    "openFile": "Open File",
+    "new": "New",
+    "copyChapter": "Copy Chapter",
+    "copyChapterConfirm": "Are you sure you want to copy this chapter?",
+    "copying": "Copying...",
     "chapterActivation": "Chapter Activation",
     "selectChapter": "Select a Chapter",
     "selectChapterHint": "Select a chapter from the structure tree to view and manage its content and settings.",
@@ -531,17 +546,21 @@
       "cancel": "Cancel",
       "createLecture": "Create Lecture",
       "createChapter": "Create Chapter",
-      "creating": "Creating..."
+      "creating": "Creating...",
+      "uploading": "Uploading..."
     },
     "messages": {
       "lectureCreated": "Lecture created successfully",
       "lectureCreateFailed": "Failed to create lecture",
+      "titleRequired": "Please enter a title for the lecture",
       "chapterCreated": "Chapter created successfully",
       "chapterCreateFailed": "Failed to create chapter",
       "chapterUpdated": "Chapter updated successfully",
       "chapterUpdateFailed": "Failed to update chapter",
       "chapterDeleted": "Chapter deleted successfully",
       "chapterDeleteFailed": "Failed to delete chapter",
+      "chapterCopied": "Chapter copied successfully",
+      "chapterCopyFailed": "Failed to copy chapter",
       "lectureDeleted": "Lecture deleted successfully",
       "lectureDeleteFailed": "Failed to delete lecture",
       "deleteChapterConfirm": "Are you sure you want to delete this chapter?",
@@ -550,7 +569,7 @@
   },
   "activation": {
     "pageTitle": "Activation Management",
-    "pageDescription": "Manage activation codes for courses, chapters, and library items",
+    "pageDescription": "Manage activation codes for courses, chapters, library items, live rooms, and quizzes",
     "generateCodes": "Generate Codes",
     "tabs": {
       "allCodes": "All Codes",
@@ -574,6 +593,8 @@
       "course": "Course",
       "chapter": "Chapter",
       "library": "Library",
+      "liveRoom": "Live Room",
+      "quiz": "Quiz",
       "allTypes": "All Types"
     },
     "filters": {
@@ -616,7 +637,7 @@
     },
     "generate": {
       "title": "Generate Activation Codes",
-      "description": "Create new activation codes for courses, chapters, or library items.",
+      "description": "Create new activation codes for courses, chapters, library items, live rooms, or quizzes.",
       "sectionTitle": "Code Configuration",
       "codeType": "Code Type",
       "assignedItem": "Assigned Item",
@@ -709,6 +730,60 @@
         "name": "Enable Profile Editing",
         "description": "Allow students to change their details."
       }
+    }
+  },
+  "otaUpload": {
+    "pageTitle": "OTA APK Upload",
+    "pageDescription": "Upload new app versions for over-the-air updates",
+    "versionInfo": "Version Information",
+    "versionName": "Version Name",
+    "versionNamePlaceholder": "e.g., 1.2.3",
+    "versionCode": "Version Code",
+    "versionCodePlaceholder": "e.g., 123",
+    "versionCodeHint": "Must be a unique positive integer greater than 0",
+    "apkFile": "APK File",
+    "apkFileRequired": "APK file is required",
+    "apkFileSize": "Maximum file size: Unlimited",
+    "dragDropHint": "Drag and drop APK file here, or click to browse",
+    "fileTypes": "Only .apk files (any size)",
+    "selectedFile": "Selected file",
+    "changeFile": "Change file",
+    "releaseNotes": "Release Notes (Optional)",
+    "releaseNotesPlaceholder": "Describe what's new in this version...",
+    "forceUpdate": "Force Update",
+    "forceUpdateHint": "If enabled, users will be forced to update to this version before using the app.",
+    "uploadButton": "Upload APK",
+    "uploading": "Uploading...",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "versionHistory": "Version History",
+    "noVersions": "No versions uploaded yet",
+    "noVersionsHint": "Upload your first APK version",
+    "code": "Code",
+    "released": "Released",
+    "edit": "Edit Version",
+    "editVersion": "Edit Version",
+    "download": "Download APK",
+    "delete": "Delete Version",
+    "deleteConfirm": "Are you sure you want to delete this version?",
+    "validation": {
+      "versionNameRequired": "Version name is required",
+      "versionNameMaxLength": "Version name must not exceed {max} characters",
+      "versionCodeRequired": "Version code is required",
+      "versionCodeInvalid": "Version code must be a positive integer",
+      "apkRequired": "Please select an APK file",
+      "apkInvalid": "File must be an APK file",
+      "apkSize": "File size must not exceed {maxSize}"
+    },
+    "success": {
+      "uploaded": "APK uploaded successfully",
+      "deleted": "Version deleted successfully"
+    },
+    "error": {
+      "upload": "Failed to upload APK",
+      "delete": "Failed to delete version",
+      "load": "Failed to load versions"
     }
   },
   "liveSessions": {
@@ -1120,6 +1195,7 @@
     "editUniversity": "Edit University",
     "searchPlaceholder": "Search universities...",
     "columns": {
+      "image": "Image",
       "name": "Name",
       "created": "Created"
     },
@@ -1129,9 +1205,12 @@
       "addDescription": "Create a new university or institution",
       "editDescription": "Update university information",
       "sectionTitle": "University Information",
+      "imageLabel": "University Image",
       "nameLabel": "University Name",
       "namePlaceholder": "e.g., Cairo University",
-      "nameRequired": "University name is required"
+      "nameRequired": "University name is required",
+      "codeLabel": "University Code",
+      "codePlaceholder": "e.g., CU"
     },
     "loading": "Loading university...",
     "notFound": "University not found",
@@ -1150,6 +1229,7 @@
     "searchPlaceholder": "Search faculties...",
     "allUniversities": "All Universities",
     "columns": {
+      "image": "Image",
       "name": "Name",
       "university": "University",
       "created": "Created"
@@ -1160,6 +1240,7 @@
       "addDescription": "Create a new faculty or college",
       "editDescription": "Update faculty information",
       "sectionTitle": "Faculty Information",
+      "imageLabel": "Faculty Image",
       "nameLabel": "Faculty Name",
       "namePlaceholder": "e.g., Faculty of Engineering",
       "universityLabel": "University",
@@ -1201,21 +1282,94 @@
       "imageLabel": "Department Image",
       "nameLabel": "Department Name",
       "namePlaceholder": "e.g., Medicine",
-      "centerLabel": "Center",
-      "selectCenter": "Select Center"
+      "parentTypeLabel": "Parent Type",
+      "selectParentType": "Select parent type",
+      "parentTypeCenter": "Center",
+      "parentTypeDepartment": "Department",
+      "parentLabel": "Parent",
+      "noParent": "No Parent (Top Level)"
+    },
+    "subDepartment": "Sub-Department",
+    "filter": {
+      "typeLabel": "Department Type",
+      "allTypes": "All Types",
+      "parentOnly": "Top-Level Only",
+      "subOnly": "Sub-Departments Only",
+      "parentDepartmentLabel": "Parent Department",
+      "allParentDepartments": "All Parent Departments"
     },
     "loading": "Loading department...",
     "notFound": "Department not found",
     "noDepartments": "No departments found. Create your first department!",
+    "noSearchResults": "No departments match your search",
     "deleteTitle": "Delete Department",
     "loadError": "Failed to load departments",
     "retry": "Retry",
-    "back": "Back to Departments"
+    "back": "Back to Departments",
+    "tree": {
+      "expandAll": "Expand All",
+      "collapseAll": "Collapse All",
+      "parentDepartment": "Parent Department"
+    }
   },
   "language": {
     "switcher": "Language",
     "english": "English",
     "arabic": "العربية"
+  },
+  "watermarkSettings": {
+    "pageTitle": "Watermark Settings",
+    "pageDescription": "Configure and manage watermarks for your platform content.",
+    "selectContentType": "Select Content Type",
+    "selectContentTypeDesc": "Choose a content type to configure its watermark settings individually",
+    "enableWatermark": "Enable Watermark",
+    "enableWatermarkDesc": "Show watermark on protected content pages",
+    "watermarkText": "Watermark Text",
+    "watermarkTextPlaceholder": "Enter watermark text (e.g., Learnoo)",
+    "watermarkTextDesc": "Text displayed on watermarked pages",
+    "useStudentId": "Use Student Code as Watermark",
+    "useStudentIdDesc": "Show each student's unique code on their content pages instead of custom text",
+    "opacity": "Opacity",
+    "opacityDesc": "Adjust watermark visibility (10% - 50%)",
+    "rotation": "Rotation",
+    "rotationDesc": "Angle of watermark text (-45° to 45°)",
+    "applyTo": "Apply Watermark To",
+    "applyToChapters": "Chapters",
+    "applyToExams": "Exams & Quizzes",
+    "applyToLibrary": "Electronic Library",
+    "applyToVideos": "Recorded Videos",
+    "applyToLiveStreams": "Live Streams",
+    "applyToFiles": "Documents & Files",
+    "positionAndSize": "Position & Size",
+    "position": "Position",
+    "positionDesc": "Choose where the watermark appears on the screen",
+    "positionTopLeft": "Top Left",
+    "positionTopRight": "Top Right",
+    "positionBottomLeft": "Bottom Left",
+    "positionBottomRight": "Bottom Right",
+    "positionCenter": "Center",
+    "positionFull": "Full Screen (Repeating)",
+    "size": "Size",
+    "sizeDesc": "Choose the size of the watermark text",
+    "sizeSmall": "Small",
+    "sizeMedium": "Medium",
+    "sizeLarge": "Large",
+    "preview": "Preview",
+    "previewSettings": "Preview Settings",
+    "previewNotSaved": "Preview Only - Not Saved",
+    "useCustomPreviewText": "Use Custom Preview Text",
+    "useCustomPreviewTextDesc": "Test with custom text that won't be saved",
+    "previewTextPlaceholder": "Enter preview text...",
+    "previewBackground": "Preview Background",
+    "previewSticky": "Sticky",
+    "backgroundLight": "Light",
+    "backgroundDark": "Dark",
+    "backgroundImage": "Image",
+    "previewLightBackground": "Light Background Preview",
+    "previewDarkBackground": "Dark Background Preview",
+    "previewImageBackground": "Image/Video Background Preview",
+    "saveSuccess": "Watermark settings saved successfully",
+    "saveError": "Failed to save watermark settings"
   },
   "platformSettings": {
     "pageDescription": "Manage your platform's core configuration and preferences.",
@@ -1238,6 +1392,10 @@
     "termsPrivacy": {
       "title": "Terms & Privacy",
       "description": "Manage terms of service and privacy policy text."
+    },
+    "watermark": {
+      "title": "Watermark Settings",
+      "description": "Configure watermarks for chapters, exams, and library content."
     },
     "soon": "Soon"
   },
@@ -1269,6 +1427,7 @@
     "noItems": "No library items found.",
     "loadError": "Failed to load library items. Please try again.",
     "backToLibrary": "Back to Library",
+    "uploading": "Uploading...",
     "add": {
       "pageTitle": "Add Library Item",
       "pageDescription": "Add a new book or material to the electronic library and send a notification to students",

@@ -181,7 +181,27 @@ export default function StudentProfilePage() {
               </div>
               <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.personal')}</h2>
             </div>
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-y-10 gap-x-12">
+            <div className="p-8 flex flex-col gap-8">
+              {/* Profile Image */}
+              <div className="flex items-center gap-4">
+                {studentData?.image ? (
+                  <img
+                    src={studentData.image}
+                    alt={student.name}
+                    className="w-20 h-20 rounded-full object-cover border-2 border-indigo-100 shadow-sm"
+                  />
+                ) : (
+                  <div className="w-20 h-20 bg-[#EEF2FF] rounded-full flex items-center justify-center border-2 border-indigo-100 shadow-sm">
+                    <span className="text-2xl font-bold text-[#4F46E5]">{student.avatar}</span>
+                  </div>
+                )}
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-[#1E293B]">{student.name}</span>
+                  <span className="text-sm text-[#64748B]">{student.email}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-10 gap-x-12">
               <div className="flex flex-col gap-1.5">
                 <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.fullName')}</span>
                 <span className="text-[15px] font-bold text-[#1E293B]">{student.name}</span>
@@ -224,6 +244,7 @@ export default function StudentProfilePage() {
                   <span className="text-[11px] font-bold text-[#94A3B8] uppercase">{t('students.form.view.fields.joined')}</span>
                   <span className="text-[14px] font-semibold text-[#475569]">{student.joined}</span>
                 </div>
+              </div>
               </div>
             </div>
           </section>

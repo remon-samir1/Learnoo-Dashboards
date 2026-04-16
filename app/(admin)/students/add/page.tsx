@@ -37,7 +37,7 @@ export default function AddStudentPage() {
   const { data: coursesData, isLoading: isCoursesLoading } = useCourses();
   
   // Mutation
-  const { mutate: createStudent, isLoading: isCreating, error: createError } = useCreateStudent();
+  const { mutate: createStudent, isLoading: isCreating, error: createError, progress } = useCreateStudent();
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -341,9 +341,12 @@ export default function AddStudentPage() {
             <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.profileImage')}</h2>
           </div>
           <div className="p-6">
-            <FileUpload 
-              label={t('students.form.fields.profileImage')} 
+            <FileUpload
+              label={t('students.form.fields.profileImage')}
               onFileSelect={(file) => setFormData({...formData, image: file})}
+              previewUrl={formData.image ? URL.createObjectURL(formData.image) : undefined}
+              onClear={() => setFormData({...formData, image: null})}
+              progress={isCreating ? progress : undefined}
             />
           </div>
         </section>
