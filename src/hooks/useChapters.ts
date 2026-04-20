@@ -32,12 +32,15 @@ export function useCreateChapter() {
   });
   const [progress, setProgress] = useState(0);
 
-  const mutate = useCallback(async (data: CreateChapterRequest) => {
+  const mutate = useCallback(async (data: CreateChapterRequest, onProgress?: (progress: number) => void) => {
     setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
     setProgress(0);
 
     try {
-      const result = await api.chapters.create(data, (p) => setProgress(p));
+      const result = await api.chapters.create(data, (p) => {
+        setProgress(p);
+        onProgress?.(p);
+      });
       setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
       setProgress(100);
       return result.data;
@@ -69,12 +72,15 @@ export function useUpdateChapter() {
   });
   const [progress, setProgress] = useState(0);
 
-  const mutate = useCallback(async (id: number, data: UpdateChapterRequest) => {
+  const mutate = useCallback(async (id: number, data: UpdateChapterRequest, onProgress?: (progress: number) => void) => {
     setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
     setProgress(0);
 
     try {
-      const result = await api.chapters.update(id, data, (p) => setProgress(p));
+      const result = await api.chapters.update(id, data, (p) => {
+        setProgress(p);
+        onProgress?.(p);
+      });
       setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
       setProgress(100);
       return result.data;

@@ -10,6 +10,9 @@ import { usePlatformFeature, useUpdatePlatformFeature } from '@/src/hooks';
 type WatermarkPosition = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center' | 'full';
 type WatermarkSize = 'small' | 'medium' | 'large';
 type ContentType = 'chapters' | 'exams' | 'library' | 'videos' | 'liveStreams' | 'files';
+type MovementPattern = 'random' | 'circular' | 'zigzag' | 'bounce' | 'edge';
+type AnimationStyle = 'slide' | 'fade' | 'scale' | 'rotate' | 'glide';
+type EasingType = 'linear' | 'ease' | 'easeInOut' | 'bounce' | 'elastic';
 
 interface WatermarkConfig {
   enabled: boolean;
@@ -19,6 +22,12 @@ interface WatermarkConfig {
   rotation: number;
   position: WatermarkPosition;
   size: WatermarkSize;
+  dynamicPosition: boolean;
+  dynamicInterval: number;
+  movementPattern: MovementPattern;
+  animationStyle: AnimationStyle;
+  easingType: EasingType;
+  randomCoordinates: boolean;
 }
 
 interface WatermarkSettings {
@@ -42,6 +51,12 @@ const defaultConfig: WatermarkConfig = {
   rotation: -12,
   position: 'full',
   size: 'medium',
+  dynamicPosition: false,
+  dynamicInterval: 2,
+  movementPattern: 'random',
+  animationStyle: 'glide',
+  easingType: 'easeInOut',
+  randomCoordinates: false,
 };
 
 interface PreviewSettings {
@@ -66,6 +81,11 @@ export default function WatermarkSettingsPage() {
     usePreviewText: false,
     previewBackground: 'light',
   });
+
+  // Dynamic position state for preview
+  const [dynamicPreviewPosition, setDynamicPreviewPosition] = useState<WatermarkPosition>('topLeft');
+  const [nextChangeIn, setNextChangeIn] = useState(2);
+  const [previewCoords, setPreviewCoords] = useState({ x: 10, y: 10 });
 
   // Helper to get feature value by key
   const getFeatureValue = (key: string, defaultValue: string = ''): string => {
@@ -100,6 +120,12 @@ export default function WatermarkSettingsPage() {
           rotation: getFeatureNumber(`watermark_${key}_rotation`, -12),
           position: (getFeatureValue(`watermark_${key}_position`, 'full') as WatermarkPosition),
           size: (getFeatureValue(`watermark_${key}_size`, 'medium') as WatermarkSize),
+          dynamicPosition: getFeatureBool(`watermark_${key}_dynamic_position`, false),
+          dynamicInterval: getFeatureNumber(`watermark_${key}_dynamic_interval`, 2),
+          movementPattern: (getFeatureValue(`watermark_${key}_movement_pattern`, 'random') as MovementPattern),
+          animationStyle: (getFeatureValue(`watermark_${key}_animation_style`, 'glide') as AnimationStyle),
+          easingType: (getFeatureValue(`watermark_${key}_easing_type`, 'easeInOut') as EasingType),
+          randomCoordinates: getFeatureBool(`watermark_${key}_random_coordinates`, false),
         };
       });
       setSettings(newSettings);
@@ -107,6 +133,54 @@ export default function WatermarkSettingsPage() {
   }, [features]);
 
   const currentSettings = settings[activeType] || defaultConfig;
+
+  // Positions array for dynamic movement
+  const positions = ['topLeft', 'topRight', 'center', 'bottomLeft', 'bottomRight'] as WatermarkPosition[];
+
+  // Movement pattern position sequences
+  const movementSequences: Record<MovementPattern, WatermarkPosition[]> = {
+    random: positions,
+    circular: ['topLeft', 'topRight', 'bottomRight', 'bottomLeft'],
+    zigzag: ['topLeft', 'center', 'topRight', 'center', 'bottomLeft', 'center', 'bottomRight'],
+    bounce: ['topLeft', 'bottomRight', 'topRight', 'bottomLeft'],
+    edge: ['topLeft', 'topRight', 'bottomRight', 'bottomLeft', 'topLeft'],
+  };
+
+  // Dynamic position effect for preview
+  useEffect(() => {
+    if (!currentSettings.dynamicPosition) return;
+
+    let sequenceIndex = 0;
+    const sequence = movementSequences[currentSettings.movementPattern];
+
+    const interval = setInterval(() => {
+      if (currentSettings.randomCoordinates) {
+        // Random coordinates mode (10-90% range)
+        setPreviewCoords({
+          x: Math.floor(Math.random() * 80) + 10,
+          y: Math.floor(Math.random() * 80) + 10,
+        });
+      } else {
+        // Pattern-based position
+        setDynamicPreviewPosition((currentPos) => {
+          if (currentSettings.movementPattern === 'random') {
+            // Random but not duplicate
+            const available = positions.filter(p => p !== currentPos);
+            return available[Math.floor(Math.random() * available.length)];
+          } else {
+            // Follow sequence
+            sequenceIndex = (sequenceIndex + 1) % sequence.length;
+            return sequence[sequenceIndex];
+          }
+        });
+      }
+      // Random next change between 1-5 seconds
+      const nextInterval = Math.floor(Math.random() * 4) + 1;
+      setNextChangeIn(nextInterval);
+    }, nextChangeIn * 1000);
+
+    return () => clearInterval(interval);
+  }, [currentSettings.dynamicPosition, nextChangeIn, currentSettings.movementPattern, currentSettings.randomCoordinates]);
 
   const updateCurrentSettings = (updates: Partial<WatermarkConfig>) => {
     setSettings((prev) => ({
@@ -129,6 +203,12 @@ export default function WatermarkSettingsPage() {
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_rotation`, value: String(config.rotation) }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_position`, value: config.position }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_size`, value: config.size }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_dynamic_position`, value: config.dynamicPosition ? '1' : '0' }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_dynamic_interval`, value: String(config.dynamicInterval) }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_movement_pattern`, value: config.movementPattern }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_animation_style`, value: config.animationStyle }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_easing_type`, value: config.easingType }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_random_coordinates`, value: config.randomCoordinates ? '1' : '0' }));
       });
       
       await Promise.all(requests);
@@ -308,7 +388,7 @@ export default function WatermarkSettingsPage() {
               <div>
                 <label className="text-[13px] font-bold text-[#475569] block mb-3">{t('position')}</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(['topLeft', 'topRight', 'center', 'bottomLeft', 'bottomRight', 'full'] as WatermarkPosition[]).map((pos) => (
+                  {positions.map((pos) => (
                     <button
                       key={pos}
                       type="button"
@@ -324,6 +404,123 @@ export default function WatermarkSettingsPage() {
                   ))}
                 </div>
                 <p className="text-xs text-[#94A3B8] mt-2">{t('positionDesc')}</p>
+
+              {/* Dynamic Position Toggle */}
+              <div className="mt-4 pt-4 border-t border-[#F1F5F9]">
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={currentSettings.dynamicPosition}
+                    onChange={(e) => updateCurrentSettings({ dynamicPosition: e.target.checked })}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
+                  <span className="ml-3 text-sm font-medium text-[#475569]">{t('dynamicPosition')}</span>
+                </label>
+                <p className="text-xs text-[#94A3B8] mt-1">{t('dynamicPositionDesc')}</p>
+
+                {/* Interval Slider */}
+                {currentSettings.dynamicPosition && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-[13px] font-bold text-[#475569]">{t('dynamicInterval')}</label>
+                      <span className="text-sm font-medium text-[#2137D6]">{currentSettings.dynamicInterval}s</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max="5"
+                      value={currentSettings.dynamicInterval}
+                      onChange={(e) => updateCurrentSettings({ dynamicInterval: parseInt(e.target.value) })}
+                      className="w-full h-2 bg-[#F1F5F9] rounded-lg appearance-none cursor-pointer accent-[#2137D6]"
+                    />
+                    <p className="text-xs text-[#94A3B8] mt-1">{t('dynamicIntervalDesc')}</p>
+
+                    {/* Random Coordinates Toggle */}
+                    <div className="mt-4 pt-3 border-t border-[#F1F5F9]">
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={currentSettings.randomCoordinates}
+                          onChange={(e) => updateCurrentSettings({ randomCoordinates: e.target.checked })}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
+                        <span className="ml-3 text-sm font-medium text-[#475569]">{t('randomCoordinates')}</span>
+                      </label>
+                      <p className="text-xs text-[#94A3B8] mt-1">{t('randomCoordinatesDesc')}</p>
+                    </div>
+
+                    {/* Movement Pattern */}
+                    {!currentSettings.randomCoordinates && (
+                      <div className="mt-4 pt-3 border-t border-[#F1F5F9]">
+                        <label className="text-[13px] font-bold text-[#475569] block mb-2">{t('movementPattern')}</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['random', 'circular', 'zigzag', 'bounce', 'edge'] as MovementPattern[]).map((pattern) => (
+                            <button
+                              key={pattern}
+                              type="button"
+                              onClick={() => updateCurrentSettings({ movementPattern: pattern })}
+                              className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                                currentSettings.movementPattern === pattern
+                                  ? 'bg-[#2137D6] text-white'
+                                  : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#E2E8F0]'
+                              }`}
+                            >
+                              {t(`pattern${pattern.charAt(0).toUpperCase() + pattern.slice(1)}`)}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-[#94A3B8] mt-2">{t('movementPatternDesc')}</p>
+                      </div>
+                    )}
+
+                    {/* Animation Style */}
+                    <div className="mt-4 pt-3 border-t border-[#F1F5F9]">
+                      <label className="text-[13px] font-bold text-[#475569] block mb-2">{t('animationStyle')}</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {(['slide', 'fade', 'scale', 'rotate', 'glide'] as AnimationStyle[]).map((style) => (
+                          <button
+                            key={style}
+                            type="button"
+                            onClick={() => updateCurrentSettings({ animationStyle: style })}
+                            className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                              currentSettings.animationStyle === style
+                                ? 'bg-[#2137D6] text-white'
+                                : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#E2E8F0]'
+                            }`}
+                          >
+                            {t(`style${style.charAt(0).toUpperCase() + style.slice(1)}`)}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-[#94A3B8] mt-2">{t('animationStyleDesc')}</p>
+                    </div>
+
+                    {/* Easing Type */}
+                    <div className="mt-4 pt-3 border-t border-[#F1F5F9]">
+                      <label className="text-[13px] font-bold text-[#475569] block mb-2">{t('easingType')}</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {(['linear', 'ease', 'easeInOut', 'bounce', 'elastic'] as EasingType[]).map((ease) => (
+                          <button
+                            key={ease}
+                            type="button"
+                            onClick={() => updateCurrentSettings({ easingType: ease })}
+                            className={`px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                              currentSettings.easingType === ease
+                                ? 'bg-[#2137D6] text-white'
+                                : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#E2E8F0]'
+                            }`}
+                          >
+                            {t(`ease${ease.charAt(0).toUpperCase() + ease.slice(1)}`)}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-[#94A3B8] mt-2">{t('easingTypeDesc')}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
               </div>
 
               {/* Size */}
@@ -434,6 +631,52 @@ export default function WatermarkSettingsPage() {
                   <Eye className="w-4 h-4 text-[#4F46E5]" />
                   <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('preview')}</h2>
                 </div>
+                {/* Compute effective position for dynamic movement */}
+                {(() => {
+                  const effectivePosition = currentSettings.dynamicPosition && !currentSettings.randomCoordinates ? dynamicPreviewPosition : currentSettings.position;
+                  const positionClasses: Record<WatermarkPosition, string> = {
+                    topLeft: 'top-4 left-4',
+                    topRight: 'top-4 right-4',
+                    bottomLeft: 'bottom-4 left-4',
+                    bottomRight: 'bottom-4 right-4',
+                    center: 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+                    full: ''
+                  };
+
+                  // Animation style classes
+                  const animationClasses: Record<AnimationStyle, string> = {
+                    slide: 'transition-transform duration-500',
+                    fade: 'transition-all duration-500',
+                    scale: 'transition-transform duration-500',
+                    rotate: 'transition-transform duration-500',
+                    glide: 'transition-all duration-700',
+                  };
+
+                  // Easing classes
+                  const easingClasses: Record<EasingType, string> = {
+                    linear: 'ease-linear',
+                    ease: 'ease-in-out',
+                    easeInOut: 'ease-in-out',
+                    bounce: 'transition-all duration-700',
+                    elastic: 'transition-all duration-700',
+                  };
+
+                  const getAnimationClass = () => {
+                    const base = animationClasses[currentSettings.animationStyle];
+                    const ease = currentSettings.easingType === 'bounce' || currentSettings.easingType === 'elastic'
+                      ? easingClasses[currentSettings.easingType]
+                      : base;
+                    return `${base} ${ease}`;
+                  };
+
+                  // Random coordinates style
+                  const randomCoordsStyle = currentSettings.randomCoordinates ? {
+                    left: `${previewCoords.x}%`,
+                    top: `${previewCoords.y}%`,
+                    transform: 'translate(-50%, -50%)',
+                  } : {};
+
+                  return (
                 <div className="p-6">
                   {/* Dynamic Preview based on selected background and position */}
                   {previewSettings.previewBackground === 'light' && (
@@ -441,7 +684,7 @@ export default function WatermarkSettingsPage() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-xs text-[#94A3B8]">{t('previewLightBackground')}</span>
                       </div>
-                      {currentSettings.position === 'full' ? (
+                      {currentSettings.position === 'full' && !currentSettings.dynamicPosition ? (
                         <div className="absolute inset-0 flex flex-wrap content-center justify-center gap-x-12 gap-y-8 p-4 pointer-events-none" style={{ transform: `rotate(${currentSettings.rotation}deg) scale(1.1)` }}>
                           {Array.from({ length: 4 }).map((_, i) => (
                             <span
@@ -457,19 +700,18 @@ export default function WatermarkSettingsPage() {
                         </div>
                       ) : (
                         <div
-                          className={`absolute pointer-events-none ${
-                            currentSettings.position === 'topLeft' ? 'top-4 left-4' :
-                            currentSettings.position === 'topRight' ? 'top-4 right-4' :
-                            currentSettings.position === 'bottomLeft' ? 'bottom-4 left-4' :
-                            currentSettings.position === 'bottomRight' ? 'bottom-4 right-4' :
-                            currentSettings.position === 'center' ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' : ''
-                          }`}
-                          style={{ transform: currentSettings.position === 'center' ? `rotate(${currentSettings.rotation}deg) translate(-50%, -50%)` : `rotate(${currentSettings.rotation}deg)` }}
+                          className={`absolute pointer-events-none ${getAnimationClass()} ${currentSettings.randomCoordinates ? '' : positionClasses[effectivePosition]}`}
+                          style={{
+                            ...randomCoordsStyle,
+                            ...(!currentSettings.randomCoordinates && effectivePosition !== 'center' ? { transform: `rotate(${currentSettings.rotation}deg)` } : {}),
+                            ...(currentSettings.animationStyle === 'scale' ? { transform: `${randomCoordsStyle.transform || ''} scale(${currentSettings.dynamicPosition ? 1.1 : 1})` } : {}),
+                            ...(currentSettings.animationStyle === 'rotate' ? { transform: `${randomCoordsStyle.transform || ''} rotate(${currentSettings.rotation + (currentSettings.dynamicPosition ? 15 : 0)}deg)` } : {}),
+                          }}
                         >
                           <span
-                            className={`font-bold text-gray-400/60 select-none whitespace-nowrap ${
+                            className={`font-bold text-gray-400/60 select-none whitespace-nowrap inline-block ${
                               currentSettings.size === 'small' ? 'text-base' : currentSettings.size === 'large' ? 'text-4xl' : 'text-2xl'
-                            }`}
+                            } ${currentSettings.animationStyle === 'fade' && currentSettings.dynamicPosition ? 'animate-pulse' : ''}`}
                             style={{ opacity: currentSettings.opacity / 100 }}
                           >
                             {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
@@ -484,7 +726,7 @@ export default function WatermarkSettingsPage() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-xs text-[#64748B]">{t('previewDarkBackground')}</span>
                       </div>
-                      {currentSettings.position === 'full' ? (
+                      {currentSettings.position === 'full' && !currentSettings.dynamicPosition ? (
                         <div className="absolute inset-0 flex flex-wrap content-center justify-center gap-x-12 gap-y-8 p-4 pointer-events-none" style={{ transform: `rotate(${currentSettings.rotation}deg) scale(1.1)` }}>
                           {Array.from({ length: 4 }).map((_, i) => (
                             <span
@@ -500,19 +742,18 @@ export default function WatermarkSettingsPage() {
                         </div>
                       ) : (
                         <div
-                          className={`absolute pointer-events-none ${
-                            currentSettings.position === 'topLeft' ? 'top-4 left-4' :
-                            currentSettings.position === 'topRight' ? 'top-4 right-4' :
-                            currentSettings.position === 'bottomLeft' ? 'bottom-4 left-4' :
-                            currentSettings.position === 'bottomRight' ? 'bottom-4 right-4' :
-                            currentSettings.position === 'center' ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' : ''
-                          }`}
-                          style={{ transform: currentSettings.position === 'center' ? `rotate(${currentSettings.rotation}deg) translate(-50%, -50%)` : `rotate(${currentSettings.rotation}deg)` }}
+                          className={`absolute pointer-events-none ${getAnimationClass()} ${currentSettings.randomCoordinates ? '' : positionClasses[effectivePosition]}`}
+                          style={{
+                            ...randomCoordsStyle,
+                            ...(!currentSettings.randomCoordinates && effectivePosition !== 'center' ? { transform: `rotate(${currentSettings.rotation}deg)` } : {}),
+                            ...(currentSettings.animationStyle === 'scale' ? { transform: `${randomCoordsStyle.transform || ''} scale(${currentSettings.dynamicPosition ? 1.1 : 1})` } : {}),
+                            ...(currentSettings.animationStyle === 'rotate' ? { transform: `${randomCoordsStyle.transform || ''} rotate(${currentSettings.rotation + (currentSettings.dynamicPosition ? 15 : 0)}deg)` } : {}),
+                          }}
                         >
                           <span
-                            className={`font-bold text-white/50 select-none whitespace-nowrap ${
+                            className={`font-bold text-white/50 select-none whitespace-nowrap inline-block ${
                               currentSettings.size === 'small' ? 'text-base' : currentSettings.size === 'large' ? 'text-4xl' : 'text-2xl'
-                            }`}
+                            } ${currentSettings.animationStyle === 'fade' && currentSettings.dynamicPosition ? 'animate-pulse' : ''}`}
                             style={{ opacity: currentSettings.opacity / 100 }}
                           >
                             {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
@@ -528,7 +769,7 @@ export default function WatermarkSettingsPage() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-xs text-white/80">{t('previewImageBackground')}</span>
                       </div>
-                      {currentSettings.position === 'full' ? (
+                      {currentSettings.position === 'full' && !currentSettings.dynamicPosition ? (
                         <div className="absolute inset-0 flex flex-wrap content-center justify-center gap-x-12 gap-y-8 p-4 pointer-events-none" style={{ transform: `rotate(${currentSettings.rotation}deg) scale(1.1)` }}>
                           {Array.from({ length: 4 }).map((_, i) => (
                             <span
@@ -544,19 +785,18 @@ export default function WatermarkSettingsPage() {
                         </div>
                       ) : (
                         <div
-                          className={`absolute pointer-events-none ${
-                            currentSettings.position === 'topLeft' ? 'top-4 left-4' :
-                            currentSettings.position === 'topRight' ? 'top-4 right-4' :
-                            currentSettings.position === 'bottomLeft' ? 'bottom-4 left-4' :
-                            currentSettings.position === 'bottomRight' ? 'bottom-4 right-4' :
-                            currentSettings.position === 'center' ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2' : ''
-                          }`}
-                          style={{ transform: currentSettings.position === 'center' ? `rotate(${currentSettings.rotation}deg) translate(-50%, -50%)` : `rotate(${currentSettings.rotation}deg)` }}
+                          className={`absolute pointer-events-none ${getAnimationClass()} ${currentSettings.randomCoordinates ? '' : positionClasses[effectivePosition]}`}
+                          style={{
+                            ...randomCoordsStyle,
+                            ...(!currentSettings.randomCoordinates && effectivePosition !== 'center' ? { transform: `rotate(${currentSettings.rotation}deg)` } : {}),
+                            ...(currentSettings.animationStyle === 'scale' ? { transform: `${randomCoordsStyle.transform || ''} scale(${currentSettings.dynamicPosition ? 1.1 : 1})` } : {}),
+                            ...(currentSettings.animationStyle === 'rotate' ? { transform: `${randomCoordsStyle.transform || ''} rotate(${currentSettings.rotation + (currentSettings.dynamicPosition ? 15 : 0)}deg)` } : {}),
+                          }}
                         >
                           <span
-                            className={`font-bold text-white/70 select-none whitespace-nowrap ${
+                            className={`font-bold text-white/70 select-none whitespace-nowrap inline-block ${
                               currentSettings.size === 'small' ? 'text-base' : currentSettings.size === 'large' ? 'text-4xl' : 'text-2xl'
-                            }`}
+                            } ${currentSettings.animationStyle === 'fade' && currentSettings.dynamicPosition ? 'animate-pulse' : ''}`}
                             style={{ opacity: currentSettings.opacity / 100 }}
                           >
                             {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
@@ -566,6 +806,8 @@ export default function WatermarkSettingsPage() {
                     </div>
                   )}
                 </div>
+              );
+            })()}
               </section>
             </div>
           )}

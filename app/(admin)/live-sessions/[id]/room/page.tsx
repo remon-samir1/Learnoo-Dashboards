@@ -1,440 +1,253 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Peer } from 'peerjs';
+import { Peer, DataConnection } from 'peerjs';
 import {
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  PhoneOff,
-  MessageSquare,
-  Users,
-  Settings,
-  ChevronLeft,
-  Copy,
-  Check,
-  Monitor,
-  MonitorOff,
-  MoreVertical,
-  Maximize2,
+  Mic, MicOff, Video, VideoOff, PhoneOff, Users, ChevronLeft, Phone, X, MessageCircle, Send,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getUserData } from '@/lib/auth';
 
-interface Participant {
-  id: string;
+const PEER_HOST = 'peer.learnoo.app';
+const PEER_PORT = 443;
+const PEER_PATH = '/server';
+
+interface JoinRequest {
+  peerId: string;
   name: string;
-  stream?: MediaStream;
-  isAudioEnabled: boolean;
-  isVideoEnabled: boolean;
-  isScreenSharing: boolean;
+  conn: DataConnection;
 }
 
 interface ChatMessage {
   id: string;
-  senderId: string;
-  senderName: string;
-  message: string;
-  timestamp: Date;
+  peerId: string;
+  name: string;
+  content: string;
+  timestamp: number;
+  isHost: boolean;
 }
-
-const PEER_SERVER_HOST = 'peer.learnoo.app';
-const PEER_SERVER_PORT = 443;
-const PEER_SERVER_PATH = '/server';
 
 export default function LiveRoomPage() {
   const params = useParams();
   const router = useRouter();
   const roomId = params.id as string;
+  const { data: liveRoom, isLoading } = useLiveRoom(parseInt(roomId));
 
-  const { data: liveRoom, isLoading: isRoomLoading } = useLiveRoom(parseInt(roomId));
-
-  const [peer, setPeer] = useState<Peer | null>(null);
-  const [myPeerId, setMyPeerId] = useState<string>('');
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [participants, setParticipants] = useState<Map<string, Participant>>(new Map());
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  const [connectedClients, setConnectedClients] = useState<Map<string, string>>(new Map());
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [status, setStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [showRequests, setShowRequests] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    // Dummy messages for preview
+    // { id: '1', peerId: 'student1', name: 'Ahmed', content: 'Hello professor!', timestamp: Date.now() - 300000, isHost: false },
+    // { id: '2', peerId: 'host', name: 'You', content: 'Welcome everyone! Ready to start?', timestamp: Date.now() - 240000, isHost: true },
+    // { id: '3', peerId: 'student2', name: 'Sara', content: 'Yes, ready!', timestamp: Date.now() - 180000, isHost: false },
+    // { id: '4', peerId: 'student3', name: 'Omar', content: 'Can you hear me?', timestamp: Date.now() - 60000, isHost: false },
+  ]);
   const [newMessage, setNewMessage] = useState('');
-  const [showChat, setShowChat] = useState(false);
-  const [showParticipants, setShowParticipants] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const [dataConnections, setDataConnections] = useState<Map<string, DataConnection>>(new Map());
+  const [showChat, setShowChat] = useState(true);
 
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const screenStreamRef = useRef<MediaStream | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const peerRef = useRef<Peer | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const userData = getUserData();
   const userName = userData?.attributes?.first_name
     ? `${userData.attributes.first_name} ${userData.attributes.last_name || ''}`
     : 'Instructor';
 
-  // Initialize PeerJS and get user media
+  // Initialize camera and PeerJS
   useEffect(() => {
     if (!roomId) return;
 
-    const initPeer = async (idToUse?: string): Promise<Peer | null> => {
+    let mounted = true;
+    let peer: Peer | null = null;
+    let stream: MediaStream | null = null;
+
+    const init = async () => {
       try {
-        const isHostAttempt = idToUse === roomId;
+        // Get camera + mic
+        if (!roomId) { return; }
+        stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        if (!mounted) { stream.getTracks().forEach(t => t.stop()); return; }
+        setLocalStream(stream);
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
 
-        // Get user media if not already available
-        let stream = localStream;
-        if (!stream) {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
-            audio: true,
-          });
-          setLocalStream(stream);
-
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-          }
-        }
-
-        const newPeer = new Peer(idToUse || '', {
-          host: PEER_SERVER_HOST,
-          port: PEER_SERVER_PORT,
-          path: PEER_SERVER_PATH,
-          secure: true,
+        peer = new Peer(roomId, {
+          host: PEER_HOST, port: PEER_PORT, path: PEER_PATH, secure: true,
           config: {
             iceServers: [
-              {
-                urls: "stun:stun.relay.metered.ca:80",
-              },
-              {
-                urls: "turn:global.relay.metered.ca:80",
-                username: "f29e7283f4043b41d539ce22",
-                credential: "+61zZCdLwcLhN0KX",
-              },
-              {
-                urls: "turn:global.relay.metered.ca:80?transport=tcp",
-                username: "f29e7283f4043b41d539ce22",
-                credential: "+61zZCdLwcLhN0KX",
-              },
-              {
-                urls: "turn:global.relay.metered.ca:443",
-                username: "f29e7283f4043b41d539ce22",
-                credential: "+61zZCdLwcLhN0KX",
-              },
-              {
-                urls: "turns:global.relay.metered.ca:443?transport=tcp",
-                username: "f29e7283f4043b41d539ce22",
-                credential: "+61zZCdLwcLhN0KX",
-              },
+              { urls: 'stun:stun.l.google.com:19302' },
+              { urls: 'turn:global.relay.metered.ca:80', username: 'f29e7283f4043b41d539ce22', credential: '+61zZCdLwcLhN0KX' },
+              { urls: 'turn:global.relay.metered.ca:80?transport=tcp', username: 'f29e7283f4043b41d539ce22', credential: '+61zZCdLwcLhN0KX' },
+              { urls: 'turn:global.relay.metered.ca:443', username: 'f29e7283f4043b41d539ce22', credential: '+61zZCdLwcLhN0KX' },
+              { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: 'f29e7283f4043b41d539ce22', credential: '+61zZCdLwcLhN0KX' },
             ],
-          },
-          debug: 2,
+          }
+        });
+        peerRef.current = peer;
+
+
+        // When connected to PeerJS server
+        peer.on('open', (id) => {
+          setStatus('connected');
         });
 
-        // newPeer.on('open', (id) => {
-        //   console.log('Connected to PeerJS server with ID:', id);
-        //   setMyPeerId(id);
-        //   setConnectionStatus('connected');
+        peer.on('connection', (conn) => {
+          console.log(conn)
+          conn.on('data', (data: any) => {
+            console.log(data)
 
-        //   if (!isHostAttempt) {
-        //     // I am a participant, connect to the host
-        //     console.log('Connecting to host:', roomId);
-        //     const conn = newPeer.connect(roomId);
-        //     conn.on('open', () => {
-        //       console.log('Data connection to host opened, sending join action');
-        //       conn.send({
-        //         action: 'join',
-        //         id: id,
-        //         name: userName
-        //       });
-        //     });
+            if (data && data.action == "join") {
+              if (peer && data.id && streamRef.current) {
+                peer.call(data.id, streamRef.current);
+                setDataConnections(prev => new Map(prev).set(data.id, conn));
 
-        //     conn.on('error', (err) => {
-        //       console.error('Data connection error:', err);
-        //     });
-        //   }
-        // });
+                setConnectedClients(prev => new Map(prev).set(data.id, data.name));
+              }
+            }
 
-        // newPeer.on('error', (err) => {
-        //   console.error('PeerJS error:', err);
+            if (data && data.action == "message") {
+              setChatMessages(prev => [...prev, {
+                id: data.id,
+                peerId: data.id,
+                name: data.name,
+                content: data.content,
+                timestamp: Date.now(),
+                isHost: false,
+              }]);
+            }
+          })
+        });
 
-        //   if (isHostAttempt && err.type === 'unavailable-id') {
-        //     console.log('Room ID taken, joining as participant...');
-        //     newPeer.destroy();
-        //     initPeer(); // Try again without a specific ID to be a participant
-        //     return;
-        //   }
-
-        //   setConnectionStatus('error');
-        // });
-
-        // newPeer.on('call', (call) => {
-        //   console.log('Incoming call from:', call.peer);
-        //   if (stream) {
-        //     call.answer(stream);
-        //   }
-
-        //   call.on('stream', (remoteStream) => {
-        //     setParticipants((prev) => {
-        //       const updated = new Map(prev);
-        //       const participant = updated.get(call.peer);
-        //       if (participant) {
-        //         updated.set(call.peer, { ...participant, stream: remoteStream });
-        //       } else {
-        //         // If we don't know this participant yet, add them
-        //         updated.set(call.peer, {
-        //           id: call.peer,
-        //           name: 'Remote User',
-        //           stream: remoteStream,
-        //           isAudioEnabled: true,
-        //           isVideoEnabled: true,
-        //           isScreenSharing: false,
-        //         });
-        //       }
-        //       return updated;
-        //     });
-        //   });
-        // });
-
-        // newPeer.on('connection', (conn) => {
-        //   conn.on('data', (data: any) => {
-        //     console.log('Data received:', data);
-        //     if (data.action === 'join') {
-        //       console.log('Participant joining:', data.id);
-        //       // When a participant sends 'join', call them with our current stream
-        //       const streamToShare = screenStreamRef.current || stream;
-        //       if (streamToShare) {
-        //         newPeer.call(data.id, streamToShare);
-        //       }
-
-        //       setParticipants((prev) => {
-        //         if (prev.has(data.id)) return prev;
-        //         const updated = new Map(prev);
-        //         updated.set(data.id, {
-        //           id: data.id,
-        //           name: data.name || 'Participant',
-        //           isAudioEnabled: true,
-        //           isVideoEnabled: true,
-        //           isScreenSharing: false,
-        //         });
-        //         return updated;
-        //       });
-        //     } else if (typeof data === 'object' && data !== null) {
-        //       const msg = data as { type: string; senderId: string; senderName: string; message: string };
-        //       if (msg.type === 'chat') {
-        //         setMessages((prev) => [
-        //           ...prev,
-        //           {
-        //             id: `${Date.now()}-${Math.random()}`,
-        //             senderId: msg.senderId,
-        //             senderName: msg.senderName,
-        //             message: msg.message,
-        //             timestamp: new Date(),
-        //           },
-        //         ]);
-        //       }
-        //     }
-        //   });
-        // });
-
-        setPeer(newPeer);
-        return newPeer;
       } catch (err) {
-        console.error('Failed to initialize peer:', err);
-        setConnectionStatus('error');
-        return null;
+        console.error('Init error:', err);
+        setStatus('error');
       }
     };
 
-    let peerInstance: Peer | null = null;
-
-    initPeer(roomId).then((peer) => {
-      peerInstance = peer;
-    });
+    init();
 
     return () => {
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
-      if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      if (peerInstance) {
-        peerInstance.destroy();
-      }
+      mounted = false;
+      stream?.getTracks().forEach(t => t.stop());
+      peer?.destroy();
     };
   }, [roomId]);
 
-  // Scroll to bottom of chat
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const toggleAudio = useCallback(() => {
+  // Toggle audio/video
+  const toggleAudio = () => {
     if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioEnabled(audioTrack.enabled);
-      }
+      const track = localStream.getAudioTracks()[0];
+      if (track) { track.enabled = !track.enabled; setIsAudioEnabled(track.enabled); }
     }
-  }, [localStream]);
+  };
 
-  const toggleVideo = useCallback(() => {
+  const toggleVideo = () => {
     if (localStream) {
-      const videoTrack = localStream.getVideoTracks()[0];
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoEnabled(videoTrack.enabled);
-      }
+      const track = localStream.getVideoTracks()[0];
+      if (track) { track.enabled = !track.enabled; setIsVideoEnabled(track.enabled); }
     }
-  }, [localStream]);
+  };
 
-  const toggleScreenShare = useCallback(async () => {
-    if (isScreenSharing) {
-      // Stop screen sharing
-      if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach((track) => track.stop());
-        screenStreamRef.current = null;
-      }
+  // Host calls a client (initiated by host)
+  const callClient = (request: JoinRequest) => {
+    const peer = peerRef.current;
+    const stream = streamRef.current;
+    if (!peer || !stream) return;
 
-      if (localStream && localVideoRef.current) {
-        localVideoRef.current.srcObject = localStream;
+    // Remove from requests
+    setJoinRequests(prev => prev.filter(r => r.peerId !== request.peerId));
 
-        // Update all active calls with the original stream
-        if (peer) {
-          Object.values(peer.connections).forEach((conns: any) => {
-            conns.forEach((conn: any) => {
-              if (conn.peerConnection && conn.localStream) {
-                const videoTrack = localStream.getVideoTracks()[0];
-                const sender = conn.peerConnection.getSenders().find((s: any) => s.track?.kind === 'video');
-                if (sender && videoTrack) {
-                  sender.replaceTrack(videoTrack);
-                }
-              }
-            });
-          });
-        }
-      }
-      setIsScreenSharing(false);
-    } else {
-      // Start screen sharing
-      try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: true,
-        });
-        screenStreamRef.current = screenStream;
+    // Call the client
+    const call = peer.call(request.peerId, stream);
 
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = screenStream;
-        }
+    call.on('stream', (remoteStream) => {
+      setRemoteStreams(prev => new Map(prev).set(request.peerId, remoteStream));
+      setConnectedClients(prev => new Map(prev).set(request.peerId, request.name));
+    });
 
-        // Update all active calls with the screen stream
-        if (peer) {
-          Object.values(peer.connections).forEach((conns: any) => {
-            conns.forEach((conn: any) => {
-              if (conn.peerConnection) {
-                const videoTrack = screenStream.getVideoTracks()[0];
-                const sender = conn.peerConnection.getSenders().find((s: any) => s.track?.kind === 'video');
-                if (sender && videoTrack) {
-                  sender.replaceTrack(videoTrack);
-                }
-              }
-            });
-          });
-        }
+    call.on('close', () => {
+      setRemoteStreams(prev => {
+        const next = new Map(prev);
+        next.delete(request.peerId);
+        return next;
+      });
+      setConnectedClients(prev => {
+        const next = new Map(prev);
+        next.delete(request.peerId);
+        return next;
+      });
+    });
 
-        screenStream.getVideoTracks()[0].onended = () => {
-          setIsScreenSharing(false);
-          screenStreamRef.current = null;
-          if (localStream && localVideoRef.current) {
-            localVideoRef.current.srcObject = localStream;
+    // Notify client they're accepted
+    request.conn.send({ type: 'accepted' });
+  };
 
-            // Revert tracks for all calls
-            if (peer) {
-              Object.values(peer.connections).forEach((conns: any) => {
-                conns.forEach((conn: any) => {
-                  if (conn.peerConnection) {
-                    const videoTrack = localStream.getVideoTracks()[0];
-                    const sender = conn.peerConnection.getSenders().find((s: any) => s.track?.kind === 'video');
-                    if (sender && videoTrack) {
-                      sender.replaceTrack(videoTrack);
-                    }
-                  }
-                });
-              });
-            }
-          }
-        };
+  // Reject join request
+  const rejectClient = (request: JoinRequest) => {
+    request.conn.send({ type: 'rejected' });
+    request.conn.close();
+    setJoinRequests(prev => prev.filter(r => r.peerId !== request.peerId));
+  };
 
-        setIsScreenSharing(true);
-      } catch (err) {
-        console.error('Failed to share screen:', err);
-      }
-    }
-  }, [isScreenSharing, localStream, peer]);
+  const endSession = () => {
+    localStream?.getTracks().forEach(t => t.stop());
+    peerRef.current?.destroy();
+    router.push('/live-sessions');
+  };
 
-  const sendMessage = useCallback(() => {
-    if (!newMessage.trim() || !peer || !myPeerId) return;
+  // Send chat message to all connected clients
+  const sendChatMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
 
-    const messageData = {
-      type: 'chat',
-      senderId: myPeerId,
-      senderName: userName,
-      message: newMessage.trim(),
+    const content = newMessage.trim();
+    const timestamp = Date.now();
+
+    // Add to local chat
+    const localMsg: ChatMessage = {
+      id: `${timestamp}-host`,
+      peerId: 'host',
+      name: userName,
+      content,
+      timestamp,
+      isHost: true,
     };
+    setChatMessages(prev => [...prev, localMsg]);
 
-    // Send to all connected peers
-    Object.values(peer.connections).forEach((connections) => {
-      if (Array.isArray(connections)) {
-        connections.forEach((conn) => {
-          if (conn.open) {
-            conn.send(messageData);
-          }
+    // Broadcast to all connected clients via data connections
+    dataConnections.forEach((conn) => {
+      if (conn.open) {
+        conn.send({
+          type: 'chat-message',
+          name: userName,
+          content,
+          timestamp,
+          isHost: true,
         });
       }
     });
 
-    // Add to local messages
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `${Date.now()}-${Math.random()}`,
-        senderId: myPeerId,
-        senderName: userName,
-        message: newMessage.trim(),
-        timestamp: new Date(),
-      },
-    ]);
-
     setNewMessage('');
-  }, [newMessage, peer, myPeerId, userName]);
+  };
 
-  const endCall = useCallback(() => {
-    if (localStream) {
-      localStream.getTracks().forEach((track) => track.stop());
-    }
-    if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    if (peer) {
-      peer.destroy();
-    }
-    router.push('/live-sessions');
-  }, [localStream, peer, router]);
+  const formatChatTime = (timestamp: number): string => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
 
-  const copyRoomLink = useCallback(() => {
-    const link = `${window.location.origin}/live-sessions/${roomId}/join`;
-    navigator.clipboard.writeText(link);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  }, [roomId]);
-
-  if (isRoomLoading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-screen bg-[#0F172A]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB]" />
       </div>
     );
@@ -451,298 +264,220 @@ export default function LiveRoomPage() {
             </button>
           </Link>
           <div>
-            <h1 className="text-lg font-bold text-white">
-              {liveRoom?.attributes?.title || 'Live Session'}
-            </h1>
+            <h1 className="text-lg font-bold text-white">{liveRoom?.attributes?.title || 'Live Session'}</h1>
             <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
-              <span
-                className={`w-2 h-2 rounded-full ${connectionStatus === 'connected'
-                  ? 'bg-green-500'
-                  : connectionStatus === 'connecting'
-                    ? 'bg-yellow-500 animate-pulse'
-                    : 'bg-red-500'
-                  }`}
-              />
-              <span>
-                {connectionStatus === 'connected'
-                  ? 'Connected'
-                  : connectionStatus === 'connecting'
-                    ? 'Connecting...'
-                    : 'Connection Error'}
-              </span>
+              <span className={`w-2 h-2 rounded-full ${status === 'connected' ? 'bg-green-500' : status === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`} />
+              <span>{status === 'connected' ? 'Live' : status === 'connecting' ? 'Connecting...' : 'Error'}</span>
               <span>•</span>
-              <span>{participants.size + 1} participant(s)</span>
+              <span>{remoteStreams.size + 1} participant(s)</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            onClick={copyRoomLink}
-            className="flex items-center gap-2 px-4 py-2 bg-[#334155] hover:bg-[#475569] rounded-lg text-white text-sm font-medium transition-colors"
-          >
-            {isCopied ? (
-              <>
-                <Check className="w-4 h-4" />
-                Copied!
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4" />
-                Copy Invite Link
-              </>
-            )}
-          </button>
-          <button
-            onClick={() => setShowParticipants(!showParticipants)}
-            className={`p-2 rounded-lg transition-colors ${showParticipants ? 'bg-[#2563EB] text-white' : 'bg-[#334155] text-white hover:bg-[#475569]'
-              }`}
-          >
-            <Users className="w-5 h-5" />
-          </button>
+          {/* Join Requests Badge */}
+          {joinRequests.length > 0 && (
+            <button
+              onClick={() => setShowRequests(!showRequests)}
+              className="flex items-center gap-2 px-3 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white text-sm font-medium transition-colors animate-pulse"
+            >
+              <Phone className="w-4 h-4" />
+              {joinRequests.length} Request{joinRequests.length > 1 ? 's' : ''}
+            </button>
+          )}
+          <div className="flex items-center gap-2 px-3 py-2 bg-[#0F172A] rounded-lg">
+            <Users className="w-4 h-4 text-[#94A3B8]" />
+            <span className="text-sm text-white">{remoteStreams.size + 1}</span>
+          </div>
           <button
             onClick={() => setShowChat(!showChat)}
-            className={`p-2 rounded-lg transition-colors ${showChat ? 'bg-[#2563EB] text-white' : 'bg-[#334155] text-white hover:bg-[#475569]'
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${showChat ? 'bg-[#2563EB] text-white' : 'bg-[#0F172A] text-[#94A3B8] hover:text-white'
               }`}
           >
-            <MessageSquare className="w-5 h-5" />
+            <MessageCircle className="w-4 h-4" />
+            Chat
           </button>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Video Grid */}
-        <div className="flex-1 p-6 overflow-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 h-full">
-            {/* Local Video */}
-            <div className="relative bg-[#1E293B] rounded-xl overflow-hidden aspect-video">
-              <video
-                ref={localVideoRef}
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-              />
-              {!isVideoEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#1E293B]">
-                  <div className="w-20 h-20 bg-[#334155] rounded-full flex items-center justify-center">
-                    <span className="text-2xl font-bold text-white">
-                      {userName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                </div>
-              )}
-              <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                <span className="px-2 py-1 bg-black/50 rounded text-xs text-white font-medium">
-                  {userName} (You)
-                </span>
-                {!isAudioEnabled && <MicOff className="w-4 h-4 text-red-500" />}
-              </div>
-              {isScreenSharing && (
-                <div className="absolute top-4 left-4 px-2 py-1 bg-[#2563EB] rounded text-xs text-white font-medium flex items-center gap-1">
-                  <Monitor className="w-3 h-3" />
-                  Sharing Screen
-                </div>
-              )}
-            </div>
+      {/* Main Content - Full Width/Height */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Chat Panel - Left Side */}
+        <div className={`w-80 bg-[#1E293B] border-r border-[#334155] flex flex-col transition-all duration-300 m-3 rounded-2xl border-2 overflow-hidden ${showChat ? 'opacity-100 visible' : 'opacity-0 invisible w-0 overflow-hidden border-0 m-0'}`}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#334155] bg-[#0F172A]">
+            <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-[#2563EB]" />
+              Live Chat
+            </h3>
+            <button
+              onClick={() => setShowChat(false)}
+              className="p-1 hover:bg-[#334155] rounded text-[#94A3B8]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Remote Participants */}
-            {Array.from(participants.entries()).map(([peerId, participant]) => (
-              <div
-                key={peerId}
-                className="relative bg-[#1E293B] rounded-xl overflow-hidden aspect-video"
-              >
-                {participant.stream ? (
-                  <video
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-cover"
-                    ref={(el) => {
-                      if (el) el.srcObject = participant.stream || null;
-                    }}
-                  />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-[#1E293B]">
-                    <div className="w-20 h-20 bg-[#334155] rounded-full flex items-center justify-center">
-                      <span className="text-2xl font-bold text-white">
-                        {participant.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <div className="absolute bottom-4 left-4 flex items-center gap-2">
-                  <span className="px-2 py-1 bg-black/50 rounded text-xs text-white font-medium">
-                    {participant.name}
+          {/* Chat Messages */}
+          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+            {chatMessages.map((msg) => (
+              <div key={msg.id} className={`flex flex-col ${msg.isHost ? 'items-end' : 'items-start'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-medium text-[#94A3B8]">
+                    {msg.isHost ? 'You' : msg.name}
                   </span>
-                  {!participant.isAudioEnabled && <MicOff className="w-4 h-4 text-red-500" />}
+                  <span className="text-[10px] text-[#64748B]">{formatChatTime(msg.timestamp)}</span>
+                </div>
+                <div className={`max-w-[90%] px-3 py-2 rounded-lg text-sm ${msg.isHost
+                  ? 'bg-[#2563EB] text-white rounded-br-none'
+                  : 'bg-[#334155] text-white rounded-bl-none'
+                  }`}>
+                  {msg.content}
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Chat Input */}
+          <form onSubmit={sendChatMessage} className="p-3 border-t border-[#334155] bg-[#0F172A]">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 px-3 py-2 bg-[#1E293B] border border-[#334155] rounded-lg text-sm text-white placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
+              />
+              <button
+                type="submit"
+                disabled={!newMessage.trim()}
+                className="p-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
         </div>
 
-        {/* Sidebar - Chat or Participants */}
-        {(showChat || showParticipants) && (
-          <div className="w-80 bg-[#1E293B] border-l border-[#334155] flex flex-col">
-            {showChat ? (
-              <>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[#334155]">
-                  <h3 className="font-semibold text-white">Chat</h3>
-                  <button
-                    onClick={() => setShowChat(false)}
-                    className="p-1 hover:bg-[#334155] rounded text-[#94A3B8]"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
+        {/* Center - Host Video (Full Width/Height) */}
+        <div className="flex-1 relative bg-[#0F172A] p-3">
+          <div className="w-full h-full bg-[#1E293B] rounded-2xl overflow-hidden shadow-2xl border-2 border-[#334155]">
+            <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+            {!isVideoEnabled && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#1E293B]">
+                <div className="w-32 h-32 rounded-full bg-[#334155] flex items-center justify-center">
+                  <span className="text-5xl font-bold text-white">{userName.charAt(0).toUpperCase()}</span>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                  {messages.length === 0 ? (
-                    <p className="text-center text-[#94A3B8] text-sm">
-                      No messages yet. Start the conversation!
-                    </p>
-                  ) : (
-                    messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex flex-col ${msg.senderId === myPeerId ? 'items-end' : 'items-start'
-                          }`}
-                      >
-                        <div
-                          className={`max-w-[80%] px-3 py-2 rounded-lg ${msg.senderId === myPeerId
-                            ? 'bg-[#2563EB] text-white'
-                            : 'bg-[#334155] text-white'
-                            }`}
-                        >
-                          <p className="text-sm">{msg.message}</p>
-                        </div>
-                        <span className="text-xs text-[#64748B] mt-1">
-                          {msg.senderName} • {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-                <div className="p-4 border-t border-[#334155]">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      placeholder="Type a message..."
-                      className="flex-1 px-3 py-2 bg-[#0F172A] border border-[#334155] rounded-lg text-white text-sm placeholder:text-[#64748B] focus:outline-none focus:border-[#2563EB]"
-                    />
-                    <button
-                      onClick={sendMessage}
-                      className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] rounded-lg text-white text-sm font-medium transition-colors"
-                    >
-                      Send
-                    </button>
+              </div>
+            )}
+            <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/60 rounded-lg text-base text-white font-medium flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+              {userName} (Host)
+            </div>
+            {!isAudioEnabled && (
+              <div className="absolute bottom-6 right-6 p-3 bg-red-500/80 rounded-lg">
+                <MicOff className="w-5 h-5 text-white" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Chat Panel - Right Side (Students) */}
+        <div className={`w-80 bg-[#1E293B] border-l border-[#334155] flex flex-col transition-all duration-300 m-3 rounded-2xl border-2 overflow-hidden ${showChat ? 'opacity-100 visible' : 'opacity-0 invisible w-0 overflow-hidden border-0 m-0'}`}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#334155] bg-[#0F172A]">
+            <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+              <Users className="w-4 h-4 text-[#2563EB]" />
+              Students
+            </h3>
+            <span className="text-xs text-[#64748B]">{dataConnections.size} online</span>
+          </div>
+
+          {/* Students List */}
+          <div className="flex-1 overflow-y-auto px-3 py-3">
+            {dataConnections.size === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-[#64748B]">
+                <Users className="w-8 h-8 mb-2 opacity-30" />
+                <p className="text-xs text-center">No students yet</p>
+              </div>
+            ) : (
+              Array.from(dataConnections.entries()).map(([peerId, conn]) => (
+                <div key={peerId} className="flex items-center gap-2 p-2 bg-[#0F172A] rounded-lg mb-2">
+                  <div className="w-8 h-8 rounded-full bg-[#334155] flex items-center justify-center text-xs text-white font-medium">
+                    {(connectedClients.get(peerId) || 'S').charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white truncate">{connectedClients.get(peerId) || 'Student'}</p>
+                    <p className="text-[10px] text-green-500">Online</p>
                   </div>
                 </div>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[#334155]">
-                  <h3 className="font-semibold text-white">
-                    Participants ({participants.size + 1})
-                  </h3>
-                  <button
-                    onClick={() => setShowParticipants(false)}
-                    className="p-1 hover:bg-[#334155] rounded text-[#94A3B8]"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                </div>
-                <div className="flex-1 overflow-y-auto p-4">
-                  {/* Local User */}
-                  <div className="flex items-center gap-3 p-3 bg-[#0F172A] rounded-lg mb-2">
-                    <div className="w-8 h-8 bg-[#2563EB] rounded-full flex items-center justify-center">
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Join Requests Sidebar */}
+        {showRequests && (
+          <div className="w-80 bg-[#1E293B] border-l border-[#334155] flex flex-col absolute right-0 top-0 bottom-0 z-10">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#334155]">
+              <h3 className="font-semibold text-white">Join Requests</h3>
+              <button
+                onClick={() => setShowRequests(false)}
+                className="p-1 hover:bg-[#334155] rounded text-[#94A3B8]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              {joinRequests.length === 0 ? (
+                <p className="text-center text-[#94A3B8] text-sm">No pending requests</p>
+              ) : (
+                joinRequests.map((request) => (
+                  <div key={request.peerId} className="flex items-center gap-3 p-3 bg-[#0F172A] rounded-lg mb-2">
+                    <div className="w-10 h-10 bg-[#334155] rounded-full flex items-center justify-center">
                       <span className="text-sm font-medium text-white">
-                        {userName.charAt(0).toUpperCase()}
+                        {request.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white">{userName} (You)</p>
-                      <p className="text-xs text-[#64748B]">Host</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{request.name}</p>
+                      <p className="text-xs text-[#64748B] truncate">{request.peerId}</p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      {!isAudioEnabled && <MicOff className="w-4 h-4 text-red-500" />}
-                      {!isVideoEnabled && <VideoOff className="w-4 h-4 text-red-500" />}
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => callClient(request)}
+                        className="p-2 bg-green-500 hover:bg-green-600 rounded-lg text-white transition-colors"
+                        title="Accept & Call"
+                      >
+                        <Phone className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => rejectClient(request)}
+                        className="p-2 bg-red-500 hover:bg-red-600 rounded-lg text-white transition-colors"
+                        title="Reject"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
-
-                  {/* Remote Participants */}
-                  {Array.from(participants.entries()).map(([peerId, participant]) => (
-                    <div key={peerId} className="flex items-center gap-3 p-3 bg-[#0F172A] rounded-lg mb-2">
-                      <div className="w-8 h-8 bg-[#334155] rounded-full flex items-center justify-center">
-                        <span className="text-sm font-medium text-white">
-                          {participant.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-white">{participant.name}</p>
-                        <p className="text-xs text-[#64748B]">Participant</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {!participant.isAudioEnabled && <MicOff className="w-4 h-4 text-red-500" />}
-                        {!participant.isVideoEnabled && <VideoOff className="w-4 h-4 text-red-500" />}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+                ))
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Control Bar */}
+      {/* Controls */}
       <div className="flex items-center justify-center gap-4 px-6 py-4 bg-[#1E293B] border-t border-[#334155]">
-        <button
-          onClick={toggleAudio}
-          className={`p-3 rounded-full transition-colors ${isAudioEnabled
-            ? 'bg-[#334155] hover:bg-[#475569] text-white'
-            : 'bg-red-500 hover:bg-red-600 text-white'
-            }`}
-        >
+        <button onClick={toggleAudio} className={`p-3 rounded-full transition-colors ${isAudioEnabled ? 'bg-[#334155] hover:bg-[#475569] text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
           {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
         </button>
-
-        <button
-          onClick={toggleVideo}
-          className={`p-3 rounded-full transition-colors ${isVideoEnabled
-            ? 'bg-[#334155] hover:bg-[#475569] text-white'
-            : 'bg-red-500 hover:bg-red-600 text-white'
-            }`}
-        >
+        <button onClick={toggleVideo} className={`p-3 rounded-full transition-colors ${isVideoEnabled ? 'bg-[#334155] hover:bg-[#475569] text-white' : 'bg-red-500 hover:bg-red-600 text-white'}`}>
           {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
         </button>
-
-        <button
-          onClick={toggleScreenShare}
-          className={`p-3 rounded-full transition-colors ${isScreenSharing
-            ? 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white'
-            : 'bg-[#334155] hover:bg-[#475569] text-white'
-            }`}
-        >
-          {isScreenSharing ? <Monitor className="w-5 h-5" /> : <MonitorOff className="w-5 h-5" />}
-        </button>
-
-        <button className="p-3 bg-[#334155] hover:bg-[#475569] rounded-full text-white transition-colors">
-          <Settings className="w-5 h-5" />
-        </button>
-
-        <button
-          onClick={endCall}
-          className="px-6 py-3 bg-red-500 hover:bg-red-600 rounded-full text-white font-medium transition-colors flex items-center gap-2"
-        >
-          <PhoneOff className="w-5 h-5" />
-          End Call
+        <button onClick={endSession} className="px-6 py-3 bg-red-500 hover:bg-red-600 rounded-full text-white font-medium transition-colors flex items-center gap-2">
+          <PhoneOff className="w-5 h-5" /> End Session
         </button>
       </div>
     </div>
   );
 }
+

@@ -9,6 +9,8 @@ export interface CookieAttributes {
 }
 
 export function set(name: string, value: string, options: CookieAttributes = {}): void {
+  if (typeof document === 'undefined') return;
+
   let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
 
   if (options.expires) {
@@ -43,6 +45,8 @@ export function set(name: string, value: string, options: CookieAttributes = {})
 }
 
 export function get(name: string): string | undefined {
+  if (typeof document === 'undefined') return undefined;
+
   const cookies = document.cookie.split(';');
   for (const cookie of cookies) {
     const [cookieName, cookieValue] = cookie.trim().split('=');
@@ -54,6 +58,8 @@ export function get(name: string): string | undefined {
 }
 
 export function remove(name: string, options: Pick<CookieAttributes, 'path' | 'domain'> = {}): void {
+  if (typeof document === 'undefined') return;
+
   const removeOptions: CookieAttributes = {
     ...options,
     expires: new Date(0),

@@ -28,12 +28,15 @@ export function useCreateDepartment() {
   });
   const [progress, setProgress] = useState(0);
 
-  const mutate = useCallback(async (data: CreateDepartmentRequest) => {
+  const mutate = useCallback(async (data: CreateDepartmentRequest, onProgress?: (progress: number) => void) => {
     setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
     setProgress(0);
 
     try {
-      const result = await api.departments.create(data, (p) => setProgress(p));
+      const result = await api.departments.create(data, (p) => {
+        setProgress(p);
+        onProgress?.(p);
+      });
       setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
       setProgress(100);
       return result.data;
@@ -65,12 +68,15 @@ export function useUpdateDepartment() {
   });
   const [progress, setProgress] = useState(0);
 
-  const mutate = useCallback(async (id: number, data: Partial<CreateDepartmentRequest>) => {
+  const mutate = useCallback(async (id: number, data: Partial<CreateDepartmentRequest>, onProgress?: (progress: number) => void) => {
     setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
     setProgress(0);
 
     try {
-      const result = await api.departments.update(id, data, (p) => setProgress(p));
+      const result = await api.departments.update(id, data, (p) => {
+        setProgress(p);
+        onProgress?.(p);
+      });
       setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
       setProgress(100);
       return result.data;

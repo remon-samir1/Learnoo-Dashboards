@@ -191,6 +191,7 @@ export interface ChapterAttributes {
   is_activated: boolean;
   is_locked: boolean;
   can_watch: boolean;
+  view_detection_timestamp?: number | null;
   attachments?: Array<{
     id: string;
     type: string;
@@ -211,13 +212,14 @@ export interface ChapterAttributes {
 export type Chapter = JsonApiData<ChapterAttributes>;
 
 export interface CreateChapterRequest {
-  lecture_id: number;
+  lecture_id?: number;
   title: string;
   thumbnail?: File;
   video?: File;
   duration: string;
   is_free_preview?: 0 | 1;
   attachments: File[];
+  view_detection_timestamp?: number | null;
 }
 
 export interface UpdateChapterRequest {
@@ -230,6 +232,7 @@ export interface UpdateChapterRequest {
   max_views?: number;
   attachments?: File[];
   removed_attachments?: string[];
+  view_detection_timestamp?: number | null;
 }
 
 // ============================================
@@ -612,6 +615,16 @@ export interface LiveRoomAttributes {
   status?: 'pending' | 'live' | 'ended';
   enable_chat?: boolean;
   enable_recording?: boolean;
+  chapter_id?: number | null;
+  chapter?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: {
+        title: string;
+      };
+    };
+  };
   user?: {
     data: {
       id: string;
@@ -648,6 +661,7 @@ export interface CreateLiveRoomRequest {
   max_join_time?: number | null;
   enable_chat?: boolean;
   enable_recording?: boolean;
+  chapter_id?: number | null;
 }
 
 export interface UpdateLiveRoomRequest {
@@ -659,6 +673,7 @@ export interface UpdateLiveRoomRequest {
   max_join_time?: number | null;
   enable_chat?: boolean;
   enable_recording?: boolean;
+  chapter_id?: number | null;
 }
 
 // Note Types
