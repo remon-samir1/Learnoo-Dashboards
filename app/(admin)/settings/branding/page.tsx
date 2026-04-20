@@ -276,7 +276,7 @@ export default function BrandingSettingsPage() {
             </div>
             <div className="grid grid-cols-1 gap-1.5 relative">
                <label className="text-[13px] font-medium text-[#4B5563]">Font Family</label>
-                <select 
+                <select
                   name="fontFamily"
                   value={formData.fontFamily}
                   onChange={handleChange}
@@ -286,10 +286,59 @@ export default function BrandingSettingsPage() {
                   <option>Roboto</option>
                   <option>Open Sans</option>
                   <option>Poppins</option>
+                  <option>Montserrat</option>
+                  <option>Lato</option>
+                  <option>Nunito</option>
+                  <option>Ubuntu</option>
+                  <option>Playfair Display</option>
+                  <option>Merriweather</option>
+                  <option>Noto Sans</option>
+                  <option>Raleway</option>
+                  <option>Work Sans</option>
+                  <option>Source Sans Pro</option>
+                  <option>Fira Sans</option>
+                  <option>Libre Franklin</option>
+                  <option>Cairo</option>
+                  <option>Tajawal</option>
+                  <option>Noto Naskh Arabic</option>
+                  <option>Changa</option>
+                  <option>Almarai</option>
+                  <option>Amiri</option>
                 </select>
                 <div className="absolute right-4 top-[38px] pointer-events-none text-[#9CA3AF]">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </div>
+            </div>
+
+            {/* Font Family Preview */}
+            <div className="xl:col-span-3">
+              <label className="text-[13px] font-medium text-[#4B5563] block mb-2">Font Preview</label>
+              <link
+                rel="stylesheet"
+                href={`https://fonts.googleapis.com/css2?family=${formData.fontFamily.replace(/\s+/g, '+')}:wght@300;400;500;600;700&display=swap`}
+              />
+              <div
+                key={formData.fontFamily}
+                className="p-6 bg-white border border-[#EEEEEE] rounded-xl min-h-[120px] flex flex-col justify-center gap-3"
+                style={{ fontFamily: `"${formData.fontFamily}", sans-serif` }}
+              >
+                <p className="text-[32px] font-bold" style={{ color: formData.primaryColor }}>
+                  Aa Bb Cc 123
+                </p>
+                <p className="text-[16px] text-[#4B5563]">
+                  The quick brown fox jumps over the lazy dog.
+                </p>
+                <p className="text-[14px] text-[#6B7280]">
+                  Pack my box with five dozen liquor jugs.
+                </p>
+                <div className="flex gap-4 mt-2 pt-3 border-t border-[#F3F4F6]">
+                  <span className="text-[12px] text-[#9CA3AF]">Light</span>
+                  <span className="text-[12px] text-[#4B5563] font-normal">Normal</span>
+                  <span className="text-[12px] text-[#111827] font-medium">Medium</span>
+                  <span className="text-[12px]" style={{ color: formData.primaryColor, fontWeight: 600 }}>Semibold</span>
+                  <span className="text-[12px] text-[#111827] font-bold">Bold</span>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -37,9 +37,9 @@ function formatDateTime(dateString: string): string {
     month: 'short', 
     day: 'numeric', 
     year: 'numeric',
-    hour: '2-digit', 
+    hour: 'numeric', 
     minute: '2-digit', 
-    hour12: false 
+    hour12: true 
   });
 }
 
@@ -138,11 +138,11 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-[#1E293B]">{attrs.title}</h1>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase ${
-                status === 'LIVE' ? 'bg-[#EF4444] text-white' :
+                status === 'LIVE' ? 'bg-[#DCFCE7] text-[#166534]' :
                 status === 'UPCOMING' ? 'bg-[#DBEAFE] text-[#2563EB]' :
                 'bg-[#F1F5F9] text-[#64748B]'
               }`}>
-                {t(`liveSessions.status.${status.toLowerCase()}`)}
+                {status === 'LIVE' ? t('liveSessions.status.now') : t(`liveSessions.status.${status.toLowerCase()}`)}
               </span>
             </div>
             <div className="flex items-center gap-4 mt-1 text-[13px] text-[#64748B]">

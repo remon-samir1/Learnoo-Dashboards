@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Video, MessageCircle, Play, Square, Settings as SettingsIcon, Info, Disc, Trash2 } from 'lucide-react';
+import { Video, MessageCircle, Play, Settings as SettingsIcon, Info, Disc, Trash2 } from 'lucide-react';
 
 interface LiveSessionCardProps {
   status: 'LIVE' | 'UPCOMING' | 'ENDED';
@@ -14,7 +14,6 @@ interface LiveSessionCardProps {
   enable_chat?: boolean;
   enable_recording?: boolean;
   onStart?: () => void;
-  onEnd?: () => void;
   onDetails?: () => void;
   onSettings?: () => void;
   onDelete?: () => void;
@@ -30,7 +29,6 @@ export default function LiveSessionCard({
   enable_chat = true,
   enable_recording = false,
   onStart,
-  onEnd,
   onDetails,
   onSettings,
   onDelete
@@ -43,19 +41,19 @@ export default function LiveSessionCard({
   return (
     <div className="bg-white border border-[#F1F5F9] rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-sm hover:shadow-md transition-all">
       {/* Session Icon */}
-      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${isLive ? 'bg-[#FEF1F1]' : 'bg-[#F4F5FD]'}`}>
-        <Video className={`w-8 h-8 ${isLive ? 'text-[#EF4444]' : 'text-[#2563EB]'}`} />
+      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${isLive ? 'bg-[#F0FDF4]' : 'bg-[#F4F5FD]'}`}>
+        <Video className={`w-8 h-8 ${isLive ? 'text-[#10B981]' : 'text-[#2563EB]'}`} />
       </div>
 
       {/* Session Info */}
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-3 mb-2">
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase ${
-            isLive ? 'bg-[#EF4444] text-white' :
+            isLive ? 'bg-[#DCFCE7] text-[#166534]' :
             isUpcoming ? 'bg-[#DBEAFE] text-[#2563EB]' :
             'bg-[#F1F5F9] text-[#64748B]'
           }`}>
-            {t(`liveSessions.status.${status.toLowerCase()}`)}
+            {isLive ? t('liveSessions.status.now') : t(`liveSessions.status.${status.toLowerCase()}`)}
           </span>
           <span className="text-[13px] font-medium text-[#1E293B]">{time}</span>
           {duration && <span className="text-[13px] text-[#64748B]">• {duration}</span>}
@@ -85,24 +83,13 @@ export default function LiveSessionCard({
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-2 w-full md:w-[140px]">
-        {isLive && (
-          <button
-            onClick={onEnd}
-            className="w-full py-2 bg-[#EF4444] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#DC2626] transition-colors"
-          >
-            <Square className="w-4 h-4 fill-current" />
-            {t('liveSessions.card.end')}
-          </button>
-        )}
-        {isUpcoming && (
-          <button
-            onClick={onStart}
-            className="w-full py-2 bg-[#2563EB] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#1D4ED8] transition-colors"
-          >
-            <Play className="w-4 h-4 fill-current" />
-            {t('liveSessions.card.start')}
-          </button>
-        )}
+        <button
+          onClick={onStart}
+          className="w-full py-2 bg-[#2563EB] text-white rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#1D4ED8] transition-colors"
+        >
+          <Play className="w-4 h-4 fill-current" />
+          {t('liveSessions.card.start')}
+        </button>
         {(isUpcoming || isLive || isEnded) && (
           <button
             onClick={onDetails}

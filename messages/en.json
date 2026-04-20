@@ -29,6 +29,8 @@
     "comingSoon": "Coming Soon",
     "success": "Success",
     "error": "Error",
+    "deleteSuccess": "Deleted successfully",
+    "deleteError": "Failed to delete",
     "warning": "Warning",
     "info": "Info",
     "all": "All",
@@ -800,7 +802,8 @@
     "status": {
       "live": "LIVE",
       "upcoming": "UPCOMING",
-      "ended": "ENDED"
+      "ended": "ENDED",
+      "now": "Now"
     },
     "time": {
       "today": "Today",
@@ -1111,8 +1114,10 @@
       }
     },
     "posts": {
+      "title": "Posts",
       "noPosts": "No posts found.",
       "unknownUser": "Unknown",
+      "createPost": "Create Post",
       "comments": "Comments",
       "reactions": "reactions",
       "you": "You: ",
@@ -1145,6 +1150,29 @@
         "unpublish": "Unpublish",
         "delete": "Delete"
       }
+    },
+    "createPost": {
+      "title": "Create Post",
+      "titleLabel": "Title",
+      "titlePlaceholder": "Enter post title...",
+      "contentLabel": "Content",
+      "contentPlaceholder": "Enter post content...",
+      "typeLabel": "Type",
+      "statusLabel": "Status",
+      "imageLabel": "Image (optional)",
+      "submit": "Create Post",
+      "cancel": "Cancel",
+      "titleRequired": "Title is required",
+      "contentRequired": "Content is required"
+    },
+    "postTypes": {
+      "post": "Post",
+      "question": "Question",
+      "summary": "Summary"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "published": "Published"
     },
     "postDetails": {
       "pageTitle": "Post Details",
@@ -1343,6 +1371,33 @@
     "positionAndSize": "Position & Size",
     "position": "Position",
     "positionDesc": "Choose where the watermark appears on the screen",
+    "dynamicPosition": "Dynamic Position",
+    "dynamicPositionDesc": "Watermark moves to random positions every few seconds",
+    "dynamicInterval": "Change Interval",
+    "dynamicIntervalDesc": "Seconds between position changes (1-5 seconds, random)",
+    "randomCoordinates": "Random Coordinates",
+    "randomCoordinatesDesc": "Move freely anywhere on screen instead of fixed positions",
+    "movementPattern": "Movement Pattern",
+    "movementPatternDesc": "Choose how the watermark travels between positions",
+    "patternRandom": "Random",
+    "patternCircular": "Circular",
+    "patternZigzag": "Zigzag",
+    "patternBounce": "Bounce",
+    "patternEdge": "Edge Loop",
+    "animationStyle": "Animation Style",
+    "animationStyleDesc": "Visual effect when watermark moves",
+    "styleSlide": "Slide",
+    "styleFade": "Fade",
+    "styleScale": "Scale",
+    "styleRotate": "Rotate",
+    "styleGlide": "Glide",
+    "easingType": "Easing Function",
+    "easingTypeDesc": "Smoothness of the movement transition",
+    "easeLinear": "Linear",
+    "easeEase": "Ease",
+    "easeEaseInOut": "Ease In-Out",
+    "easeBounce": "Bounce",
+    "easeElastic": "Elastic",
     "positionTopLeft": "Top Left",
     "positionTopRight": "Top Right",
     "positionBottomLeft": "Bottom Left",

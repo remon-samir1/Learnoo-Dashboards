@@ -37,11 +37,11 @@ function formatTime(dateString: string, t: any): string {
   const isToday = date.toDateString() === now.toDateString();
   const isTomorrow = new Date(now.setDate(now.getDate() + 1)).toDateString() === date.toDateString();
 
-  const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
   if (isToday) return `${t('liveSessions.time.today')}, ${timeStr}`;
   if (isTomorrow) return `${t('liveSessions.time.tomorrow')}, ${timeStr}`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 function getDuration(startedAt: string, endedAt?: string | null): string {
@@ -144,7 +144,6 @@ export default function LiveSessionsPage() {
                 key={room.id}
                 {...cardProps}
                 onStart={() => handleStart(room.id)}
-                onEnd={() => {}}
                 onDetails={() => router.push(`/live-sessions/${room.id}`)}
                 onSettings={() => router.push(`/live-sessions/${room.id}/settings`)}
                 onDelete={() => handleDelete(room.id)}

@@ -29,6 +29,8 @@
     "comingSoon": "قريباً",
     "success": "نجاح",
     "error": "خطأ",
+    "deleteSuccess": "تم الحذف بنجاح",
+    "deleteError": "فشل الحذف",
     "warning": "تحذير",
     "info": "معلومات",
     "all": "الكل",
@@ -800,7 +802,8 @@
     "status": {
       "live": "مباشر",
       "upcoming": "قادم",
-      "ended": "منتهي"
+      "ended": "منتهي",
+      "now": "الآن"
     },
     "time": {
       "today": "اليوم",
@@ -1111,8 +1114,10 @@
       }
     },
     "posts": {
+      "title": "المنشورات",
       "noPosts": "لا توجد منشورات.",
-      "unknownUser": "غير معروف",
+      "unknownUser": "مجهول",
+      "createPost": "إنشاء منشور",
       "comments": "تعليقات",
       "reactions": "تفاعلات",
       "you": "أنت: ",
@@ -1145,6 +1150,29 @@
         "unpublish": "إلغاء النشر",
         "delete": "حذف"
       }
+    },
+    "createPost": {
+      "title": "إنشاء منشور",
+      "titleLabel": "العنوان",
+      "titlePlaceholder": "أدخل عنوان المنشور...",
+      "contentLabel": "المحتوى",
+      "contentPlaceholder": "أدخل محتوى المنشور...",
+      "typeLabel": "النوع",
+      "statusLabel": "الحالة",
+      "imageLabel": "الصورة (اختياري)",
+      "submit": "إنشاء المنشور",
+      "cancel": "إلغاء",
+      "titleRequired": "العنوان مطلوب",
+      "contentRequired": "المحتوى مطلوب"
+    },
+    "postTypes": {
+      "post": "منشور",
+      "question": "سؤال",
+      "summary": "ملخص"
+    },
+    "statuses": {
+      "draft": "مسودة",
+      "published": "منشور"
     },
     "postDetails": {
       "pageTitle": "تفاصيل المنشور",
@@ -1343,6 +1371,33 @@
     "positionAndSize": "الموضع والحجم",
     "position": "الموضع",
     "positionDesc": "اختر مكان ظهور العلامة المائية على الشاشة",
+    "dynamicPosition": "موضع ديناميكي",
+    "dynamicPositionDesc": "تتحرك العلامة المائية إلى مواضع عشوائية كل بضع ثوانٍ",
+    "dynamicInterval": "فاصل التغيير",
+    "dynamicIntervalDesc": "الثواني بين تغييرات الموقع (1-5 ثوانٍ، عشوائي)",
+    "randomCoordinates": "إحداثيات عشوائية",
+    "randomCoordinatesDesc": "التحرك بحرية في أي مكان على الشاشة بدلاً من المواقع الثابتة",
+    "movementPattern": "نمط الحركة",
+    "movementPatternDesc": "اختر كيفية انتقال العلامة المائية بين المواقع",
+    "patternRandom": "عشوائي",
+    "patternCircular": "دائري",
+    "patternZigzag": "متعرج",
+    "patternBounce": "ارتداد",
+    "patternEdge": "حافة مستمرة",
+    "animationStyle": "نمط الرسوم المتحركة",
+    "animationStyleDesc": "التأثير البصري عند تحرك العلامة المائية",
+    "styleSlide": "انزلاق",
+    "styleFade": "تلاشي",
+    "styleScale": "تكبير",
+    "styleRotate": "دوران",
+    "styleGlide": "انسيابي",
+    "easingType": "دالة التسارع",
+    "easingTypeDesc": "نعومة انتقال الحركة",
+    "easeLinear": "خطي",
+    "easeEase": "سهل",
+    "easeEaseInOut": "سهل داخل-خارج",
+    "easeBounce": "ارتداد",
+    "easeElastic": "مرن",
     "positionTopLeft": "أعلى اليسار",
     "positionTopRight": "أعلى اليمين",
     "positionBottomLeft": "أسفل اليسار",

@@ -32,12 +32,15 @@ export function useCreateCourse() {
   });
   const [progress, setProgress] = useState(0);
 
-  const mutate = useCallback(async (data: CreateCourseRequest) => {
+  const mutate = useCallback(async (data: CreateCourseRequest, onProgress?: (progress: number) => void) => {
     setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
     setProgress(0);
 
     try {
-      const result = await api.courses.create(data, (p) => setProgress(p));
+      const result = await api.courses.create(data, (p) => {
+        setProgress(p);
+        onProgress?.(p);
+      });
       setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
       setProgress(100);
       return result.data;
@@ -69,12 +72,15 @@ export function useUpdateCourse() {
   });
   const [progress, setProgress] = useState(0);
 
-  const mutate = useCallback(async (id: number, data: UpdateCourseRequest) => {
+  const mutate = useCallback(async (id: number, data: UpdateCourseRequest, onProgress?: (progress: number) => void) => {
     setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
     setProgress(0);
 
     try {
-      const result = await api.courses.update(id, data, (p) => setProgress(p));
+      const result = await api.courses.update(id, data, (p) => {
+        setProgress(p);
+        onProgress?.(p);
+      });
       setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
       setProgress(100);
       return result.data;

@@ -4,10 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronDown, MessageCircle, Send, Globe, Edit2, Trash2, MessageSquare, Pin, Check, Trash, Loader2, X, Eye, Plus } from 'lucide-react';
-import { usePosts, useDeletePost, useUpdatePost } from '@/src/hooks/usePosts';
+import { usePosts, useDeletePost, useUpdatePost, useCreatePost } from '@/src/hooks/usePosts';
 import { useSocialLinks, useCreateSocialLink, useUpdateSocialLink, useDeleteSocialLink } from '@/src/hooks/useSocialLinks';
 import { useCourses } from '@/src/hooks/useCourses';
-import type { Post, SocialLink } from '@/src/types';
+import type { Post, SocialLink, CreatePostRequest } from '@/src/types';
 
 function getTimeAgo(dateString: string, t: (key: string, params?: Record<string, string | number>) => string): string {
   const date = new Date(dateString);
@@ -51,6 +51,7 @@ export default function CommunityModerationPage() {
   const { data: postsData, isLoading, error, refetch } = usePosts();
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
   const { mutate: updatePost } = useUpdatePost();
+  const { mutate: createPost, isLoading: isCreating } = useCreatePost();
   
   // Social Links hooks
   const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks();
@@ -81,6 +82,16 @@ export default function CommunityModerationPage() {
     : socialLinks?.filter(link => String(link.attributes.course_id) === selectedCourseFilter);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editForm, setEditForm] = useState({ title: '', content: '', type: 'post' as 'post' | 'question' | 'summary' });
+  
+  // Create Post Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    content: '',
+    type: 'post' as 'post' | 'question' | 'summary',
+    status: 'published' as 'draft' | 'published',
+    image: null as File | null
+  });
 
   useEffect(() => {
     if (postsData) {
@@ -126,6 +137,39 @@ export default function CommunityModerationPage() {
       alert(t('community.notifications.postUnpublished'));
     } catch {
       await refetch();
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!createForm.title.trim()) {
+      alert(t('community.createPost.titleRequired'));
+      return;
+    }
+    if (!createForm.content.trim()) {
+      alert(t('community.createPost.contentRequired'));
+      return;
+    }
+
+    try {
+      await createPost({
+        title: createForm.title,
+        content: createForm.content,
+        type: createForm.type,
+        status: createForm.status,
+        image: createForm.image || undefined
+      });
+      setIsCreateModalOpen(false);
+      setCreateForm({
+        title: '',
+        content: '',
+        type: 'post',
+        status: 'published',
+        image: null
+      });
+      await refetch();
+      alert(t('community.notifications.postCreated'));
+    } catch {
+      alert(t('community.notifications.postCreateFailed'));
     }
   };
 
@@ -346,6 +390,18 @@ export default function CommunityModerationPage() {
             {t('community.socialLinks.noLinks')}
           </div>
         )}
+      </div>
+
+      {/* Posts Header */}
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <h2 className="text-lg font-bold text-[#1E293B]">{t('community.posts.title')}</h2>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all"
+        >
+          <Plus className="w-4 h-4" />
+          {t('community.posts.createPost')}
+        </button>
       </div>
 
       {/* Posts List */}
@@ -652,6 +708,111 @@ export default function CommunityModerationPage() {
                   className="flex-1 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
                 >
                   {t('community.socialLinks.modal.cancel')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Post Modal */}
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-[#E2E8F0]">
+              <h3 className="text-lg font-bold text-[#1E293B]">
+                {t('community.createPost.title')}
+              </h3>
+              <button
+                onClick={() => setIsCreateModalOpen(false)}
+                className="p-2 hover:bg-[#F8FAFC] rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5 text-[#64748B]" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-[#475569] mb-1">
+                  {t('community.createPost.titleLabel')}
+                </label>
+                <input
+                  type="text"
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
+                  placeholder={t('community.createPost.titlePlaceholder')}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-[#475569] mb-1">
+                  {t('community.createPost.contentLabel')}
+                </label>
+                <textarea
+                  value={createForm.content}
+                  onChange={(e) => setCreateForm({ ...createForm, content: e.target.value })}
+                  rows={5}
+                  className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] resize-none"
+                  placeholder={t('community.createPost.contentPlaceholder')}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-[#475569] mb-1">
+                  {t('community.createPost.typeLabel')}
+                </label>
+                <select
+                  value={createForm.type}
+                  onChange={(e) => setCreateForm({ ...createForm, type: e.target.value as 'post' | 'question' | 'summary' })}
+                  className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
+                >
+                  <option value="post">{t('community.postTypes.post')}</option>
+                  <option value="question">{t('community.postTypes.question')}</option>
+                  <option value="summary">{t('community.postTypes.summary')}</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-[#475569] mb-1">
+                  {t('community.createPost.statusLabel')}
+                </label>
+                <select
+                  value={createForm.status}
+                  onChange={(e) => setCreateForm({ ...createForm, status: e.target.value as 'draft' | 'published' })}
+                  className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
+                >
+                  <option value="draft">{t('community.statuses.draft')}</option>
+                  <option value="published">{t('community.statuses.published')}</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-[#475569] mb-1">
+                  {t('community.createPost.imageLabel')}
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setCreateForm({ ...createForm, image: e.target.files?.[0] || null })}
+                  className="w-full text-sm text-[#475569] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-[#EEF2FF] file:text-[#2137D6] hover:file:bg-[#DBEAFE]"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={handleCreatePost}
+                  disabled={isCreating}
+                  className="flex-1 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {t('community.createPost.submit')}
+                </button>
+                <button
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="flex-1 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
+                >
+                  {t('community.createPost.cancel')}
                 </button>
               </div>
             </div>
