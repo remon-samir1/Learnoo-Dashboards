@@ -220,7 +220,7 @@ export default function CourseDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            href="/content-manager"
+            href="/departments"
             className="px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#475569] rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-all"
           >
             {t('courses.view.manageContent')}

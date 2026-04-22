@@ -136,13 +136,14 @@
       "students": "إدارة الطلاب",
       "courses": "دوراتي",
       "centers": "المراكز",
-      "departments": "الأقسام",
+      "departments": "الهيكل الأكاديمي",
       "faculties": "الكليات",
       "universities": "الجامعات",
       "levels": "المستويات",
       "lectures": "المحاضرات",
       "chapters": "الفصول",
       "exams": "الاختبارات والأسئلة",
+      "academicStructure": "الهيكل الأكاديمي",
       "contentManager": "مدير المحتوى",
       "community": "المجتمع",
       "electronicLibrary": "المكتبة الإلكترونية",
@@ -691,7 +692,7 @@
     "toast": {
       "saveSuccess": "تم حفظ إعدادات الميزات بنجاح!",
       "saveError": "فشل حفظ إعدادات الميزات",
-      "resetSuccess": "تم إعادة تعيين التغييرات إلى القيم المحفوظة"
+      "resetSuccess": "تم إعادة تعيين التغييرات"
     },
     "categories": {
       "auth": {
@@ -704,7 +705,7 @@
       },
       "experience": {
         "title": "تجربة الطالب",
-        "description": "تفعيل/تعطيل عناصر واجهة المستخدم في تطبيق الطالب."
+        "description": "تفعيل عناصر واجهة المستخدم في تطبيق الطالب."
       }
     },
     "features": {
@@ -731,6 +732,18 @@
       "feature_profile_editing": {
         "name": "تفعيل تعديل الملف الشخصي",
         "description": "السماح للطلاب بتغيير بياناتهم."
+      },
+      "feature_single_device_access": {
+        "name": "الوصول من جهاز واحد فقط",
+        "description": "تقييد الحساب على جهاز واحد نشط فقط في كل مرة."
+      },
+      "feature_block_screenshots": {
+        "name": "حظر لقطات الشاشة والتسجيل",
+        "description": "منع لقطات الشاشة وتسجيل الشاشة للمحتوى."
+      },
+      "feature_screen_share_max_resolution": {
+        "name": "تحديد دقة مشاركة الشاشة",
+        "description": "تقييد مشاركة الشاشة بحد أقصى للعرض والارتفاع."
       }
     }
   },
@@ -1284,8 +1297,8 @@
     "back": "العودة إلى الكليات"
   },
   "departments": {
-    "pageTitle": "إدارة الأقسام",
-    "pageDescription": "إدارة الأقسام والفئات",
+    "pageTitle": "الهيكل الأكاديمي",
+    "pageDescription": "إدارة الجامعات والكليات والمراكز والأقسام والدورات والمحتوى",
     "addDepartment": "إضافة قسم",
     "editDepartment": "تعديل القسم",
     "searchPlaceholder": "البحث في الأقسام...",
@@ -1424,7 +1437,13 @@
     "previewDarkBackground": "معاينة الخلفية الداكنة",
     "previewImageBackground": "معاينة خلفية الصورة/الفيديو",
     "saveSuccess": "تم حفظ إعدادات العلامة المائية بنجاح",
-    "saveError": "فشل حفظ إعدادات العلامة المائية"
+    "saveError": "فشل حفظ إعدادات العلامة المائية",
+    "voiceSettings": "إعدادات الصوت",
+    "enableVoice": "تفعيل الصوت",
+    "enableVoiceDesc": "تشغيل الإعلانات الصوتية بفواصل منتظمة",
+    "voiceInterval": "فاصل الصوت",
+    "voiceIntervalDesc": "تشغيل الإعلان الصوتي كل X دقيقة (1-30 دقيقة)",
+    "minutes": "دقيقة"
   },
   "platformSettings": {
     "pageDescription": "إدارة التكوين الأساسي والتفضيلات لمنصتك.",
