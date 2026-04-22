@@ -136,13 +136,14 @@
       "students": "Students Management",
       "courses": "My Courses",
       "centers": "Centers",
-      "departments": "Departments",
+      "departments": "Academic Structure",
       "faculties": "Faculties",
       "universities": "Universities",
       "levels": "Levels",
       "lectures": "Lectures",
       "chapters": "Chapters",
       "exams": "Exams & Q&A",
+      "academicStructure": "Academic Structure",
       "contentManager": "Content Manager",
       "community": "Community",
       "electronicLibrary": "Electronic Library",
@@ -731,6 +732,18 @@
       "feature_profile_editing": {
         "name": "Enable Profile Editing",
         "description": "Allow students to change their details."
+      },
+      "feature_single_device_access": {
+        "name": "Single Device Access",
+        "description": "Restrict account to only one active device at a time."
+      },
+      "feature_block_screenshots": {
+        "name": "Block Screenshots & Recording",
+        "description": "Prevent screenshots and screen recording of content."
+      },
+      "feature_screen_share_max_resolution": {
+        "name": "Limit Screen Share Resolution",
+        "description": "Restrict screen sharing to maximum width and height."
       }
     }
   },
@@ -1284,8 +1297,8 @@
     "back": "Back to Faculties"
   },
   "departments": {
-    "pageTitle": "Departments Management",
-    "pageDescription": "Manage departments and categories",
+    "pageTitle": "Academic Structure",
+    "pageDescription": "Manage universities, faculties, centers, departments, courses and content",
     "addDepartment": "Add Department",
     "editDepartment": "Edit Department",
     "searchPlaceholder": "Search departments...",
@@ -1424,7 +1437,13 @@
     "previewDarkBackground": "Dark Background Preview",
     "previewImageBackground": "Image/Video Background Preview",
     "saveSuccess": "Watermark settings saved successfully",
-    "saveError": "Failed to save watermark settings"
+    "saveError": "Failed to save watermark settings",
+    "voiceSettings": "Voice Settings",
+    "enableVoice": "Enable Voice",
+    "enableVoiceDesc": "Play voice announcements at regular intervals",
+    "voiceInterval": "Voice Interval",
+    "voiceIntervalDesc": "Play voice announcement every X minutes (1-30 minutes)",
+    "minutes": "minutes"
   },
   "platformSettings": {
     "pageDescription": "Manage your platform's core configuration and preferences.",

@@ -28,7 +28,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Role-based route protection
-  const adminRoutes = ['/dashboard', '/centers', '/community', '/content-manager', '/courses', 
+  const adminRoutes = ['/dashboard', '/centers', '/community', '/departments', '/courses', 
     '/downloads', '/electronic-library', '/exams', '/feature-control', '/live-sessions', 
     '/notes-summaries', '/notifications', '/settings', '/students'];
   

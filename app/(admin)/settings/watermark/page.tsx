@@ -28,6 +28,8 @@ interface WatermarkConfig {
   animationStyle: AnimationStyle;
   easingType: EasingType;
   randomCoordinates: boolean;
+  voiceEnabled: boolean;
+  voiceInterval: number;
 }
 
 interface WatermarkSettings {
@@ -57,6 +59,8 @@ const defaultConfig: WatermarkConfig = {
   animationStyle: 'glide',
   easingType: 'easeInOut',
   randomCoordinates: false,
+  voiceEnabled: false,
+  voiceInterval: 5,
 };
 
 interface PreviewSettings {
@@ -126,6 +130,8 @@ export default function WatermarkSettingsPage() {
           animationStyle: (getFeatureValue(`watermark_${key}_animation_style`, 'glide') as AnimationStyle),
           easingType: (getFeatureValue(`watermark_${key}_easing_type`, 'easeInOut') as EasingType),
           randomCoordinates: getFeatureBool(`watermark_${key}_random_coordinates`, false),
+          voiceEnabled: getFeatureBool(`watermark_${key}_voice_enabled`, false),
+          voiceInterval: getFeatureNumber(`watermark_${key}_voice_interval`, 5),
         };
       });
       setSettings(newSettings);
@@ -209,6 +215,8 @@ export default function WatermarkSettingsPage() {
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_animation_style`, value: config.animationStyle }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_easing_type`, value: config.easingType }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_random_coordinates`, value: config.randomCoordinates ? '1' : '0' }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_voice_enabled`, value: config.voiceEnabled ? '1' : '0' }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_voice_interval`, value: String(config.voiceInterval) }));
       });
       
       await Promise.all(requests);
@@ -544,6 +552,46 @@ export default function WatermarkSettingsPage() {
                 </div>
                 <p className="text-xs text-[#94A3B8] mt-2">{t('sizeDesc')}</p>
               </div>
+            </div>
+          </section>
+
+          {/* Voice Settings */}
+          <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
+              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('voiceSettings')}</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {/* Enable Voice Toggle */}
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={currentSettings.voiceEnabled}
+                  onChange={(e) => updateCurrentSettings({ voiceEnabled: e.target.checked })}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
+                <span className="ml-3 text-sm font-medium text-[#475569]">{t('enableVoice')}</span>
+              </label>
+              <p className="text-xs text-[#94A3B8]">{t('enableVoiceDesc')}</p>
+
+              {/* Voice Interval Slider */}
+              {currentSettings.voiceEnabled && (
+                <div className="pt-4 border-t border-[#F1F5F9]">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[13px] font-bold text-[#475569]">{t('voiceInterval')}</label>
+                    <span className="text-sm font-medium text-[#2137D6]">{currentSettings.voiceInterval} {t('minutes')}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1"
+                    max="30"
+                    value={currentSettings.voiceInterval}
+                    onChange={(e) => updateCurrentSettings({ voiceInterval: parseInt(e.target.value) })}
+                    className="w-full h-2 bg-[#F1F5F9] rounded-lg appearance-none cursor-pointer accent-[#2137D6]"
+                  />
+                  <p className="text-xs text-[#94A3B8] mt-1">{t('voiceIntervalDesc')}</p>
+                </div>
+              )}
             </div>
           </section>
 

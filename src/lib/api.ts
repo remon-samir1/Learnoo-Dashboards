@@ -959,6 +959,15 @@ export const platformFeatureApi = {
 
 
 // ============================================
+// Admin API
+// ============================================
+
+export const adminApi = {
+  clearSessionsCache: () =>
+    post<ApiResponse<{ message: string }>>('/v1/admin/clear-sessions-cache'),
+};
+
+// ============================================
 // OTA Key Helper
 // ============================================
 
@@ -1102,6 +1111,7 @@ export const api = {
   dashboard: dashboardApi,
   platformFeature: platformFeatureApi,
   appVersions: appVersionsApi,
+  admin: adminApi,
 };
 
 export default api;
