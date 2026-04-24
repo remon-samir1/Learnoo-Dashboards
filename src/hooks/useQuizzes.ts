@@ -1,5 +1,5 @@
 import { api } from '@/src/lib/api';
-import type { Quiz, CreateQuizRequest, QuizQuestion, CreateQuizQuestionRequest } from '@/src/types';
+import type { Quiz, CreateQuizRequest, QuizQuestion, CreateQuizQuestionRequest, QuizAttempt } from '@/src/types';
 import { createQueryHook, createMutationHook } from './index';
 
 // ============================================
@@ -54,4 +54,26 @@ export const useUpdateQuizQuestion = createMutationHook(
 
 export const useDeleteQuizQuestion = createMutationHook(
   (id: number) => api.quizQuestions.delete(id).then(res => res.data)
+);
+
+// ============================================
+// Quiz Attempts Hooks
+// ============================================
+
+export const useQuizAttempts = createQueryHook(
+  () => api.quizAttempts.list().then(res => res.data),
+  { enabled: true }
+);
+
+export const useQuizAttempt = createQueryHook(
+  (id: number) => api.quizAttempts.get(id).then(res => res.data),
+  { enabled: true }
+);
+
+export const useStartQuizAttempt = createMutationHook(
+  (data: any) => api.quizAttempts.start(data).then(res => res.data)
+);
+
+export const useSubmitQuizAttempt = createMutationHook(
+  (id: number, data: any) => api.quizAttempts.submit(id, data).then(res => res.data)
 );

@@ -9,7 +9,8 @@ import {
   XCircle,
   Reply,
   Trash2,
-  Edit
+  Edit,
+  BarChart3
 } from 'lucide-react';
 import Link from 'next/link';
 import { useQuizzes, useDeleteQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
@@ -148,6 +149,19 @@ export default function ExamsPage() {
         >
           {item.attributes.is_public ? t('exams.visibility.public') : t('exams.visibility.private')}
         </button>
+      ),
+    },
+    {
+      key: 'results',
+      header: 'Results',
+      render: (item) => (
+        <Link
+          href={`/exams/${item.id}/results`}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#EFF6FF] text-[#2137D6] rounded-lg text-[10px] font-bold hover:bg-[#E0E7FF] transition-all"
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          Results
+        </Link>
       ),
     }
   ];

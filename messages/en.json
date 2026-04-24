@@ -172,6 +172,7 @@
     "email": "Email",
     "phone": "Phone",
     "specialization": "Specialization",
+    "status": "Status",
     "actions": "Actions",
     "searchPlaceholder": "Search by name or email...",
     "noInstructors": "No instructors found. Add your first instructor!",
@@ -968,6 +969,7 @@
       "visibility": "Visibility"
     },
     "status": {
+      "label": "Status",
       "active": "Active",
       "draft": "Draft"
     },

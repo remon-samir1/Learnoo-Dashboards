@@ -58,6 +58,7 @@ import {
 } from "@/src/hooks";
 
 import { useStudents } from "@/src/hooks/useStudents";
+import { useInstructors } from "@/src/hooks/useInstructors";
 
 import { api } from "@/src/lib/api";
 
@@ -929,6 +930,15 @@ function TreeItem({
               {node.name}
             </span>
 
+            {node.type === "course" && (() => {
+              const instructorName = (node.data as Course)?.attributes?.instructor?.data?.attributes?.full_name;
+              return instructorName ? (
+                <span className="text-xs text-gray-500 truncate">
+                  - {instructorName}
+                </span>
+              ) : null;
+            })()}
+
             {isDraft && (
               <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">
                 {t("courses.draft")}
@@ -1230,6 +1240,8 @@ export default function DepartmentsPage() {
     useUploadPreActivation();
 
   const { data: students } = useStudents();
+
+  const { data: instructorsResponse, isLoading: instructorsLoading } = useInstructors();
 
   const { mutate: deleteDepartment } = useDeleteDepartment();
 
@@ -2168,6 +2180,10 @@ export default function DepartmentsPage() {
 
               max_views_per_student:
                 parseInt(formData.max_views_per_student) || 10,
+
+              doctor_id: formData.instructor_id
+                ? parseInt(formData.instructor_id)
+                : undefined,
             },
             (progress) => setUploadProgress(progress),
           );
@@ -2311,6 +2327,10 @@ export default function DepartmentsPage() {
                 parseInt(formData.max_views_per_student) || 10,
 
               status: formData.status ?? 0,
+
+              doctor_id: formData.instructor_id
+                ? parseInt(formData.instructor_id)
+                : undefined,
             },
             (progress) => setUploadProgress(progress),
           );
@@ -3041,6 +3061,18 @@ export default function DepartmentsPage() {
                           ? "Active"
                           : "Draft"}
                       </span>
+                    </div>
+
+                    {/* Instructor */}
+
+                    <div>
+                      <label className="text-[10px] font-medium text-gray-400 uppercase">
+                        Instructor
+                      </label>
+
+                      <p className="text-xs text-gray-700">
+                        {(viewNode.data as Course).attributes.instructor?.data?.attributes?.full_name || 'N/A'}
+                      </p>
                     </div>
 
                     {/* Visibility */}
@@ -4414,6 +4446,8 @@ export default function DepartmentsPage() {
       {editModalOpen && selectedNode && (
         <EditModal
           node={selectedNode}
+          instructors={instructorsResponse?.data}
+          instructorsLoading={instructorsLoading}
           onClose={() => {
             setEditModalOpen(false);
 
@@ -4438,6 +4472,8 @@ export default function DepartmentsPage() {
         <AddModal
           type={addType}
           parentId={addParentId}
+          instructors={instructorsResponse?.data}
+          instructorsLoading={instructorsLoading}
           onClose={() => {
             setAddModalOpen(false);
 
@@ -4787,6 +4823,10 @@ export default function DepartmentsPage() {
 interface EditModalProps {
   node: TreeNode;
 
+  instructors?: any[];
+
+  instructorsLoading?: boolean;
+
   onClose: () => void;
 
   onSubmit: (data: any) => void;
@@ -4798,6 +4838,8 @@ interface EditModalProps {
 
 function EditModal({
   node,
+  instructors,
+  instructorsLoading,
   onClose,
   onSubmit,
   isLoading,
@@ -4859,6 +4901,8 @@ function EditModal({
 
           max_views_per_student:
             course.attributes.max_views_per_student?.toString() || "10",
+
+          instructor_id: course.attributes.doctor_id?.toString() || course.attributes.instructor?.data?.id?.toString() || "",
 
           thumbnail: null,
         };
@@ -5441,6 +5485,33 @@ function EditModal({
                       <option value={1}>Active</option>
                     </select>
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Instructor
+                    </label>
+
+                    <select
+                      value={formData.instructor_id || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          instructor_id: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      disabled={instructorsLoading}
+                    >
+                      <option value="">
+                        {instructorsLoading ? "Loading..." : "Select Instructor"}
+                      </option>
+                      {instructors?.map((instructor: any) => (
+                        <option key={instructor.id} value={instructor.id}>
+                          {instructor.attributes.first_name} {instructor.attributes.last_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -5892,6 +5963,10 @@ interface AddModalProps {
 
   parentId: string | null;
 
+  instructors?: any[];
+
+  instructorsLoading?: boolean;
+
   onClose: () => void;
 
   onSubmit: (data: any) => void;
@@ -5904,6 +5979,8 @@ interface AddModalProps {
 function AddModal({
   type,
   parentId,
+  instructors,
+  instructorsLoading,
   onClose,
   onSubmit,
   isLoading,
@@ -6420,27 +6497,52 @@ function AddModal({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
 
-                  <select
-                    value={formData.status ?? 0}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        status: parseInt(e.target.value),
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  >
-                    <option value={0}>Draft</option>
+                <select
+                  value={formData.status ?? 0}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: parseInt(e.target.value),
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value={0}>Draft</option>
 
-                    <option value={1}>Active</option>
-                  </select>
-                </div>
+                  <option value={1}>Active</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Instructor
+                </label>
+
+                <select
+                  value={formData.instructor_id || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      instructor_id: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  disabled={instructorsLoading}
+                >
+                  <option value="">
+                    {instructorsLoading ? "Loading..." : "Select Instructor"}
+                  </option>
+                  {instructors?.map((instructor: any) => (
+                    <option key={instructor.id} value={instructor.id}>
+                      {instructor.attributes.first_name} {instructor.attributes.last_name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </>
           )}
