@@ -6,7 +6,7 @@ import { createQueryHook, createMutationHook } from './index';
 // Social Links Hooks
 // ============================================
 
-export const useSocialLinks = createQueryHook(
+export const useSocialLinks = createQueryHook<SocialLink[]>(
   () => api.socialLinks.list().then(res => res.data)
 );
 

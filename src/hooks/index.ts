@@ -184,5 +184,6 @@ export * from './useCodes';
 export * from './useLiveRooms';
 export * from './useNotes';
 export * from './useStudents';
+export * from './useInstructors';
 export * from './useCourses';
 export * from './useAppVersions';
