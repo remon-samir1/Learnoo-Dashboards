@@ -383,6 +383,9 @@ function buildFormData(data: Record<string, unknown>): FormData {
     } else if (typeof value === 'boolean') {
       formData.append(key, value ? '1' : '0');
     } else if (typeof value === 'number') {
+      // Don't convert to string for numeric fields that should remain as numbers
+      // FormData always sends strings, but we send it as a string representation of the number
+      // The backend should handle the conversion back to int
       formData.append(key, String(value));
     } else {
       formData.append(key, String(value));
@@ -506,7 +509,7 @@ export const codesApi = {
 
 export interface PreActivationUploadRequest {
   item_id: number;
-  item_type: 'course' | 'chapter' | 'library';
+  item_type: 'course' | 'chapter' | 'library' | 'category';
   file: File;
 }
 
@@ -722,11 +725,44 @@ export const notesApi = {
 
   get: (id: number) => get<ApiResponse<Note>>(`/v1/note/${id}`),
 
-  create: (data: CreateNoteRequest) =>
-    post<ApiResponse<Note>>('/v1/note', data),
+  create: (data: CreateNoteRequest) => {
+    // Use FormData for file uploads, JSON otherwise
+    if (data.attachment) {
+      const formData = new FormData();
+      formData.append('title', data.title);
+      formData.append('type', data.type);
+      formData.append('content', data.content || '');
+      if (data.linked_lecture) {
+        formData.append('linked_lecture', data.linked_lecture);
+      }
+      // Don't send is_publish in FormData - use query parameter instead
+      // FormData converts bool to string which causes backend type error
+      formData.append('attachment', data.attachment);
+      // Send course_id and is_publish as query parameters to avoid FormData string conversion
+      const params = new URLSearchParams();
+      if (data.course_id) params.append('course_id', String(data.course_id));
+      if (data.is_publish !== undefined) params.append('is_publish', data.is_publish ? '1' : '0');
+      const url = `/v1/note${params.toString() ? '?' + params.toString() : ''}`;
+      return postMultipart<ApiResponse<Note>>(url, formData);
+    }
+    return post<ApiResponse<Note>>('/v1/note', data);
+  },
 
-  update: (id: number, data: CreateNoteRequest) =>
-    put<ApiResponse<Note>>(`/v1/note/${id}`, data),
+  update: (id: number, data: Partial<CreateNoteRequest>) => {
+    // Use FormData for file uploads, JSON otherwise
+    if (data.attachment) {
+      const formData = new FormData();
+      if (data.title) formData.append('title', data.title);
+      if (data.type) formData.append('type', data.type);
+      if (data.content !== undefined) formData.append('content', data.content);
+      // Don't send course_id or is_publish in FormData for updates - note already has these in database
+      // FormData converts numbers/bools to strings which causes backend type error
+      if (data.linked_lecture !== undefined) formData.append('linked_lecture', data.linked_lecture);
+      formData.append('attachment', data.attachment);
+      return putMultipart<ApiResponse<Note>>(`/v1/note/${id}`, formData);
+    }
+    return put<ApiResponse<Note>>(`/v1/note/${id}`, data);
+  },
 
   delete: (id: number) => del<ApiResponse<Note>>(`/v1/note/${id}`),
 };
@@ -867,7 +903,8 @@ export const studentsApi = {
     center_id?: number | string;
     per_page?: number;
     page?: number;
-  }) => get<ApiListResponse<Student>>('/v1/student', params),
+    role?: number;
+  }) => get<ApiListResponse<Student>>('/v1/student', { ...params, role: 0 }),
 
   get: (id: string) => get<ApiResponse<Student>>(`/v1/student/${id}`),
 
@@ -888,6 +925,36 @@ export const studentsApi = {
     formData.append('password', password);
     return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData);
   },
+};
+
+// ============================================
+// Instructors API (uses students endpoint with role filter)
+// ============================================
+
+export const instructorsApi = {
+  list: (params?: {
+    search?: string;
+    university_id?: number | string;
+    faculty_id?: number | string;
+    center_id?: number | string;
+    per_page?: number;
+    page?: number;
+    role?: number;
+  }) => get<ApiListResponse<Student>>('/v1/student', { ...params, role: 1 }),
+
+  get: (id: string) => get<ApiResponse<Student>>(`/v1/student/${id}`),
+
+  create: (data: CreateStudentRequest, onProgress?: (progress: number) => void) => {
+    const formData = buildFormData({ ...data, role: 1 } as unknown as Record<string, unknown>);
+    return postMultipart<ApiResponse<Student>>('/v1/student', formData, onProgress);
+  },
+
+  update: (id: string, data: Partial<CreateStudentRequest>, onProgress?: (progress: number) => void) => {
+    const formData = buildFormData(data as unknown as Record<string, unknown>);
+    return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData, onProgress);
+  },
+
+  delete: (id: string) => del<ApiResponse<Student>>(`/v1/student/${id}`),
 };
 
 // ============================================
@@ -1088,8 +1155,7 @@ export const api = {
   centers: centersApi,
   chapters: chaptersApi,
   codes: codesApi,
-  socialLinks: socialLinksApi,
-  comments: commentsApi,
+  preActivation: preActivationApi,
   courses: coursesApi,
   departments: departmentsApi,
   discussions: discussionsApi,
@@ -1101,15 +1167,18 @@ export const api = {
   liveRooms: liveRoomsApi,
   notes: notesApi,
   posts: postsApi,
+  comments: commentsApi,
   quizzes: quizzesApi,
   quizQuestions: quizQuestionsApi,
   quizAttempts: quizAttemptsApi,
   universities: universitiesApi,
   userProgress: userProgressApi,
   students: studentsApi,
+  instructors: instructorsApi,
   search: searchApi,
   dashboard: dashboardApi,
   platformFeature: platformFeatureApi,
+  socialLinks: socialLinksApi,
   appVersions: appVersionsApi,
   admin: adminApi,
 };

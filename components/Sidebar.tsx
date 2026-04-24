@@ -48,7 +48,9 @@ import {
 
   Power,
 
-  Smartphone
+  Smartphone,
+
+  GraduationCap
 
 } from 'lucide-react';
 
@@ -97,6 +99,8 @@ const getMenuItems = (t: (key: string) => string): MenuItem[] => [
   { name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' },
 
   { name: t('sidebar.academicStructure'), icon: School, path: '/departments' },
+
+  { name: t('sidebar.instructors'), icon: GraduationCap, path: '/instructors' },
 
   { name: t('sidebar.students'), icon: Users2, path: '/students' },
 
