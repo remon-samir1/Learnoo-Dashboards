@@ -187,7 +187,7 @@ export default function InstructorsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          href={`/instructors/${instructor.id}`}
+                          href={`/instructors/${instructor.id}/edit`}
                           className="p-2 hover:bg-[#F1F5F9] rounded-lg transition-colors text-[#64748B] hover:text-[#2137D6]"
                         >
                           <Edit2 className="w-4 h-4" />

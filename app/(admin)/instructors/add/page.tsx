@@ -7,7 +7,8 @@ import {
   Save, 
   X, 
   Info,
-  Loader2
+  Loader2,
+  ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,7 +16,8 @@ import { FileUpload } from '@/components/FileUpload';
 import { 
   useCreateInstructor
 } from '@/src/hooks';
-import type { CreateStudentRequest } from '@/src/types';
+import type { CreateStudentRequest, StudentStatus } from '@/src/types';
+import { StudentStatusLabels } from '@/src/types';
 
 export default function AddInstructorPage() {
   const t = useTranslations();
@@ -31,6 +33,7 @@ export default function AddInstructorPage() {
     email: '',
     password: '',
     specialization: '',
+    status: 1 as StudentStatus,
     image: null as File | null
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -57,6 +60,7 @@ export default function AddInstructorPage() {
         email: formData.email,
         password: formData.password,
         specialization: formData.specialization,
+        status: formData.status,
         image: formData.image || undefined
       };
 
@@ -161,8 +165,23 @@ export default function AddInstructorPage() {
               />
             </div>
 
+            {/* Status */}
+            <div className="flex flex-col gap-2 relative">
+              <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.status')}</label>
+              <select
+                value={formData.status}
+                onChange={(e) => setFormData(prev => ({ ...prev, status: parseInt(e.target.value) as StudentStatus }))}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none"
+              >
+                <option value={1}>{StudentStatusLabels[1]}</option>
+                <option value={0}>{StudentStatusLabels[0]}</option>
+                <option value={2}>{StudentStatusLabels[2]}</option>
+              </select>
+              <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+            </div>
+
             {/* Password */}
-            <div className="flex flex-col gap-2 md:col-span-2">
+            <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.password')} *</label>
               <input
                 type="password"
