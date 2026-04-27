@@ -19,6 +19,7 @@ interface WatermarkConfig {
   text: string;
   useStudentCode: boolean;
   usePhoneNumber: boolean;
+  color: string;
   opacity: number;
   rotation: number;
   position: WatermarkPosition;
@@ -51,6 +52,7 @@ const defaultConfig: WatermarkConfig = {
   text: 'Learnoo',
   useStudentCode: false,
   usePhoneNumber: false,
+  color: '#000000',
   opacity: 20,
   rotation: -12,
   position: 'full',
@@ -123,6 +125,7 @@ export default function WatermarkSettingsPage() {
           text: getFeatureValue(`watermark_${key}_text`, 'Learnoo'),
           useStudentCode: getFeatureBool(`watermark_${key}_use_student_code`, false),
           usePhoneNumber: getFeatureBool(`watermark_${key}_use_phone_number`, false),
+          color: getFeatureValue(`watermark_${key}_color`, '#000000'),
           opacity: getFeatureNumber(`watermark_${key}_opacity`, 20),
           rotation: getFeatureNumber(`watermark_${key}_rotation`, -12),
           position: (getFeatureValue(`watermark_${key}_position`, 'full') as WatermarkPosition),
@@ -202,13 +205,14 @@ export default function WatermarkSettingsPage() {
     setIsSaving(true);
     try {
       const requests: Promise<unknown>[] = [];
-      
+
       contentTypes.forEach(({ key }) => {
         const config = settings[key] || defaultConfig;
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_enabled`, value: config.enabled ? '1' : '0' }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_text`, value: config.text }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_use_student_code`, value: config.useStudentCode ? '1' : '0' }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_use_phone_number`, value: config.usePhoneNumber ? '1' : '0' }));
+        requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_color`, value: config.color }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_opacity`, value: String(config.opacity) }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_rotation`, value: String(config.rotation) }));
         requests.push(updateFeature.mutateAsync({ key: `watermark_${key}_position`, value: config.position }));
@@ -371,6 +375,30 @@ export default function WatermarkSettingsPage() {
               <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('opacity')} & {t('rotation')}</h2>
             </div>
             <div className="p-6 space-y-6">
+              {/* Color */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[13px] font-bold text-[#475569]">{t('color')}</label>
+                  <span className="text-sm font-medium text-[#2137D6]">{currentSettings.color}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={currentSettings.color}
+                    onChange={(e) => updateCurrentSettings({ color: e.target.value })}
+                    className="w-12 h-12 rounded-lg cursor-pointer border-2 border-[#E2E8F0]"
+                  />
+                  <input
+                    type="text"
+                    value={currentSettings.color}
+                    onChange={(e) => updateCurrentSettings({ color: e.target.value })}
+                    placeholder="#000000"
+                    className="flex-1 px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                  />
+                </div>
+                <p className="text-xs text-[#94A3B8] mt-1">{t('colorDesc')}</p>
+              </div>
+
               {/* Opacity */}
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -758,10 +786,10 @@ export default function WatermarkSettingsPage() {
                           {Array.from({ length: 4 }).map((_, i) => (
                             <span
                               key={i}
-                              className={`font-bold text-gray-400/40 select-none whitespace-nowrap ${
+                              className={`font-bold select-none whitespace-nowrap ${
                                 currentSettings.size === 'small' ? 'text-lg' : currentSettings.size === 'large' ? 'text-3xl' : 'text-2xl'
                               }`}
-                              style={{ opacity: currentSettings.opacity / 100 }}
+                              style={{ color: currentSettings.color, opacity: currentSettings.opacity / 100 }}
                             >
                               {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
                             </span>
@@ -778,10 +806,10 @@ export default function WatermarkSettingsPage() {
                           }}
                         >
                           <span
-                            className={`font-bold text-gray-400/60 select-none whitespace-nowrap inline-block ${
+                            className={`font-bold select-none whitespace-nowrap inline-block ${
                               currentSettings.size === 'small' ? 'text-base' : currentSettings.size === 'large' ? 'text-4xl' : 'text-2xl'
                             } ${currentSettings.animationStyle === 'fade' && currentSettings.dynamicPosition ? 'animate-pulse' : ''}`}
-                            style={{ opacity: currentSettings.opacity / 100 }}
+                            style={{ color: currentSettings.color, opacity: currentSettings.opacity / 100 }}
                           >
                             {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
                           </span>
@@ -800,10 +828,10 @@ export default function WatermarkSettingsPage() {
                           {Array.from({ length: 4 }).map((_, i) => (
                             <span
                               key={i}
-                              className={`font-bold text-white/30 select-none whitespace-nowrap ${
+                              className={`font-bold select-none whitespace-nowrap ${
                                 currentSettings.size === 'small' ? 'text-lg' : currentSettings.size === 'large' ? 'text-3xl' : 'text-2xl'
                               }`}
-                              style={{ opacity: currentSettings.opacity / 100 }}
+                              style={{ color: currentSettings.color, opacity: currentSettings.opacity / 100 }}
                             >
                               {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
                             </span>
@@ -820,10 +848,10 @@ export default function WatermarkSettingsPage() {
                           }}
                         >
                           <span
-                            className={`font-bold text-white/50 select-none whitespace-nowrap inline-block ${
+                            className={`font-bold select-none whitespace-nowrap inline-block ${
                               currentSettings.size === 'small' ? 'text-base' : currentSettings.size === 'large' ? 'text-4xl' : 'text-2xl'
                             } ${currentSettings.animationStyle === 'fade' && currentSettings.dynamicPosition ? 'animate-pulse' : ''}`}
-                            style={{ opacity: currentSettings.opacity / 100 }}
+                            style={{ color: currentSettings.color, opacity: currentSettings.opacity / 100 }}
                           >
                             {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
                           </span>
@@ -843,10 +871,10 @@ export default function WatermarkSettingsPage() {
                           {Array.from({ length: 4 }).map((_, i) => (
                             <span
                               key={i}
-                              className={`font-bold text-white/50 select-none whitespace-nowrap ${
+                              className={`font-bold select-none whitespace-nowrap ${
                                 currentSettings.size === 'small' ? 'text-lg' : currentSettings.size === 'large' ? 'text-3xl' : 'text-2xl'
                               }`}
-                              style={{ opacity: currentSettings.opacity / 100 }}
+                              style={{ color: currentSettings.color, opacity: currentSettings.opacity / 100 }}
                             >
                               {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
                             </span>
@@ -863,10 +891,10 @@ export default function WatermarkSettingsPage() {
                           }}
                         >
                           <span
-                            className={`font-bold text-white/70 select-none whitespace-nowrap inline-block ${
+                            className={`font-bold select-none whitespace-nowrap inline-block ${
                               currentSettings.size === 'small' ? 'text-base' : currentSettings.size === 'large' ? 'text-4xl' : 'text-2xl'
                             } ${currentSettings.animationStyle === 'fade' && currentSettings.dynamicPosition ? 'animate-pulse' : ''}`}
-                            style={{ opacity: currentSettings.opacity / 100 }}
+                            style={{ color: currentSettings.color, opacity: currentSettings.opacity / 100 }}
                           >
                             {currentSettings.useStudentCode ? 'STUDENT_CODE' : currentSettings.text}
                           </span>

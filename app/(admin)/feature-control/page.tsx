@@ -198,13 +198,6 @@ export default function FeatureControlPage() {
 
 
 
-  const [categories, setCategories] = useState<FeatureCategory[]>(getCategoryConfig(t));
-
-  const [hasChanges, setHasChanges] = useState(false);
-
-
-
-
   // Helper to get feature value by key
 
   const getFeatureValue = useCallback((key: string, defaultValue: string = '1'): string => {
@@ -216,6 +209,17 @@ export default function FeatureControlPage() {
     return feature?.attributes.value || defaultValue;
 
   }, [features]);
+
+
+
+  const [categories, setCategories] = useState<FeatureCategory[]>(getCategoryConfig(t));
+
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const [screenShareWidth, setScreenShareWidth] = useState('1280');
+
+  const [screenShareHeight, setScreenShareHeight] = useState('720');
+
 
 
 
@@ -258,6 +262,10 @@ export default function FeatureControlPage() {
         });
 
       });
+
+      // Load screen share width and height
+      setScreenShareWidth(getFeatureValue('feature_screen_share_max_width', '1280'));
+      setScreenShareHeight(getFeatureValue('feature_screen_share_max_height', '720'));
 
     }
 
@@ -326,6 +334,10 @@ export default function FeatureControlPage() {
       });
 
     });
+
+    // Save screen share width and height
+    requests.push(updateFeature.mutateAsync({ key: 'feature_screen_share_max_width', value: screenShareWidth }));
+    requests.push(updateFeature.mutateAsync({ key: 'feature_screen_share_max_height', value: screenShareHeight }));
 
 
 
@@ -525,26 +537,59 @@ export default function FeatureControlPage() {
 
                 category.features.map((feature) => (
 
-                  <div key={feature.id} className="flex items-center justify-between gap-4">
+                  <div key={feature.id}>
+                    <div className="flex items-center justify-between gap-4">
 
-                    <div className="flex flex-col gap-0.5">
+                      <div className="flex flex-col gap-0.5">
 
-                      <p className="text-[13px] font-semibold text-[#1E293B]">{feature.name}</p>
+                        <p className="text-[13px] font-semibold text-[#1E293B]">{feature.name}</p>
 
-                      <p className="text-[11px] text-[#94A3B8]">{feature.description}</p>
+                        <p className="text-[11px] text-[#94A3B8]">{feature.description}</p>
+
+                      </div>
+
+                      <Switch
+
+                        enabled={feature.enabled}
+
+                        onChange={() => toggleFeature(category.id, feature.id)}
+
+                        disabled={updateFeature.isPending}
+
+                      />
 
                     </div>
 
-                    <Switch
-
-                      enabled={feature.enabled}
-
-                      onChange={() => toggleFeature(category.id, feature.id)}
-
-                      disabled={updateFeature.isPending}
-
-                    />
-
+                    {feature.id === 'feature_screen_share_max_resolution' && feature.enabled && (
+                      <div className="mt-4 grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[11px] font-semibold text-[#64748B] mb-1 block">Max Width (px)</label>
+                          <input
+                            type="number"
+                            value={screenShareWidth}
+                            onChange={(e) => {
+                              setScreenShareWidth(e.target.value);
+                              setHasChanges(true);
+                            }}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
+                            placeholder="1280"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-[#64748B] mb-1 block">Max Height (px)</label>
+                          <input
+                            type="number"
+                            value={screenShareHeight}
+                            onChange={(e) => {
+                              setScreenShareHeight(e.target.value);
+                              setHasChanges(true);
+                            }}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
+                            placeholder="720"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                 ))
