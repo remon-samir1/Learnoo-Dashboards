@@ -3290,7 +3290,9 @@ export interface SocialLinkAttributes {
 
 
 
-  course_id: number;
+  course_id?: number;
+
+  courses?: { id: string; type: string; attributes: Record<string, unknown> }[];
 
 
 
@@ -3346,7 +3348,9 @@ export interface CreateSocialLinkRequest {
 
 
 
-  course_id: number;
+  course_id?: number;
+
+  course_ids?: number[];
 
 
 

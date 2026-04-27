@@ -93,7 +93,7 @@ import {
 
 import { DeleteModal } from "@/src/components/ui/DeleteModal";
 
-import { toast } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 import Link from "next/link";
 
@@ -126,14 +126,14 @@ interface TreeNode {
   name: string;
 
   data:
-    | University
-    | Faculty
-    | Center
-    | Department
-    | Course
-    | Lecture
-    | Chapter
-    | Note;
+  | University
+  | Faculty
+  | Center
+  | Department
+  | Course
+  | Lecture
+  | Chapter
+  | Note;
 
   children: TreeNode[];
 
@@ -563,8 +563,8 @@ function buildUnifiedTree(
     courseMap.set(course.id, courseNode);
 
     const deptId =
-      course.attributes.department?.data?.id ||
-      course.attributes.category?.data?.id;
+      course.attributes.category?.data?.id ||
+      course.attributes.category_id?.toString();
 
     if (deptId && departmentMap.has(deptId)) {
       const dept = departmentMap.get(deptId)!;
@@ -836,12 +836,14 @@ function TreeItem({
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all hover:shadow-sm cursor-pointer ${isDragging ? "opacity-50 border-dashed border-blue-400" : ""} ${
-          isSelected
-            ? "bg-blue-50 border-blue-300 shadow-sm"
-            : "bg-white border-gray-200 hover:border-gray-300"
-        }`}
-        style={{ marginLeft: `${node.level * 24}px` }}
+        className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all hover:shadow-sm cursor-pointer ${isDragging ? "opacity-50 border-dashed border-blue-400" : ""} ${isSelected
+          ? "bg-blue-50 border-blue-300 shadow-sm"
+          : "bg-white border-gray-200 hover:border-gray-300"
+          }`}
+        style={{
+          marginLeft: `${node.level * 32 + 12 + (node.type === 'faculty' ? 12 : 0)}px`,
+          marginTop: node.type === 'faculty' ? '8px' : '0px'
+        }}
       >
         {/* Expand/Collapse */}
 
@@ -851,11 +853,10 @@ function TreeItem({
 
             hasChildren && onToggle(node.id);
           }}
-          className={`p-1 rounded transition-colors ${
-            hasChildren
-              ? "hover:bg-gray-100 text-gray-500"
-              : "text-transparent cursor-default"
-          }`}
+          className={`p-1 rounded transition-colors ${hasChildren
+            ? "hover:bg-gray-100 text-gray-500"
+            : "text-transparent cursor-default"
+            }`}
         >
           {hasChildren ? (
             isExpanded ? (
@@ -871,7 +872,7 @@ function TreeItem({
         {/* Type Icon or Image */}
 
         {node.type === "university" &&
-        (node.data as University).attributes.image ? (
+          (node.data as University).attributes.image ? (
           <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
             <img
               src={(node.data as University).attributes.image || undefined}
@@ -1903,8 +1904,8 @@ export default function DepartmentsPage() {
     return codes.filter((code) => {
       const codeableType =
         itemType === "course" ? "App\\Models\\Course" :
-        itemType === "chapter" ? "App\\Models\\Chapter" :
-        "App\\Models\\Department";
+          itemType === "chapter" ? "App\\Models\\Chapter" :
+            "App\\Models\\Department";
 
       return (
         code.attributes.codeable_type === codeableType &&
@@ -2038,15 +2039,16 @@ export default function DepartmentsPage() {
         file,
       });
 
+      const count = (result as any)?.created || (result as any)?.data?.created || 0;
+      const skipped = (result as any)?.skipped || (result as any)?.data?.skipped || 0;
+
       setPreactivationResults({
-        success: result.data.count || 0,
-
-        failed: preactivationNumbers.length - (result.data.count || 0),
-
-        count: result.data.count || 0,
+        success: count,
+        failed: skipped,
+        count: count,
       });
 
-      toast.success(result.data.message || `Success: ${result.data.count}`);
+      toast.success(`Success: ${count} numbers processed`);
 
       refetchCodes();
 
@@ -2055,8 +2057,9 @@ export default function DepartmentsPage() {
       }
 
       setPreactivationNumbers([]);
-    } catch {
-      toast.error("Upload failed");
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Upload failed";
+      toast.error(errorMessage);
     }
   };
 
@@ -2082,11 +2085,52 @@ export default function DepartmentsPage() {
     const targetLectureId = parseInt(selectedTargetLecture);
 
     try {
-      await copyChapter(chapterId, targetLectureId);
+      // Get original chapter data to check for attachments
+      const originalChapterResponse = await api.chapters.get(chapterId);
+      const originalChapter = originalChapterResponse.data;
+      const hasAttachments = originalChapter.attributes.attachments && originalChapter.attributes.attachments.length > 0;
+
+      // Copy the chapter
+      const newChapter = await copyChapter(chapterId, targetLectureId);
+
+      // If the original chapter had attachments, copy them to the new chapter
+      if (hasAttachments && originalChapter.attributes.attachments) {
+        const attachmentFiles: File[] = [];
+
+        // Download each attachment and convert to File object
+        for (const attachment of originalChapter.attributes.attachments) {
+          try {
+            const attachmentPath = attachment.attributes.path;
+            if (attachmentPath) {
+              const response = await fetch(attachmentPath);
+              const blob = await response.blob();
+              const fileName = attachment.attributes.name || `attachment_${attachment.id}`;
+              const file = new File([blob], fileName, { type: blob.type });
+              attachmentFiles.push(file);
+            }
+          } catch (error) {
+            console.error(`Failed to download attachment ${attachment.id}:`, error);
+          }
+        }
+
+        // Upload attachments to the new chapter
+        if (attachmentFiles.length > 0) {
+          await updateChapter(parseInt(newChapter.id), {
+            lecture_id: targetLectureId,
+            title: newChapter.attributes.title,
+            thumbnail: undefined,
+            video: undefined,
+            duration: newChapter.attributes.duration,
+            is_free_preview: newChapter.attributes.is_free_preview,
+            max_views: newChapter.attributes.max_views,
+            view_by_minute: newChapter.attributes.view_by_minute,
+            attachments: attachmentFiles,
+          });
+        }
+      }
 
       if (copyMoveMode === "move") {
         // Delete original after successful copy
-
         await api.chapters.delete(chapterId);
       }
 
@@ -2165,9 +2209,9 @@ export default function DepartmentsPage() {
           const categoryId = course.attributes.category?.data?.id
             ? parseInt(course.attributes.category.data.id)
             : course.attributes.category_id ||
-              (selectedNode.parentId
-                ? parseInt(selectedNode.parentId.replace("dept-", ""))
-                : 1);
+            (selectedNode.parentId
+              ? parseInt(selectedNode.parentId.replace("dept-", ""))
+              : 1);
 
           await updateCourse(
             rawId,
@@ -2220,6 +2264,8 @@ export default function DepartmentsPage() {
             thumbnail: formData.thumbnail,
 
             video: formData.video,
+
+            attachments: formData.attachments,
           });
 
           resetUpdateChapter();
@@ -2454,6 +2500,7 @@ export default function DepartmentsPage() {
 
   return (
     <div className="flex flex-col gap-6 pb-12">
+      <Toaster position="top-right" />
       {/* Header */}
 
       <div className="flex items-center justify-between">
@@ -2545,7 +2592,7 @@ export default function DepartmentsPage() {
                 <p className="text-gray-500 text-center">
                   {searchQuery
                     ? t("departments.noSearchResults") ||
-                      "No departments match your search"
+                    "No departments match your search"
                     : t("departments.noDepartments")}
                 </p>
               </div>
@@ -2716,22 +2763,20 @@ export default function DepartmentsPage() {
                     <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
                       <button
                         onClick={() => setActivationTab("code")}
-                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
-                          activationTab === "code"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                        }`}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
                       >
                         By Code
                       </button>
 
                       <button
                         onClick={() => setActivationTab("preactivation")}
-                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
-                          activationTab === "preactivation"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                        }`}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
                       >
                         Preactivation
                       </button>
@@ -2771,11 +2816,10 @@ export default function DepartmentsPage() {
                                 ).map((code) => (
                                   <label
                                     key={code.id}
-                                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                                      selectedCode === code.id
-                                        ? "bg-[#EEF2FF] border border-[#2137D6]"
-                                        : "hover:bg-[#F8FAFC] border border-transparent"
-                                    }`}
+                                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
+                                      ? "bg-[#EEF2FF] border border-[#2137D6]"
+                                      : "hover:bg-[#F8FAFC] border border-transparent"
+                                      }`}
                                   >
                                     <input
                                       type="radio"
@@ -2948,7 +2992,7 @@ export default function DepartmentsPage() {
                             const phoneNumbersContent = preactivationNumbers
                               .filter(n => n.trim().length > 0)
                               .join('\n');
-                            
+
                             if (phoneNumbersContent.length === 0) {
                               toast.error("Please add at least one phone number");
                               return;
@@ -3051,11 +3095,10 @@ export default function DepartmentsPage() {
                       </label>
 
                       <span
-                        className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${
-                          viewNode.meta?.status === "active"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-700"
-                        }`}
+                        className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full ${viewNode.meta?.status === "active"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                          }`}
                       >
                         {viewNode.meta?.status === "active"
                           ? "Active"
@@ -3143,19 +3186,19 @@ export default function DepartmentsPage() {
 
                   {(viewNode.data as Course).attributes.instructor?.data
                     ?.attributes?.full_name && (
-                    <div className="mb-2">
-                      <label className="text-[10px] font-medium text-gray-400 uppercase">
-                        Instructor
-                      </label>
+                      <div className="mb-2">
+                        <label className="text-[10px] font-medium text-gray-400 uppercase">
+                          Instructor
+                        </label>
 
-                      <p className="text-xs text-gray-700">
-                        {
-                          (viewNode.data as Course).attributes.instructor?.data
-                            ?.attributes?.full_name
-                        }
-                      </p>
-                    </div>
-                  )}
+                        <p className="text-xs text-gray-700">
+                          {
+                            (viewNode.data as Course).attributes.instructor?.data
+                              ?.attributes?.full_name
+                          }
+                        </p>
+                      </div>
+                    )}
 
                   {/* Description */}
 
@@ -3205,22 +3248,20 @@ export default function DepartmentsPage() {
                     <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
                       <button
                         onClick={() => setActivationTab("code")}
-                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
-                          activationTab === "code"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                        }`}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
                       >
                         By Code
                       </button>
 
                       <button
                         onClick={() => setActivationTab("preactivation")}
-                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
-                          activationTab === "preactivation"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                        }`}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
                       >
                         Preactivation
                       </button>
@@ -3266,11 +3307,10 @@ export default function DepartmentsPage() {
                                   {availableCodes.map((code) => (
                                     <label
                                       key={code.id}
-                                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                                        selectedCode === code.id
-                                          ? "bg-[#EEF2FF] border border-[#2137D6]"
-                                          : "hover:bg-[#F8FAFC] border border-transparent"
-                                      }`}
+                                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
+                                        ? "bg-[#EEF2FF] border border-[#2137D6]"
+                                        : "hover:bg-[#F8FAFC] border border-transparent"
+                                        }`}
                                     >
                                       <input
                                         type="radio"
@@ -3367,11 +3407,10 @@ export default function DepartmentsPage() {
                                   .map((student: any) => (
                                     <label
                                       key={student.id}
-                                      className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${
-                                        selectedStudent === student.id
-                                          ? "bg-[#EEF2FF]"
-                                          : "hover:bg-[#F8FAFC]"
-                                      }`}
+                                      className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${selectedStudent === student.id
+                                        ? "bg-[#EEF2FF]"
+                                        : "hover:bg-[#F8FAFC]"
+                                        }`}
                                     >
                                       <div className="flex items-center gap-2">
                                         <input
@@ -3573,7 +3612,7 @@ export default function DepartmentsPage() {
                             const phoneNumbersContent = preactivationNumbers
                               .filter(n => n.trim().length > 0)
                               .join('\n');
-                             
+
                             if (phoneNumbersContent.length === 0) {
                               toast.error("Please add at least one phone number");
                               return;
@@ -3801,22 +3840,20 @@ export default function DepartmentsPage() {
                     <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
                       <button
                         onClick={() => setActivationTab("code")}
-                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
-                          activationTab === "code"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                        }`}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
                       >
                         By Code
                       </button>
 
                       <button
                         onClick={() => setActivationTab("preactivation")}
-                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${
-                          activationTab === "preactivation"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                        }`}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
                       >
                         Preactivation
                       </button>
@@ -3862,11 +3899,10 @@ export default function DepartmentsPage() {
                                   {availableCodes.map((code) => (
                                     <label
                                       key={code.id}
-                                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
-                                        selectedCode === code.id
-                                          ? "bg-[#EEF2FF] border border-[#2137D6]"
-                                          : "hover:bg-[#F8FAFC] border border-transparent"
-                                      }`}
+                                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
+                                        ? "bg-[#EEF2FF] border border-[#2137D6]"
+                                        : "hover:bg-[#F8FAFC] border border-transparent"
+                                        }`}
                                     >
                                       <input
                                         type="radio"
@@ -3963,11 +3999,10 @@ export default function DepartmentsPage() {
                                   .map((student: any) => (
                                     <label
                                       key={student.id}
-                                      className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${
-                                        selectedStudent === student.id
-                                          ? "bg-[#EEF2FF]"
-                                          : "hover:bg-[#F8FAFC]"
-                                      }`}
+                                      className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${selectedStudent === student.id
+                                        ? "bg-[#EEF2FF]"
+                                        : "hover:bg-[#F8FAFC]"
+                                        }`}
                                     >
                                       <div className="flex items-center gap-2">
                                         <input
@@ -4172,7 +4207,7 @@ export default function DepartmentsPage() {
                             const phoneNumbersContent = preactivationNumbers
                               .filter(n => n.trim().length > 0)
                               .join('\n');
-                             
+
                             if (phoneNumbersContent.length === 0) {
                               toast.error("Please add at least one phone number");
                               return;
@@ -4239,7 +4274,7 @@ export default function DepartmentsPage() {
 
                   {(viewNode.data as Chapter).attributes.attachments &&
                     (viewNode.data as Chapter).attributes.attachments!.length >
-                      0 && (
+                    0 && (
                       <div className="mb-4">
                         <label className="text-xs font-medium text-gray-500 uppercase">
                           Attachments & Resources
@@ -4371,11 +4406,10 @@ export default function DepartmentsPage() {
                     </label>
 
                     <span
-                      className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full mt-1 ${
-                        (viewNode.data as Note).attributes.is_publish
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}
+                      className={`inline-block px-2 py-0.5 text-[10px] font-medium rounded-full mt-1 ${(viewNode.data as Note).attributes.is_publish
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-700"
+                        }`}
                     >
                       {(viewNode.data as Note).attributes.is_publish
                         ? "Published"
@@ -4413,15 +4447,14 @@ export default function DepartmentsPage() {
 
                   <button
                     onClick={() => handleEdit(viewNode)}
-                    className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${
-                      viewNode.type === "department"
-                        ? "bg-blue-600 hover:bg-blue-700"
-                        : viewNode.type === "course"
-                          ? "bg-green-600 hover:bg-green-700"
-                          : viewNode.type === "lecture"
-                            ? "bg-purple-600 hover:bg-purple-700"
-                            : "bg-orange-600 hover:bg-orange-700"
-                    }`}
+                    className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${viewNode.type === "department"
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : viewNode.type === "course"
+                        ? "bg-green-600 hover:bg-green-700"
+                        : viewNode.type === "lecture"
+                          ? "bg-purple-600 hover:bg-purple-700"
+                          : "bg-orange-600 hover:bg-orange-700"
+                      }`}
                   >
                     Edit{" "}
                     {viewNode.type.charAt(0).toUpperCase() +
@@ -4592,9 +4625,8 @@ export default function DepartmentsPage() {
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
                   placeholder="Enter note title"
-                  className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${
-                    noteErrors.title ? "border-[#EF4444]" : "border-[#E2E8F0]"
-                  }`}
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${noteErrors.title ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                    }`}
                 />
 
                 {noteErrors.title && (
@@ -4614,9 +4646,8 @@ export default function DepartmentsPage() {
                 <select
                   value={noteType}
                   onChange={(e) => setNoteType(e.target.value)}
-                  className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all ${
-                    noteErrors.type ? "border-[#EF4444]" : "border-[#E2E8F0]"
-                  }`}
+                  className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all ${noteErrors.type ? "border-[#EF4444]" : "border-[#E2E8F0]"
+                    }`}
                 >
                   {getNoteTypes().map((type) => (
                     <option key={type.value} value={type.value}>
@@ -5759,8 +5790,14 @@ function EditModal({
                   <input
                     type="number"
                     min="0"
-                    defaultValue={
-                      (node.data as Chapter).attributes.max_views ?? 5
+                    value={formData.max_views}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        max_views: e.target.value
+                          ? parseInt(e.target.value)
+                          : undefined,
+                      })
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
@@ -7155,20 +7192,18 @@ function CopyMoveModal({
                               !isCurrentLecture && onSelectTarget(lecture.id)
                             }
                             disabled={isCurrentLecture}
-                            className={`w-full flex items-center gap-2 p-2 pl-8 text-left transition-colors ${
-                              isCurrentLecture
-                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                : isSelected
-                                  ? "bg-orange-50 text-orange-700"
-                                  : "hover:bg-gray-50 text-gray-700"
-                            }`}
+                            className={`w-full flex items-center gap-2 p-2 pl-8 text-left transition-colors ${isCurrentLecture
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                              : isSelected
+                                ? "bg-orange-50 text-orange-700"
+                                : "hover:bg-gray-50 text-gray-700"
+                              }`}
                           >
                             <FolderOpen
-                              className={`w-4 h-4 ${
-                                isCurrentLecture
-                                  ? "text-gray-400"
-                                  : "text-purple-500"
-                              }`}
+                              className={`w-4 h-4 ${isCurrentLecture
+                                ? "text-gray-400"
+                                : "text-purple-500"
+                                }`}
                             />
 
                             <span className="text-sm flex-1">
@@ -7231,11 +7266,10 @@ function CopyMoveModal({
           <button
             onClick={onConfirm}
             disabled={!selectedTarget || isLoading}
-            className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${
-              mode === "copy"
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-purple-600 hover:bg-purple-700"
-            }`}
+            className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${mode === "copy"
+              ? "bg-blue-600 hover:bg-blue-700"
+              : "bg-purple-600 hover:bg-purple-700"
+              }`}
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
 
@@ -7312,8 +7346,8 @@ function GenerateCodeModal({
 
       const codeableType =
         itemType === "course" ? "App\\Models\\Course" :
-        itemType === "chapter" ? "App\\Models\\Chapter" :
-        "App\\Models\\Department";
+          itemType === "chapter" ? "App\\Models\\Chapter" :
+            "App\\Models\\Department";
 
       const result = await createCode({
         codeable_id: parseInt(itemId),

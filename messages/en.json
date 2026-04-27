@@ -1422,6 +1422,8 @@
     "useStudentIdDesc": "Show each student's unique code on their content pages instead of custom text",
     "usePhoneNumber": "Include Phone Number",
     "usePhoneNumberDesc": "Show student's phone number alongside their code in the watermark",
+    "color": "Color",
+    "colorDesc": "Choose the color of the watermark text",
     "opacity": "Opacity",
     "opacityDesc": "Adjust watermark visibility (10% - 50%)",
     "rotation": "Rotation",
