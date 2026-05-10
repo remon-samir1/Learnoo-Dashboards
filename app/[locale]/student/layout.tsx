@@ -6,11 +6,13 @@ export const metadata: Metadata = {
   title: "Learnoo-Dashboard",
 };
 
-export default function StudentLayout({
+export default async function StudentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
