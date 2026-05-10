@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { useDebounce } from "@uidotdev/usehooks";
+
 import {
   Bell,
   BookOpen,
@@ -15,6 +15,7 @@ import {
   Video,
 } from "lucide-react";
 import Cookies from "@/lib/cookies";
+import { useDebouncedCallback } from "use-debounce";
 
 type DropdownType = "language" | "notifications" | null;
 
@@ -71,7 +72,7 @@ export default function Navbar() {
   const [search, setSearch] = useState("");
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
 
-  const debouncedSearch = useDebounce(search, 500);
+  const debouncedSearch = useDebouncedCallback((value) => setSearch(value), 500);
   console.log("Search:", debouncedSearch);
 
   const currentLanguage =
@@ -112,7 +113,7 @@ export default function Navbar() {
 
         <input
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => debouncedSearch(e.target.value)}
           placeholder={t("searchPlaceholder")}
           className="h-10 w-full rounded-xl border border-[var(--border-color)] bg-gray-50 ps-11 pe-4 text-sm text-[var(--text-main)] outline-none transition placeholder:text-[var(--text-placeholder)] focus:border-[var(--primary-blue)] focus:bg-white"
         />
