@@ -1,3 +1,4 @@
+import { useLocale } from 'next-intl';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -5,7 +6,7 @@ export function proxy(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const userRole = request.cookies.get('user_role')?.value;
   const locale = request.cookies.get('locale')?.value || 'en';
-  
+ 
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
@@ -49,10 +50,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
   }
   // student trying to access admin routes || doctor roles
-  if (isStudentRoute && (userRole === 'Admin' || userRole === 'Doctor')) {
-    return NextResponse.redirect(new URL('/student', request.url));
+  if (isStudentRoute && (userRole === 'Admin' || userRole === 'Doctor' || pathname === '/student')) {
+    return NextResponse.redirect(new URL(`${locale}/student`, request.url));
   }
-
+  
   // Unknown role - redirect to login
   if (!userRole || (userRole !== 'Admin' && userRole !== 'Doctor' && userRole !== 'Student')) {
     const response = NextResponse.redirect(new URL('/login', request.url));

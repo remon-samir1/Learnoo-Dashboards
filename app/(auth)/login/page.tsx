@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Cookies, { CookieAttributes } from '@/lib/cookies';
 import AuthPageLayout from '../components/AuthLayout';
 
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const locale = useLocale() || "ar";
 
   return (
     <AuthPageLayout
@@ -142,7 +143,7 @@ export default function LoginPage() {
         router.push('/doctor/dashboard');
       } 
        else if (userRole === 'Student') {
-        router.push('/ar/student');
+        router.push(`/${locale}/student`);
       } 
       
       else {
