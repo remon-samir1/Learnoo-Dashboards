@@ -140,7 +140,12 @@ export default function LoginPage() {
         router.push('/dashboard');
       } else if (userRole === 'Doctor') {
         router.push('/doctor/dashboard');
-      } else {
+      } 
+       else if (userRole === 'Student') {
+        router.push('/student');
+      } 
+      
+      else {
         setError(t('errors.noPermission'));
         // Clear cookies if role is not authorized
         Cookies.remove('token');

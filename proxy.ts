@@ -33,9 +33,11 @@ export function proxy(request: NextRequest) {
     '/notes-summaries', '/notifications', '/settings', '/students'];
   
   const doctorRoutes = ['/doctor'];
+  const studentRoutes = ['/student'];
 
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
   const isDoctorRoute = doctorRoutes.some(route => pathname.startsWith(route));
+  const isStudentRoute = studentRoutes.some(route => pathname.startsWith(route));
 
   // Admin trying to access doctor routes
   if (isDoctorRoute && userRole !== 'Doctor') {
@@ -46,9 +48,13 @@ export function proxy(request: NextRequest) {
   if (isAdminRoute && userRole !== 'Admin') {
     return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
   }
+  // student trying to access admin routes || doctor roles
+  if (isStudentRoute && (userRole === 'Admin' || userRole === 'Doctor')) {
+    return NextResponse.redirect(new URL('/student', request.url));
+  }
 
   // Unknown role - redirect to login
-  if (!userRole || (userRole !== 'Admin' && userRole !== 'Doctor')) {
+  if (!userRole || (userRole !== 'Admin' && userRole !== 'Doctor' && userRole !== 'Student')) {
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('token');
     response.cookies.delete('user_role');
