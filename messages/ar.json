@@ -130,7 +130,29 @@
     "featureControl": "التحكم في الميزات",
     "otaUpload": "رفع تحديثات الهواء",
     "adminDashboard": "لوحة تحكم المشرف",
-    "doctorDashboard": "لوحة تحكم الدكتور"
+    "doctorDashboard": "لوحة تحكم الدكتور",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "helpFaq": "المساعدة والأسئلة"
+  },
+  "navbar": {
+    "searchPlaceholder": "ابحث عن الدورات، المحاضرات، الاختبارات...",
+    "notifications": "الإشعارات",
+    "new": "جديد",
+    "language": "اللغة",
+    "english": "الإنجليزية",
+    "arabic": "العربية",
+    "notificationItems": {
+      "courseTitle": "تم رفع دورة جديدة",
+      "courseMessage": "دورة الرياضيات متاحة الآن.",
+      "examTitle": "تذكير بالاختبار",
+      "examMessage": "اختبار الفيزياء يبدأ غداً.",
+      "lectureTitle": "محاضرة جديدة",
+      "lectureMessage": "تمت إضافة محاضرة الكيمياء.",
+      "time1": "منذ 5 دقائق",
+      "time2": "منذ ساعة",
+      "time3": "اليوم"
+    }
   },
   "header": {
     "titles": {

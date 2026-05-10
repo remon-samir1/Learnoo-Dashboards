@@ -107,6 +107,25 @@
       "submit": "Reset Password"
     }
   },
+  "navbar": {
+    "searchPlaceholder": "Search courses, lectures, exams...",
+    "notifications": "Notifications",
+    "new": "new",
+    "language": "Language",
+    "english": "English",
+    "arabic": "Arabic",
+    "notificationItems": {
+      "courseTitle": "New course uploaded",
+      "courseMessage": "Mathematics course is now available.",
+      "examTitle": "Exam reminder",
+      "examMessage": "Physics exam starts tomorrow.",
+      "lectureTitle": "New lecture",
+      "lectureMessage": "Chemistry lecture has been added.",
+      "time1": "5 min ago",
+      "time2": "1 hour ago",
+      "time3": "Today"
+    }
+  },
   "sidebar": {
     "dashboard": "Dashboard",
     "academicStructure": "Academic Structure",
@@ -130,7 +149,10 @@
     "featureControl": "Feature Control",
     "otaUpload": "OTA Upload",
     "adminDashboard": "Admin Dashboard",
-    "doctorDashboard": "Doctor Dashboard"
+    "doctorDashboard": "Doctor Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "helpFaq": "Help & FAQ"
   },
   "header": {
     "titles": {
