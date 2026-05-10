@@ -1,7 +1,10 @@
-import getUserDataFromJWT from "@/lib/server.utils";
-
-export default async function  StudentPage() {
+import { getUserData } from "@/src/services/student/user.service";
 
 
-  return <div>Student Dashboard</div>;
+export default async function  StudentPage () {
+ const {data:{data:{attributes}}} =await getUserData();
+
+  return <div>
+
+  </div>;
 }

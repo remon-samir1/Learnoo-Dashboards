@@ -20,7 +20,7 @@ export default async function StudentLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <Navbar />
 
-        <main className="flex-1 overflow-y-auto p-5">{children}</main>
+        <main className="flex-1  p-5">{children}</main>
       </div>
     </div>
   );
