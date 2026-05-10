@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useDebounce } from "@uidotdev/usehooks";
 import {
@@ -14,12 +14,13 @@ import {
   Search,
   Video,
 } from "lucide-react";
+import Cookies from "@/lib/cookies";
 
 type DropdownType = "language" | "notifications" | null;
 
 const languages = [
-  { code: "en", short: "EN" },
-  { code: "ar", short: "AR" },
+  { code: "en", label: "English", short: "EN" },
+  { code: "ar", label: "العربية", short: "AR" },
 ];
 
 const notificationItems = [
@@ -63,6 +64,7 @@ const notificationItems = [
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations("navbar");
 
@@ -70,7 +72,6 @@ export default function Navbar() {
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
 
   const debouncedSearch = useDebounce(search, 500);
-
   console.log("Search:", debouncedSearch);
 
   const currentLanguage =
@@ -81,8 +82,23 @@ export default function Navbar() {
   };
 
   const changeLanguage = (language: string) => {
-    document.cookie = `locale=${language}; path=/; max-age=31536000`;
+    Cookies.set("locale", language, {
+      expires: 365,
+      path: "/",
+      sameSite: "lax",
+    });
+
     setOpenDropdown(null);
+
+    const segments = pathname.split("/").filter(Boolean);
+
+    if (segments[0] === "en" || segments[0] === "ar") {
+      segments[0] = language;
+      router.replace(`/${segments.join("/")}`);
+    } else {
+      router.replace(`/${language}${pathname === "/" ? "" : pathname}`);
+    }
+
     router.refresh();
   };
 
@@ -127,9 +143,7 @@ export default function Navbar() {
                       : "text-[var(--text-muted)] hover:bg-blue-50 hover:text-primary"
                   }`}
                 >
-                  <span>
-                    {language.code === "en" ? t("english") : t("arabic")}
-                  </span>
+                  <span>{language.label}</span>
                   <span className="text-xs font-bold">{language.short}</span>
                 </button>
               ))}
@@ -160,44 +174,42 @@ export default function Navbar() {
                 </button>
               </div>
 
-              <div>
-                {notificationItems.map((item) => {
-                  const Icon = item.icon;
+              {notificationItems.map((item) => {
+                const Icon = item.icon;
 
-                  return (
+                return (
+                  <div
+                    key={item.id}
+                    className="flex gap-3 border-t border-[var(--border-color)] px-4 py-3 transition hover:bg-gray-50"
+                  >
                     <div
-                      key={item.id}
-                      className="flex gap-3 border-t border-[var(--border-color)] px-4 py-3 transition hover:bg-gray-50"
+                      className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${item.color}`}
                     >
-                      <div
-                        className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${item.color}`}
-                      >
-                        <Icon size={18} />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-3">
-                          <h4 className="text-sm font-semibold text-dark">
-                            {item.title}
-                          </h4>
-
-                          {item.unread && (
-                            <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
-                          )}
-                        </div>
-
-                        <p className="mt-1 text-sm leading-5 text-[var(--text-muted)]">
-                          {item.message}
-                        </p>
-
-                        <span className="mt-1 block text-xs text-[var(--text-placeholder)]">
-                          {item.time}
-                        </span>
-                      </div>
+                      <Icon size={18} />
                     </div>
-                  );
-                })}
-              </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <h4 className="text-sm font-semibold text-dark">
+                          {item.title}
+                        </h4>
+
+                        {item.unread && (
+                          <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                        )}
+                      </div>
+
+                      <p className="mt-1 text-sm leading-5 text-[var(--text-muted)]">
+                        {item.message}
+                      </p>
+
+                      <span className="mt-1 block text-xs text-[var(--text-placeholder)]">
+                        {item.time}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
 
               <button
                 type="button"

@@ -1,16 +1,16 @@
 import Navbar from "@/components/student/Navbar";
 import Sidebar from "@/components/student/Sidebar";
-import { Metadata } from "next";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Learnoo-Dashboard",
 };
 
-export default function RootLayout({
+export default function StudentLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />

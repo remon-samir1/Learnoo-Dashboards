@@ -21,18 +21,28 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   const cookieStore = await cookies();
-  const locale = cookieStore.get('locale')?.value || 'en';
-  const isRTL = locale === 'ar';
+  const cookieLocale = cookieStore.get("locale")?.value;
 
-  // Load messages
-  const messages = (await import(`../messages/${locale}.json`)).default;
+  const locale =
+    cookieLocale === "ar" || cookieLocale === "en" ? cookieLocale : "en";
+
+  const isRTL = locale === "ar";
+
+  const messages =
+    locale === "ar"
+      ? (await import("../messages/ar.json")).default
+      : (await import("../messages/en.json")).default;
 
   return (
-    <html lang={locale} dir={isRTL ? 'rtl' : 'ltr'} className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html
+      lang={locale}
+      dir={isRTL ? "rtl" : "ltr"}
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
       <body>
         <Providers messages={messages} locale={locale}>
           {children}

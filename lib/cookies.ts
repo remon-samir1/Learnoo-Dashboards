@@ -1,5 +1,5 @@
 // Simple cookie utility to replace js-cookie dependency
-
+//src/lib/cookies.ts
 export interface CookieAttributes {
   expires?: number | Date;
   path?: string;

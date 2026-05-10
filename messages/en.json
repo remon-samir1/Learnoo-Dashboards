@@ -111,9 +111,6 @@
     "searchPlaceholder": "Search courses, lectures, exams...",
     "notifications": "Notifications",
     "new": "new",
-    "language": "Language",
-    "english": "English",
-    "arabic": "Arabic",
     "notificationItems": {
       "courseTitle": "New course uploaded",
       "courseMessage": "Mathematics course is now available.",

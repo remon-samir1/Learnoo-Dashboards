@@ -139,9 +139,6 @@
     "searchPlaceholder": "ابحث عن الدورات، المحاضرات، الاختبارات...",
     "notifications": "الإشعارات",
     "new": "جديد",
-    "language": "اللغة",
-    "english": "الإنجليزية",
-    "arabic": "العربية",
     "notificationItems": {
       "courseTitle": "تم رفع دورة جديدة",
       "courseMessage": "دورة الرياضيات متاحة الآن.",
