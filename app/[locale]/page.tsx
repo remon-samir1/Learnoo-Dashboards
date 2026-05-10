@@ -1,6 +1,7 @@
-import React from 'react'
 
-const StudentDashboard = () => {
+
+const StudentDashboard =async () => {
+
   return (
     <div>
       hello

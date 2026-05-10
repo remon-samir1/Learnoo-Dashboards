@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import getUserDataFromJWT from './lib/server.utils';
 
 export function proxy(request: NextRequest) {
+  
   const token = request.cookies.get('token')?.value;
   const userRole = request.cookies.get('user_role')?.value;
   const locale = request.cookies.get('locale')?.value || 'en';
@@ -50,7 +52,7 @@ export function proxy(request: NextRequest) {
   }
  
   // student trying to access admin routes || doctor roles || student main page
-  if (isStudentRoute && userRole === 'Student') {
+  if (isStudentRoute && userRole === 'Student' || pathname === "/student") {
     return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
   }
 
