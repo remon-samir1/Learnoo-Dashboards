@@ -1,4 +1,3 @@
-import { useLocale } from 'next-intl';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -38,8 +37,8 @@ export function proxy(request: NextRequest) {
 
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
   const isDoctorRoute = doctorRoutes.some(route => pathname.startsWith(route));
-  const isStudentRoute = studentRoutes.some(route => pathname.startsWith(route));
-
+  const isStudentRoute = studentRoutes.some(route => pathname.startsWith(`/${locale}/${route}`));
+ 
   // Admin trying to access doctor routes
   if (isDoctorRoute && userRole !== 'Doctor') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
@@ -49,11 +48,13 @@ export function proxy(request: NextRequest) {
   if (isAdminRoute && userRole !== 'Admin') {
     return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
   }
-  // student trying to access admin routes || doctor roles
-  if (isStudentRoute && (userRole === 'Admin' || userRole === 'Doctor' || pathname === '/student')) {
-    return NextResponse.redirect(new URL(`${locale}/student`, request.url));
+ 
+  // student trying to access admin routes || doctor roles || student main page
+  if (isStudentRoute && userRole === 'Student') {
+    return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
   }
-  
+
+
   // Unknown role - redirect to login
   if (!userRole || (userRole !== 'Admin' && userRole !== 'Doctor' && userRole !== 'Student')) {
     const response = NextResponse.redirect(new URL('/login', request.url));
