@@ -230,7 +230,15 @@
       "noAcademicStructure": "لا يوجد هيكل أكاديمي متاح"
     }
   },
-  "students": {
+   "student": {
+     "home": {
+      "welcome": {
+      "title":"مرحباً بك",
+      "activeCourses": "الكورسات المفعلة",
+      "liveToday": "بث مباشر اليوم",
+      "upcomingExams": "الامتحانات المقبلة"
+    }
+     },
     "pageTitle": "إدارة الطلاب",
     "pageDescription": "إدارة حسابات الطلاب والوصول والتفاصيل.",
     "addStudent": "إضافة طالب",

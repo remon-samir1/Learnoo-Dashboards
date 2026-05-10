@@ -230,7 +230,13 @@
       "noAcademicStructure": "No academic structure available"
     }
   },
-  "students": {
+  "student": {
+     "home": {
+     "welcome": { "title":"Welcome back",
+      "activeCourses": "Active Courses",
+      "liveToday": "Live Today",
+      "upcomingExams": "Upcoming Exams"}
+    },
     "pageTitle": "Students Management",
     "pageDescription": "Manage student accounts, access, and details.",
     "addStudent": "Add Student",
