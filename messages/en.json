@@ -231,16 +231,16 @@
     }
   },
   "student": {
-     "home": {
-     "welcome": { "title":"Welcome back",
-      "activeCourses": "Active Courses",
-      "liveToday": "Live Today",
-      "upcomingExams": "Upcoming Exams"
-    },
-     "continueWatching": { 
-      "continue":"Continue Watching"
-  
-    }
+    "home": {
+      "welcome": {
+        "title": "Welcome back",
+        "activeCourses": "Active Courses",
+        "liveToday": "Live Today",
+        "upcomingExams": "Upcoming Exams"
+      },
+      "continueWatching": {
+        "continue": "Continue Watching"
+      }
     },
     "pageTitle": "Students Management",
     "pageDescription": "Manage student accounts, access, and details.",
@@ -891,6 +891,10 @@
     "deleteConfirm": "Are you sure you want to delete this session?",
     "deleteSuccess": "Session deleted successfully",
     "deleteError": "Failed to delete session",
+  "all": "All",
+  "live": "Live",
+  "upcoming": "Upcoming",
+  "ended": "Ended",
     "status": {
       "live": "LIVE",
       "upcoming": "UPCOMING",
@@ -1090,12 +1094,31 @@
     "pageDescription": "Manage instructor notes and student-created summaries.",
     "searchPlaceholder": "Search...",
     "addNote": "Add Note",
+    "all": "All",
+    "summary": "Summary",
+    "highlights": "Highlights",
+    "notes": "Notes",
+    "course": "Course",
+    "lecture": "Lecture",
+    "published": "Published",
+    "draft": "Draft",
     "filters": {
       "allTypes": "All Types",
       "summary": "Summary",
       "highlight": "Highlight",
       "keyPoint": "Key Point",
-      "importantNotice": "Important Notice"
+      "importantNotice": "Important Notice",
+      "pageTitle": "Notes & Summaries",
+      "pageDescription": "Access all your course notes, summaries, and highlights",
+      "searchPlaceholder": "Search notes...",
+      "all": "All",
+      "highlights": "Highlights",
+      "notes": "Notes",
+      "noNotes": "No notes found",
+      "course": "Course",
+      "lecture": "Lecture",
+      "published": "Published",
+      "draft": "Draft"
     },
     "table": {
       "title": "Title",
