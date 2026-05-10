@@ -235,7 +235,12 @@
      "welcome": { "title":"Welcome back",
       "activeCourses": "Active Courses",
       "liveToday": "Live Today",
-      "upcomingExams": "Upcoming Exams"}
+      "upcomingExams": "Upcoming Exams"
+    },
+     "continueWatching": { 
+      "continue":"Continue Watching"
+  
+    }
     },
     "pageTitle": "Students Management",
     "pageDescription": "Manage student accounts, access, and details.",

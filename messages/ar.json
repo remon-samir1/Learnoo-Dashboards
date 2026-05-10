@@ -236,7 +236,12 @@
       "title":"مرحباً بك",
       "activeCourses": "الكورسات المفعلة",
       "liveToday": "بث مباشر اليوم",
-      "upcomingExams": "الامتحانات المقبلة"
+      "upcomingExams": "الامتحانات المقبلة",
+      "universityFallBack": "لا يوجد"
+    },
+     "continueWatching": { 
+      "continue":"متابعة المشاهدة"
+  
     }
      },
     "pageTitle": "إدارة الطلاب",
