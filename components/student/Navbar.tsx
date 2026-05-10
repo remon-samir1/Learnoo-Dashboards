@@ -14,7 +14,7 @@ import {
   Search,
   Video,
 } from "lucide-react";
-import Cookies from "@/lib/cookies";
+import Cookies, { set } from "@/lib/cookies";
 import { useDebouncedCallback } from "use-debounce";
 
 type DropdownType = "language" | "notifications" | null;
@@ -71,9 +71,14 @@ export default function Navbar() {
 
   const [search, setSearch] = useState("");
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
-
-  const debouncedSearch = useDebouncedCallback((value) => setSearch(value), 500);
-  console.log("Search:", debouncedSearch);
+  const debounced = useDebouncedCallback(
+    // function
+    (value) => {
+      setSearch(value);
+    },
+    // delay in ms
+    1000,
+  );
 
   const currentLanguage =
     languages.find((language) => language.code === locale) || languages[0];
@@ -112,8 +117,8 @@ export default function Navbar() {
         />
 
         <input
-          value={search}
-          onChange={(e) => debouncedSearch(e.target.value)}
+          defaultValue={search}
+          onChange={(e) => debounced(e.target.value)}
           placeholder={t("searchPlaceholder")}
           className="h-10 w-full rounded-xl border border-[var(--border-color)] bg-gray-50 ps-11 pe-4 text-sm text-[var(--text-main)] outline-none transition placeholder:text-[var(--text-placeholder)] focus:border-[var(--primary-blue)] focus:bg-white"
         />
