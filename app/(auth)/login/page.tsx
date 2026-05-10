@@ -142,7 +142,7 @@ export default function LoginPage() {
         router.push('/doctor/dashboard');
       } 
        else if (userRole === 'Student') {
-        router.push('/student');
+        router.push('/ar/student');
       } 
       
       else {
