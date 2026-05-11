@@ -405,7 +405,103 @@
       "pending": "Pending",
       "declined": "Declined"
     },
+    "studentPageTitle": "My Courses",
+    "studentPageDescription": "Browse your active courses, view progress, and open course details.",
+    "studentTabs": {
+      "all": "All",
+      "courses": "Courses",
+      "finalRevision": "Final Revision",
+      "reviews": "Reviews",
+      "makeup": "Makeup"
+    },
+    "studentCategoryNames": {
+      "courses": "Courses",
+      "finalRevision": "Final Revision"
+    },
+    "studentTitleNames": {
+      "generalManagement": "General Management",
+      "financialAccounting": "Financial Accounting",
+      "microeconomics": "Microeconomics"
+    },
+    "studentResultsCount": "{count, plural, one {# course} other {# courses}}",
+    "studentCourseCard": {
+      "activateToAccess": "Activate to access",
+      "activateCourse": "Activate Course"
+    },
+    "studentStatus": {
+      "active": "Active"
+    },
+    "studentDetails": {
+      "title": "Course details",
+      "back": "Back to courses",
+      "loading": "Loading…",
+      "error": "Error",
+      "notFound": "Course not found.",
+      "invalidId": "Invalid course id.",
+      "attributesHeading": "Attributes (from API)",
+      "tabs": {
+        "lectures": "Lectures",
+        "exams": "Exams",
+        "notes": "Notes"
+      },
+      "lectureNumber": "Lecture {number}",
+      "watch": "Watch",
+      "locked": "Locked",
+      "reactivate": "Re-activate",
+      "hasExam": "Has Exam",
+      "hasPdf": "Has PDF",
+      "viewsExhausted": "Views Exhausted",
+      "partsCount": "{count} parts",
+      "viewsRemaining": "{remaining}/{max} views left",
+      "viewsUnlimited": "Unlimited views left",
+      "openPdf": "PDF",
+      "heroLectureCount": "{count} Lectures",
+      "examsEmpty": "No exams for this course.",
+      "notesEmpty": "No notes for this course.",
+      "notes": {
+        "deleteTitle": "Delete note",
+        "deleteDescription": "Are you sure you want to delete «{title}»? This action cannot be undone.",
+        "deleting": "Deleting…",
+        "updateError": "Could not update the note. Try again.",
+        "deleteError": "Could not delete the note. Try again."
+      },
+      "lecturesEmpty": "No lectures available.",
+      "lectureHeading": "Lecture {number}: {title}",
+      "chapterItemHeading": "Chapter {number}: {title}",
+      "lectureNoParts": "No video parts in this lecture yet.",
+      "statLectures": "Lectures",
+      "statChapters": "Chapters",
+      "statNotes": "Notes",
+      "statExams": "Exams",
+      "viewPdf": "View PDF",
+      "openExamsTab": "Exam",
+      "examsAvailableNow": "Available Now",
+      "examsAvailableBadge": "Available",
+      "examsStartExam": "Start Exam",
+      "examsDurationMinutes": "{count} minutes",
+      "examsQuestionCount": "{count} questions",
+      "examsPassMarks": "Pass {passing} / {total} marks",
+      "examsAttemptsAllowed": "{count} attempts",
+      "examsDeadline": "Ends {date}",
+      "examsChapterCourse": "Course",
+      "examsChapterFallback": "Chapter {id}",
+      "examsNoActiveExams": "No exams are available to start right now.",
+      "examsUpcomingTitle": "Upcoming Exams",
+      "examsCompletedTitle": "Completed Exams",
+      "examsLockedTitle": "Locked Exams",
+      "examsDaysLeft": "{count, plural, one {# day left} other {# days left}}",
+      "examsUpcomingFallback": "Upcoming",
+      "examsScheduled": "Scheduled",
+      "examsViewResults": "View Results",
+      "examsNotAvailable": "Not Available",
+      "examsQuestionsAndDuration": "{questions} questions • {minutes} minutes",
+      "watchPageTitle": "Watch lecture",
+      "watchBack": "Back to course",
+      "watchNotFound": "This chapter could not be found.",
+      "watchNoVideo": "No video is available for this chapter."
+    },
     "card": {
+      "progress": "Progress",
       "lectures": "lectures",
       "notes": "notes",
       "exams": "exams",
@@ -460,6 +556,8 @@
       "uploading": "Uploading..."
     },
     "view": {
+      "openCourse": "Open course",
+      "locked": "Locked",
       "loading": "Loading course details...",
       "error": "Error Loading Course",
       "notFound": "Course not found",

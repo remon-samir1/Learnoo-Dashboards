@@ -8,8 +8,14 @@ interface DeleteModalProps {
   onClose: () => void;
   onConfirm: () => void;
   title: string;
-  itemName: string;
+  /** Used in the default English body when `description` is not set */
+  itemName?: string;
   isLoading?: boolean;
+  /** When set, replaces the default confirmation paragraph (use for i18n) */
+  description?: React.ReactNode;
+  cancelLabel?: string;
+  confirmLabel?: string;
+  confirmLoadingLabel?: string;
 }
 
 export function DeleteModal({
@@ -17,8 +23,12 @@ export function DeleteModal({
   onClose,
   onConfirm,
   title,
-  itemName,
+  itemName = '',
   isLoading = false,
+  description,
+  cancelLabel = 'Cancel',
+  confirmLabel = 'Delete',
+  confirmLoadingLabel = 'Deleting...',
 }: DeleteModalProps) {
   if (!isOpen) return null;
 
@@ -33,8 +43,12 @@ export function DeleteModal({
             <div className="flex-1">
               <h3 className="text-lg font-bold text-[#1E293B] mb-1">{title}</h3>
               <p className="text-sm text-[#64748B]">
-                Are you sure you want to delete <strong className="text-[#1E293B]">{itemName}</strong>?
-                This action cannot be undone.
+                {description ?? (
+                  <>
+                    Are you sure you want to delete{' '}
+                    <strong className="text-[#1E293B]">{itemName}</strong>? This action cannot be undone.
+                  </>
+                )}
               </p>
             </div>
             <button
@@ -52,7 +66,7 @@ export function DeleteModal({
             disabled={isLoading}
             className="px-4 py-2 bg-white border border-[#E2E8F0] rounded-xl text-sm font-medium text-[#475569] hover:bg-[#F8FAFC] transition-all disabled:opacity-50"
           >
-            Cancel
+            {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
@@ -60,7 +74,7 @@ export function DeleteModal({
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isLoading ? 'Deleting...' : 'Delete'}
+            {isLoading ? confirmLoadingLabel : confirmLabel}
           </button>
         </div>
       </div>

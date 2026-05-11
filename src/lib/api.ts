@@ -369,7 +369,7 @@ function buildFormData(data: Record<string, unknown>): FormData {
     if (value instanceof File) {
       formData.append(key, value);
     } else if (Array.isArray(value)) {
-      value.forEach((item) => {
+      value.forEach((item, index) => {
         if (item instanceof File) {
           formData.append(`${key}[${index}]`, item);
         } else if (typeof item === 'boolean') {

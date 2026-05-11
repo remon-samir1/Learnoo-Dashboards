@@ -89,7 +89,7 @@ export function ActivityItemSkeleton() {
 export function CourseCardSkeleton() {
   return (
     <div className="bg-white border border-[#F1F5F9] rounded-2xl overflow-hidden shadow-sm">
-      <Skeleton width="100%" height={192} />
+      <Skeleton width="100%" height={208} className="rounded-none" />
       <div className="p-4">
         <Skeleton width="90%" height={18} className="mb-2" />
         <Skeleton width="60%" height={14} className="mb-4" />

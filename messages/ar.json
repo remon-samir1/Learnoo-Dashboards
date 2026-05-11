@@ -405,7 +405,103 @@
       "pending": "قيد الانتظار",
       "declined": "مرفوض"
     },
+    "studentPageTitle": "دوراتي",
+    "studentPageDescription": "تصفح دوراتك النشطة، واطلع على التقدم، وافتح تفاصيل الدورة.",
+    "studentTabs": {
+      "all": "الكل",
+      "courses": "الدورات",
+      "finalRevision": "المراجعات النهائية",
+      "reviews": "المراجعات",
+      "makeup": "دورات التعويض"
+    },
+    "studentCategoryNames": {
+      "courses": "الدورات",
+      "finalRevision": "المراجعات النهائية"
+    },
+    "studentTitleNames": {
+      "generalManagement": "ادارة عامة",
+      "financialAccounting": "محاسبة مالية",
+      "microeconomics": "الاقتصاد الجزئي"
+    },
+    "studentResultsCount": "{count, plural, one {# دورة} other {# دورات}}",
+    "studentCourseCard": {
+      "activateToAccess": "فعّل للوصول",
+      "activateCourse": "تفعيل الدورة"
+    },
+    "studentStatus": {
+      "active": "نشط"
+    },
+    "studentDetails": {
+      "title": "تفاصيل الدورة",
+      "back": "العودة إلى الدورات",
+      "loading": "جارٍ التحميل…",
+      "error": "خطأ",
+      "notFound": "الدورة غير موجودة.",
+      "invalidId": "معرّف الدورة غير صالح.",
+      "attributesHeading": "الخصائص (من واجهة البرمجة)",
+      "tabs": {
+        "lectures": "المحاضرات",
+        "exams": "الاختبارات",
+        "notes": "الملاحظات"
+      },
+      "lectureNumber": "محاضرة {number}",
+      "watch": "مشاهدة",
+      "locked": "مقفل",
+      "reactivate": "إعادة التفعيل",
+      "hasExam": "يحتوي على امتحان",
+      "hasPdf": "يحتوي على PDF",
+      "viewsExhausted": "انتهت المشاهدات",
+      "partsCount": "{count} أجزاء",
+      "viewsRemaining": "{remaining}/{max} مشاهدات متبقية",
+      "viewsUnlimited": "مشاهدات غير محدودة",
+      "openPdf": "PDF",
+      "heroLectureCount": "{count} محاضرات",
+      "examsEmpty": "لا توجد اختبارات لهذه الدورة.",
+      "notesEmpty": "لا توجد ملاحظات لهذه الدورة.",
+      "notes": {
+        "deleteTitle": "حذف الملاحظة",
+        "deleteDescription": "هل أنت متأكد أنك تريد حذف «{title}»؟ لا يمكن التراجع عن هذا الإجراء.",
+        "deleting": "جارٍ الحذف…",
+        "updateError": "تعذّر تحديث الملاحظة. حاول مرة أخرى.",
+        "deleteError": "تعذّر حذف الملاحظة. حاول مرة أخرى."
+      },
+      "lecturesEmpty": "لا توجد محاضرات متاحة.",
+      "lectureHeading": "المحاضرة {number}: {title}",
+      "chapterItemHeading": "الفصل {number}: {title}",
+      "lectureNoParts": "لا توجد أجزاء فيديو في هذه المحاضرة بعد.",
+      "statLectures": "محاضرات",
+      "statChapters": "فصول",
+      "statNotes": "ملاحظات",
+      "statExams": "اختبارات",
+      "viewPdf": "عرض PDF",
+      "openExamsTab": "الامتحان",
+      "examsAvailableNow": "متاح الآن",
+      "examsAvailableBadge": "متاح",
+      "examsStartExam": "بدء الامتحان",
+      "examsDurationMinutes": "{count} دقيقة",
+      "examsQuestionCount": "{count} سؤال",
+      "examsPassMarks": "النجاح {passing} / {total} درجة",
+      "examsAttemptsAllowed": "{count} محاولات",
+      "examsDeadline": "ينتهي {date}",
+      "examsChapterCourse": "الدورة",
+      "examsChapterFallback": "الفصل {id}",
+      "examsNoActiveExams": "لا توجد امتحانات متاحة للبدء حالياً.",
+      "examsUpcomingTitle": "الامتحانات القادمة",
+      "examsCompletedTitle": "الامتحانات المكتملة",
+      "examsLockedTitle": "الامتحانات المقفلة",
+      "examsDaysLeft": "{count, plural, one {يوم واحد متبقي} other {{count} أيام متبقية}}",
+      "examsUpcomingFallback": "قادم",
+      "examsScheduled": "مجدول",
+      "examsViewResults": "عرض النتائج",
+      "examsNotAvailable": "غير متاح",
+      "examsQuestionsAndDuration": "{questions} سؤال • {minutes} دقيقة",
+      "watchPageTitle": "مشاهدة المحاضرة",
+      "watchBack": "العودة إلى الدورة",
+      "watchNotFound": "تعذر العثور على هذا الفصل.",
+      "watchNoVideo": "لا يتوفر فيديو لهذا الفصل."
+    },
     "card": {
+      "progress": "التقدم",
       "lectures": "محاضرات",
       "notes": "ملاحظات",
       "exams": "اختبارات",
@@ -460,6 +556,8 @@
       "uploading": "جارٍ الرفع..."
     },
     "view": {
+      "openCourse": "فتح الدورة",
+      "locked": "مقفل",
       "loading": "جارٍ تحميل تفاصيل الدورة...",
       "error": "خطأ في تحميل الدورة",
       "notFound": "الدورة غير موجودة",

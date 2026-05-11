@@ -1230,6 +1230,11 @@ export interface CourseAttributes {
 
 
 
+  /** When true, student sees locked card UI until course is activated. */
+  is_locked?: boolean;
+
+
+
   reason: string | null;
 
 
@@ -1271,6 +1276,10 @@ export interface CourseAttributes {
 
 
         full_name: string;
+
+
+
+        image?: string | null;
 
 
 

@@ -15,12 +15,12 @@ export default function AdminLayout({
     <div className="flex h-screen bg-[#FFFFFB] font-sans overflow-hidden">
       {/* Sidebar - Fixed, scrollable independently */}
       <div className={`flex-shrink-0 h-screen overflow-y-auto overflow-x-hidden transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
-        <Sidebar 
-          isCollapsed={isSidebarCollapsed} 
-          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
       </div>
-      
+
       {/* Main Content Area - Scrollable independently */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Header />

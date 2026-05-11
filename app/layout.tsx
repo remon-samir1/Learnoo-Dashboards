@@ -43,7 +43,8 @@ export default async function RootLayout({
       dir={isRTL ? "rtl" : "ltr"}
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
-      <body>
+      {/* Extensions (e.g. ColorZilla: cz-shortcut-listen) mutate <body> before hydration */}
+      <body suppressHydrationWarning>
         <Providers messages={messages} locale={locale}>
           {children}
         </Providers>

@@ -12,14 +12,16 @@ import {
   HelpCircle,
   Home,
   Library,
+  Menu,
   NotebookText,
   Settings,
   User,
   Users,
   Video,
+  X,
   type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Logout from "./Logout";
 
 type SidebarItem = {
@@ -52,12 +54,14 @@ function NavItem({
   href,
   collapsed,
   active,
+  onNavigate,
 }: {
   item: SidebarItem;
   label: string;
   href: string;
   collapsed: boolean;
   active: boolean;
+  onNavigate?: () => void;
 }) {
   const Icon = item.icon;
 
@@ -65,6 +69,7 @@ function NavItem({
     <Link
       href={href}
       title={collapsed ? label : undefined}
+      onClick={onNavigate}
       className={`group relative flex items-center rounded-xl border border-transparent text-sm font-medium transition-all duration-200 ${
         collapsed ? "justify-center py-3" : "gap-3 px-3 py-2.5"
       } ${
@@ -101,12 +106,51 @@ function NavItem({
   );
 }
 
+const MOBILE_BREAKPOINT_QUERY = "(max-width: 767px)";
+
 export default function Sidebar() {
   const t = useTranslations("sidebar");
   const common = useTranslations("common");
   const locale = useLocale();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_BREAKPOINT_QUERY);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    closeMobile();
+  }, [pathname, closeMobile]);
+
+  useEffect(() => {
+    if (!isMobile) setMobileOpen(false);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!isMobile || !mobileOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMobile();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isMobile, mobileOpen, closeMobile]);
 
   const withLocale = (href: string) => `/${locale}${href}`;
 
@@ -120,108 +164,164 @@ export default function Sidebar() {
     return pathname.startsWith(localizedHref);
   };
 
-  return (
-    <aside
-      className={`sticky top-0 h-screen shrink-0 border-e border-[var(--border-color)] bg-[var(--card-bg)] transition-all duration-300 ${
-        collapsed ? "w-[100px]" : "w-[240px]"
-      }`}
-    >
-      <button
-        type="button"
-        onClick={() => setCollapsed((prev) => !prev)}
-        aria-label="Toggle sidebar"
-        className={`absolute -end-3 top-20 z-50 flex size-7 items-center justify-center rounded-full border shadow-md transition-all duration-300 ${
-          collapsed
-            ? "border-white bg-[var(--primary)] text-white hover:opacity-90"
-            : "border-[var(--primary)] bg-[var(--card-bg)] text-[var(--primary)] hover:bg-blue-50"
-        }`}
-      >
-        <ChevronLeft
-          size={16}
-          className={`transition-transform duration-300 ${
-            collapsed ? "rotate-180" : ""
-          }`}
-        />
-      </button>
+  const onItemNavigate = isMobile ? closeMobile : undefined;
 
-      <div className="sidebar-scroll h-full overflow-y-auto px-3 py-3 pb-10">
-        <div className="flex min-h-full flex-col">
-          <Link
-            href={withLocale("/student")}
-            className="mb-6 flex items-center justify-center"
-          >
-            <div className="flex items-center">
-              <div className="relative size-12 shrink-0">
-                <Image
-                  src="/logo.svg"
-                  alt="Learnoo Logo"
-                  fill
-                  sizes="48px"
-                  className="object-contain"
-                  priority
-                />
-              </div>
-
-              {!collapsed && (
-                <span className="text-xl font-bold text-[var(--primary)]">
-                  Learnoo
-                </span>
-              )}
+  const sidebarInner = (effectiveCollapsed: boolean) => (
+    <div className="sidebar-scroll h-full overflow-y-auto px-3 py-3 pb-10">
+      <div className="flex min-h-full flex-col">
+        <Link
+          href={withLocale("/student")}
+          className="mb-6 flex items-center justify-center"
+          onClick={onItemNavigate}
+        >
+          <div className="flex items-center">
+            <div className="relative size-12 shrink-0">
+              <Image
+                src="/logo.svg"
+                alt="Learnoo Logo"
+                fill
+                sizes="48px"
+                className="object-contain"
+                priority
+              />
             </div>
-          </Link>
 
-          <div className="flex-1">
-            {!collapsed && (
-              <p className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-placeholder)]">
-                {common("mainMenu")}
-              </p>
+            {!effectiveCollapsed && (
+              <span className="text-xl font-bold text-[var(--primary)]">
+                Learnoo
+              </span>
             )}
-
-            {sections.map((items, index) => (
-              <nav
-                key={index}
-                className={
-                  index
-                    ? "mt-4 space-y-1 border-t border-[var(--border-color)] pt-4"
-                    : "space-y-1"
-                }
-              >
-                {items.map((item) => (
-                  <NavItem
-                    key={item.href}
-                    item={item}
-                    label={t(item.key)}
-                    href={withLocale(item.href)}
-                    collapsed={collapsed}
-                    active={isActive(item.href)}
-                  />
-                ))}
-              </nav>
-            ))}
           </div>
+        </Link>
 
-          <div className="mt-4 border-t border-[var(--border-color)] pt-4">
-            {!collapsed && (
-              <div className="mb-3 flex items-center gap-2 rounded-xl bg-gray-50 p-2.5">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white">
-                  AH
-                </div>
+        <div className="flex-1">
+          {!effectiveCollapsed && (
+            <p className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-placeholder)]">
+              {common("mainMenu")}
+            </p>
+          )}
 
-                <div className="min-w-0">
-                  <h4 className="truncate text-sm font-semibold text-[var(--text-dark)]">
-                    Ahmed Hassan
-                  </h4>
-                  <p className="truncate text-xs text-[var(--text-muted)]">
-                    Online University
-                  </p>
-                </div>
+          {sections.map((items, index) => (
+            <nav
+              key={index}
+              className={
+                index
+                  ? "mt-4 space-y-1 border-t border-[var(--border-color)] pt-4"
+                  : "space-y-1"
+              }
+            >
+              {items.map((item) => (
+                <NavItem
+                  key={item.href}
+                  item={item}
+                  label={t(item.key)}
+                  href={withLocale(item.href)}
+                  collapsed={effectiveCollapsed}
+                  active={isActive(item.href)}
+                  onNavigate={onItemNavigate}
+                />
+              ))}
+            </nav>
+          ))}
+        </div>
+
+        <div className="mt-4 border-t border-[var(--border-color)] pt-4">
+          {!effectiveCollapsed && (
+            <div className="mb-3 flex items-center gap-2 rounded-xl bg-gray-50 p-2.5">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--primary)] text-xs font-bold text-white">
+                AH
               </div>
-            )}
 
-            <Logout collapsed={collapsed} />
-          </div>
+              <div className="min-w-0">
+                <h4 className="truncate text-sm font-semibold text-[var(--text-dark)]">
+                  Ahmed Hassan
+                </h4>
+                <p className="truncate text-xs text-[var(--text-muted)]">
+                  Online University
+                </p>
+              </div>
+            </div>
+          )}
+
+          <Logout collapsed={effectiveCollapsed} />
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <div className="relative w-0 shrink-0 overflow-visible md:w-auto md:shrink-0">
+      <div className="md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          aria-expanded={mobileOpen}
+          aria-controls="student-sidebar-drawer"
+          className={`fixed start-3 top-[calc(4.25rem+env(safe-area-inset-top,0px))] z-[100] flex size-11 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--primary)] shadow-md transition hover:bg-blue-50 ${
+            mobileOpen ? "pointer-events-none opacity-0" : ""
+          }`}
+        >
+          <Menu size={22} />
+        </button>
+
+        <div
+          className={`fixed inset-0 z-[90] bg-black/40 transition-opacity duration-300 md:hidden ${
+            mobileOpen
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
+          }`}
+          aria-hidden={!mobileOpen}
+          onClick={closeMobile}
+        />
+
+        <aside
+          id="student-sidebar-drawer"
+          className={`fixed inset-y-0 start-0 z-[95] flex h-[100dvh] w-[min(100vw-3rem,280px)] max-w-[100vw] border-e border-[var(--border-color)] bg-[var(--card-bg)] shadow-xl transition-transform duration-300 ease-out md:hidden ${
+            mobileOpen
+              ? "translate-x-0"
+              : "pointer-events-none ltr:-translate-x-full rtl:translate-x-full"
+          }`}
+          aria-hidden={!mobileOpen}
+        >
+          <button
+            type="button"
+            onClick={closeMobile}
+            aria-label="Close menu"
+            className="absolute end-3 top-3 z-10 flex size-9 items-center justify-center rounded-lg border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--text-muted)] transition hover:bg-blue-50 hover:text-[var(--primary)]"
+          >
+            <X size={18} />
+          </button>
+
+          {sidebarInner(false)}
+        </aside>
+      </div>
+
+      <aside
+        className={`sticky top-0 hidden h-screen shrink-0 border-e border-[var(--border-color)] bg-[var(--card-bg)] transition-all duration-300 md:block ${
+          collapsed ? "w-[100px]" : "w-[240px]"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => setCollapsed((prev) => !prev)}
+          aria-label="Toggle sidebar"
+          className={`absolute -end-3 top-20 z-50 hidden size-7 items-center justify-center rounded-full border shadow-md transition-all duration-300 md:flex ${
+            collapsed
+              ? "border-white bg-[var(--primary)] text-white hover:opacity-90"
+              : "border-[var(--primary)] bg-[var(--card-bg)] text-[var(--primary)] hover:bg-blue-50"
+          }`}
+        >
+          <ChevronLeft
+            size={16}
+            className={`transition-transform duration-300 ${
+              collapsed ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {sidebarInner(collapsed)}
+      </aside>
+    </div>
   );
 }
