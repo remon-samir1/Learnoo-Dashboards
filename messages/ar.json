@@ -230,7 +230,19 @@
       "noAcademicStructure": "لا يوجد هيكل أكاديمي متاح"
     }
   },
-  "students": {
+  "student": {
+    "home": {
+      "welcome": {
+        "title": "مرحباً بك",
+        "activeCourses": "الكورسات المفعلة",
+        "liveToday": "بث مباشر اليوم",
+        "upcomingExams": "الامتحانات المقبلة",
+        "universityFallBack": "لا يوجد"
+      },
+      "continueWatching": {
+        "continue": "متابعة المشاهدة"
+      }
+    },
     "pageTitle": "إدارة الطلاب",
     "pageDescription": "إدارة حسابات الطلاب والوصول والتفاصيل.",
     "addStudent": "إضافة طالب",
@@ -978,6 +990,10 @@
     "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الجلسة؟",
     "deleteSuccess": "تم حذف الجلسة بنجاح",
     "deleteError": "فشل حذف الجلسة",
+    "all": "الكل",
+    "live": "مباشر",
+    "upcoming": "القادمة",
+    "ended": "المنتهية",
     "status": {
       "live": "مباشر",
       "upcoming": "قادم",
@@ -1177,12 +1193,31 @@
     "pageDescription": "إدارة ملاحظات المدرسين والملخصات التي أنشأها الطلاب.",
     "searchPlaceholder": "بحث...",
     "addNote": "إضافة ملاحظة",
+    "all": "الكل",
+    "summary": "الملخصات",
+    "highlights": "النقاط المهمة",
+    "notes": "الملاحظات",
+    "course": "الكورس",
+    "lecture": "المحاضرة",
+    "published": "منشور",
+    "draft": "مسودة",
     "filters": {
       "allTypes": "جميع الأنواع",
       "summary": "ملخص",
       "highlight": "تظليل",
       "keyPoint": "نقطة رئيسية",
-      "importantNotice": "إشعار مهم"
+      "importantNotice": "إشعار مهم",
+      "pageTitle": "الملاحظات والملخصات",
+      "pageDescription": "اطلع على كل ملاحظاتك وملخصاتك وأهم النقاط",
+      "all": "الكل",
+      "searchPlaceholder": "ابحث في الملاحظات...",
+      "highlights": "النقاط المهمة",
+      "notes": "الملاحظات",
+      "noNotes": "لا توجد ملاحظات",
+      "course": "الكورس",
+      "lecture": "المحاضرة",
+      "published": "منشور",
+      "draft": "مسودة"
     },
     "table": {
       "title": "العنوان",

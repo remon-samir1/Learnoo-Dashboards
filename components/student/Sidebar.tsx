@@ -315,7 +315,13 @@ export default function Sidebar() {
           <ChevronLeft
             size={16}
             className={`transition-transform duration-300 ${
-              collapsed ? "rotate-180" : ""
+              collapsed
+                ? locale === "en"
+                  ? "rotate-180"
+                  : ""
+                : locale === "ar"
+                  ? "rotate-180"
+                  : ""
             }`}
           />
         </button>
