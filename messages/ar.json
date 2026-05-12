@@ -1,0 +1,1695 @@
+{
+  "app": {
+    "name": "Learnoo Admin",
+    "tagline": "Pro Instructor"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "save": "حفظ",
+    "saving": "جاري الحفظ...",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "view": "عرض",
+    "search": "بحث",
+    "filter": "تصفية",
+    "status": "الحالة",
+    "actions": "إجراءات",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "add": "إضافة",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "submit": "إرسال",
+    "back": "العودة لتسجيل الدخول",
+    "next": "التالي",
+    "previous": "السابق",
+    "soon": "قريباً",
+    "comingSoon": "قريباً",
+    "success": "نجاح",
+    "error": "خطأ",
+    "deleteSuccess": "تم الحذف بنجاح",
+    "deleteError": "فشل الحذف",
+    "warning": "تحذير",
+    "info": "معلومات",
+    "all": "الكل",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "suspended": "موقوف",
+    "showing": "عرض",
+    "to": "إلى",
+    "of": "من",
+    "results": "نتائج",
+    "noResults": "لا توجد نتائج",
+    "notFound": "غير موجود",
+    "unknown": "غير معروف",
+    "na": "غير متاح",
+    "mainMenu": "القائمة الرئيسية",
+    "logout": "تسجيل الخروج",
+    "logoutConfirm": "هل أنت متأكد من أنك تريد تسجيل الخروج؟",
+    "welcome": "مرحباً",
+    "dashboard": "لوحة التحكم"
+  },
+  "auth": {
+    "login": {
+      "title": "Learnoo Admin",
+      "subtitle": "سجل الدخول لإدارة منصتك",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "emailPlaceholder": "admin@learnoo.com",
+      "passwordPlaceholder": "أدخل كلمة المرور",
+      "rememberMe": "تذكرني",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "signIn": "تسجيل الدخول",
+      "signingIn": "جارٍ تسجيل الدخول...",
+      "noAccount": "ليس لديك حساب؟",
+      "createAccount": "إنشاء حساب",
+      "errors": {
+        "missingFields": "الرجاء إدخال البريد الإلكتروني وكلمة المرور",
+        "loginFailed": "فشل تسجيل الدخول",
+        "noToken": "لم يتم استلام الرمز المميز",
+        "noPermission": "ليس لديك صلاحية للوصول إلى هذه المنصة"
+      }
+    },
+    "forgotPassword": {
+      "title": "نسيت كلمة المرور",
+      "subtitle": "أدخل بريدك الإلكتروني لإعادة تعيين كلمة المرور",
+      "email": "البريد الإلكتروني",
+      "submit": "إعادة تعيين كلمة المرور",
+      "backToLogin": "العودة لتسجيل الدخول"
+    },
+    "createAccount": {
+      "title": "إنشاء حساب",
+      "subtitle": "سجل للوصول إلى المنصة",
+      "firstName": "الاسم الأول",
+      "lastName": "الاسم الأخير",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "submit": "إنشاء حساب",
+      "haveAccount": "لديك حساب بالفعل؟",
+      "login": "تسجيل الدخول"
+    },
+    "verification": {
+      "title": "رمز التحقق",
+      "subtitle": "أدخل الرمز المرسل إلى بريدك الإلكتروني",
+      "code": "رمز التحقق",
+      "verify": "تحقق",
+      "resend": "إعادة إرسال الرمز"
+    },
+    "resetPassword": {
+      "title": "إعادة تعيين كلمة المرور",
+      "subtitle": "أدخل كلمة المرور الجديدة",
+      "newPassword": "كلمة المرور الجديدة",
+      "confirmPassword": "تأكيد كلمة المرور",
+      "submit": "إعادة تعيين كلمة المرور"
+    }
+  },
+  "sidebar": {
+    "dashboard": "لوحة التحكم",
+    "academicStructure": "الهيكل الأكاديمي",
+    "universities": "الجامعات",
+    "faculties": "الكليات",
+    "centers": "المراكز",
+    "departments": "الأقسام",
+    "instructors": "المدربون",
+    "students": "الطلاب",
+    "activation": "التفعيل",
+    "myCourses": "دوراتي",
+    "contentManager": "مدير المحتوى",
+    "liveSessions": "الجلسات المباشرة",
+    "examsAndQA": "الاختبارات والأسئلة",
+    "community": "المجتمع",
+    "notesSummaries": "الملاحظات والملخصات",
+    "electronicLibrary": "المكتبة الإلكترونية",
+    "notifications": "الإشعارات",
+    "downloads": "التنزيلات",
+    "profileSettings": "الملف الشخصي والإعدادات",
+    "featureControl": "التحكم في الميزات",
+    "otaUpload": "رفع تحديثات الهواء",
+    "adminDashboard": "لوحة تحكم المشرف",
+    "instructorDashboard": "لوحة تحكم المدرب",
+    "doctorDashboard": "لوحة تحكم الدكتور"
+  },
+  "header": {
+    "titles": {
+      "dashboard": "نظرة عامة على لوحة التحكم",
+      "students": "إدارة الطلاب",
+      "courses": "دوراتي",
+      "centers": "المراكز",
+      "departments": "الهيكل الأكاديمي",
+      "faculties": "الكليات",
+      "universities": "الجامعات",
+      "levels": "المستويات",
+      "lectures": "المحاضرات",
+      "chapters": "الفصول",
+      "exams": "الاختبارات والأسئلة",
+      "academicStructure": "الهيكل الأكاديمي",
+      "contentManager": "مدير المحتوى",
+      "community": "المجتمع",
+      "electronicLibrary": "المكتبة الإلكترونية",
+      "notesSummaries": "الملاحظات والملخصات",
+      "liveSessions": "الجلسات المباشرة",
+      "notifications": "الإشعارات",
+      "downloads": "التنزيلات",
+      "settings": "الإعدادات",
+      "platformSettings": "إعدادات المنصة",
+      "featureControl": "التحكم في الميزات",
+      "featureControlPanel": "لوحة التحكم في الميزات",
+      "create": "إنشاء",
+      "edit": "تعديل",
+      "details": "التفاصيل",
+      "liveRoom": "غرفة البث المباشر",
+      "activation": "التفعيل"
+    }
+  },
+  "instructors": {
+    "pageTitle": "إدارة المدربين",
+    "pageDescription": "إدارة حسابات المدربين والتفاصيل.",
+    "addInstructor": "إضافة مدرب",
+    "name": "الاسم",
+    "email": "البريد الإلكتروني",
+    "phone": "الهاتف",
+    "specialization": "التخصص",
+    "status": "الحالة",
+    "actions": "إجراءات",
+    "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+    "noInstructors": "لم يتم العثور على مدربين. أضف أول مدرب!",
+    "deleteConfirm": "هل أنت متأكد من حذف هذا المدرب؟",
+    "form": {
+      "addTitle": "إضافة مدرب جديد",
+      "addDescription": "إنشاء حساب مدرب جديد وتعيينه للمراكز.",
+      "editTitle": "تعديل المدرب",
+      "editDescription": "تحديث تفاصيل المدرب والتعيينات.",
+      "sections": {
+        "personal": "المعلومات الشخصية",
+        "academic": "المعلومات الأكاديمية",
+        "centers": "المراكز"
+      },
+      "firstName": "الاسم الأول",
+      "firstNamePlaceholder": "أدخل الاسم الأول",
+      "lastName": "اسم العائلة",
+      "lastNamePlaceholder": "أدخل اسم العائلة",
+      "email": "البريد الإلكتروني",
+      "emailPlaceholder": "أدخل البريد الإلكتروني",
+      "phone": "الهاتف",
+      "phonePlaceholder": "أدخل رقم الهاتف",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "أدخل كلمة المرور (اتركها فارغة للحفاظ على الحالية)",
+      "passwordHint": "اتركها فارغة للحفاظ على كلمة المرور الحالية",
+      "image": "صورة الملف الشخصي",
+      "specialization": "التخصص",
+      "specializationPlaceholder": "أدخل التخصص",
+      "status": "الحالة",
+      "university": "الجامعة",
+      "selectUniversity": "اختر الجامعة",
+      "faculty": "الكلية",
+      "selectFaculty": "اختر الكلية",
+      "selectCenter": "اختر المركز",
+      "selected": "المحدد",
+      "noAcademicStructure": "لا يوجد هيكل أكاديمي متاح"
+    }
+  },
+  "students": {
+    "pageTitle": "إدارة الطلاب",
+    "pageDescription": "إدارة حسابات الطلاب والوصول والتفاصيل.",
+    "addStudent": "إضافة طالب",
+    "studentCode": "رمز الطالب",
+    "nameContact": "الاسم ومعلومات الاتصال",
+    "university": "الجامعة",
+    "centers": "المراكز",
+    "status": "الحالة",
+    "actions": "إجراءات",
+    "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+    "allStatuses": "جميع الحالات",
+    "noPhone": "لا يوجد هاتف",
+    "viewProfile": "عرض الملف الشخصي",
+    "resetPassword": "إعادة تعيين كلمة المرور",
+    "editStudent": "تعديل الطالب",
+    "deleteStudent": "حذف الطالب",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذا الطالب؟",
+    "noStudents": "لم يتم العثور على طلاب. أضف طالبك الأول!",
+    "statusLabels": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "suspended": "موقوف"
+    },
+    "modals": {
+      "resetPassword": {
+        "title": "إعادة تعيين كلمة المرور",
+        "description": "أنت على وشك إعادة تعيين كلمة المرور لـ",
+        "passwordResetMessage": "تم إعادة تعيين كلمة المرور لـ",
+        "newPassword": "كلمة المرور المُنشأة (للمشرف فقط):",
+        "close": "إغلاق",
+        "confirm": "تأكيد إعادة التعيين",
+        "error": "فشل إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى."
+      }
+    },
+    "form": {
+      "addTitle": "إضافة طالب جديد",
+      "addDescription": "إنشاء حساب طالب جديد وتعيين الدورات.",
+      "editTitle": "تعديل الطالب",
+      "editDescription": "تحديث تفاصيل حساب الطالب وتعيينات الدورات.",
+      "sections": {
+        "personal": "المعلومات الشخصية",
+        "academic": "المعلومات الأكاديمية",
+        "centers": "المراكز والدورات",
+        "profileImage": "الصورة الشخصية",
+        "accountStatus": "حالة الحساب"
+      },
+      "fields": {
+        "firstName": "الاسم الأول",
+        "lastName": "الاسم الأخير",
+        "phone": "رقم الهاتف",
+        "email": "عنوان البريد الإلكتروني",
+        "password": "كلمة المرور",
+        "passwordOptional": "كلمة المرور (اتركها فارغة للاحتفاظ بالحالية)",
+        "university": "الجامعة",
+        "faculty": "الكلية",
+        "centers": "المراكز (اختيار متعدد)",
+        "courses": "الدورات المعينة (اختيار متعدد)",
+        "status": "الحالة",
+        "profileImage": "الصورة الشخصية",
+        "selectUniversity": "اختر الجامعة",
+        "selectFaculty": "اختر الكلية",
+        "selectCenter": "اختر المركز",
+        "selectCourse": "اختر الدورة",
+        "noCentersSelected": "لم يتم اختيار مراكز",
+        "noCoursesSelected": "لم يتم اختيار دورات",
+        "placeholders": {
+          "firstName": "أحمد",
+          "lastName": "علي",
+          "phone": "+20 100 123 4567",
+          "email": "student@university.edu",
+          "password": "********"
+        }
+      },
+      "buttons": {
+        "cancel": "إلغاء",
+        "create": "إنشاء طالب",
+        "update": "تحديث الطالب",
+        "creating": "جارٍ الإنشاء...",
+        "updating": "جارٍ التحديث..."
+      },
+      "view": {
+        "studentId": "رمز الطالب",
+        "lastActive": "آخر نشاط",
+        "editStudent": "تعديل الطالب",
+        "sections": {
+          "personal": "المعلومات الشخصية",
+          "academic": "المعلومات الأكاديمية",
+          "enrolledCourses": "الدورات المسجلة",
+          "examResults": "نتائج الامتحانات",
+          "security": "الأمان والوصول إلى الحساب",
+          "centers": "المراكز",
+          "activity": "ملخص النشاط",
+          "device": "الجهاز والوصول"
+        },
+        "fields": {
+          "fullName": "الاسم الكامل",
+          "status": "الحالة",
+          "email": "البريد الإلكتروني",
+          "phone": "الهاتف",
+          "joined": "تاريخ الانضمام",
+          "university": "الجامعة",
+          "faculty": "الكلية",
+          "lectures": "محاضرات",
+          "chapters": "فصول",
+          "exams": "امتحانات",
+          "exam": "الامتحان",
+          "score": "الدرجة",
+          "date": "التاريخ",
+          "notesCreated": "الملاحظات المنشأة",
+          "downloads": "التنزيلات",
+          "liveAttendance": "حضور البث المباشر",
+          "communityPosts": "منشورات المجتمع",
+          "device": "الجهاز",
+          "lastIp": "آخر عنوان IP",
+          "resetPassword": "إعادة تعيين كلمة المرور"
+        },
+        "noCourses": "لم يتم العثور على دورات مسجلة",
+        "noExams": "لم يتم العثور على نتائج امتحانات",
+        "noCenters": "لم يتم تعيين مراكز",
+        "loadError": "فشل تحميل بيانات الطالب",
+        "backToStudents": "العودة إلى الطلاب"
+      }
+    },
+    "import": {
+      "selectFile": "اختيار ملف",
+      "uploading": "جارٍ الرفع...",
+      "success": "نجاح",
+      "failed": "فشل"
+    },
+    "openFile": "فتح الملف"
+  },
+  "dashboard": {
+    "stats": {
+      "totalStudents": "إجمالي الطلاب",
+      "activeCourses": "الدورات النشطة",
+      "liveSessionsToday": "الجلسات المباشرة اليوم",
+      "notesCreated": "الملاحظات المنشأة",
+      "monthlyRevenue": "الإيرادات الشهرية",
+      "communityPosts": "منشورات المجتمع"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "addStudent": "إضافة طالب",
+      "addCourse": "إضافة دورة",
+      "liveSession": "جلسة مباشرة",
+      "notify": "إشعار",
+      "addToLibrary": "إضافة إلى المكتبة"
+    }
+  },
+  "courses": {
+    "pageTitle": "إدارة الدورات",
+    "pageDescription": "إنشاء وإدارة الدورات، وتعيين المدرسين والمراكز.",
+    "createCourse": "إنشاء دورة",
+    "searchPlaceholder": "البحث في الدورات...",
+    "allStatuses": "جميع الحالات",
+    "allApprovals": "جميع الموافقات",
+    "active": "نشط",
+    "draft": "مسودة",
+    "approved": "موافق عليه",
+    "pending": "قيد الانتظار",
+    "declined": "مرفوض",
+    "noCourses": "لم يتم العثور على دورات. أنشئ دورتك الأولى!",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الدورة؟",
+    "deleteSuccess": "تم حذف الدورة بنجاح",
+    "deleteError": "فشل حذف الدورة",
+    "status": {
+      "active": "نشط",
+      "draft": "مسودة"
+    },
+    "approval": {
+      "approved": "موافق عليه",
+      "pending": "قيد الانتظار",
+      "declined": "مرفوض"
+    },
+    "card": {
+      "lectures": "محاضرات",
+      "notes": "ملاحظات",
+      "exams": "اختبارات",
+      "noInstructor": "لا يوجد مدرس",
+      "noCenter": "لا يوجد مركز",
+      "untitled": "دورة بدون عنوان"
+    },
+    "form": {
+      "addTitle": "إضافة دورة جديدة",
+      "addDescription": "إنشاء دورة جديدة وتعيين المدرسين والمراكز.",
+      "editTitle": "تعديل الدورة",
+      "editDescription": "تحديث تفاصيل الدورة والإعدادات.",
+      "sections": {
+        "courseInfo": "معلومات الدورة",
+        "academicInfo": "المعلومات الأكاديمية",
+        "pricingSettings": "الأسعار والإعدادات",
+        "thumbnail": "صورة الدورة"
+      },
+      "fields": {
+        "title": "عنوان الدورة",
+        "subtitle": "العنوان الفرعي",
+        "description": "الوصف",
+        "objectives": "الأهداف",
+        "department": "القسم",
+        "price": "السعر (جنيه)",
+        "maxViews": "الحد الأقصى للمشاهدات لكل طالب",
+        "visibility": "الرؤية",
+        "status": "الحالة"
+      },
+      "placeholders": {
+        "title": "فيزياء 101: الميكانيكا",
+        "subtitle": "مقدمة في الميكانيكا الكلاسيكية",
+        "description": "أدخل وصف الدورة...",
+        "objectives": "أدخل أهداف الدورة ونتائج التعلم...",
+        "price": "0",
+        "maxViews": "10"
+      },
+      "selectDepartment": "اختر القسم",
+      "loadingDepartments": "جارٍ تحميل الأقسام...",
+      "public": "عام",
+      "private": "خاص",
+      "thumbnailHint": "انقر لتحميل الصورة",
+      "thumbnailFormats": "PNG، JPG حتى 5 ميجابايت",
+      "selectedFile": "تم اختيار",
+      "buttons": {
+        "cancel": "إلغاء",
+        "create": "إنشاء دورة",
+        "update": "تحديث الدورة",
+        "creating": "جارٍ الإنشاء...",
+        "updating": "جارٍ التحديث..."
+      },
+      "uploading": "جارٍ الرفع..."
+    },
+    "view": {
+      "loading": "جارٍ تحميل تفاصيل الدورة...",
+      "error": "خطأ في تحميل الدورة",
+      "notFound": "الدورة غير موجودة",
+      "backToCourses": "العودة إلى الدورات",
+      "manageContent": "إدارة المحتوى",
+      "editCourse": "تعديل الدورة",
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "sections": {
+        "description": "الوصف",
+        "objectives": "الأهداف",
+        "lecturesContent": "المحاضرات والمحتوى",
+        "performance": "الأداء",
+        "courseDetails": "تفاصيل الدورة",
+        "activation": "تفعيل الدورة"
+      },
+      "stats": {
+        "lectures": "محاضرات",
+        "chapters": "فصول",
+        "notes": "ملاحظات",
+        "exams": "اختبارات",
+        "students": "طلاب"
+      },
+      "labels": {
+        "price": "السعر",
+        "visibility": "الرؤية",
+        "maxViews": "الحد الأقصى للمشاهدات",
+        "createdAt": "تاريخ الإنشاء",
+        "perStudent": "لكل طالب"
+      },
+      "noLectures": "لا توجد محاضرات متاحة.",
+      "viewDetails": "عرض التفاصيل",
+      "activationTabs": {
+        "byCode": "بالرمز",
+        "preactivation": "التفعيل المسبق"
+      },
+      "availableCodes": "الرموز المتاحة",
+      "generateCodes": "إنشاء رموز التفعيل",
+      "selectStudent": "اختيار الطالب",
+      "searchStudents": "البحث عن الطلاب...",
+      "noStudentsFound": "لم يتم العثور على طلاب",
+      "activate": "تفعيل",
+      "activating": "جارٍ التفعيل...",
+      "preactivation": {
+        "title": "ملف التفعيل المسبق",
+        "description": "قم بتحميل ملف يحتوي على أرقام الهواتف",
+        "selectFile": "اختر ملفاً أولاً",
+        "numbersReady": "رقم/أرقام هاتف جاهزة للتحميل",
+        "upload": "تحميل التفعيل المسبق",
+        "clear": "مسح",
+        "success": "تم معالجة التفعيلات المسبقة",
+        "failed": "فشل تحميل ملف التفعيل المسبق"
+      }
+    },
+    "messages": {
+      "pleaseUploadThumbnail": "يرجى تحميل صورة الدورة",
+      "pleaseSelectDepartment": "يرجى اختيار القسم",
+      "courseCreated": "تم إنشاء الدورة بنجاح!",
+      "courseUpdated": "تم تحديث الدورة بنجاح!",
+      "pleaseSelectImage": "يرجى اختيار ملف صورة (PNG، JPG، JPEG)",
+      "imageSizeError": "يجب أن يكون حجم الصورة أقل من 5 ميجابايت",
+      "imageSelected": "تم اختيار الصورة بنجاح",
+      "selectCodeAndStudent": "يرجى اختيار الرمز والطالب",
+      "courseActivated": "تم تفعيل الدورة بنجاح!",
+      "codeCopied": "تم نسخ الرمز إلى الحافظة"
+    }
+  },
+  "centers": {
+    "pageTitle": "إدارة المراكز",
+    "pageDescription": "إدارة المراكز الفعلية والافتراضية",
+    "addCenter": "إضافة مركز",
+    "searchPlaceholder": "البحث في المراكز...",
+    "columns": {
+      "image": "الصورة",
+      "name": "الاسم",
+      "parent": "الأب (الكلية)",
+      "created": "تاريخ الإنشاء"
+    },
+    "centerName": "اسم المركز",
+    "parent": "الأب (الكلية)",
+    "created": "تاريخ الإنشاء",
+    "noCenters": "لم يتم العثور على مراكز",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذا المركز؟",
+    "loadError": "فشل تحميل المراكز",
+    "retry": "إعادة المحاولة",
+    "form": {
+      "addTitle": "إضافة مركز جديد",
+      "editTitle": "تعديل المركز",
+      "addDescription": "إنشاء مركز فعلي أو افتراضي جديد",
+      "editDescription": "تحديث معلومات المركز",
+      "sectionTitle": "معلومات المركز",
+      "imageLabel": "صورة المركز",
+      "nameLabel": "اسم المركز",
+      "namePlaceholder": "مثال: المركز الرئيسي، الدقي",
+      "parentFacultyLabel": "الكلية",
+      "selectFaculty": "اختر الكلية"
+    },
+    "loading": "جارٍ تحميل المركز...",
+    "notFound": "المركز غير موجود"
+  },
+  "contentManager": {
+    "pageTitle": "مدير المحتوى",
+    "pageDescription": "إدارة هيكل الدورة، رفع الفيديوهات، وإعدادات المحاضرات.",
+    "courseStructure": "هيكل الدورة",
+    "loadingLectures": "جارٍ تحميل المحاضرات...",
+    "loadingChapters": "جارٍ تحميل الفصول...",
+    "addLecture": "إضافة محاضرة",
+    "addChapter": "إضافة فصل",
+    "locked": "مقفل",
+    "published": "منشور",
+    "lectureId": "معرف المحاضرة",
+    "saveChanges": "حفظ التغييرات",
+    "saving": "جارٍ الحفظ...",
+    "uploading": "جارٍ الرفع...",
+    "videoContent": "محتوى الفيديو",
+    "addVideo": "إضافة فيديو",
+    "changeVideo": "تغيير الفيديو",
+    "noVideo": "لا يوجد محتوى فيديو متاح",
+    "addVideoHint": "أضف مرفق فيديو لعرض المحتوى هنا",
+    "thumbnail": "الصورة المصغرة",
+    "add": "إضافة",
+    "change": "تغيير",
+    "replace": "استبدال",
+    "noThumbnail": "لم يتم تعيين صورة مصغرة",
+    "removeThumbnail": "إزالة الصورة المصغرة",
+    "undoRemove": "تراجع عن الإزالة",
+    "chapterSettings": "إعدادات الفصل",
+    "freePreview": "معاينة مجانية",
+    "freePreviewDescription": "السماح للطلاب بمشاهدة هذا الفصل بدون تسجيل.",
+    "maxViews": "الحد الأقصى للمشاهدات",
+    "maxViewsDescription": "تعيين الحد الأقصى لعدد المشاهدات المسموح بها لهذا الفصل.",
+    "attachments": "المرفقات والموارد",
+    "noAttachments": "لا توجد مرفقات متاحة.",
+    "openFile": "فتح الملف",
+    "new": "جديد",
+    "copyChapter": "نسخ الفصل",
+    "copyChapterConfirm": "هل أنت متأكد من أنك تريد نسخ هذا الفصل؟",
+    "copying": "جارٍ النسخ...",
+    "chapterActivation": "تفعيل الفصل",
+    "selectChapter": "اختيار فصل",
+    "selectChapterHint": "اختر فصلاً من شجرة الهيكل لعرض وإدارة محتواه وإعداداته.",
+    "modal": {
+      "addLecture": "إضافة محاضرة جديدة",
+      "addChapter": "إضافة فصل جديد",
+      "title": "العنوان",
+      "description": "الوصف",
+      "duration": "المدة (مثال: 45:00)",
+      "thumbnailImage": "صورة مصغرة",
+      "videoFile": "ملف الفيديو",
+      "otherAttachments": "مرفقات أخرى",
+      "selectImage": "اختيار ملف صورة",
+      "selectVideo": "اختيار ملف فيديو",
+      "selectFiles": "اختيار ملفات",
+      "filesSelected": "{count} ملفات محددة",
+      "cancel": "إلغاء",
+      "createLecture": "إنشاء محاضرة",
+      "createChapter": "إنشاء فصل",
+      "creating": "جارٍ الإنشاء...",
+      "uploading": "جارٍ الرفع..."
+    },
+    "messages": {
+      "lectureCreated": "تم إنشاء المحاضرة بنجاح",
+      "lectureCreateFailed": "فشل إنشاء المحاضرة",
+      "titleRequired": "الرجاء إدخال عنوان للمحاضرة",
+      "chapterCreated": "تم إنشاء الفصل بنجاح",
+      "chapterCreateFailed": "فشل إنشاء الفصل",
+      "chapterUpdated": "تم تحديث الفصل بنجاح",
+      "chapterUpdateFailed": "فشل تحديث الفصل",
+      "chapterDeleted": "تم حذف الفصل بنجاح",
+      "chapterDeleteFailed": "فشل حذف الفصل",
+      "chapterCopied": "تم نسخ الفصل بنجاح",
+      "chapterCopyFailed": "فشل نسخ الفصل",
+      "lectureDeleted": "تم حذف المحاضرة بنجاح",
+      "lectureDeleteFailed": "فشل حذف المحاضرة",
+      "deleteChapterConfirm": "هل أنت متأكد من أنك تريد حذف هذا الفصل؟",
+      "deleteLectureConfirm": "هل أنت متأكد من أنك تريد حذف هذه المحاضرة؟"
+    }
+  },
+  "activation": {
+    "pageTitle": "إدارة التفعيل",
+    "pageDescription": "إدارة رموز التفعيل للدورات والفصول وعناصر المكتبة والغرف المباشرة والاختبارات",
+    "generateCodes": "إنشاء رموز",
+    "tabs": {
+      "allCodes": "جميع الرموز",
+      "assignToUser": "تعيين لمستخدم",
+      "studentHistory": "سجل الطالب"
+    },
+    "columns": {
+      "code": "الرمز",
+      "type": "النوع",
+      "item": "العنصر",
+      "status": "الحالة",
+      "created": "تاريخ الإنشاء"
+    },
+    "status": {
+      "used": "مستخدم",
+      "available": "متاح",
+      "all": "الكل",
+      "allStatus": "جميع الحالات"
+    },
+    "types": {
+      "course": "دورة",
+      "chapter": "فصل",
+      "library": "مكتبة",
+      "liveRoom": "غرفة مباشرة",
+      "quiz": "اختبار",
+      "allTypes": "جميع الأنواع"
+    },
+    "filters": {
+      "searchPlaceholder": "البحث في رموز التفعيل...",
+      "allItems": "جميع العناصر"
+    },
+    "actions": {
+      "copyCode": "نسخ الرمز",
+      "cleanInvalid": "تنظيف غير الصالح",
+      "cleaning": "جارٍ التنظيف...",
+      "assign": "تعيين لمستخدم",
+      "assigning": "جارٍ التعيين...",
+      "clearSelection": "مسح الاختيار"
+    },
+    "messages": {
+      "noOrphanedCodes": "لم يتم العثور على رموز معزولة. جميع الرموز صالحة!",
+      "orphanedCodesRemoved": "رمز/رموز معزولة تمت إزالتها بنجاح",
+      "failedRemoveOrphaned": "فشل إزالة بعض الرموز المعزولة",
+      "codeCopied": "تم نسخ الرمز إلى الحافظة",
+      "selectStudentAndCode": "يرجى اختيار طالب ورمز",
+      "codeNotFound": "الرمز غير موجود",
+      "codeAssigned": "تم تعيين الرمز بنجاح!",
+      "noCodesFound": "لم يتم العثور على رموز تفعيل. أنشئ رموزك الأولى!",
+      "noStudentsFound": "لم يتم العثور على طلاب",
+      "noAvailableCodes": "لا توجد رموز متاحة للتعيين. تم استخدام جميع الرموز.",
+      "generateNewCodes": "إنشاء رموز جديدة",
+      "noCodesMatchSearch": "لا توجد رموز مطابقة للبحث.",
+      "clearSearch": "مسح البحث",
+      "noCodesAvailable": "لا توجد رموز تفعيل متاحة.",
+      "generateCodesLink": "إنشاء رموز",
+      "studentNoCodes": "لم يستخدم هذا الطالب أي رموز تفعيل بعد.",
+      "codesGenerated": "رمز/رموز تم إنشاؤها بنجاح!",
+      "selectItem": "يرجى اختيار عنصر"
+    },
+    "sections": {
+      "selectStudent": "اختيار الطالب",
+      "selectCode": "اختيار رمز التفعيل",
+      "searchStudents": "البحث عن الطلاب بالاسم أو البريد الإلكتروني...",
+      "searchCodes": "البحث بالرمز..."
+    },
+    "generate": {
+      "title": "إنشاء رموز التفعيل",
+      "description": "إنشاء رموز تفعيل جديدة للدورات والفصول وعناصر المكتبة والغرف المباشرة والاختبارات.",
+      "sectionTitle": "تكوين الرمز",
+      "codeType": "نوع الرمز",
+      "assignedItem": "العنصر المعين",
+      "quantity": "الكمية",
+      "quantityHint": "إنشاء ما يصل إلى 100 رمز في المرة الواحدة",
+      "selectType": "اختر",
+      "generatedCodes": "الرموز المُنشأة",
+      "cancel": "إلغاء",
+      "generate": "إنشاء الرموز",
+      "generating": "جارٍ الإنشاء...",
+      "generateAndDownload": "إنشاء وتنزيل",
+      "downloaded": "تم تنزيل الرموز كملف Excel"
+    },
+    "assign": {
+      "title": "تعيين رمز لمستخدم",
+      "description": "تعيين رموز التفعيل للطلاب للوصول إلى الدورات/الفصول/المكتبة."
+    },
+    "edit": {
+      "title": "تعديل رمز التفعيل",
+      "description": "تحديث تفاصيل الرمز والتعيين.",
+      "sectionTitle": "تفاصيل الرمز",
+      "codeLabel": "الرمز",
+      "codeHint": "رمز تفعيل فريد",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ...",
+      "cancel": "إلغاء",
+      "loadingCode": "جارٍ تحميل بيانات الرمز...",
+      "loadingItems": "جارٍ تحميل العناصر...",
+      "notFound": "الرمز غير موجود",
+      "back": "العودة إلى التفعيل",
+      "current": "الحالي",
+      "codeUpdated": "تم تحديث الرمز بنجاح!"
+    },
+    "delete": {
+      "title": "حذف رمز التفعيل"
+    },
+    "history": {
+      "usedCodes": "الرموز المستخدمة",
+      "codeCount": "رمز/أرقام مستخدمة"
+    }
+  },
+  "featureControl": {
+    "description": "تفعيل أو تعطيل ميزات المنصة على الفور. يتم تطبيق التغييرات فوراً على جميع الطلاب.",
+    "buttons": {
+      "reset": "إعادة تعيين",
+      "save": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ..."
+    },
+    "toast": {
+      "saveSuccess": "تم حفظ إعدادات الميزات بنجاح!",
+      "saveError": "فشل حفظ إعدادات الميزات",
+      "resetSuccess": "تم إعادة تعيين التغييرات"
+    },
+    "categories": {
+      "auth": {
+        "title": "المصادقة والأمان",
+        "description": "إدارة كيفية وصول الطلاب إلى المنصة."
+      },
+      "library": {
+        "title": "ميزات المكتبة",
+        "description": "التحكم في الوصول إلى المكتبة الإلكترونية."
+      },
+      "experience": {
+        "title": "تجربة الطالب",
+        "description": "تفعيل عناصر واجهة المستخدم في تطبيق الطالب."
+      }
+    },
+    "features": {
+      "feature_otp_verification": {
+        "name": "تفعيل التحقق بOTP",
+        "description": "طلب كلمة مرور لمرة واحدة لتسجيل دخول الطالب."
+      },
+      "feature_login_without_otp": {
+        "name": "السماح بتسجيل الدخول بدون OTP",
+        "description": "خيار احتياطي للطلاب الذين لا يمكنهم استلام الرسائل النصية."
+      },
+      "feature_electronic_library": {
+        "name": "تفعيل المكتبة الإلكترونية",
+        "description": "إظهار تبويب المكتبة للطلاب."
+      },
+      "feature_library_purchases": {
+        "name": "تفعيل المشتريات",
+        "description": "السماح للطلاب بشراء المواد المميزة."
+      },
+      "feature_continue_watching": {
+        "name": "تفعيل متابعة المشاهدة",
+        "description": "عرض المحاضرات المشاهدة مؤخراً في الصفحة الرئيسية."
+      },
+      "feature_profile_editing": {
+        "name": "تفعيل تعديل الملف الشخصي",
+        "description": "السماح للطلاب بتغيير بياناتهم."
+      },
+      "feature_single_device_access": {
+        "name": "الوصول من جهاز واحد فقط",
+        "description": "تقييد الحساب على جهاز واحد نشط فقط في كل مرة."
+      },
+      "feature_block_screenshots": {
+        "name": "حظر لقطات الشاشة والتسجيل",
+        "description": "منع لقطات الشاشة وتسجيل الشاشة للمحتوى."
+      },
+      "feature_screen_share_max_resolution": {
+        "name": "تحديد دقة مشاركة الشاشة",
+        "description": "تقييد مشاركة الشاشة بحد أقصى للعرض والارتفاع."
+      }
+    }
+  },
+  "otaUpload": {
+    "pageTitle": "رفع تحديثات الهواء",
+    "pageDescription": "رفع إصدارات جديدة من التطبيق للتحديثات اللاسلكية",
+    "versionInfo": "معلومات الإصدار",
+    "versionName": "اسم الإصدار",
+    "versionNamePlaceholder": "مثال: 1.2.3",
+    "versionCode": "كود الإصدار",
+    "versionCodePlaceholder": "مثال: 123",
+    "versionCodeHint": "يجب أن يكون عدد صحيح موجب فريد أكبر من 0",
+    "apkFile": "ملف APK",
+    "apkFileRequired": "ملف APK مطلوب",
+    "apkFileSize": "الحد الأقصى لحجم الملف: غير محدود",
+    "dragDropHint": "اسحب وأسقط ملف APK هنا، أو انقر للتصفح",
+    "fileTypes": "ملفات .apk فقط (أي حجم)",
+    "selectedFile": "الملف المحدد",
+    "changeFile": "تغيير الملف",
+    "releaseNotes": "ملاحظات الإصدار (اختياري)",
+    "releaseNotesPlaceholder": "صف ما هو جديد في هذا الإصدار...",
+    "forceUpdate": "التحديث الإجباري",
+    "forceUpdateHint": "إذا تم تمكينه، سيُجبر المستخدمون على التحديث إلى هذا الإصدار قبل استخدام التطبيق.",
+    "uploadButton": "رفع APK",
+    "uploading": "جارٍ الرفع...",
+    "cancel": "إلغاء",
+    "saving": "جارٍ الحفظ...",
+    "saveChanges": "حفظ التغييرات",
+    "versionHistory": "تاريخ الإصدارات",
+    "noVersions": "لم يتم رفع أي إصدارات بعد",
+    "noVersionsHint": "ارفع إصدار APK الأول",
+    "code": "الكود",
+    "released": "تم الإصدار",
+    "edit": "تعديل الإصدار",
+    "editVersion": "تعديل الإصدار",
+    "download": "تحميل APK",
+    "delete": "حذف الإصدار",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذا الإصدار؟",
+    "validation": {
+      "versionNameRequired": "اسم الإصدار مطلوب",
+      "versionNameMaxLength": "اسم الإصدار يجب ألا يتجاوز {max} حرف",
+      "versionCodeRequired": "كود الإصدار مطلوب",
+      "versionCodeInvalid": "كود الإصدار يجب أن يكون عدد صحيح موجب",
+      "apkRequired": "يرجى اختيار ملف APK",
+      "apkInvalid": "يجب أن يكون الملف APK",
+      "apkSize": "حجم الملف يجب ألا يتجاوز {maxSize}"
+    },
+    "success": {
+      "uploaded": "تم رفع APK بنجاح",
+      "deleted": "تم حذف الإصدار بنجاح"
+    },
+    "error": {
+      "upload": "فشل رفع APK",
+      "delete": "فشل حذف الإصدار",
+      "load": "فشل تحميل الإصدارات"
+    }
+  },
+  "liveSessions": {
+    "pageTitle": "الجلسات المباشرة",
+    "pageDescription": "جدولة وإدارة الجلسات المباشرة والتفاعلات.",
+    "scheduleSession": "جدولة جلسة",
+    "searchPlaceholder": "البحث في الجلسات المباشرة...",
+    "noSessions": "لم يتم العثور على جلسات مباشرة. جدول جلستك الأولى!",
+    "loading": "جارٍ تحميل الجلسات المباشرة...",
+    "error": "فشل تحميل الجلسات المباشرة",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الجلسة؟",
+    "deleteSuccess": "تم حذف الجلسة بنجاح",
+    "deleteError": "فشل حذف الجلسة",
+    "status": {
+      "live": "مباشر",
+      "upcoming": "قادم",
+      "ended": "منتهي",
+      "now": "الآن"
+    },
+    "time": {
+      "today": "اليوم",
+      "tomorrow": "غداً"
+    },
+    "card": {
+      "noCourse": "لا يوجد دورة",
+      "unknownInstructor": "مدرب غير معروف",
+      "chatOn": "الدردشة مفعلة",
+      "chatOff": "الدردشة معطلة",
+      "recordingOn": "التسجيل مفعل",
+      "recordingOff": "التسجيل معطل",
+      "start": "بدء",
+      "end": "إنهاء",
+      "details": "التفاصيل",
+      "settings": "الإعدادات",
+      "delete": "حذف"
+    },
+    "detail": {
+      "backToSessions": "العودة إلى الجلسات",
+      "sessionNotFound": "الجلسة غير موجودة",
+      "settings": "الإعدادات",
+      "maxStudents": "الحد الأقصى للطلاب",
+      "maxJoinTime": "الحد الأقصى للانضمام",
+      "anytime": "أي وقت",
+      "sessionInfo": "معلومات الجلسة",
+      "features": "المميزات",
+      "chatEnabled": "الدردشة مفعلة",
+      "chatDisabled": "الدردشة معطلة",
+      "recordingEnabled": "التسجيل مفعل",
+      "recordingDisabled": "التسجيل معطل",
+      "labels": {
+        "title": "العنوان",
+        "course": "الدورة",
+        "instructor": "المدرب",
+        "description": "الوصف",
+        "startTime": "وقت البدء",
+        "endTime": "وقت الانتهاء"
+      }
+    },
+    "schedule": {
+      "pageTitle": "جدولة جلسة مباشرة",
+      "pageDescription": "إنشاء وإعداد جلسة بث مباشر جديدة.",
+      "sessionDetails": "تفاصيل الجلسة",
+      "sessionTitle": "عنوان الجلسة",
+      "titlePlaceholder": "مثال: الفيزياء 101: جلسة أسئلة وأجوبة",
+      "course": "الدورة",
+      "loadingCourses": "جارٍ تحميل الدورات...",
+      "selectCourse": "اختر الدورة",
+      "startTime": "وقت البدء",
+      "maxStudents": "الحد الأقصى للطلاب (0 غير محدود)",
+      "maxJoinTime": "الحد الأقصى للانضمام (دقائق بعد البدء)",
+      "maxJoinTimeHint": "يمكن للطلاب الانضمام خلال هذا الوقت بعد بدء الجلسة. 0 = أي وقت.",
+      "description": "الوصف",
+      "descriptionPlaceholder": "قدم وصفاً موجزاً للجلسة...",
+      "quickHelp": "مساعدة سريعة",
+      "helpText": "تأكد من صحة جميع التفاصيل. يمكن تعديل جميع إعدادات الجلسة لاحقاً من خلال صفحة إعدادات الجلسة.",
+      "helpItems": {
+        "notify": "سيتم إخطار الطلاب",
+        "links": "يتم إنشاء روابط الجلسة تلقائياً",
+        "recording": "التسجيل متاح بعد الجلسة"
+      },
+      "scheduleButton": "جدولة الجلسة",
+      "scheduling": "جارٍ الجدولة...",
+      "cancel": "إلغاء",
+      "validation": {
+        "fillRequired": "يرجى ملء الدورة والعنوان ووقت البدء"
+      },
+      "success": "تم جدولة الجلسة بنجاح!",
+      "error": "فشل جدولة الجلسة"
+    },
+    "settings": {
+      "pageTitle": "إعدادات الجلسة",
+      "pageDescription": "تكوين الميزات لهذه الجلسة المباشرة.",
+      "communication": "التواصل",
+      "recordingPlayback": "التسجيل والتشغيل",
+      "enableChat": "تفعيل الدردشة",
+      "enableChatDescription": "السماح بالدردشة النصية في الوقت الفعلي خلال الجلسة",
+      "enableRecording": "تفعيل التسجيل",
+      "enableRecordingDescription": "تسجيل الجلسة وحفظها تلقائياً في المكتبة",
+      "backToSession": "العودة إلى الجلسة",
+      "saveChanges": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ...",
+      "saveSuccess": "تم حفظ الإعدادات بنجاح",
+      "saveError": "فشل حفظ الإعدادات",
+      "loadError": "فشل تحميل إعدادات الجلسة"
+    }
+  },
+  "exams": {
+    "pageTitle": "الاختبارات والأسئلة",
+    "pageDescription": "إدارة التقييمات والاختبارات",
+    "createExam": "إنشاء اختبار",
+    "searchPlaceholder": "البحث في الاختبارات...",
+    "columns": {
+      "title": "العنوان",
+      "type": "النوع",
+      "chapter": "الفصل",
+      "duration": "المدة",
+      "questions": "الأسئلة",
+      "status": "الحالة",
+      "visibility": "الرؤية"
+    },
+    "status": {
+      "label": "الحالة",
+      "active": "نشط",
+      "draft": "مسودة"
+    },
+    "visibility": {
+      "public": "عام",
+      "private": "خاص"
+    },
+    "noExams": "لم يتم العثور على اختبارات. أنشئ اختبارك الأول!",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذا الاختبار؟",
+    "deleteSuccess": "تم حذف الاختبار بنجاح!",
+    "minutes": "دقيقة",
+    "questions": "سؤال",
+    "create": {
+      "pageTitle": "إنشاء اختبار جديد",
+      "pageDescription": "تصميم وإعداد التقييم الخاص بك",
+      "backToExams": "العودة إلى الاختبارات",
+      "examTitle": "عنوان الاختبار",
+      "titlePlaceholder": "مثال: اختبار الفيزياء النصفي",
+      "examType": "نوع الاختبار",
+      "exam": "اختبار",
+      "homework": "واجب منزلي",
+      "course": "الدورة",
+      "loading": "جارٍ التحميل...",
+      "selectCourse": "اختر الدورة",
+      "chapter": "الفصل",
+      "selectChapter": "اختر الفصل",
+      "selectCourseFirst": "اختر دورة أولاً",
+      "duration": "المدة (دقيقة)",
+      "totalMarks": "الدرجات الكلية",
+      "passingMarks": "درجة النجاح (%)",
+      "maxAttempts": "الحد الأقصى للمحاولات",
+      "availability": "التوفر",
+      "startTime": "وقت البدء",
+      "endTime": "وقت الانتهاء (اختياري)",
+      "visibility": "الرؤية",
+      "public": "عام",
+      "private": "خاص",
+      "questionsSection": "الأسئلة",
+      "addQuestion": "إضافة سؤال",
+      "question": "السؤال",
+      "questionPlaceholder": "أدخل سؤالك هنا...",
+      "questionType": "نوع السؤال",
+      "singleChoice": "اختيار واحد",
+      "multipleChoice": "اختيار متعدد",
+      "trueFalse": "صح / خطأ",
+      "shortAnswer": "إجابة قصيرة",
+      "score": "الدرجة",
+      "questionText": "نص السؤال",
+      "enableAutoCorrection": "تفعيل التصحيح التلقائي",
+      "answers": "الإجابات",
+      "answer": "الإجابة",
+      "addAnswer": "إضافة إجابة",
+      "removeQuestion": "حذف السؤال",
+      "expectedAnswer": "الإجابة المتوقعة (للمرجعية)",
+      "expectedAnswerPlaceholder": "أدخل الإجابة المتوقعة للمرجعية...",
+      "markCorrectHint": "انقر على المربع لتحديد الإجابة الصحيحة",
+      "multipleAllowed": "ات (متعددة مسموح بها)",
+      "cancel": "إلغاء",
+      "createExam": "إنشاء الاختبار",
+      "creating": "جارٍ الإنشاء...",
+      "validation": {
+        "titleRequired": "يرجى إدخال عنوان الاختبار",
+        "courseRequired": "يرجى اختيار الدورة",
+        "durationRequired": "يرجى إدخال مدة صالحة",
+        "marksRequired": "يرجى إدخال الدرجات الكلية",
+        "questionsRequired": "يرجى إضافة سؤال واحد على الأقل",
+        "questionTextRequired": "يرجى إدخال نص السؤال للسؤال",
+        "answersRequired": "يرجى إضافة إجابتين على الأقل للسؤال",
+        "correctAnswerRequired": "يرجى تحديد إجابة صحيحة واحدة على الأقل للسؤال"
+      },
+      "success": "تم إنشاء الاختبار بنجاح!",
+      "error": "فشل إنشاء الاختبار"
+    },
+    "edit": {
+      "pageTitle": "تعديل الاختبار",
+      "pageDescription": "تعديل التقييم الخاص بك",
+      "backToExams": "العودة إلى الاختبارات",
+      "loading": "جارٍ تحميل بيانات الاختبار...",
+      "notFound": "الاختبار غير موجود",
+      "cancel": "إلغاء",
+      "saveChanges": "حفظ التغييرات",
+      "saving": "جارٍ الحفظ...",
+      "success": "تم تحديث الاختبار بنجاح!",
+      "error": "فشل تحديث الاختبار"
+    }
+  },
+  "notesSummaries": {
+    "pageTitle": "الملاحظات والملخصات",
+    "pageDescription": "إدارة ملاحظات المدرسين والملخصات التي أنشأها الطلاب.",
+    "searchPlaceholder": "بحث...",
+    "addNote": "إضافة ملاحظة",
+    "filters": {
+      "allTypes": "جميع الأنواع",
+      "summary": "ملخص",
+      "highlight": "تظليل",
+      "keyPoint": "نقطة رئيسية",
+      "importantNotice": "إشعار مهم"
+    },
+    "table": {
+      "title": "العنوان",
+      "type": "النوع",
+      "courseId": "معرف الدورة",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "status": {
+      "published": "منشور",
+      "draft": "مسودة"
+    },
+    "untitledNote": "ملاحظة بدون عنوان",
+    "na": "غ/م",
+    "loading": "جارٍ التحميل...",
+    "loadError": "فشل تحميل الملاحظات. يرجى المحاولة مرة أخرى.",
+    "noNotes": "لم يتم العثور على ملاحظات.",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الملاحظة؟",
+    "create": {
+      "pageTitle": "إضافة ملاحظة جديدة",
+      "pageDescription": "إنشاء ملاحظة أو ملخص جديد.",
+      "titleLabel": "العنوان",
+      "titleRequired": "العنوان مطلوب",
+      "titlePlaceholder": "أدخل عنوان الملاحظة",
+      "typeLabel": "النوع",
+      "typeRequired": "النوع مطلوب",
+      "courseLabel": "الدورة",
+      "coursePlaceholder": "اختر دورة (اختياري)",
+      "loadingCourses": "جارٍ تحميل الدورات...",
+      "linkedLectureLabel": "المحاضرة المرتبطة",
+      "linkedLecturePlaceholder": "أدخل المحاضرة المرتبطة (اختياري)",
+      "contentLabel": "المحتوى",
+      "contentPlaceholder": "أدخل محتوى الملاحظة...",
+      "charactersCount": "{count} حرف",
+      "publishImmediately": "النشر فوراً",
+      "cancel": "إلغاء",
+      "creating": "جارٍ الإنشاء...",
+      "createNote": "إنشاء ملاحظة"
+    },
+    "editNote": {
+      "pageTitle": "تعديل الملاحظة",
+      "pageDescription": "تحديث تفاصيل ومحتوى الملاحظة.",
+      "loadError": "فشل تحميل الملاحظة. يرجى المحاولة مرة أخرى.",
+      "backToNotes": "العودة إلى الملاحظات",
+      "titleLabel": "العنوان",
+      "titlePlaceholder": "أدخل عنوان الملاحظة",
+      "typeLabel": "النوع",
+      "courseLabel": "الدورة",
+      "coursePlaceholder": "اختر دورة (اختياري)",
+      "loadingCourses": "جارٍ تحميل الدورات...",
+      "linkedLectureLabel": "المحاضرة المرتبطة",
+      "linkedLecturePlaceholder": "أدخل المحاضرة المرتبطة (اختياري)",
+      "contentLabel": "المحتوى",
+      "contentPlaceholder": "أدخل محتوى الملاحظة...",
+      "charactersCount": "{count} حرف",
+      "published": "منشور",
+      "cancel": "إلغاء",
+      "saving": "جارٍ الحفظ...",
+      "saveChanges": "حفظ التغييرات"
+    },
+    "detail": {
+      "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الملاحظة؟",
+      "loadError": "فشل تحميل الملاحظة. يرجى المحاولة مرة أخرى.",
+      "backToNotes": "العودة إلى الملاحظات",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "content": "المحتوى",
+      "details": "التفاصيل",
+      "type": "النوع",
+      "courseId": "معرف الدورة",
+      "linkedLecture": "المحاضرة المرتبطة",
+      "date": "التاريخ",
+      "status": "الحالة"
+    }
+  },
+  "community": {
+    "pageTitle": "إدارة المجتمع",
+    "pageDescription": "مراجعة وإدارة منشورات الطلاب والتعليقات.",
+    "filters": {
+      "all": "جميع المنشورات",
+      "draft": "مسودة",
+      "published": "منشور"
+    },
+    "socialLinks": {
+      "title": "روابط التواصل الاجتماعي",
+      "allCourses": "جميع الدورات",
+      "addLink": "إضافة رابط",
+      "noLinks": "لا توجد روابط اجتماعية بعد. انقر على \"إضافة رابط\" لإنشاء واحدة.",
+      "status": {
+        "active": "نشط",
+        "inactive": "غير نشط"
+      },
+      "modal": {
+        "edit": "تعديل رابط اجتماعي",
+        "add": "إضافة رابط اجتماعي",
+        "course": "الدورة",
+        "selectCourse": "اختر دورة",
+        "icon": "الأيقونة",
+        "linkUrl": "رابط URL",
+        "title": "العنوان",
+        "linkTitlePlaceholder": "عنوان الرابط",
+        "subtitle": "العنوان الفرعي",
+        "linkSubtitlePlaceholder": "العنوان الفرعي للرابط",
+        "color": "اللون",
+        "status": "الحالة",
+        "update": "تحديث",
+        "create": "إنشاء",
+        "cancel": "إلغاء"
+      }
+    },
+    "posts": {
+      "title": "المنشورات",
+      "noPosts": "لا توجد منشورات.",
+      "unknownUser": "مجهول",
+      "createPost": "إنشاء منشور",
+      "comments": "تعليقات",
+      "reactions": "تفاعلات",
+      "you": "أنت: ",
+      "timeAgo": {
+        "justNow": "الآن",
+        "minAgo": "{minutes} دقيقة مضت",
+        "hourAgo": "{hours} ساعة{plural} مضت",
+        "dayAgo": "{days} يوم{plural} مضت",
+        "today": "اليوم"
+      },
+      "status": {
+        "published": "منشور",
+        "draft": "مسودة"
+      },
+      "type": {
+        "post": "منشور",
+        "question": "سؤال",
+        "summary": "ملخص"
+      },
+      "editForm": {
+        "titlePlaceholder": "العنوان",
+        "contentPlaceholder": "المحتوى",
+        "save": "حفظ",
+        "cancel": "إلغاء"
+      },
+      "actions": {
+        "view": "عرض",
+        "edit": "تعديل",
+        "publish": "نشر",
+        "unpublish": "إلغاء النشر",
+        "delete": "حذف"
+      }
+    },
+    "createPost": {
+      "title": "إنشاء منشور",
+      "titleLabel": "العنوان",
+      "titlePlaceholder": "أدخل عنوان المنشور...",
+      "contentLabel": "المحتوى",
+      "contentPlaceholder": "أدخل محتوى المنشور...",
+      "typeLabel": "النوع",
+      "statusLabel": "الحالة",
+      "imageLabel": "الصورة (اختياري)",
+      "submit": "إنشاء المنشور",
+      "cancel": "إلغاء",
+      "titleRequired": "العنوان مطلوب",
+      "contentRequired": "المحتوى مطلوب"
+    },
+    "postTypes": {
+      "post": "منشور",
+      "question": "سؤال",
+      "summary": "ملخص"
+    },
+    "statuses": {
+      "draft": "مسودة",
+      "published": "منشور"
+    },
+    "postDetails": {
+      "pageTitle": "تفاصيل المنشور",
+      "pageDescription": "عرض إدارة المجتمع",
+      "backToCommunity": "العودة إلى المجتمع",
+      "loading": "جارٍ تحميل المنشور...",
+      "loadError": "فشل تحميل المنشور.",
+      "retry": "إعادة المحاولة",
+      "edit": "تعديل",
+      "publish": "نشر",
+      "unpublish": "إلغاء النشر",
+      "deletePost": "حذف المنشور",
+      "save": "حفظ",
+      "cancel": "إلغاء",
+      "titlePlaceholder": "العنوان",
+      "contentPlaceholder": "المحتوى",
+      "reactions": "تفاعلات",
+      "you": "أنت: ",
+      "commentsSection": "التعليقات",
+      "noComments": "لا توجد تعليقات بعد. كن أول من يعلق!",
+      "replyPlaceholder": "الرد كمسؤول...",
+      "postReply": "نشر الرد كمسؤول",
+      "deleteComment": "حذف",
+      "moderationHistory": "سجل الإدارة",
+      "flaggedByStudent": "تم الإبلاغ من قبل الطالب"
+    },
+    "confirmations": {
+      "deletePost": "هل أنت متأكد من أنك تريد حذف هذا المنشور؟",
+      "publishPost": "هل أنت متأكد من أنك تريد نشر \"{title}\"؟",
+      "unpublishPost": "هل أنت متأكد من أنك تريد إلغاء نشر \"{title}\"؟",
+      "deleteComment": "هل أنت متأكد من أنك تريد حذف هذا التعليق؟",
+      "deleteSocialLink": "هل أنت متأكد من أنك تريد حذف هذا الرابط الاجتماعي؟"
+    },
+    "notifications": {
+      "postDeleted": "تم حذف المنشور بنجاح!",
+      "postPublished": "تم نشر المنشور بنجاح!",
+      "postUnpublished": "تم إلغاء نشر المنشور بنجاح!",
+      "postUpdated": "تم تحديث المنشور بنجاح!",
+      "socialLinkCreated": "تم إنشاء الرابط الاجتماعي بنجاح!",
+      "socialLinkUpdated": "تم تحديث الرابط الاجتماعي بنجاح!",
+      "socialLinkDeleted": "تم حذف الرابط الاجتماعي بنجاح!"
+    }
+  },
+  "universities": {
+    "pageTitle": "إدارة الجامعات",
+    "pageDescription": "إدارة الجامعات والمؤسسات",
+    "addUniversity": "إضافة جامعة",
+    "editUniversity": "تعديل الجامعة",
+    "searchPlaceholder": "البحث في الجامعات...",
+    "columns": {
+      "image": "الصورة",
+      "name": "الاسم",
+      "created": "تاريخ الإنشاء"
+    },
+    "form": {
+      "addTitle": "إضافة جامعة جديدة",
+      "editTitle": "تعديل الجامعة",
+      "addDescription": "إنشاء جامعة أو مؤسسة جديدة",
+      "editDescription": "تحديث معلومات الجامعة",
+      "sectionTitle": "معلومات الجامعة",
+      "imageLabel": "صورة الجامعة",
+      "nameLabel": "اسم الجامعة",
+      "namePlaceholder": "مثال: جامعة القاهرة",
+      "nameRequired": "اسم الجامعة مطلوب",
+      "codeLabel": "رمز الجامعة",
+      "codePlaceholder": "مثال: CU"
+    },
+    "loading": "جارٍ تحميل الجامعة...",
+    "notFound": "الجامعة غير موجودة",
+    "noUniversities": "لم يتم العثور على جامعات. أنشئ جامعتك الأولى!",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الجامعة؟",
+    "deleteTitle": "حذف الجامعة",
+    "loadError": "فشل تحميل الجامعات",
+    "retry": "إعادة المحاولة",
+    "back": "العودة إلى الجامعات"
+  },
+  "faculties": {
+    "pageTitle": "إدارة الكليات",
+    "pageDescription": "إدارة الكليات والمعاهد",
+    "addFaculty": "إضافة كلية",
+    "editFaculty": "تعديل الكلية",
+    "searchPlaceholder": "البحث في الكليات...",
+    "allUniversities": "جميع الجامعات",
+    "columns": {
+      "image": "الصورة",
+      "name": "الاسم",
+      "university": "الجامعة",
+      "created": "تاريخ الإنشاء"
+    },
+    "form": {
+      "addTitle": "إضافة كلية جديدة",
+      "editTitle": "تعديل الكلية",
+      "addDescription": "إنشاء كلية أو معهد جديد",
+      "editDescription": "تحديث معلومات الكلية",
+      "sectionTitle": "معلومات الكلية",
+      "imageLabel": "صورة الكلية",
+      "nameLabel": "اسم الكلية",
+      "namePlaceholder": "مثال: كلية الهندسة",
+      "universityLabel": "الجامعة",
+      "selectUniversity": "اختر الجامعة"
+    },
+    "loading": "جارٍ تحميل الكلية...",
+    "notFound": "الكلية غير موجودة",
+    "noFaculties": "لم يتم العثور على كليات. أنشئ كليتك الأولى!",
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الكلية؟",
+    "deleteTitle": "حذف الكلية",
+    "loadError": "فشل تحميل الكليات",
+    "retry": "إعادة المحاولة",
+    "back": "العودة إلى الكليات"
+  },
+  "departments": {
+    "pageTitle": "الهيكل الأكاديمي",
+    "pageDescription": "إدارة الجامعات والكليات والمراكز والأقسام والدورات والمحتوى",
+    "addDepartment": "إضافة قسم",
+    "editDepartment": "تعديل القسم",
+    "searchPlaceholder": "البحث في الأقسام...",
+    "allFaculties": "جميع الكليات",
+    "columns": {
+      "image": "الصورة",
+      "name": "الاسم",
+      "parent": "الأب (المركز)",
+      "stats": "الإحصائيات",
+      "created": "تاريخ الإنشاء"
+    },
+    "stats": {
+      "courses": "دورات",
+      "students": "طلاب"
+    },
+    "form": {
+      "addTitle": "إضافة قسم جديد",
+      "editTitle": "تعديل القسم",
+      "addDescription": "إنشاء قسم أو فئة دورة جديدة",
+      "editDescription": "تحديث تفاصيل القسم ومعلومات الفئة",
+      "sectionTitle": "معلومات القسم",
+      "imageLabel": "صورة القسم",
+      "nameLabel": "اسم القسم",
+      "namePlaceholder": "مثال: الطب",
+      "parentTypeLabel": "نوع الأب",
+      "selectParentType": "اختر نوع الأب",
+      "parentTypeCenter": "مركز",
+      "parentTypeDepartment": "قسم",
+      "parentLabel": "الأب",
+      "noParent": "لا يوجد أب (مستوى أعلى)"
+    },
+    "subDepartment": "قسم فرعي",
+    "filter": {
+      "typeLabel": "نوع القسم",
+      "allTypes": "جميع الأنواع",
+      "parentOnly": "المستوى الأعلى فقط",
+      "subOnly": "الأقسام الفرعية فقط",
+      "parentDepartmentLabel": "القسم الأب",
+      "allParentDepartments": "جميع الأقسام الأم"
+    },
+    "loading": "جارٍ تحميل القسم...",
+    "notFound": "القسم غير موجود",
+    "noDepartments": "لم يتم العثور على أقسام. أنشئ قسمك الأول!",
+    "noSearchResults": "لا توجد أقسام تطابق بحثك",
+    "deleteTitle": "حذف القسم",
+    "loadError": "فشل تحميل الأقسام",
+    "retry": "إعادة المحاولة",
+    "back": "العودة إلى الأقسام",
+    "tree": {
+      "expandAll": "توسيع الكل",
+      "collapseAll": "طي الكل",
+      "parentDepartment": "القسم الرئيسي"
+    }
+  },
+  "language": {
+    "switcher": "اللغة",
+    "english": "English",
+    "arabic": "العربية"
+  },
+  "watermarkSettings": {
+    "pageTitle": "إعدادات العلامة المائية",
+    "pageDescription": "تكوين وإدارة العلامات المائية لمحتوى منصتك.",
+    "selectContentType": "اختر نوع المحتوى",
+    "selectContentTypeDesc": "اختر نوع المحتوى لتكوين إعدادات العلامة المائية له بشكل فردي",
+    "enableWatermark": "تفعيل العلامة المائية",
+    "enableWatermarkDesc": "إظهار العلامة المائية على صفحات المحتوى المحمي",
+    "watermarkText": "نص العلامة المائية",
+    "watermarkTextPlaceholder": "أدخل نص العلامة المائية (مثال: Learnoo)",
+    "watermarkTextDesc": "النص المعروض على الصفحات ذات العلامة المائية",
+    "useStudentId": "استخدام كود الطالب كعلامة مائية",
+    "useStudentIdDesc": "عرض كود الطالب الفريد على صفحات المحتوى بدلاً من النص المخصص",
+    "usePhoneNumber": "إظهار رقم الهاتف",
+    "usePhoneNumberDesc": "عرض رقم هاتف الطالب بجانب كوده في العلامة المائية",
+    "color": "اللون",
+    "colorDesc": "اختر لون نص العلامة المائية",
+    "opacity": "الشفافية",
+    "opacityDesc": "تعديل وضوح العلامة المائية (10% - 50%)",
+    "rotation": "الدوران",
+    "rotationDesc": "زاوية نص العلامة المائية (-45° إلى 45°)",
+    "applyTo": "تطبيق العلامة المائية على",
+    "applyToChapters": "الفصول",
+    "applyToExams": "الاختبارات والاختبارات القصيرة",
+    "applyToLibrary": "المكتبة الإلكترونية",
+    "applyToVideos": "الفيديوهات المسجلة",
+    "applyToLiveStreams": "البث المباشر",
+    "applyToFiles": "المستندات والملفات",
+    "positionAndSize": "الموضع والحجم",
+    "position": "الموضع",
+    "positionDesc": "اختر مكان ظهور العلامة المائية على الشاشة",
+    "dynamicPosition": "موضع ديناميكي",
+    "dynamicPositionDesc": "تتحرك العلامة المائية إلى مواضع عشوائية كل بضع ثوانٍ",
+    "dynamicInterval": "فاصل التغيير",
+    "dynamicIntervalDesc": "الثواني بين تغييرات الموقع (1-5 ثوانٍ، عشوائي)",
+    "randomCoordinates": "إحداثيات عشوائية",
+    "randomCoordinatesDesc": "التحرك بحرية في أي مكان على الشاشة بدلاً من المواقع الثابتة",
+    "movementPattern": "نمط الحركة",
+    "movementPatternDesc": "اختر كيفية انتقال العلامة المائية بين المواقع",
+    "patternRandom": "عشوائي",
+    "patternCircular": "دائري",
+    "patternZigzag": "متعرج",
+    "patternBounce": "ارتداد",
+    "patternEdge": "حافة مستمرة",
+    "animationStyle": "نمط الرسوم المتحركة",
+    "animationStyleDesc": "التأثير البصري عند تحرك العلامة المائية",
+    "styleSlide": "انزلاق",
+    "styleFade": "تلاشي",
+    "styleScale": "تكبير",
+    "styleRotate": "دوران",
+    "styleGlide": "انسيابي",
+    "easingType": "دالة التسارع",
+    "easingTypeDesc": "نعومة انتقال الحركة",
+    "easeLinear": "خطي",
+    "easeEase": "سهل",
+    "easeEaseInOut": "سهل داخل-خارج",
+    "easeBounce": "ارتداد",
+    "easeElastic": "مرن",
+    "positionTopLeft": "أعلى اليسار",
+    "positionTopRight": "أعلى اليمين",
+    "positionBottomLeft": "أسفل اليسار",
+    "positionBottomRight": "أسفل اليمين",
+    "positionCenter": "الوسط",
+    "positionFull": "كامل الشاشة (متكرر)",
+    "size": "الحجم",
+    "sizeDesc": "اختر حجم نص العلامة المائية",
+    "sizeSmall": "صغير",
+    "sizeMedium": "متوسط",
+    "sizeLarge": "كبير",
+    "preview": "معاينة",
+    "previewSettings": "إعدادات المعاينة",
+    "previewNotSaved": "للمعاينة فقط - لا يتم الحفظ",
+    "useCustomPreviewText": "استخدام نص معاينة مخصص",
+    "useCustomPreviewTextDesc": "اختبار بنص مخصص لن يتم حفظه",
+    "previewTextPlaceholder": "أدخل نص المعاينة...",
+    "previewBackground": "خلفية المعاينة",
+    "previewSticky": "ثابت",
+    "backgroundLight": "فاتح",
+    "backgroundDark": "داكن",
+    "backgroundImage": "صورة",
+    "previewLightBackground": "معاينة الخلفية الفاتحة",
+    "previewDarkBackground": "معاينة الخلفية الداكنة",
+    "previewImageBackground": "معاينة خلفية الصورة/الفيديو",
+    "saveSuccess": "تم حفظ إعدادات العلامة المائية بنجاح",
+    "saveError": "فشل حفظ إعدادات العلامة المائية",
+    "voiceSettings": "إعدادات الصوت",
+    "enableVoice": "تفعيل الصوت",
+    "enableVoiceDesc": "تشغيل الإعلانات الصوتية بفواصل منتظمة",
+    "voiceInterval": "فاصل الصوت",
+    "voiceIntervalDesc": "تشغيل الإعلان الصوتي كل X دقيقة (1-30 دقيقة)",
+    "minutes": "دقيقة"
+  },
+  "platformSettings": {
+    "pageDescription": "إدارة التكوين الأساسي والتفضيلات لمنصتك.",
+    "generalSettings": {
+      "title": "الإعدادات العامة",
+      "description": "اسم المنصة والمنطقة الزمنية والتكوين الأساسي."
+    },
+    "profile": {
+      "title": "الملف الشخصي",
+      "description": "تحديث معلوماتك الشخصية وتفاصيل حسابك."
+    },
+    "branding": {
+      "title": "الهوية البصرية",
+      "description": "الشعارات والألوان والهوية البصرية."
+    },
+    "notifications": {
+      "title": "إعدادات الإشعارات",
+      "description": "قوالب البريد الإلكتروني وإعدادات الإشعارات الفورية الافتراضية."
+    },
+    "languageRegion": {
+      "title": "اللغة والمنطقة",
+      "description": "اللغة الافتراضية وتنسيقات التاريخ والعملة."
+    },
+    "termsPrivacy": {
+      "title": "الشروط والخصوصية",
+      "description": "إدارة نص شروط الخدمة وسياسة الخصوصية."
+    },
+    "watermark": {
+      "title": "إعدادات العلامة المائية",
+      "description": "تكوين العلامات المائية للفصول والاختبارات والمكتبة."
+    },
+    "soon": "قريباً"
+  },
+  "electronicLibrary": {
+    "pageTitle": "المكتبة الإلكترونية",
+    "pageDescription": "إدارة الكتب الرقمية والمواد والأسعار.",
+    "addItem": "إضافة عنصر",
+    "searchPlaceholder": "البحث في عناصر المكتبة...",
+    "filters": {
+      "allTypes": "جميع الأنواع",
+      "allCourses": "جميع الدورات",
+      "booklet": "كتيب",
+      "reference": "مرجع",
+      "guide": "دليل"
+    },
+    "status": {
+      "published": "منشور",
+      "draft": "مسودة"
+    },
+    "card": {
+      "noImage": "لا توجد صورة",
+      "view": "عرض",
+      "edit": "تعديل",
+      "delete": "حذف"
+    },
+    "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذا العنصر من المكتبة؟",
+    "deleteSuccess": "تم حذف العنصر من المكتبة بنجاح",
+    "deleteError": "فشل حذف العنصر من المكتبة",
+    "noItems": "لم يتم العثور على عناصر في المكتبة.",
+    "loadError": "فشل تحميل عناصر المكتبة. يرجى المحاولة مرة أخرى.",
+    "backToLibrary": "العودة إلى المكتبة",
+    "uploading": "جارٍ الرفع...",
+    "add": {
+      "pageTitle": "إضافة عنصر إلى المكتبة",
+      "pageDescription": "إضافة كتاب أو مادة جديدة إلى المكتبة الإلكترونية وإرسال إشعار للطلاب",
+      "sections": {
+        "itemDetails": "تفاصيل العنصر",
+        "coverImage": "صورة الغلاف",
+        "attachment": "ملف المرفق",
+        "settings": "الإعدادات"
+      },
+      "fields": {
+        "title": "العنوان",
+        "titleRequired": "العنوان مطلوب",
+        "titlePlaceholder": "مثال: دليل مرجعي للرياضيات",
+        "description": "الوصف",
+        "descriptionRequired": "الوصف مطلوب",
+        "descriptionPlaceholder": "وصف العنصر...",
+        "course": "الدورة",
+        "courseRequired": "الدورة مطلوبة",
+        "selectCourse": "اختر الدورة",
+        "loadingCourses": "جارٍ تحميل الدورات...",
+        "materialType": "نوع المادة",
+        "price": "السعر",
+        "priceRequired": "السعر الصحيح مطلوب",
+        "pricePlaceholder": "19.99",
+        "uploadCoverImage": "رفع صورة الغلاف",
+        "coverImageRequired": "صورة الغلاف مطلوبة",
+        "clickToUploadImage": "انقر لرفع الصورة",
+        "supportedFormats": "الصيغ المدعومة: JPG، PNG، WebP",
+        "uploadFile": "رفع الملف",
+        "attachmentRequired": "ملف المرفق مطلوب",
+        "clickToUploadFile": "انقر لرفع الملف",
+        "changeFile": "تغيير الملف",
+        "fileTypes": "PDF، DOC، DOCX، أو أي نوع ملف"
+      },
+      "settings": {
+        "codeActivation": "تفعيل الكود مطلوب",
+        "codeActivationDescription": "يحتاج الطلاب إلى كود للوصول إلى هذا العنصر",
+        "publishItem": "نشر العنصر",
+        "publishItemDescription": "جعل هذا العنصر مرئياً للطلاب"
+      },
+      "buttons": {
+        "cancel": "إلغاء",
+        "adding": "جارٍ الإضافة...",
+        "addToLibrary": "إضافة إلى المكتبة"
+      }
+    },
+    "edit": {
+      "pageTitle": "تعديل عنصر المكتبة",
+      "pageDescription": "تحديث تفاصيل عنصر المكتبة",
+      "sections": {
+        "itemDetails": "تفاصيل العنصر",
+        "coverImage": "صورة الغلاف",
+        "attachment": "ملف المرفق",
+        "settings": "الإعدادات"
+      },
+      "fields": {
+        "title": "العنوان",
+        "description": "الوصف",
+        "course": "الدورة",
+        "selectCourse": "اختر الدورة",
+        "loadingCourses": "جارٍ تحميل الدورات...",
+        "materialType": "نوع المادة",
+        "price": "السعر",
+        "uploadNewCoverImage": "رفع صورة غلاف جديدة",
+        "clickToUploadNewImage": "انقر لرفع صورة جديدة",
+        "supportedFormats": "الصيغ المدعومة: JPG، PNG، WebP",
+        "uploadNewFile": "رفع ملف جديد",
+        "clickToUploadNewFile": "انقر لرفع ملف جديد",
+        "changeFile": "تغيير الملف"
+      },
+      "settings": {
+        "codeActivation": "تفعيل الكود مطلوب",
+        "codeActivationDescription": "يحتاج الطلاب إلى كود للوصول إلى هذا العنصر",
+        "publishItem": "نشر العنصر",
+        "publishItemDescription": "جعل هذا العنصر مرئياً للطلاب"
+      },
+      "buttons": {
+        "cancel": "إلغاء",
+        "saving": "جارٍ الحفظ...",
+        "saveChanges": "حفظ التغييرات"
+      }
+    },
+    "detail": {
+      "loading": "جارٍ تحميل عنصر المكتبة...",
+      "loadError": "فشل تحميل عنصر المكتبة. يرجى المحاولة مرة أخرى.",
+      "edit": "تعديل",
+      "delete": "حذف",
+      "noCoverImage": "لا توجد صورة غلاف",
+      "sections": {
+        "itemDetails": "تفاصيل العنصر",
+        "libraryActivation": "تفعيل المكتبة"
+      },
+      "fields": {
+        "description": "الوصف",
+        "courseId": "رمز الدورة",
+        "codeActivation": "تفعيل الكود مطلوب",
+        "yes": "نعم",
+        "no": "لا",
+        "attachments": "المرفقات",
+        "createdDate": "تاريخ الإنشاء",
+        "lastUpdated": "آخر تحديث"
+      },
+      "activation": {
+        "tabs": {
+          "byCode": "بالكود",
+          "preactivation": "التفعيل المسبق"
+        },
+        "availableCodes": "الرموز المتاحة",
+        "noAvailableCodes": "لا توجد رموز متاحة. أنشئ رموزاً أولاً.",
+        "selectStudent": "اختيار الطالب",
+        "searchStudents": "البحث عن الطلاب...",
+        "noStudentsFound": "لم يتم العثور على طلاب",
+        "activate": "تفعيل عنصر المكتبة",
+        "activating": "جارٍ التفعيل...",
+        "howItWorks": "كيف يعمل:",
+        "preactivationDescription": "قم برفع أرقام الهواتف، وسنقوم بإنشاء رموز فريدة وتفعيلها فوراً للطلاب المطابقين.",
+        "uploadPhoneNumbers": "رفع أرقام الهواتف",
+        "supportedFormats": "المدعوم: .txt، .csv (رقم هاتف في كل سطر)",
+        "chooseFile": "اختيار ملف",
+        "phoneNumbers": "أرقام الهواتف",
+        "clear": "مسح",
+        "uploadAndProcess": "رفع ومعالجة",
+        "uploading": "جارٍ الرفع...",
+        "preactivationResults": "نتائج التفعيل المسبق:",
+        "success": "نجاح",
+        "failed": "فشل",
+        "uploadSuccess": "تم التفعيل المسبق بنجاح! تم معالجة {count} رقم هاتف."
+      }
+    }
+  }
+}
