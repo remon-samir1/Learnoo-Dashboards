@@ -1,0 +1,246 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { ArrowLeft, Save, Loader2, ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useParams } from 'next/navigation';
+import { useNote, useUpdateNote } from '@/src/hooks/useNotes';
+import { useCourses } from '@/src/hooks/useCourses';
+
+function getNoteTypes(t: (key: string) => string) {
+  return [
+    { value: 'summary', label: t('filters.summary') },
+    { value: 'highlight', label: t('filters.highlight') },
+    { value: 'key_point', label: t('filters.keyPoint') },
+    { value: 'important_notice', label: t('filters.importantNotice') }
+  ];
+}
+
+export default function EditNotePage() {
+  const t = useTranslations('notesSummaries');
+  const router = useRouter();
+  const params = useParams();
+  const noteId = parseInt(params.id as string);
+
+  const { data: note, isLoading: isLoadingNote, error } = useNote(noteId);
+  const { mutate: updateNote, isLoading: isUpdating } = useUpdateNote();
+  const { data: courses, isLoading: isLoadingCourses } = useCourses();
+  const NOTE_TYPES = getNoteTypes(t);
+
+  const [title, setTitle] = useState('');
+  const [type, setType] = useState('summary');
+  const [content, setContent] = useState('');
+  const [courseId, setCourseId] = useState('');
+  const [linkedLecture, setLinkedLecture] = useState('');
+  const [isPublish, setIsPublish] = useState(false);
+
+  // Populate form when note data loads
+  useEffect(() => {
+    if (note) {
+      setTitle(note.attributes.title || '');
+      setType(note.attributes.type || 'summary');
+      setContent(note.attributes.content || '');
+      setCourseId(note.attributes.course_id ? String(note.attributes.course_id) : '');
+      setLinkedLecture(note.attributes.linked_lecture || '');
+      setIsPublish(note.attributes.is_publish || false);
+    }
+  }, [note]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!title.trim()) return;
+    
+    try {
+      await updateNote(noteId, {
+        title: title.trim(),
+        type: type as any,
+        content: content.trim(),
+        course_id: courseId ? parseInt(courseId) : undefined,
+        linked_lecture: linkedLecture.trim() || undefined,
+        is_publish: isPublish
+      });
+      
+      router.push(`/notes-summaries/${noteId}`);
+    } catch {
+      // Error handled by hook
+    }
+  };
+
+  if (isLoadingNote) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
+      </div>
+    );
+  }
+
+  if (error || !note) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-[#EF4444]">{t('editNote.loadError')}</p>
+        <Link
+          href="/notes-summaries"
+          className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {t('editNote.backToNotes')}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-12">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link 
+          href={`/notes-summaries/${noteId}`}
+          className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('editNote.pageTitle')}</h1>
+          <p className="text-sm text-[#64748B] mt-0.5">{t('editNote.pageDescription')}</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
+        <div className="p-6 space-y-6">
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-semibold text-[#475569] mb-2">
+              {t('editNote.titleLabel')} <span className="text-[#EF4444]">*</span>
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t('editNote.titlePlaceholder')}
+              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+              required
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="block text-sm font-semibold text-[#475569] mb-2">
+              {t('editNote.typeLabel')} <span className="text-[#EF4444]">*</span>
+            </label>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+            >
+              {NOTE_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Course */}
+          <div>
+            <label className="block text-sm font-semibold text-[#475569] mb-2">
+              {t('editNote.courseLabel')}
+            </label>
+            <div className="relative">
+              <select
+                value={courseId}
+                onChange={(e) => setCourseId(e.target.value)}
+                disabled={isLoadingCourses}
+                className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
+              >
+                <option value="">{t('editNote.coursePlaceholder')}</option>
+                {courses?.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.attributes.title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+            </div>
+            {isLoadingCourses && (
+              <p className="mt-1 text-xs text-[#94A3B8]">{t('editNote.loadingCourses')}</p>
+            )}
+          </div>
+
+          {/* Linked Lecture */}
+          <div>
+            <label className="block text-sm font-semibold text-[#475569] mb-2">
+              {t('editNote.linkedLectureLabel')}
+            </label>
+            <input
+              type="text"
+              value={linkedLecture}
+              onChange={(e) => setLinkedLecture(e.target.value)}
+              placeholder={t('editNote.linkedLecturePlaceholder')}
+              className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+            />
+          </div>
+
+          {/* Content */}
+          <div>
+            <label className="block text-sm font-semibold text-[#475569] mb-2">
+              {t('editNote.contentLabel')}
+            </label>
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder={t('editNote.contentPlaceholder')}
+              rows={8}
+              className="w-full px-4 py-4 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
+            />
+            <p className="mt-2 text-xs text-[#94A3B8]">
+              {t('editNote.charactersCount', { count: content.length })}
+            </p>
+          </div>
+
+          {/* Publish Status */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isPublish"
+              checked={isPublish}
+              onChange={(e) => setIsPublish(e.target.checked)}
+              className="w-5 h-5 rounded border-[#E2E8F0] text-[#2137D6] focus:ring-[#2137D6]"
+            />
+            <label htmlFor="isPublish" className="text-sm font-semibold text-[#475569]">
+              {t('editNote.published')}
+            </label>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="px-6 py-4 bg-[#F8FAFC] border-t border-[#F1F5F9] flex items-center justify-between">
+          <Link
+            href={`/notes-summaries/${noteId}`}
+            className="px-5 py-2.5 text-sm font-bold text-[#64748B] hover:text-[#1E293B] transition-colors"
+          >
+            {t('editNote.cancel')}
+          </Link>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={isUpdating}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('editNote.saving')}
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  {t('editNote.saveChanges')}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
