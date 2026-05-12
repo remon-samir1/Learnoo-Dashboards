@@ -18,18 +18,27 @@ interface AuthState {
   error: string | null;
 
   // Getters
+<<<<<<< HEAD
   getUserRole: () => 'Admin' | 'Instructor' | 'Doctor' | 'Student' | 'Unknown' | null;
   isAdmin: () => boolean;
   isInstructor: () => boolean;
   isDoctor: () => boolean;
   canUseActivations: () => boolean;
+=======
+  getUserRole: () => 'Admin' | 'Doctor' | 'Student' | 'Unknown' | null;
+  isAdmin: () => boolean;
+  isDoctor: () => boolean;
+>>>>>>> origin/master
 
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
+<<<<<<< HEAD
   updateUser: (user: User) => void;
+=======
+>>>>>>> origin/master
   clearError: () => void;
 }
 
@@ -108,21 +117,27 @@ export const useAuthStore = create<AuthState>()(
         return role === 'Admin';
       },
 
+<<<<<<< HEAD
       isInstructor: () => {
         const role = get().getUserRole();
         return role === 'Instructor';
       },
 
+=======
+>>>>>>> origin/master
       isDoctor: () => {
         const role = get().getUserRole();
         return role === 'Doctor';
       },
 
+<<<<<<< HEAD
       canUseActivations: () => {
         const { user } = get();
         return user?.attributes.can_use_activations ?? false;
       },
 
+=======
+>>>>>>> origin/master
       // Actions
       login: async (credentials) => {
         set({ isLoading: true, error: null });
@@ -256,6 +271,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+<<<<<<< HEAD
       updateUser: (user: User) => {
         set({ user });
         // Update cookies with new user data
@@ -266,6 +282,8 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
+=======
+>>>>>>> origin/master
       clearError: () => set({ error: null }),
     }),
     {
@@ -331,9 +349,13 @@ export function useAuth() {
       isLoading: state.isLoading,
       error: state.error,
       isAdmin: state.isAdmin(),
+<<<<<<< HEAD
       isInstructor: state.isInstructor(),
       isDoctor: state.isDoctor(),
       canUseActivations: state.canUseActivations(),
+=======
+      isDoctor: state.isDoctor(),
+>>>>>>> origin/master
       userRole: state.getUserRole(),
     }))
   );

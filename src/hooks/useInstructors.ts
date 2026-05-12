@@ -111,6 +111,7 @@ export function useUpdateInstructor() {
 export const useDeleteInstructor = createMutationHook(
   (id: string) => api.instructors.delete(id)
 );
+<<<<<<< HEAD
 
 export const useResetInstructorPassword = createMutationHook(
   ({ instructorId, password }: { instructorId: string; password: string }) => 
@@ -121,3 +122,5 @@ export const useToggleCanUseActivations = createMutationHook(
   ({ instructorId, canUseActivations }: { instructorId: string; canUseActivations: boolean }) =>
     api.instructors.updateCanUseActivations(instructorId, canUseActivations)
 );
+=======
+>>>>>>> origin/master

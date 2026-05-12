@@ -130,7 +130,10 @@
     "featureControl": "التحكم في الميزات",
     "otaUpload": "رفع تحديثات الهواء",
     "adminDashboard": "لوحة تحكم المشرف",
+<<<<<<< HEAD
     "instructorDashboard": "لوحة تحكم المدرب",
+=======
+>>>>>>> origin/master
     "doctorDashboard": "لوحة تحكم الدكتور"
   },
   "header": {
@@ -997,7 +1000,10 @@
       "selectCourse": "اختر الدورة",
       "chapter": "الفصل",
       "selectChapter": "اختر الفصل",
+<<<<<<< HEAD
       "selectCourseFirst": "اختر دورة أولاً",
+=======
+>>>>>>> origin/master
       "duration": "المدة (دقيقة)",
       "totalMarks": "الدرجات الكلية",
       "passingMarks": "درجة النجاح (%)",
@@ -1507,10 +1513,13 @@
       "title": "الإعدادات العامة",
       "description": "اسم المنصة والمنطقة الزمنية والتكوين الأساسي."
     },
+<<<<<<< HEAD
     "profile": {
       "title": "الملف الشخصي",
       "description": "تحديث معلوماتك الشخصية وتفاصيل حسابك."
     },
+=======
+>>>>>>> origin/master
     "branding": {
       "title": "الهوية البصرية",
       "description": "الشعارات والألوان والهوية البصرية."
@@ -1687,8 +1696,12 @@
         "uploading": "جارٍ الرفع...",
         "preactivationResults": "نتائج التفعيل المسبق:",
         "success": "نجاح",
+<<<<<<< HEAD
         "failed": "فشل",
         "uploadSuccess": "تم التفعيل المسبق بنجاح! تم معالجة {count} رقم هاتف."
+=======
+        "failed": "فشل"
+>>>>>>> origin/master
       }
     }
   }

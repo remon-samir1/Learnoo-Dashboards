@@ -55,10 +55,13 @@ export function isAdmin(): boolean {
   return getUserRole() === 'Admin';
 }
 
+<<<<<<< HEAD
 export function isInstructor(): boolean {
   return getUserRole() === 'Instructor';
 }
 
+=======
+>>>>>>> origin/master
 export function isDoctor(): boolean {
   return getUserRole() === 'Doctor';
 }

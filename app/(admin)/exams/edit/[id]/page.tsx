@@ -1,42 +1,59 @@
 "use client";
 
+<<<<<<< HEAD
 import React, { useState, useEffect, useMemo } from 'react';
+=======
+import React, { useState, useEffect } from 'react';
+>>>>>>> origin/master
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Plus,
   Trash2,
   ChevronDown,
+<<<<<<< HEAD
   ChevronRight,
+=======
+>>>>>>> origin/master
   Clock,
   Calendar,
   FileText,
   Award,
   RotateCcw,
+<<<<<<< HEAD
   Loader2,
   FolderOpen,
   BookOpen,
   X,
   ImagePlus
+=======
+  Loader2
+>>>>>>> origin/master
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
+<<<<<<< HEAD
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { useCenters } from '@/src/hooks/useCenters';
 import { useDepartments } from '@/src/hooks/useDepartments';
 import type { University, Faculty, Center, Department, Course } from '@/src/types';
+=======
+>>>>>>> origin/master
 
 interface Answer {
   id: string;
   text: string;
   isCorrect: boolean;
+<<<<<<< HEAD
   reason: string;
   image?: File | null;
   imagePreview?: string;
+=======
+>>>>>>> origin/master
 }
 
 interface Question {
@@ -46,8 +63,11 @@ interface Question {
   score: number;
   autoCorrect: boolean;
   answers: Answer[];
+<<<<<<< HEAD
   image?: File | null;
   imagePreview?: string;
+=======
+>>>>>>> origin/master
 }
 
 interface ExamDetails {
@@ -63,6 +83,7 @@ interface ExamDetails {
   startTime: string;
   endTime: string;
   is_public: boolean;
+<<<<<<< HEAD
   reason?: string;
 }
 
@@ -359,6 +380,8 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
       )}
     </div>
   );
+=======
+>>>>>>> origin/master
 }
 
 export default function EditExamPage() {
@@ -370,6 +393,7 @@ export default function EditExamPage() {
   const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { data: quiz, isLoading: quizLoading } = useQuiz(parseInt(examId));
+<<<<<<< HEAD
   const { mutate: updateQuiz, isLoading: isUpdating, progress: updateProgress } = useUpdateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: universities } = useUniversities();
@@ -379,6 +403,10 @@ export default function EditExamPage() {
 
   // Tree selection state
   const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
+=======
+  const { mutate: updateQuiz, isLoading: isUpdating } = useUpdateQuiz();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+>>>>>>> origin/master
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '',
@@ -411,6 +439,7 @@ export default function EditExamPage() {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+<<<<<<< HEAD
   // Build course tree
   const courseTree = useMemo(() => {
     if (!universities || !faculties || !centers || !departments || !courses) {
@@ -440,6 +469,8 @@ export default function EditExamPage() {
     }
   };
 
+=======
+>>>>>>> origin/master
   // Filter chapters based on selected course
   const filteredChapters = examDetails.course
     ? chapters?.filter(ch => ch.attributes.course_id === parseInt(examDetails.course))
@@ -460,8 +491,13 @@ export default function EditExamPage() {
         startTime: formatDateTimeForInput(quiz.attributes.start_time),
         endTime: formatDateTimeForInput(quiz.attributes.end_time),
         is_public: quiz.attributes.is_public || false,
+<<<<<<< HEAD
         status: (quiz.attributes.is_public || quiz.attributes.status === 'active') ? 'Active' : 'Draft',
               });
+=======
+        status: (quiz.attributes.is_public || quiz.attributes.status === 'active') ? 'Active' : 'Draft'
+      });
+>>>>>>> origin/master
 
       // Load questions if available
       if (quiz.attributes.questions && quiz.attributes.questions.length > 0) {
@@ -471,6 +507,7 @@ export default function EditExamPage() {
           type: q.attributes.type,
           score: q.attributes.score,
           autoCorrect: q.attributes.auto_correct ?? true,
+<<<<<<< HEAD
           image: null,
           imagePreview: '',
           answers: q.attributes.answers?.map((ans, idx) => ({
@@ -480,6 +517,12 @@ export default function EditExamPage() {
             reason: ans.attributes.reason || '',
             image: null,
             imagePreview: ''
+=======
+          answers: q.attributes.answers?.map((ans, idx) => ({
+            id: String(idx + 1),
+            text: ans.attributes.text,
+            isCorrect: ans.attributes.is_correct
+>>>>>>> origin/master
           })) || []
         })));
       }
@@ -494,11 +537,17 @@ export default function EditExamPage() {
       type: 'single_choice',
       score: 1,
       autoCorrect: true,
+<<<<<<< HEAD
       image: null,
       imagePreview: '',
       answers: [
         { id: '1', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
         { id: '2', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }
+=======
+      answers: [
+        { id: '1', text: '', isCorrect: false },
+        { id: '2', text: '', isCorrect: false }
+>>>>>>> origin/master
       ]
     }]);
   };
@@ -519,7 +568,11 @@ export default function EditExamPage() {
         const newAnswerId = (q.answers.length + 1).toString();
         return {
           ...q,
+<<<<<<< HEAD
           answers: [...q.answers, { id: newAnswerId, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }]
+=======
+          answers: [...q.answers, { id: newAnswerId, text: '', isCorrect: false }]
+>>>>>>> origin/master
         };
       }
       return q;
@@ -554,7 +607,10 @@ export default function EditExamPage() {
     setQuestions(questions.map(q => {
       if (q.id === qId) {
         if (q.type === 'single_choice' || q.type === 'true_false') {
+<<<<<<< HEAD
           // Single choice - only one correct answer
+=======
+>>>>>>> origin/master
           return {
             ...q,
             answers: q.answers.map(a => ({
@@ -563,7 +619,10 @@ export default function EditExamPage() {
             }))
           };
         } else {
+<<<<<<< HEAD
           // Multiple choice - toggle without affecting others
+=======
+>>>>>>> origin/master
           return {
             ...q,
             answers: q.answers.map(a =>
@@ -576,6 +635,7 @@ export default function EditExamPage() {
     }));
   };
 
+<<<<<<< HEAD
   const handleQuestionImageChange = (qId: string, file: File | null) => {
     setQuestions(questions.map(q => {
       if (q.id === qId) {
@@ -605,6 +665,8 @@ export default function EditExamPage() {
     }));
   };
 
+=======
+>>>>>>> origin/master
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -635,18 +697,28 @@ export default function EditExamPage() {
           type: q.type,
           score: q.score,
           auto_correct: q.autoCorrect,
+<<<<<<< HEAD
           image: q.image || undefined,
           answers: q.type === 'short_answer' ? undefined : q.answers.map(a => ({
             text: a.text,
             is_correct: a.isCorrect,
             reason: a.reason || undefined,
             image: a.image || undefined,
+=======
+          answers: q.type === 'short_answer' ? undefined : q.answers.map(a => ({
+            text: a.text,
+            is_correct: a.isCorrect,
+>>>>>>> origin/master
           })),
           order: i + 1,
         })),
       };
 
+<<<<<<< HEAD
       await updateQuiz(parseInt(examId), quizData as any);
+=======
+      await updateQuiz(parseInt(examId), quizData);
+>>>>>>> origin/master
 
       alert('Exam updated successfully!');
     } catch (error) {
@@ -713,8 +785,13 @@ export default function EditExamPage() {
               />
             </div>
 
+<<<<<<< HEAD
             {/* Type, Chapter */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+=======
+            {/* Type, Course, Center */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+>>>>>>> origin/master
               <div className="flex flex-col gap-2 relative">
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.examType')} <span className="text-[#EF4444]">*</span></label>
                 <select
@@ -730,11 +807,34 @@ export default function EditExamPage() {
               </div>
 
               <div className="flex flex-col gap-2 relative">
+<<<<<<< HEAD
+=======
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
+                <select
+                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  value={examDetails.course}
+                  onChange={(e) => setExamDetails({...examDetails, course: e.target.value, chapter: ''})}
+                  disabled={coursesLoading}
+                >
+                  <option value="">{coursesLoading ? t('create.loading') : t('create.selectCourse')}</option>
+                  {courses?.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.attributes.title}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                {coursesLoading && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
+              </div>
+
+              <div className="flex flex-col gap-2 relative">
+>>>>>>> origin/master
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.chapter')}</label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={examDetails.chapter}
                   onChange={(e) => setExamDetails({...examDetails, chapter: e.target.value})}
+<<<<<<< HEAD
                   disabled={!examDetails.course || chaptersLoading}
                 >
                   <option value="">
@@ -744,6 +844,11 @@ export default function EditExamPage() {
                         ? t('create.loading')
                         : t('create.selectChapter')}
                   </option>
+=======
+                  disabled={chaptersLoading}
+                >
+                  <option value="">{chaptersLoading ? t('create.loading') : t('create.selectChapter')}</option>
+>>>>>>> origin/master
                   {filteredChapters?.map((chapter) => (
                     <option key={chapter.id} value={chapter.id}>
                       {chapter.attributes.title}
@@ -751,6 +856,7 @@ export default function EditExamPage() {
                   ))}
                 </select>
                 <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+<<<<<<< HEAD
                 {chaptersLoading && examDetails.course && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
               </div>
             </div>
@@ -785,6 +891,12 @@ export default function EditExamPage() {
               )}
             </div>
 
+=======
+                {chaptersLoading && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
+              </div>
+            </div>
+
+>>>>>>> origin/master
             {/* Duration, Marks, Attempts */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="flex flex-col gap-2">
@@ -983,13 +1095,18 @@ export default function EditExamPage() {
 
                 {/* Question Text */}
                 <div className="flex flex-col gap-2">
+<<<<<<< HEAD
                   <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')}</label>
+=======
+                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')} <span className="text-[#EF4444]">*</span></label>
+>>>>>>> origin/master
                   <input
                     type="text"
                     placeholder={t('create.questionPlaceholder')}
                     className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                     value={q.text}
                     onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
+<<<<<<< HEAD
                   />
                 </div>
 
@@ -1034,6 +1151,12 @@ export default function EditExamPage() {
                   )}
                 </div>
 
+=======
+                    required
+                  />
+                </div>
+
+>>>>>>> origin/master
                 {/* Answers Section */}
                 {q.type !== 'short_answer' && (
                   <div className="flex flex-col gap-4">
@@ -1053,6 +1176,7 @@ export default function EditExamPage() {
 
                     <div className="grid grid-cols-1 gap-3">
                       {q.answers.map((answer, ansIndex) => (
+<<<<<<< HEAD
                         <div key={answer.id} className="flex flex-col gap-2">
                           <div className="flex items-center gap-3">
                             <button
@@ -1134,6 +1258,40 @@ export default function EditExamPage() {
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
+=======
+                        <div key={answer.id} className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleCorrectAnswer(q.id, answer.id)}
+                            className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                              answer.isCorrect
+                                ? 'bg-[#10B981] border-[#10B981] text-white'
+                                : 'border-[#E2E8F0] hover:border-[#10B981]'
+                            }`}
+                          >
+                            {answer.isCorrect && (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                          <input
+                            type="text"
+                            placeholder={`${t('create.answer')} ${ansIndex + 1}`}
+                            className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                            value={answer.text}
+                            onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
+                            required
+                          />
+                          {q.answers.length > 2 && q.type !== 'true_false' && (
+                            <button
+                              type="button"
+                              onClick={() => removeAnswer(q.id, answer.id)}
+                              className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+>>>>>>> origin/master
                           )}
                         </div>
                       ))}

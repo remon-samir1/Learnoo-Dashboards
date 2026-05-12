@@ -25,7 +25,11 @@ import { useCourses } from '@/src/hooks/useCourses';
 import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
 
 import { useStudents } from '@/src/hooks/useStudents';
+<<<<<<< HEAD
 import { useCurrentUser } from '@/src/hooks/useAuth';
+=======
+
+>>>>>>> origin/master
 import { useCreateChapter, useUpdateChapter, useCopyChapter } from '@/src/hooks/useChapters';
 
 import type { Course, Lecture, Chapter } from '@/src/types';
@@ -147,7 +151,10 @@ export default function ContentManagerPage() {
   const { mutate: uploadPreActivation, isLoading: isUploadingChapterPreActivation } = useUploadPreActivation();
 
   const { data: students } = useStudents();
+<<<<<<< HEAD
   const { canUseActivations } = useCurrentUser();
+=======
+>>>>>>> origin/master
 
 
 
@@ -778,11 +785,24 @@ export default function ContentManagerPage() {
       const result = await uploadPreActivation({ item_id: Number(selectedChapter.id), item_type: 'chapter', file });
 
       setChapterPreactivationResults({
+<<<<<<< HEAD
         success: result.activated || 0,
         failed: result.skipped || 0,
         count: result.total_phones || 0
       });
       toast.success(result.message || `Processed ${result.total_phones || 0} pre-activations`);
+=======
+
+        success: result.data.count || 0,
+
+        failed: chapterPreactivationNumbers.length - (result.data.count || 0),
+
+        count: result.data.count || 0
+
+      });
+
+      toast.success(result.data.message || `Processed ${result.data.count} pre-activations`);
+>>>>>>> origin/master
 
       refetchCodes();
 
@@ -1799,7 +1819,11 @@ export default function ContentManagerPage() {
 
 
               {/* Chapter Activation Section */}
+<<<<<<< HEAD
               {canUseActivations && (
+=======
+
+>>>>>>> origin/master
               <section className="bg-white rounded-3xl border border-[#F1F5F9] p-6 shadow-sm">
 
                 <div className="flex items-center justify-between mb-4">
@@ -2259,7 +2283,10 @@ export default function ContentManagerPage() {
                 )}
 
               </section>
+<<<<<<< HEAD
               )}
+=======
+>>>>>>> origin/master
 
             </>
 

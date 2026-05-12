@@ -69,7 +69,11 @@ export default function LoginPage() {
         )}
 
         {/* Sign In Button */}
+<<<<<<< HEAD
         <button
+=======
+        <button 
+>>>>>>> origin/master
           onClick={handleLogin}
           disabled={loading}
           className="w-full h-9 bg-primary border-none rounded-lg font-sans font-medium text-[11.9px] leading-5 text-white cursor-pointer hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -107,7 +111,11 @@ export default function LoginPage() {
         body: JSON.stringify({
           phone_or_email: email,
           password: password,
+<<<<<<< HEAD
           device_name: 'dashboard-login'
+=======
+          device_name: 'learnoo-web',
+>>>>>>> origin/master
         }),
       });
 
@@ -135,6 +143,7 @@ export default function LoginPage() {
       Cookies.set('user_role', userRole, cookieOptions);
       Cookies.set('user_data', JSON.stringify(data.data), cookieOptions);
 
+<<<<<<< HEAD
       if (userRole === 'Admin' || userRole === 'Instructor') {
         router.push('/dashboard');
       } else {
@@ -157,6 +166,20 @@ export default function LoginPage() {
       //   Cookies.remove('user_role');
       //   Cookies.remove('user_data');
       // }
+=======
+      // Redirect based on role
+      if (userRole === 'Admin') {
+        router.push('/dashboard');
+      } else if (userRole === 'Doctor') {
+        router.push('/doctor/dashboard');
+      } else {
+        setError(t('errors.noPermission'));
+        // Clear cookies if role is not authorized
+        Cookies.remove('token');
+        Cookies.remove('user_role');
+        Cookies.remove('user_data');
+      }
+>>>>>>> origin/master
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {

@@ -11,10 +11,16 @@ import {
   Mail,
   Phone,
   User,
+<<<<<<< HEAD
   Key,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useInstructors, useDeleteInstructor, useResetInstructorPassword, useToggleCanUseActivations } from '@/src/hooks/useInstructors';
+=======
+} from 'lucide-react';
+import Link from 'next/link';
+import { useInstructors, useDeleteInstructor } from '@/src/hooks/useInstructors';
+>>>>>>> origin/master
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
 import type { Student } from '@/src/types';
 import { StudentStatusLabels } from '@/src/types';
@@ -40,8 +46,11 @@ export default function InstructorsPage() {
 
   const { data: instructorsResponse, isLoading, error, refetch } = useInstructors(filter, {});
   const { mutate: deleteInstructor, isLoading: isDeleting } = useDeleteInstructor();
+<<<<<<< HEAD
   const { mutate: resetPassword, isLoading: isResetting } = useResetInstructorPassword();
   const { mutate: toggleCanUseActivations, isLoading: isToggling } = useToggleCanUseActivations();
+=======
+>>>>>>> origin/master
 
   const instructors = instructorsResponse?.data || [];
   const meta = instructorsResponse?.meta as any;
@@ -57,6 +66,7 @@ export default function InstructorsPage() {
     }
   };
 
+<<<<<<< HEAD
   const handleResetPassword = async (instructor: Student) => {
     const newPassword = prompt('Enter new password for ' + getFullName(instructor) + ':');
     if (!newPassword || newPassword.trim() === '') {
@@ -86,6 +96,8 @@ export default function InstructorsPage() {
     }
   };
 
+=======
+>>>>>>> origin/master
   // Helper to get full name from student structure
   const getFullName = (instructor: Student) => {
     return `${instructor.attributes.first_name} ${instructor.attributes.last_name}`.trim();
@@ -160,9 +172,12 @@ export default function InstructorsPage() {
                   <th className="text-left px-6 py-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                     {t('status')}
                   </th>
+<<<<<<< HEAD
                   <th className="text-center px-6 py-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                     Can Use Activations
                   </th>
+=======
+>>>>>>> origin/master
                   <th className="text-right px-6 py-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                     {tc('actions')}
                   </th>
@@ -220,6 +235,7 @@ export default function InstructorsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
+<<<<<<< HEAD
                       <div className="flex justify-center">
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
@@ -247,6 +263,9 @@ export default function InstructorsPage() {
                             <Key className="w-4 h-4" />
                           )}
                         </button>
+=======
+                      <div className="flex items-center justify-end gap-2">
+>>>>>>> origin/master
                         <Link
                           href={`/instructors/${instructor.id}/edit`}
                           className="p-2 hover:bg-[#F1F5F9] rounded-lg transition-colors text-[#64748B] hover:text-[#2137D6]"

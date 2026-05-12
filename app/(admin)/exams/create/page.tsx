@@ -1,42 +1,59 @@
 "use client";
 
+<<<<<<< HEAD
 import React, { useState, useMemo } from 'react';
+=======
+import React, { useState } from 'react';
+>>>>>>> origin/master
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Plus,
   Trash2,
   ChevronDown,
+<<<<<<< HEAD
   ChevronRight,
+=======
+>>>>>>> origin/master
   Clock,
   Calendar,
   FileText,
   Award,
   RotateCcw,
+<<<<<<< HEAD
   Loader2,
   FolderOpen,
   BookOpen,
   X,
   ImagePlus
+=======
+  Loader2
+>>>>>>> origin/master
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useCreateQuiz } from '@/src/hooks/useQuizzes';
+<<<<<<< HEAD
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { useCenters } from '@/src/hooks/useCenters';
 import { useDepartments } from '@/src/hooks/useDepartments';
 import type { University, Faculty, Center, Department, Course } from '@/src/types';
+=======
+>>>>>>> origin/master
 
 interface Answer {
   id: string;
   text: string;
   isCorrect: boolean;
+<<<<<<< HEAD
   reason: string;
   image?: File | null;
   imagePreview?: string;
+=======
+>>>>>>> origin/master
 }
 
 interface Question {
@@ -47,8 +64,11 @@ interface Question {
   score: number;
   autoCorrect: boolean;
   answers: Answer[];
+<<<<<<< HEAD
   image?: File | null;
   imagePreview?: string;
+=======
+>>>>>>> origin/master
 }
 
 interface ExamDetails {
@@ -66,6 +86,7 @@ interface ExamDetails {
   is_public: boolean;
 }
 
+<<<<<<< HEAD
 type NodeType = 'university' | 'faculty' | 'center' | 'department' | 'course';
 
 interface TreeNode {
@@ -361,16 +382,21 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
   );
 }
 
+=======
+>>>>>>> origin/master
 export default function CreateExamPage() {
   const t = useTranslations('exams');
   const router = useRouter();
   const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { mutate: createQuiz, isLoading: isCreatingQuiz, isError: isQuizError, error: quizError } = useCreateQuiz();
+<<<<<<< HEAD
   const { data: universities } = useUniversities();
   const { data: faculties } = useFaculties();
   const { data: centers } = useCenters();
   const { data: departments } = useDepartments();
+=======
+>>>>>>> origin/master
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
@@ -388,6 +414,7 @@ export default function CreateExamPage() {
     is_public: false
   });
 
+<<<<<<< HEAD
   // Tree selection state
   const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
 
@@ -420,6 +447,8 @@ export default function CreateExamPage() {
     }
   };
 
+=======
+>>>>>>> origin/master
   // Filter chapters based on selected course
   const filteredChapters = examDetails.course
     ? chapters?.filter(ch => ch.attributes.course_id === parseInt(examDetails.course))
@@ -434,8 +463,13 @@ export default function CreateExamPage() {
       score: 1,
       autoCorrect: true,
       answers: [
+<<<<<<< HEAD
         { id: '1', text: '', isCorrect: false, reason: '' },
         { id: '2', text: '', isCorrect: false, reason: '' }
+=======
+        { id: '1', text: '', isCorrect: false },
+        { id: '2', text: '', isCorrect: false }
+>>>>>>> origin/master
       ]
     }
   ]);
@@ -449,11 +483,17 @@ export default function CreateExamPage() {
       type: 'single_choice',
       score: 1,
       autoCorrect: true,
+<<<<<<< HEAD
       image: null,
       imagePreview: '',
       answers: [
         { id: '1', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
         { id: '2', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }
+=======
+      answers: [
+        { id: '1', text: '', isCorrect: false },
+        { id: '2', text: '', isCorrect: false }
+>>>>>>> origin/master
       ]
     }]);
   };
@@ -474,7 +514,11 @@ export default function CreateExamPage() {
         const newAnswerId = (q.answers.length + 1).toString();
         return {
           ...q,
+<<<<<<< HEAD
           answers: [...q.answers, { id: newAnswerId, text: '', isCorrect: false, reason: '' }]
+=======
+          answers: [...q.answers, { id: newAnswerId, text: '', isCorrect: false }]
+>>>>>>> origin/master
         };
       }
       return q;
@@ -531,6 +575,7 @@ export default function CreateExamPage() {
     }));
   };
 
+<<<<<<< HEAD
   const handleQuestionImageChange = (qId: string, file: File | null) => {
     setQuestions(questions.map(q => {
       if (q.id === qId) {
@@ -560,6 +605,8 @@ export default function CreateExamPage() {
     }));
   };
 
+=======
+>>>>>>> origin/master
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -586,23 +633,37 @@ export default function CreateExamPage() {
         status: examDetails.status.toLowerCase() as 'draft' | 'active',
         start_time: examDetails.startTime || null,
         end_time: examDetails.endTime || null,
+<<<<<<< HEAD
                 questions: questions.map((q, i) => ({
+=======
+        questions: questions.map((q, i) => ({
+>>>>>>> origin/master
           text: q.text,
           type: q.type,
           score: q.score,
           auto_correct: q.autoCorrect,
+<<<<<<< HEAD
           image: q.image || undefined,
           answers: q.type === 'short_answer' ? undefined : q.answers.map(a => ({
             text: a.text,
             is_correct: a.isCorrect,
             reason: a.reason || undefined,
             image: a.image || undefined,
+=======
+          answers: q.type === 'short_answer' ? undefined : q.answers.map(a => ({
+            text: a.text,
+            is_correct: a.isCorrect,
+>>>>>>> origin/master
           })),
           order: i + 1,
         })),
       };
 
+<<<<<<< HEAD
       const createdQuiz = await createQuiz(quizData as any);
+=======
+      const createdQuiz = await createQuiz(quizData);
+>>>>>>> origin/master
 
       if (!createdQuiz) {
         throw new Error(t('create.error'));
@@ -655,6 +716,7 @@ export default function CreateExamPage() {
               />
             </div>
 
+<<<<<<< HEAD
             {/* Course Tree */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
@@ -687,6 +749,10 @@ export default function CreateExamPage() {
 
             {/* Type, Chapter */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+=======
+            {/* Type, Course, Chapter */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+>>>>>>> origin/master
               <div className="flex flex-col gap-2 relative">
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.examType')} <span className="text-[#EF4444]">*</span></label>
                 <select
@@ -702,11 +768,35 @@ export default function CreateExamPage() {
               </div>
 
               <div className="flex flex-col gap-2 relative">
+<<<<<<< HEAD
+=======
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
+                <select
+                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  value={examDetails.course}
+                  onChange={(e) => setExamDetails({...examDetails, course: e.target.value, chapter: ''})}
+                  required
+                  disabled={coursesLoading}
+                >
+                  <option value="">{coursesLoading ? t('create.loading') : t('create.selectCourse')}</option>
+                  {courses?.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.attributes.title}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                {coursesLoading && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
+              </div>
+
+              <div className="flex flex-col gap-2 relative">
+>>>>>>> origin/master
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.chapter')}</label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={examDetails.chapter}
                   onChange={(e) => setExamDetails({...examDetails, chapter: e.target.value})}
+<<<<<<< HEAD
                   disabled={!examDetails.course || chaptersLoading}
                 >
                   <option value="">
@@ -716,6 +806,11 @@ export default function CreateExamPage() {
                         ? t('create.loading')
                         : t('create.selectChapter')}
                   </option>
+=======
+                  disabled={chaptersLoading}
+                >
+                  <option value="">{chaptersLoading ? t('create.loading') : t('create.selectChapter')}</option>
+>>>>>>> origin/master
                   {filteredChapters?.map((chapter) => (
                     <option key={chapter.id} value={chapter.id}>
                       {chapter.attributes.title}
@@ -723,7 +818,11 @@ export default function CreateExamPage() {
                   ))}
                 </select>
                 <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+<<<<<<< HEAD
                 {chaptersLoading && examDetails.course && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
+=======
+                {chaptersLoading && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
+>>>>>>> origin/master
               </div>
             </div>
 
@@ -925,13 +1024,18 @@ export default function CreateExamPage() {
 
                 {/* Question Text */}
                 <div className="flex flex-col gap-2">
+<<<<<<< HEAD
                   <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')}</label>
+=======
+                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')} <span className="text-[#EF4444]">*</span></label>
+>>>>>>> origin/master
                   <input
                     type="text"
                     placeholder={t('create.questionPlaceholder')}
                     className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                     value={q.text}
                     onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
+<<<<<<< HEAD
                   />
                 </div>
 
@@ -976,6 +1080,12 @@ export default function CreateExamPage() {
                   )}
                 </div>
 
+=======
+                    required
+                  />
+                </div>
+
+>>>>>>> origin/master
                 {/* Answers Section */}
                 {q.type !== 'short_answer' && (
                   <div className="flex flex-col gap-4">
@@ -995,6 +1105,7 @@ export default function CreateExamPage() {
 
                     <div className="grid grid-cols-1 gap-3">
                       {q.answers.map((answer, ansIndex) => (
+<<<<<<< HEAD
                         <div key={answer.id} className="flex flex-col gap-2">
                           <div className="flex items-center gap-3">
                             <button
@@ -1076,6 +1187,40 @@ export default function CreateExamPage() {
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
+=======
+                        <div key={answer.id} className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleCorrectAnswer(q.id, answer.id)}
+                            className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                              answer.isCorrect
+                                ? 'bg-[#10B981] border-[#10B981] text-white'
+                                : 'border-[#E2E8F0] hover:border-[#10B981]'
+                            }`}
+                          >
+                            {answer.isCorrect && (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                          <input
+                            type="text"
+                            placeholder={`${t('create.answer')} ${ansIndex + 1}`}
+                            className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                            value={answer.text}
+                            onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
+                            required
+                          />
+                          {q.answers.length > 2 && q.type !== 'true_false' && (
+                            <button
+                              type="button"
+                              onClick={() => removeAnswer(q.id, answer.id)}
+                              className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+>>>>>>> origin/master
                           )}
                         </div>
                       ))}

@@ -9,7 +9,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { useLibrary, useDeleteLibrary } from '@/src/hooks/useLibraries';
 import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
+<<<<<<< HEAD
 import { useCurrentUser } from '@/src/hooks/useAuth';
+=======
+>>>>>>> origin/master
 import toast from 'react-hot-toast';
 
 function formatDate(dateString: string | null): string {
@@ -34,7 +37,10 @@ export default function LibraryDetailPage() {
 
   const { data: library, isLoading, error } = useLibrary(libraryId);
   const { mutate: deleteLibrary, isLoading: isDeleting } = useDeleteLibrary();
+<<<<<<< HEAD
   const { canUseActivations } = useCurrentUser();
+=======
+>>>>>>> origin/master
 
   // Activation State
   const [libraryActivationTab, setLibraryActivationTab] = useState<'code' | 'preactivation'>('code');
@@ -42,8 +48,11 @@ export default function LibraryDetailPage() {
   const [selectedLibraryStudent, setSelectedLibraryStudent] = useState('');
   const [libraryStudentSearch, setLibraryStudentSearch] = useState('');
   const [libraryPreactivationNumbers, setLibraryPreactivationNumbers] = useState<string[]>([]);
+<<<<<<< HEAD
   const [libraryPreactivationManualInput, setLibraryPreactivationManualInput] = useState('');
   const [libraryPreactivationSuccessMessage, setLibraryPreactivationSuccessMessage] = useState('');
+=======
+>>>>>>> origin/master
   const [libraryPreactivationResults, setLibraryPreactivationResults] = useState<{ success: number; failed: number; count: number } | null>(null);
   const libraryFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,13 +121,17 @@ export default function LibraryDetailPage() {
   const clearLibraryPreactivationNumbers = () => {
     setLibraryPreactivationNumbers([]);
     setLibraryPreactivationResults(null);
+<<<<<<< HEAD
     setLibraryPreactivationSuccessMessage('');
+=======
+>>>>>>> origin/master
     if (libraryFileInputRef.current) {
       libraryFileInputRef.current.value = '';
     }
   };
 
   const handleLibraryPreactivationUpload = async () => {
+<<<<<<< HEAD
     const selectedFile = libraryFileInputRef.current?.files?.[0];
 
     const file =
@@ -129,6 +142,9 @@ export default function LibraryDetailPage() {
           })
         : null);
 
+=======
+    const file = libraryFileInputRef.current?.files?.[0];
+>>>>>>> origin/master
     if (!file) {
       toast.error(t('courses.view.preactivation.selectFile'));
       return;
@@ -137,6 +153,7 @@ export default function LibraryDetailPage() {
     try {
       const result = await uploadPreActivation({ item_id: libraryId, item_type: 'library', file });
       setLibraryPreactivationResults({
+<<<<<<< HEAD
         success: result.activated || 0,
         failed: result.skipped || 0,
         count: result.total_phones || 0
@@ -144,17 +161,28 @@ export default function LibraryDetailPage() {
       const successMsg = t('electronicLibrary.detail.activation.uploadSuccess', { count: result.total_phones || 0 });
       setLibraryPreactivationSuccessMessage(successMsg);
       toast.success(successMsg);
+=======
+        success: result.data.count || 0,
+        failed: libraryPreactivationNumbers.length - (result.data.count || 0),
+        count: result.data.count || 0
+      });
+      toast.success(result.data.message || `${t('courses.view.preactivation.success')} ${result.data.count}`);
+>>>>>>> origin/master
       refetchCodes();
       if (libraryFileInputRef.current) {
         libraryFileInputRef.current.value = '';
       }
       setLibraryPreactivationNumbers([]);
+<<<<<<< HEAD
       setLibraryPreactivationManualInput('');
+=======
+>>>>>>> origin/master
     } catch {
       toast.error(t('courses.view.preactivation.failed'));
     }
   };
 
+<<<<<<< HEAD
   const addLibraryManualNumbers = () => {
     const raw = libraryPreactivationManualInput;
     const numbers = raw
@@ -172,6 +200,8 @@ export default function LibraryDetailPage() {
     setLibraryPreactivationManualInput('');
   };
 
+=======
+>>>>>>> origin/master
   const handleDelete = async () => {
     if (!confirm(t('electronicLibrary.deleteConfirm'))) return;
     try {
@@ -265,7 +295,11 @@ export default function LibraryDetailPage() {
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
+<<<<<<< HEAD
                 <span className="text-2xl font-bold text-[#2137D6]">EGP {Number(library.attributes.price).toFixed(2)}</span>
+=======
+                <span className="text-2xl font-bold text-[#2137D6]">${Number(library.attributes.price).toFixed(2)}</span>
+>>>>>>> origin/master
                 <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-wide ${
                   library.attributes.is_publish
                     ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100'
@@ -307,7 +341,10 @@ export default function LibraryDetailPage() {
               </div>
 
               {/* Code Activation */}
+<<<<<<< HEAD
               {canUseActivations && (
+=======
+>>>>>>> origin/master
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-[#FEF3C7] rounded-xl flex items-center justify-center shrink-0 border border-amber-50">
                   <Lock className="w-5 h-5 text-[#D97706]" />
@@ -317,7 +354,10 @@ export default function LibraryDetailPage() {
                   <span className="text-sm font-bold text-[#1E293B]">{library.attributes.code_activation ? t('electronicLibrary.detail.fields.yes') : t('electronicLibrary.detail.fields.no')}</span>
                 </div>
               </div>
+<<<<<<< HEAD
               )}
+=======
+>>>>>>> origin/master
 
               {/* Attachments */}
               {library.attributes.attachments && library.attributes.attachments.length > 0 && (
@@ -379,7 +419,10 @@ export default function LibraryDetailPage() {
           </section>
 
           {/* Library Activation Section */}
+<<<<<<< HEAD
           {canUseActivations && (
+=======
+>>>>>>> origin/master
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -543,6 +586,7 @@ export default function LibraryDetailPage() {
                   </button>
                 </div>
 
+<<<<<<< HEAD
                 {/* Manual Add */}
                 <div>
                   <label className="text-xs font-bold text-[#64748B] mb-2 block">Phone numbers (manual)</label>
@@ -572,6 +616,8 @@ export default function LibraryDetailPage() {
                   <p className="text-[10px] text-[#94A3B8] mt-2">Separate multiple numbers with comma or new line.</p>
                 </div>
 
+=======
+>>>>>>> origin/master
                 {/* Phone Numbers Preview */}
                 {libraryPreactivationNumbers.length > 0 && (
                   <div>
@@ -619,6 +665,7 @@ export default function LibraryDetailPage() {
                   )}
                 </button>
 
+<<<<<<< HEAD
                 {libraryPreactivationSuccessMessage && (
                   <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
@@ -630,6 +677,29 @@ export default function LibraryDetailPage() {
             )}
           </section>
           )}
+=======
+                {/* Pre-activation Results */}
+                {libraryPreactivationResults && (
+                  <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                    <p className="text-xs font-bold text-[#1E293B] mb-2">{t('electronicLibrary.detail.activation.preactivationResults')}</p>
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        {t('electronicLibrary.detail.activation.success')}: {libraryPreactivationResults.success}
+                      </span>
+                      {libraryPreactivationResults.failed > 0 && (
+                        <span className="text-xs text-red-600 flex items-center gap-1">
+                          <X className="w-3.5 h-3.5" />
+                          {t('electronicLibrary.detail.activation.failed')}: {libraryPreactivationResults.failed}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+>>>>>>> origin/master
         </div>
       </div>
     </div>

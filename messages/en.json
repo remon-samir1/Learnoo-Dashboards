@@ -130,7 +130,10 @@
     "featureControl": "Feature Control",
     "otaUpload": "OTA Upload",
     "adminDashboard": "Admin Dashboard",
+<<<<<<< HEAD
     "instructorDashboard": "Instructor Dashboard",
+=======
+>>>>>>> origin/master
     "doctorDashboard": "Doctor Dashboard"
   },
   "header": {
@@ -997,7 +1000,10 @@
       "selectCourse": "Select Course",
       "chapter": "Chapter",
       "selectChapter": "Select Chapter",
+<<<<<<< HEAD
       "selectCourseFirst": "Select a course first",
+=======
+>>>>>>> origin/master
       "duration": "Duration (min)",
       "totalMarks": "Total Marks",
       "passingMarks": "Passing Marks (%)",
@@ -1507,10 +1513,13 @@
       "title": "General Settings",
       "description": "Platform name, timezone, and basic configuration."
     },
+<<<<<<< HEAD
     "profile": {
       "title": "Profile",
       "description": "Update your personal information and account details."
     },
+=======
+>>>>>>> origin/master
     "branding": {
       "title": "Branding",
       "description": "Logos, colors, and visual identity."
@@ -1687,8 +1696,12 @@
         "uploading": "Uploading...",
         "preactivationResults": "Pre-activation Results:",
         "success": "Success",
+<<<<<<< HEAD
         "failed": "Failed",
         "uploadSuccess": "Pre-activation completed successfully! {count} phone number(s) processed."
+=======
+        "failed": "Failed"
+>>>>>>> origin/master
       }
     }
   }

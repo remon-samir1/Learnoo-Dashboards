@@ -1,6 +1,10 @@
 'use client';
 
+<<<<<<< HEAD
 import React, { useState, useEffect, useMemo } from 'react';
+=======
+import React, { useState, useEffect } from 'react';
+>>>>>>> origin/master
 import { useTranslations } from 'next-intl';
 import {
   ClipboardList,
@@ -10,6 +14,7 @@ import {
   Reply,
   Trash2,
   Edit,
+<<<<<<< HEAD
   BarChart3,
   Copy,
   ChevronDown,
@@ -324,13 +329,27 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
     </div>
   );
 }
+=======
+  BarChart3
+} from 'lucide-react';
+import Link from 'next/link';
+import { useQuizzes, useDeleteQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
+import { useChapters } from '@/src/hooks/useChapters';
+import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
+import { DataTable, Column } from '@/src/components/ui/DataTable';
+import { DeleteModal } from '@/src/components/ui/DeleteModal';
+import type { Quiz } from '@/src/types';
+>>>>>>> origin/master
 
 export default function ExamsPage() {
   const t = useTranslations();
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
+<<<<<<< HEAD
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [selectedCourseForCopy, setSelectedCourseForCopy] = useState<string>('');
+=======
+>>>>>>> origin/master
 
   const { data: quizzesData, isLoading, error, refetch } = useQuizzes();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
@@ -344,6 +363,7 @@ export default function ExamsPage() {
   const { data: chapters } = useChapters();
   const { mutate: deleteQuiz, isLoading: isDeleting } = useDeleteQuiz();
   const { mutate: updateQuiz } = useUpdateQuiz();
+<<<<<<< HEAD
   const { data: courses } = useCourses();
   const { data: universities } = useUniversities();
   const { data: faculties } = useFaculties();
@@ -352,6 +372,8 @@ export default function ExamsPage() {
 
   // Tree selection state for copy modal
   const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
+=======
+>>>>>>> origin/master
 
   const handleDelete = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
@@ -380,6 +402,7 @@ export default function ExamsPage() {
     }
   };
 
+<<<<<<< HEAD
   const { mutate: createQuiz } = useCreateQuiz();
   const { mutate: createQuizWithoutFiles } = useCreateQuizWithoutFiles();
 
@@ -480,6 +503,8 @@ export default function ExamsPage() {
     }
   };
 
+=======
+>>>>>>> origin/master
   const getChapterName = (chapterId: number | null) => {
     if (!chapterId) return '-';
     const chapter = chapters?.find(c => parseInt(c.id) === chapterId);
@@ -598,7 +623,10 @@ export default function ExamsPage() {
           isLoading={isLoading}
           keyExtractor={(item) => item.id}
           onDelete={handleDelete}
+<<<<<<< HEAD
           onCopy={handleCopy}
+=======
+>>>>>>> origin/master
           editHref={(item) => `/exams/edit/${item.id}`}
           emptyMessage={t('exams.noExams')}
         />
@@ -613,6 +641,7 @@ export default function ExamsPage() {
           itemName={selectedQuiz?.attributes.title || ''}
           isLoading={isDeleting}
         />
+<<<<<<< HEAD
         
         {/* Copy Modal */}
         {copyModalOpen && (
@@ -672,6 +701,8 @@ export default function ExamsPage() {
             </div>
           </div>
         )}
+=======
+>>>>>>> origin/master
       </div>
     </div>
   );

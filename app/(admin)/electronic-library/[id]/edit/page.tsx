@@ -1,12 +1,19 @@
 'use client';
 
+<<<<<<< HEAD
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ArrowLeft, Save, Loader2, ChevronDown, ChevronRight, FolderOpen, BookOpen } from 'lucide-react';
+=======
+import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { ArrowLeft, Save, Loader2, ChevronDown } from 'lucide-react';
+>>>>>>> origin/master
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useLibrary, useUpdateLibrary } from '@/src/hooks/useLibraries';
 import { useCourses } from '@/src/hooks/useCourses';
+<<<<<<< HEAD
 import { useCurrentUser } from '@/src/hooks/useAuth';
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { useCenters } from '@/src/hooks/useCenters';
@@ -382,6 +389,9 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
     </div>
   );
 }
+=======
+import type { Attachment } from '@/src/types';
+>>>>>>> origin/master
 
 export default function EditLibraryItemPage() {
   const t = useTranslations();
@@ -401,6 +411,7 @@ function getPreviewUrl(path: string | null): string {
   const { data: library, isLoading: isLoadingLibrary, error } = useLibrary(libraryId);
   const { mutate: updateLibrary, isLoading: isUpdating, progress } = useUpdateLibrary();
   const { data: courses, isLoading: isLoadingCourses } = useCourses();
+<<<<<<< HEAD
   const { canUseActivations } = useCurrentUser();
   
   // Tree data hooks
@@ -408,6 +419,8 @@ function getPreviewUrl(path: string | null): string {
   const { data: faculties } = useFaculties();
   const { data: centers } = useCenters();
   const { data: departments } = useDepartments();
+=======
+>>>>>>> origin/master
 
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState('');
@@ -421,6 +434,7 @@ function getPreviewUrl(path: string | null): string {
   const [isPublish, setIsPublish] = useState(false);
   const [price, setPrice] = useState('');
 
+<<<<<<< HEAD
   // Tree selection state
   const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
 
@@ -492,6 +506,8 @@ function getPreviewUrl(path: string | null): string {
     return parentIds;
   };
 
+=======
+>>>>>>> origin/master
   const MATERIAL_TYPES = [
     { value: 'booklet', label: t('electronicLibrary.filters.booklet') },
     { value: 'reference', label: t('electronicLibrary.filters.reference') },
@@ -513,6 +529,7 @@ function getPreviewUrl(path: string | null): string {
     }
   }, [library]);
 
+<<<<<<< HEAD
   // Auto-expand tree to show selected course
   useEffect(() => {
     if (courseId && courseTree.length > 0) {
@@ -521,6 +538,8 @@ function getPreviewUrl(path: string | null): string {
     }
   }, [courseId, courseTree]);
 
+=======
+>>>>>>> origin/master
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -627,6 +646,7 @@ function getPreviewUrl(path: string | null): string {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Course */}
+<<<<<<< HEAD
             <div className="flex flex-col gap-2 md:col-span-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.course')}</label>
               <div className="border border-[#E2E8F0] rounded-xl max-h-64 overflow-y-auto">
@@ -654,6 +674,24 @@ function getPreviewUrl(path: string | null): string {
                   </p>
                 </div>
               )}
+=======
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.course')}</label>
+              <div className="relative">
+                <select 
+                  className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  value={courseId}
+                  onChange={(e) => setCourseId(e.target.value)}
+                  disabled={isLoadingCourses}
+                >
+                  <option value="">{t('electronicLibrary.edit.fields.selectCourse')}</option>
+                  {courses?.map((course) => (
+                    <option key={course.id} value={course.id}>{course.attributes.title}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+              </div>
+>>>>>>> origin/master
             </div>
 
             {/* Material Type */}
@@ -802,15 +840,23 @@ function getPreviewUrl(path: string | null): string {
           <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.edit.sections.settings')}</h2>
           
           {/* Code Activation */}
+<<<<<<< HEAD
           {canUseActivations && (
+=======
+>>>>>>> origin/master
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
               <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.edit.settings.codeActivation')}</span>
               <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.edit.settings.codeActivationDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
+<<<<<<< HEAD
               <input
                 type="checkbox"
+=======
+              <input 
+                type="checkbox" 
+>>>>>>> origin/master
                 className="sr-only peer"
                 checked={codeActivation}
                 onChange={(e) => setCodeActivation(e.target.checked)}
@@ -818,7 +864,10 @@ function getPreviewUrl(path: string | null): string {
               <div className="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
             </label>
           </div>
+<<<<<<< HEAD
           )}
+=======
+>>>>>>> origin/master
 
           {/* Publish Status */}
           <div className="flex items-center justify-between">

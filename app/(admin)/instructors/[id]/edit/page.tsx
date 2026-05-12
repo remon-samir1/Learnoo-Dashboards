@@ -35,14 +35,23 @@ export default function EditInstructorPage() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
+<<<<<<< HEAD
     email: '',
     password: '',
     confirmPassword: '',
+=======
+    phone: '',
+    email: '',
+    password: '',
+>>>>>>> origin/master
     specialization: '',
     status: 1 as StudentStatus,
     image: null as File | null,
     existingImage: null as string | null,
+<<<<<<< HEAD
     can_use_activations: false,
+=======
+>>>>>>> origin/master
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -74,20 +83,30 @@ export default function EditInstructorPage() {
       setFormData({
         first_name: attrs.first_name || '',
         last_name: attrs.last_name || '',
+<<<<<<< HEAD
         email: attrs.email || '',
         password: '', // Don't pre-fill password
         confirmPassword: '', // Don't pre-fill confirm password
+=======
+        phone: attrs.phone?.toString() || '',
+        email: attrs.email || '',
+        password: '', // Don't pre-fill password
+>>>>>>> origin/master
         specialization: attrs.specialization || '',
         status: (attrs.status ?? 1) as StudentStatus,
         image: null,
         existingImage: attrs.image || null,
+<<<<<<< HEAD
         can_use_activations: attrs.can_use_activations || false,
+=======
+>>>>>>> origin/master
       });
       
       setPreviewUrl(attrs.image || null);
     }
   }, [instructorResponse]);
 
+<<<<<<< HEAD
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -102,16 +121,29 @@ export default function EditInstructorPage() {
       return;
     }
     
+=======
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+>>>>>>> origin/master
     try {
       const payload: CreateStudentRequest = {
         first_name: formData.first_name,
         last_name: formData.last_name,
+<<<<<<< HEAD
+=======
+        phone: formData.phone,
+>>>>>>> origin/master
         email: formData.email,
         password: formData.password || undefined,
         specialization: formData.specialization,
         status: formData.status,
+<<<<<<< HEAD
         image: formData.image || undefined,
         can_use_activations: formData.can_use_activations,
+=======
+        image: formData.image || undefined
+>>>>>>> origin/master
       };
 
       await updateInstructor(instructorId, payload);
@@ -198,6 +230,34 @@ export default function EditInstructorPage() {
               />
             </div>
 
+<<<<<<< HEAD
+=======
+            {/* Phone */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.phone')} *</label>
+              <input
+                type="tel"
+                required
+                value={formData.phone}
+                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                placeholder={t('instructors.form.phonePlaceholder')}
+              />
+            </div>
+
+            {/* Specialization */}
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.specialization')}</label>
+              <input
+                type="text"
+                value={formData.specialization}
+                onChange={(e) => setFormData(prev => ({ ...prev, specialization: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                placeholder={t('instructors.form.specializationPlaceholder')}
+              />
+            </div>
+
+>>>>>>> origin/master
             {/* Status */}
             <div className="flex flex-col gap-2 relative">
               <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.status')}</label>
@@ -226,6 +286,7 @@ export default function EditInstructorPage() {
               <p className="text-xs text-[#64748B]">{t('instructors.form.passwordHint')}</p>
             </div>
 
+<<<<<<< HEAD
             {/* Confirm Password */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-medium text-[#1E293B]">Confirm Password</label>
@@ -251,6 +312,8 @@ export default function EditInstructorPage() {
               />
             </div>
 
+=======
+>>>>>>> origin/master
             {/* Profile Image */}
             <div className="flex flex-col gap-2 md:col-span-2">
               <FileUpload

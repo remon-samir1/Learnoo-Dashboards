@@ -1,7 +1,13 @@
+<<<<<<< HEAD
 import { useState, useCallback } from 'react';
 import { api, ApiError } from '@/src/lib/api';
 import type { Quiz, CreateQuizRequest, QuizQuestion, CreateQuizQuestionRequest, QuizAttempt } from '@/src/types';
 import { createQueryHook, createMutationHook, MutationState } from './index';
+=======
+import { api } from '@/src/lib/api';
+import type { Quiz, CreateQuizRequest, QuizQuestion, CreateQuizQuestionRequest, QuizAttempt } from '@/src/types';
+import { createQueryHook, createMutationHook } from './index';
+>>>>>>> origin/master
 
 // ============================================
 // Quizzes & Exams Hooks
@@ -17,6 +23,7 @@ export const useQuiz = createQueryHook(
   { enabled: true }
 );
 
+<<<<<<< HEAD
 export function useCreateQuiz() {
   const [state, setState] = useState<MutationState<Quiz>>({
     data: null,
@@ -126,6 +133,16 @@ export function useUpdateQuiz() {
 
   return { ...state, mutate, reset, progress };
 }
+=======
+export const useCreateQuiz = createMutationHook(
+  (data: CreateQuizRequest) => api.quizzes.create(data).then(res => res.data)
+);
+
+export const useUpdateQuiz = createMutationHook(
+  (id: number, data: Partial<CreateQuizRequest>) => 
+    api.quizzes.update(id, data).then(res => res.data)
+);
+>>>>>>> origin/master
 
 export const useDeleteQuiz = createMutationHook(
   (id: number) => api.quizzes.delete(id).then(res => res.data)

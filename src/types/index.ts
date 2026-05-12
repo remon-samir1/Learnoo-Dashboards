@@ -482,7 +482,11 @@ export interface UserAttributes {
 
 
 
+<<<<<<< HEAD
   role: 'Admin' | 'Instructor' | 'Doctor' | 'Student' | 'Unknown';
+=======
+  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown';
+>>>>>>> origin/master
 
 
 
@@ -514,12 +518,15 @@ export interface UserAttributes {
 
 
 
+<<<<<<< HEAD
   image?: string | null;
 
   can_use_activations?: boolean;
 
 
 
+=======
+>>>>>>> origin/master
 }
 
 
@@ -818,7 +825,11 @@ export interface ChapterAttributes {
 
   is_free_preview: 0 | 1;
 
+<<<<<<< HEAD
   is_free_preview_attachment: 0 | 1;
+=======
+
+>>>>>>> origin/master
 
   max_views: number;
 
@@ -946,7 +957,11 @@ export interface CreateChapterRequest {
 
   is_free_preview?: 0 | 1;
 
+<<<<<<< HEAD
   is_free_preview_attachment?: 0 | 1;
+=======
+
+>>>>>>> origin/master
 
   attachments: File[];
 
@@ -994,7 +1009,11 @@ export interface UpdateChapterRequest {
 
   is_free_preview?: 0 | 1;
 
+<<<<<<< HEAD
   is_free_preview_attachment?: 0 | 1;
+=======
+
+>>>>>>> origin/master
 
   max_views?: number;
 
@@ -3472,10 +3491,13 @@ export interface QuizAttributes {
 
 
 
+<<<<<<< HEAD
   reason?: string;
 
 
 
+=======
+>>>>>>> origin/master
   created_at: string | null;
 
 
@@ -3560,10 +3582,13 @@ export interface CreateQuizRequest {
 
 
 
+<<<<<<< HEAD
   reason?: string;
 
 
 
+=======
+>>>>>>> origin/master
   questions?: CreateQuizQuestionRequest[];
 
 
@@ -3668,10 +3693,13 @@ export interface QuizQuestionAnswerAttributes {
 
 
 
+<<<<<<< HEAD
   reason?: string;
 
 
 
+=======
+>>>>>>> origin/master
   created_at: string | null;
 
 
@@ -4426,7 +4454,11 @@ export interface CreateStudentRequest {
 
 
 
+<<<<<<< HEAD
   phone?: string;
+=======
+  phone: string;
+>>>>>>> origin/master
 
 
 
@@ -4466,7 +4498,11 @@ export interface CreateStudentRequest {
 
   image?: File;
 
+<<<<<<< HEAD
   can_use_activations?: boolean;
+=======
+
+>>>>>>> origin/master
 
 }
 

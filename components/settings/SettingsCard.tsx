@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+<<<<<<< HEAD
 import {
   Settings,
   Palette,
@@ -11,6 +12,16 @@ import {
   Image,
   User,
   ChevronRight
+=======
+import { 
+  Settings, 
+  Palette, 
+  Bell, 
+  Globe, 
+  FileText,
+  Image,
+  ChevronRight 
+>>>>>>> origin/master
 } from 'lucide-react';
 
 const iconMap = {
@@ -19,8 +30,12 @@ const iconMap = {
   Bell,
   Globe,
   FileText,
+<<<<<<< HEAD
   Image,
   User
+=======
+  Image
+>>>>>>> origin/master
 };
 
 type IconName = keyof typeof iconMap;
