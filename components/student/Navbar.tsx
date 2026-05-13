@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
+import Cookies from "@/lib/cookies";
+import type { CurrentUser } from "@/src/interfaces/current-user.interface";
+import { getUserAttributes, getUserInitials } from "@/src/lib/current-user";
+import { getPusherClient } from "@/src/lib/pusher.client";
+import { userLogout } from "@/src/services/student/auth.service";
 import {
   Bell,
   BookOpen,
@@ -12,18 +13,16 @@ import {
   Globe2,
   LogOut,
   MessageCircle,
-  Search,
   Settings,
   User,
-  Video,
+  Video
 } from "lucide-react";
-import Cookies from "@/lib/cookies";
-import { useDebouncedCallback } from "use-debounce";
-import { getPusherClient } from "@/src/lib/pusher.client";
-import type { CurrentUser } from "@/src/interfaces/current-user.interface";
-import { getUserAttributes, getUserInitials } from "@/src/lib/current-user";
+import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { userLogout } from "@/src/services/student/auth.service";
+import { useDebouncedCallback } from "use-debounce";
 import SearchBox from "./SearchBox";
 
 type DropdownType = "language" | "notifications" | "profile" | null;
