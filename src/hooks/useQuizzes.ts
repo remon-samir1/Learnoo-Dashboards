@@ -1,7 +1,6 @@
-import { useState, useCallback } from 'react';
-import { api, ApiError } from '@/src/lib/api';
-import type { Quiz, CreateQuizRequest, QuizQuestion, CreateQuizQuestionRequest, QuizAttempt } from '@/src/types';
-import { createQueryHook, createMutationHook, MutationState } from './index';
+import { api } from '@/src/lib/api';
+import type { Quiz, CreateQuizRequest, QuizQuestion, CreateQuizQuestionRequest, QuizAttempt, FinishQuizAttemptRequest, FinishQuizAttemptResponse } from '@/src/types';
+import { createQueryHook, createMutationHook } from './index';
 
 // ============================================
 // Quizzes & Exams Hooks
@@ -17,115 +16,14 @@ export const useQuiz = createQueryHook(
   { enabled: true }
 );
 
-export function useCreateQuiz() {
-  const [state, setState] = useState<MutationState<Quiz>>({
-    data: null,
-    isLoading: false,
-    error: null,
-    isError: false,
-    isSuccess: false,
-  });
-  const [progress, setProgress] = useState(0);
+export const useCreateQuiz = createMutationHook(
+  (data: CreateQuizRequest) => api.quizzes.create(data).then(res => res.data)
+);
 
-  const mutate = useCallback(async (data: CreateQuizRequest, onProgress?: (progress: number) => void) => {
-    setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
-    setProgress(0);
-
-    try {
-      const result = await api.quizzes.create(data, (p) => {
-        setProgress(p);
-        onProgress?.(p);
-      });
-      setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
-      setProgress(100);
-      return result.data;
-    } catch (error) {
-      const message = error instanceof ApiError
-        ? error.message
-        : 'An error occurred while creating the quiz';
-      setState({ data: null, isLoading: false, error: message, isError: true, isSuccess: false });
-      throw error;
-    }
-  }, []);
-
-  const reset = useCallback(() => {
-    setState({ data: null, isLoading: false, error: null, isError: false, isSuccess: false });
-    setProgress(0);
-  }, []);
-
-  return { ...state, mutate, reset, progress };
-}
-
-export function useCreateQuizWithoutFiles() {
-  const [state, setState] = useState<MutationState<Quiz>>({
-    data: null,
-    isLoading: false,
-    error: null,
-    isError: false,
-    isSuccess: false,
-  });
-
-  const mutate = useCallback(async (data: CreateQuizRequest) => {
-    setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
-
-    try {
-      const result = await api.quizzes.createWithoutFiles(data);
-      setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
-      return result.data;
-    } catch (error) {
-      const message = error instanceof ApiError
-        ? error.message
-        : 'An error occurred while creating the quiz';
-      setState({ data: null, isLoading: false, error: message, isError: true, isSuccess: false });
-      throw error;
-    }
-  }, []);
-
-  const reset = useCallback(() => {
-    setState({ data: null, isLoading: false, error: null, isError: false, isSuccess: false });
-  }, []);
-
-  return { ...state, mutate, reset };
-}
-
-export function useUpdateQuiz() {
-  const [state, setState] = useState<MutationState<Quiz>>({
-    data: null,
-    isLoading: false,
-    error: null,
-    isError: false,
-    isSuccess: false,
-  });
-  const [progress, setProgress] = useState(0);
-
-  const mutate = useCallback(async (id: number, data: Partial<CreateQuizRequest>, onProgress?: (progress: number) => void) => {
-    setState({ data: null, isLoading: true, error: null, isError: false, isSuccess: false });
-    setProgress(0);
-
-    try {
-      const result = await api.quizzes.update(id, data, (p) => {
-        setProgress(p);
-        onProgress?.(p);
-      });
-      setState({ data: result.data, isLoading: false, error: null, isError: false, isSuccess: true });
-      setProgress(100);
-      return result.data;
-    } catch (error) {
-      const message = error instanceof ApiError
-        ? error.message
-        : 'An error occurred while updating the quiz';
-      setState({ data: null, isLoading: false, error: message, isError: false, isSuccess: false });
-      throw error;
-    }
-  }, []);
-
-  const reset = useCallback(() => {
-    setState({ data: null, isLoading: false, error: null, isError: false, isSuccess: false });
-    setProgress(0);
-  }, []);
-
-  return { ...state, mutate, reset, progress };
-}
+export const useUpdateQuiz = createMutationHook(
+  (id: number, data: Partial<CreateQuizRequest>) => 
+    api.quizzes.update(id, data).then(res => res.data)
+);
 
 export const useDeleteQuiz = createMutationHook(
   (id: number) => api.quizzes.delete(id).then(res => res.data)
@@ -177,5 +75,6 @@ export const useStartQuizAttempt = createMutationHook(
 );
 
 export const useSubmitQuizAttempt = createMutationHook(
-  (id: number, data: any) => api.quizAttempts.submit(id, data).then(res => res.data)
+  (id: number | string, data: FinishQuizAttemptRequest) =>
+    api.quizAttempts.submit(id, data) as Promise<FinishQuizAttemptResponse>
 );

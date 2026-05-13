@@ -18,18 +18,15 @@ interface AuthState {
   error: string | null;
 
   // Getters
-  getUserRole: () => 'Admin' | 'Instructor' | 'Doctor' | 'Student' | 'Unknown' | null;
+  getUserRole: () => 'Admin' | 'Doctor' | 'Student' | 'Unknown' | null;
   isAdmin: () => boolean;
-  isInstructor: () => boolean;
   isDoctor: () => boolean;
-  canUseActivations: () => boolean;
 
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
-  updateUser: (user: User) => void;
   clearError: () => void;
 }
 
@@ -108,19 +105,9 @@ export const useAuthStore = create<AuthState>()(
         return role === 'Admin';
       },
 
-      isInstructor: () => {
-        const role = get().getUserRole();
-        return role === 'Instructor';
-      },
-
       isDoctor: () => {
         const role = get().getUserRole();
         return role === 'Doctor';
-      },
-
-      canUseActivations: () => {
-        const { user } = get();
-        return user?.attributes.can_use_activations ?? false;
       },
 
       // Actions
@@ -256,16 +243,6 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      updateUser: (user: User) => {
-        set({ user });
-        // Update cookies with new user data
-        Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
-          expires: 30,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-        });
-      },
-
       clearError: () => set({ error: null }),
     }),
     {
@@ -331,9 +308,7 @@ export function useAuth() {
       isLoading: state.isLoading,
       error: state.error,
       isAdmin: state.isAdmin(),
-      isInstructor: state.isInstructor(),
       isDoctor: state.isDoctor(),
-      canUseActivations: state.canUseActivations(),
       userRole: state.getUserRole(),
     }))
   );

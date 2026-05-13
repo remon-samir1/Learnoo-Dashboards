@@ -14,7 +14,7 @@ export function useAuthHook() {
     isLoading,
     error,
     isAdmin,
-    isInstructor,
+    isDoctor,
     userRole,
   } = useAuth();
 
@@ -50,7 +50,7 @@ export function useAuthHook() {
     isLoading,
     error,
     isAdmin,
-    isInstructor,
+    isDoctor,
     userRole,
     
     // Actions
@@ -67,7 +67,7 @@ export function useAuthHook() {
 // ============================================
 
 export function useCurrentUser() {
-  const { user, isAuthenticated, isLoading, canUseActivations } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   // Use useMemo to maintain stable reference and prevent unnecessary re-renders
   return useMemo(() => ({
@@ -77,8 +77,7 @@ export function useCurrentUser() {
     fullName: user ? `${user.attributes.first_name} ${user.attributes.last_name}` : null,
     email: user?.attributes.email || null,
     role: user?.attributes.role || null,
-    canUseActivations,
-  }), [user, isAuthenticated, isLoading, canUseActivations]);
+  }), [user, isAuthenticated, isLoading]);
 }
 
 // ============================================
@@ -97,13 +96,4 @@ export function useIsAdmin() {
 export function useIsDoctor() {
   const { isDoctor, isLoading } = useAuth();
   return { isDoctor, isLoading };
-}
-
-// ============================================
-// useIsInstructor - Check if current user is instructor
-// ============================================
-
-export function useIsInstructor() {
-  const { isInstructor, isLoading } = useAuth();
-  return { isInstructor, isLoading };
 }

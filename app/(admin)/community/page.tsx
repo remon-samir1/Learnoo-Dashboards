@@ -12,6 +12,7 @@ import { useCenters } from '@/src/hooks/useCenters';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { useDepartments } from '@/src/hooks/useDepartments';
 import type { Post, SocialLink, CreatePostRequest, University, Faculty, Center, Department, Course } from '@/src/types';
+import { communityPostRelativeTime, communityPostTypeBadgeClasses } from '@/src/lib/community-post-display';
 
 type NodeType = 'university' | 'faculty' | 'center' | 'department' | 'course';
 
@@ -374,21 +375,6 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseIds 
   );
 }
 
-function getTimeAgo(dateString: string, t: (key: string, params?: Record<string, string | number>) => string): string {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMins < 1) return t('community.posts.timeAgo.justNow');
-  if (diffMins < 60) return t('community.posts.timeAgo.minAgo', { minutes: diffMins });
-  if (diffHours < 24) return t('community.posts.timeAgo.hourAgo', { hours: diffHours, plural: diffHours > 1 ? 's' : '' });
-  if (diffDays < 7) return t('community.posts.timeAgo.dayAgo', { days: diffDays, plural: diffDays > 1 ? 's' : '' });
-  return date.toLocaleDateString();
-}
-
 function getStatusColor(status: string): string {
   switch (status) {
     case 'published':
@@ -396,18 +382,6 @@ function getStatusColor(status: string): string {
     case 'draft':
     default:
       return 'bg-[#F1F5F9] text-[#64748B]';
-  }
-}
-
-function getTypeColor(type: string): string {
-  switch (type) {
-    case 'question':
-      return 'bg-[#DBEAFE] text-[#2563EB]';
-    case 'summary':
-      return 'bg-[#FEF3C7] text-[#D97706]';
-    case 'post':
-    default:
-      return 'bg-[#E0E7FF] text-[#2137D6]';
   }
 }
 
@@ -882,12 +856,12 @@ export default function CommunityModerationPage() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-[15px] font-bold text-[#1E293B]">{userName}</span>
                       <span className="text-xs font-semibold text-[#94A3B8]">
-                        {getTimeAgo(post.attributes.created_at || '', t)}
+                        {communityPostRelativeTime(post.attributes.created_at || '', t, 'community.posts.timeAgo')}
                       </span>
                       <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide ${getStatusColor(post.attributes.status)}`}>
                         {t(`community.posts.status.${post.attributes.status}`)}
                       </span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide ${getTypeColor(post.attributes.type)}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide ${communityPostTypeBadgeClasses(post.attributes.type)}`}>
                         {t(`community.posts.type.${post.attributes.type}`)}
                       </span>
                       {post.attributes.tags.map(tag => (

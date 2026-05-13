@@ -55,10 +55,6 @@ export function isAdmin(): boolean {
   return getUserRole() === 'Admin';
 }
 
-export function isInstructor(): boolean {
-  return getUserRole() === 'Instructor';
-}
-
 export function isDoctor(): boolean {
   return getUserRole() === 'Doctor';
 }

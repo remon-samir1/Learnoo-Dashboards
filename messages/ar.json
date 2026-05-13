@@ -107,6 +107,11 @@
       "submit": "إعادة تعيين كلمة المرور"
     }
   },
+  "studentDownloads": {
+    "title": "التحميلات",
+    "headline": "التحميلات قريباً",
+    "description": "هذه الميزة قيد التطوير."
+  },
   "sidebar": {
     "dashboard": "لوحة التحكم",
     "academicStructure": "الهيكل الأكاديمي",
@@ -130,8 +135,34 @@
     "featureControl": "التحكم في الميزات",
     "otaUpload": "رفع تحديثات الهواء",
     "adminDashboard": "لوحة تحكم المشرف",
-    "instructorDashboard": "لوحة تحكم المدرب",
-    "doctorDashboard": "لوحة تحكم الدكتور"
+    "doctorDashboard": "لوحة تحكم الدكتور",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "helpFaq": "المساعدة والأسئلة"
+  },
+  "navbar": {
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "logout": "تسجيل الخروج",
+    "searchPlaceholder": "ابحث عن الدورات، المحاضرات، الاختبارات...",
+    "notifications": "الإشعارات",
+    "new": "جديد",
+    "noNotifications": "لا توجد إشعارات.",
+    "notificationFallbackTitle": "إشعار",
+    "notificationFallbackMessage": "لديك إشعار جديد.",
+    "viewAllNotifications": "عرض كل الإشعارات",
+    "justNow": "الآن",
+    "notificationItems": {
+      "courseTitle": "تم رفع دورة جديدة",
+      "courseMessage": "دورة الرياضيات متاحة الآن.",
+      "examTitle": "تذكير بالاختبار",
+      "examMessage": "اختبار الفيزياء يبدأ غداً.",
+      "lectureTitle": "محاضرة جديدة",
+      "lectureMessage": "تمت إضافة محاضرة الكيمياء.",
+      "time1": "منذ 5 دقائق",
+      "time2": "منذ ساعة",
+      "time3": "اليوم"
+    }
   },
   "header": {
     "titles": {
@@ -212,7 +243,62 @@
       "noAcademicStructure": "لا يوجد هيكل أكاديمي متاح"
     }
   },
-  "students": {
+  "student": {
+    "home": {
+      "welcome": {
+        "title": "مرحباً بك",
+        "activeCourses": "الكورسات المفعلة",
+        "liveToday": "بث مباشر اليوم",
+        "upcomingExams": "قيد المشاهدة",
+        "universityFallBack": "لا يوجد"
+      },
+      "library": {
+        "title": "مكتبتي",
+        "fallbackTitle": "المكتبة",
+        "fallbackDescription": "لم يتم العثور على عناصر في المكتبة.",
+        "viewAll": "عرض الكل",
+        "empty": "لا توجد عناصر في المكتبة."
+      },
+      "quickActivation": {
+        "title": "تفعيل سريع",
+        "description": "أدخل كود التفعيل لفتح الكورس أو المحاضرة.",
+        "button": "فعّل الآن",
+        "placeholder": "أدخل كود التفعيل"
+      },
+      "continueWatching": {
+        "title": "متابعة المشاهدة",
+        "viewAll": "عرض الكل",
+        "continue": "متابعة",
+        "fallbackCourse": "الخوارزميات المتقدمة",
+        "fallbackLecture": "محاضرة"
+      },
+      "subjects": {
+        "title": "المواد الدراسية",
+        "lectures": "محاضرة",
+        "exams": "امتحان"
+      },
+      "courses": {
+        "seeAll": "مشاهدة جميع الكورسات"
+      },
+      "upcomingLive": {
+        "title": "الحصص المباشرة القادمة",
+        "viewAll": "عرض الكل",
+        "setReminder": "تفعيل التذكير",
+        "emptyTitle": "لا توجد حصص مباشرة الآن",
+        "emptyDescription": "لا توجد حصص مباشرة قادمة حالياً، تحقق مرة أخرى لاحقاً.",
+        "fallbackTitle": "حصة مباشرة",
+        "unknownInstructor": "مدرس غير معروف",
+        "unknownCourse": "الكورس غير متاح",
+        "unknownTime": "الوقت غير متاح"
+      },
+      "notes": {
+        "title": "ملاحظات وملخصات جديدة",
+        "viewAll": "عرض الكل",
+        "empty": "لا توجد ملاحظات أو ملخصات متاحة حالياً.",
+        "fallbackTitle": "ملاحظة بدون عنوان",
+        "fallbackLecture": "عام"
+      }
+    },
     "pageTitle": "إدارة الطلاب",
     "pageDescription": "إدارة حسابات الطلاب والوصول والتفاصيل.",
     "addStudent": "إضافة طالب",
@@ -387,7 +473,330 @@
       "pending": "قيد الانتظار",
       "declined": "مرفوض"
     },
+    "studentPageTitle": "دوراتي",
+    "studentPageDescription": "تصفح دوراتك النشطة، واطلع على التقدم، وافتح تفاصيل الدورة.",
+    "studentTabs": {
+      "all": "الكل",
+      "courses": "الدورات",
+      "finalRevision": "المراجعات النهائية",
+      "reviews": "المراجعات",
+      "makeup": "دورات التعويض"
+    },
+    "studentCategoryNames": {
+      "courses": "الدورات",
+      "finalRevision": "المراجعات النهائية"
+    },
+    "studentTitleNames": {
+      "generalManagement": "ادارة عامة",
+      "financialAccounting": "محاسبة مالية",
+      "microeconomics": "الاقتصاد الجزئي"
+    },
+    "studentResultsCount": "{count, plural, one {# دورة} other {# دورات}}",
+    "studentCourseCard": {
+      "activateToAccess": "فعّل للوصول",
+      "activateCourse": "تفعيل الدورة"
+    },
+    "studentActivation": {
+      "description": "أدخل رمز التفعيل أدناه لفتح الوصول الكامل إلى هذه الدورة.",
+      "descriptionLibrary": "أدخل رمز التفعيل أدناه لفتح مادة المكتبة هذه.",
+      "codeLabel": "رمز التفعيل",
+      "codePlaceholder": "مثال: ABCD-1234",
+      "cancel": "إلغاء",
+      "close": "إغلاق",
+      "enterCode": "يرجى إدخال رمز التفعيل.",
+      "invalidCourse": "لا يمكن تفعيل هذه الدورة (معرّف غير صالح).",
+      "invalidLibrary": "لا يمكن تفعيل عنصر المكتبة هذا (معرّف غير صالح).",
+      "genericError": "فشل التفعيل. حاول مرة أخرى.",
+      "success": "تم تفعيل الدورة بنجاح!",
+      "successLibrary": "تم تفعيل مادة المكتبة بنجاح!"
+    },
+    "studentStatus": {
+      "active": "نشط"
+    },
+    "studentDetails": {
+      "title": "تفاصيل الدورة",
+      "back": "العودة إلى الدورات",
+      "loading": "جارٍ التحميل…",
+      "error": "خطأ",
+      "notFound": "الدورة غير موجودة.",
+      "invalidId": "معرّف الدورة غير صالح.",
+      "attributesHeading": "الخصائص (من واجهة البرمجة)",
+      "tabs": {
+        "lectures": "المحاضرات",
+        "exams": "الاختبارات",
+        "notes": "الملاحظات"
+      },
+      "lectureNumber": "محاضرة {number}",
+      "watch": "مشاهدة",
+      "locked": "مقفل",
+      "reactivate": "إعادة التفعيل",
+      "hasExam": "يحتوي على امتحان",
+      "hasPdf": "يحتوي على PDF",
+      "viewsExhausted": "انتهت المشاهدات",
+      "partsCount": "{count} أجزاء",
+      "viewsRemaining": "{remaining}/{max} مشاهدات متبقية",
+      "viewsUnlimited": "مشاهدات غير محدودة",
+      "openPdf": "PDF",
+      "heroLectureCount": "{count} محاضرات",
+      "examsEmpty": "لا توجد اختبارات لهذه الدورة.",
+      "notesEmpty": "لا توجد ملاحظات لهذه الدورة.",
+      "notes": {
+        "deleteTitle": "حذف الملاحظة",
+        "deleteDescription": "هل أنت متأكد أنك تريد حذف «{title}»؟ لا يمكن التراجع عن هذا الإجراء.",
+        "deleting": "جارٍ الحذف…",
+        "updateError": "تعذّر تحديث الملاحظة. حاول مرة أخرى.",
+        "deleteError": "تعذّر حذف الملاحظة. حاول مرة أخرى."
+      },
+      "lecturesEmpty": "لا توجد محاضرات متاحة.",
+      "lectureHeading": "المحاضرة {number}: {title}",
+      "chapterItemHeading": "الفصل {number}: {title}",
+      "lectureNoParts": "لا توجد أجزاء فيديو في هذه المحاضرة بعد.",
+      "statLectures": "محاضرات",
+      "statChapters": "فصول",
+      "statNotes": "ملاحظات",
+      "statExams": "اختبارات",
+      "viewPdf": "عرض PDF",
+      "openExamsTab": "الامتحان",
+      "examsAvailableNow": "متاح الآن",
+      "examsAvailableBadge": "متاح",
+      "examsStartExam": "بدء الامتحان",
+      "examsDurationMinutes": "{count} دقيقة",
+      "examsQuestionCount": "{count} سؤال",
+      "examsPassMarks": "النجاح {passing} / {total} درجة",
+      "examsAttemptsAllowed": "{count} محاولات",
+      "examsDeadline": "ينتهي {date}",
+      "examsChapterCourse": "الدورة",
+      "examsChapterFallback": "الفصل {id}",
+      "examsNoActiveExams": "لا توجد امتحانات متاحة للبدء حالياً.",
+      "examsUpcomingTitle": "الامتحانات القادمة",
+      "examsCompletedTitle": "الامتحانات المكتملة",
+      "examsLockedTitle": "الامتحانات المقفلة",
+      "examsDaysLeft": "{count, plural, one {يوم واحد متبقي} other {{count} أيام متبقية}}",
+      "examsUpcomingFallback": "قادم",
+      "examsScheduled": "مجدول",
+      "examsViewResults": "عرض النتائج",
+      "examsNotAvailable": "غير متاح",
+      "examsActivationRequired": "يجب تفعيل الكورس للوصول لهذا الامتحان",
+      "examsActivationRequiredSub": "تفعيل الكورس مطلوب",
+      "examsActivateCourseForExam": "تفعيل الكورس",
+      "examsQuestionsAndDuration": "{questions} سؤال • {minutes} دقيقة",
+      "examsTotalMarks": "إجمالي {count} درجة",
+      "examsTypeExam": "امتحان",
+      "examsTypeHomework": "واجب",
+      "examsTypeRaw": "{type}",
+      "examsTypeLabel": "النوع: {type}",
+      "examsAttemptsRemainingOfMax": "{remaining} محاولة متبقية من {max}",
+      "examsAttemptsUsedOfMax": "{current} من {max} محاولات مستخدمة",
+      "examsAttemptsOverview": "{remaining} محاولة متبقية من {max} ({current} مستخدمة)",
+      "watchPageTitle": "مشاهدة المحاضرة",
+      "watchBack": "العودة إلى الدورة",
+      "watchNotFound": "تعذر العثور على هذا الفصل.",
+      "watchNoVideo": "لا يتوفر فيديو لهذا الفصل.",
+      "watchMaterials": "المواد والتنزيلات",
+      "watchOpenAttachment": "فتح"
+    },
+    "studentWatch": {
+      "viewsLeftBadge": "المشاهدات المتبقية: {remaining}/{max}",
+      "subtitleChapter": "الفصل {number}",
+      "showPdf": "عرض PDF",
+      "hidePdf": "إخفاء PDF",
+      "lectureMaterial": "مادة المحاضرة",
+      "pdfSyncHint": "عارض PDF — افتح الملف بجانب الفيديو.",
+      "askMoment": "اسأل عن هذه اللحظة",
+      "addDiscussion": "إضافة نقاش",
+      "lectureParts": "أجزاء المحاضرة",
+      "lecturePartsToolbar": "أجزاء المحاضرة:",
+      "partLabel": "الجزء {number}",
+      "discussionsHeading": "النقاشات",
+      "discussionsCount": "النقاشات ({count})",
+      "noDiscussions": "لا توجد نقاشات بعد.",
+      "jumpToTime": "انتقل إلى الوقت",
+      "timeAt": "{time}",
+      "badgeQuestion": "سؤال",
+      "badgeComment": "تعليق",
+      "viewReplies": "عرض {count} ردود",
+      "quizSectionTitle": "الاختبارات القصيرة",
+      "quizDuration": "{count} د",
+      "quizPassing": "النجاح {passing} / {total} درجة",
+      "startQuiz": "بدء الاختبار",
+      "examBannerText": "تحتوي هذه المحاضرة على امتحان مرتبط",
+      "takeExam": "بدء الامتحان",
+      "discussionModalTitle": "إضافة نقاش",
+      "discussionModalClose": "إغلاق",
+      "discussionModalLabel": "رسالتك",
+      "discussionModalPlaceholder": "اكتب تعليقك…",
+      "discussionModalCancel": "إلغاء",
+      "discussionModalSubmit": "نشر",
+      "discussionContentRequired": "يرجى إدخال رسالة.",
+      "discussionPosted": "تم نشر النقاش.",
+      "discussionPostError": "تعذّر نشر النقاش. حاول مرة أخرى.",
+      "composerPlaceholder": "اسأل عن هذه اللحظة…",
+      "composerPost": "نشر",
+      "composerMomentLabel": "عند {time}",
+      "anonymousUser": "طالب",
+      "watchAccessDenied": "لا يمكنك مشاهدة هذا الفصل.",
+      "watchAccessDeniedHint": "فعّل الدورة أو راجع حد المشاهدات. إذا فتحت الرابط مباشرة، ادخل من صفحة الدورة لفتح الفصول."
+    },
+    "studentStartExam": {
+      "back": "رجوع",
+      "loading": "جاري تحميل الاختبار…",
+      "error": "تعذّر تحميل هذا الاختبار.",
+      "invalidId": "رابط الاختبار غير صالح.",
+      "notFound": "الاختبار غير موجود.",
+      "durationLabel": "المدة",
+      "questionsLabel": "الأسئلة",
+      "minutesUnit": "{count} دقيقة",
+      "rulesHeading": "قواعد الاختبار",
+      "rule1": "يجب إكمال الاختبار في جلسة واحدة.",
+      "rule2": "يجب الإجابة على كل سؤال قبل الانتقال إلى التالي.",
+      "rule3": "لا يمكن العودة إلى الأسئلة السابقة.",
+      "rule4": "يُسلَّم الاختبار تلقائياً عند انتهاء الوقت.",
+      "rule5": "تأكد من اتصال إنترنت مستقر.",
+      "noticeTitle": "تنبيه مهم",
+      "noticeBody": "قد يتضمن هذا الاختبار محتوى مُعلَّماً بالعلامة المائية. يُمنع التقاط لقطات الشاشة أو مشاركة محتوى الاختبار وقد يؤدي ذلك إلى الرسوب.",
+      "cancel": "إلغاء",
+      "startExam": "بدء الاختبار",
+      "startAttemptError": "تعذّر بدء الاختبار. حاول مرة أخرى.",
+      "maxAttemptsReached": "استنفدت جميع المحاولات المسموحة لهذا الاختبار.",
+      "typeExam": "امتحان",
+      "typeHomework": "واجب",
+      "passingInfo": "النجاح {passing} / {total} درجة",
+      "cannotStart": "لا يمكن بدء هذا الاختبار من هنا حالياً. راجع المدرّس أو حاول لاحقاً.",
+      "activationRequiredTitle": "تفعيل الكورس مطلوب",
+      "activationRequiredBody": "يجب تفعيل الكورس للوصول لهذا الامتحان.",
+      "goToCourse": "فتح الدورة",
+      "goToCourses": "دوراتي",
+      "takePlaceholderTitle": "جلسة الاختبار",
+      "takePlaceholderBody": "سيتم ربط الأسئلة والتصحيح في الخطوة التالية. تم حفظ بيانات الاختبار من شاشة المقدمة.",
+      "backToIntro": "العودة إلى مقدمة الاختبار"
+    },
+    "studentTakeExam": {
+      "loadingSession": "جاري تحميل الاختبار…",
+      "defaultExamTitle": "اختبار",
+      "questionProgress": "السؤال {current} من {total}",
+      "questionBadge": "السؤال {n}",
+      "selectAnswerHint": "يرجى اختيار إجابة",
+      "nextQuestion": "السؤال التالي",
+      "finishExam": "إنهاء",
+      "finishError": "تعذّر إرسال الاختبار. حاول مرة أخرى.",
+      "selectMultipleHint": "اختر كل الإجابات الصحيحة",
+      "noReturnWarning": "لا يمكنك العودة إلى الأسئلة السابقة. تأكد من إجابتك قبل المتابعة.",
+      "timeOutMessage": "انتهى الوقت. انتهت هذه المحاولة."
+    },
+    "studentExamResult": {
+      "loading": "جاري تحميل النتيجة…",
+      "congratulationsTitle": "تهانينا!",
+      "passedSubtitle": "لقد نجحت في الاختبار",
+      "failedTitle": "لم يتم اجتياز الاختبار",
+      "failedSubtitle": "لم تصل إلى درجة النجاح المطلوبة لهذا الاختبار.",
+      "yourScore": "درجتك",
+      "scoreMarks": "الدرجة",
+      "passingScore": "درجة النجاح",
+      "finishedAt": "انتهى في",
+      "timeTaken": "المدة المستغرقة",
+      "timeTakenMinutes": "{value} دقيقة",
+      "backToHome": "العودة إلى الرئيسية",
+      "reviewLectures": "مراجعة المحاضرات",
+      "retryExam": "إعادة الاختبار"
+    },
+    "studentExamsPage": {
+      "pageTitle": "الامتحانات",
+      "pageSubtitle": "اعرض وادرس امتحانات دوراتك.",
+      "loadError": "تعذّر تحميل الامتحانات أو المحاولات. حاول مرة أخرى.",
+      "retryLoad": "إعادة المحاولة",
+      "loadingQuizzes": "جاري تحميل الامتحانات…",
+      "loadingAttempts": "جاري تحميل المحاولات…",
+      "emptyAvailable": "لا توجد امتحانات هنا بعد. افتح دورة لعرض الامتحانات المتاحة للبدء.",
+      "emptyUpcoming": "لا توجد امتحانات قادمة مدرجة هنا بعد.",
+      "emptyCompleted": "لا توجد محاولات امتحان مكتملة بعد.",
+      "emptyLocked": "لا توجد امتحانات مقفلة مدرجة هنا بعد.",
+      "attemptStarted": "بدأ في {date}",
+      "attemptFinished": "انتهى في {date}",
+      "attemptScoreLine": "الدرجة {score} / {total}",
+      "attemptPassed": "نجاح",
+      "attemptFailed": "لم يُجتَز"
+    },
+    "studentCommunity": {
+      "pageTitle": "المجتمع",
+      "pageSubtitle": "تواصل مع المدرسين وزملائك في الدراسة.",
+      "socialSectionTitle": "روابط التواصل",
+      "socialJoinCta": "انضم إلى مجتمعنا",
+      "socialEmpty": "لا توجد روابط تواصل بعد.",
+      "socialError": "تعذّر تحميل روابط التواصل.",
+      "tabAll": "الكل",
+      "tabPosts": "المنشورات",
+      "tabSummaries": "الملخصات",
+      "tabQuestions": "الأسئلة",
+      "createPost": "إنشاء منشور",
+      "postsEmpty": "لا توجد منشورات مطابقة لهذا التصفية بعد.",
+      "postsError": "تعذّر تحميل المنشورات. حاول لاحقًا.",
+      "toastCreated": "تم نشر منشورك.",
+      "toastCreateFailed": "تعذّر إنشاء المنشور. حاول مرة أخرى.",
+      "toastReactFailed": "تعذّر تحديث التفاعل. حاول مرة أخرى.",
+      "badgeInstructor": "مدرّس",
+      "badgeStudent": "طالب",
+      "commentsCount": "{count, plural, one {تعليق واحد} other {# تعليقات}}",
+      "repliesCount": "{count, plural, one {رد واحد} other {# ردود}}",
+      "reply": "رد",
+      "addComment": "إضافة تعليق",
+      "replyModalTitle": "إضافة تعليق",
+      "replyingTo": "التعليق على:",
+      "replyBodyLabel": "تعليقك",
+      "replyBodyPlaceholder": "اكتب تعليقك…",
+      "replyBodyRequired": "يرجى إدخال تعليق.",
+      "submitReply": "نشر التعليق",
+      "toastReplyCreated": "تم نشر تعليقك.",
+      "toastReplyFailed": "تعذّر نشر التعليق. حاول مرة أخرى.",
+      "like": "إعجاب",
+      "tagsLabel": "وسوم (اختياري)",
+      "tagsPlaceholder": "مثال: رياضيات، تفاضل"
+    },
+    "studentLibrary": {
+      "pageTitle": "المكتبة الإلكترونية",
+      "pageSubtitle": "اطّلع على مواد الدورة والكتب المرجعية.",
+      "unlockBannerTitle": "كيف تفتح المواد",
+      "unlockBannerBody": "زر مركزك، ادفع قيمة المادة، احصل على رمز التفعيل، ثم فعّلها من هنا.",
+      "activateMaterial": "تفعيل المادة",
+      "searchPlaceholder": "ابحث في المواد…",
+      "tabAll": "الكل",
+      "tabUnlocked": "المفتوحة",
+      "tabLocked": "المقفولة",
+      "loadError": "تعذّر تحميل مواد المكتبة. حاول مرة أخرى.",
+      "retryLoad": "إعادة المحاولة",
+      "empty": "لا توجد مواد مطابقة لهذا التصفية بعد.",
+      "emptySearch": "لا توجد مواد مطابقة لبحثك.",
+      "locked": "مقفول",
+      "unlock": "فتح",
+      "lockedMaterial": "مادة مقفولة",
+      "activateCourseHint": "يجب تفعيل الكورس للوصول لهذه المادة.",
+      "openMaterial": "فتح المادة",
+      "attachments": "المرفقات",
+      "download": "تحميل",
+      "openInNewTab": "فتح",
+      "openUnavailable": "غير متاح",
+      "attachmentLocked": "مقفول",
+      "notDownloadable": "غير قابل للتحميل",
+      "priceLabel": "السعر",
+      "courseRef": "الدورة #{id}",
+      "fileCount": "{count, plural, one {ملف واحد} other {# ملفات}}",
+      "materialType": {
+        "booklet": "كتيب",
+        "reference": "مرجع",
+        "guide": "دليل"
+      },
+      "invalidId": "رابط المادة غير صالح.",
+      "backToLibrary": "العودة إلى المكتبة",
+      "detailLoadError": "تعذّر تحميل هذه المادة.",
+      "unlockedBadge": "مفتوحة",
+      "descriptionHeading": "الوصف",
+      "noAttachments": "لا توجد مرفقات لهذه المادة.",
+      "pdfViewerTitle": "عارض المستندات",
+      "pdfViewerPlaceholder": "سيُعرض محتوى الصفحة هنا للصيغ المدعومة.",
+      "previewUnavailableTitle": "المعاينة غير متاحة",
+      "previewUnavailableBody": "افتح الملف في تاب جديد لعرض هذه الصيغة."
+    },
     "card": {
+      "progress": "التقدم",
       "lectures": "محاضرات",
       "notes": "ملاحظات",
       "exams": "اختبارات",
@@ -442,6 +851,8 @@
       "uploading": "جارٍ الرفع..."
     },
     "view": {
+      "openCourse": "فتح الدورة",
+      "locked": "مقفل",
       "loading": "جارٍ تحميل تفاصيل الدورة...",
       "error": "خطأ في تحميل الدورة",
       "notFound": "الدورة غير موجودة",
@@ -862,11 +1273,16 @@
     "deleteConfirm": "هل أنت متأكد من أنك تريد حذف هذه الجلسة؟",
     "deleteSuccess": "تم حذف الجلسة بنجاح",
     "deleteError": "فشل حذف الجلسة",
+    "all": "الكل",
+    "live": "مباشر",
+    "upcoming": "القادمة",
+    "ended": "المنتهية",
     "status": {
       "live": "مباشر",
       "upcoming": "قادم",
       "ended": "منتهي",
-      "now": "الآن"
+      "now": "الآن",
+      "started": "بدأ"
     },
     "time": {
       "today": "اليوم",
@@ -953,7 +1369,44 @@
       "saveSuccess": "تم حفظ الإعدادات بنجاح",
       "saveError": "فشل حفظ الإعدادات",
       "loadError": "فشل تحميل إعدادات الجلسة"
-    }
+    },
+    "title": "المحاضرات المباشرة",
+    "description": "انضم إلى المحاضرات المباشرة وشاهد الجلسات المسجلة",
+    "liveNow": "مباشر الآن",
+    "upcomingSessions": "الجلسات القادمة",
+    "recordedSessions": "الجلسات المسجلة",
+    "joinNow": "انضم الآن",
+    "noLiveSessions": "لا توجد محاضرات مباشرة حالياً.",
+    "noUpcomingSessions": "لا توجد جلسات قادمة مجدولة.",
+    "noRecordedSessions": "لا توجد جلسات مسجلة حتى الآن.",
+    "chat": "الدردشة المباشرة",
+    "viewer": "المشاهد",
+    "hideChat": "إخفاء",
+    "showChat": "إظهار الدردشة",
+    "connecting": "جارٍ الاتصال…",
+    "receivingStream": "جارٍ استقبال البث…",
+    "connectionError": "تعذر الاتصال بالجلسة المباشرة.",
+    "writeMessage": "اكتب رسالة…",
+    "send": "إرسال",
+    "upcomingMessage": "لم تبدأ هذه الجلسة بعد.",
+    "sessionEnded": "انتهت هذه الجلسة.",
+    "backToList": "العودة إلى المحاضرات المباشرة",
+    "watchRecording": "مشاهدة التسجيل",
+    "registered": "مسجل",
+    "liveBadge": "مباشر",
+    "watching": "مشاهد",
+    "maxStudentsLabel": "الحد الأقصى للطلاب",
+    "loadListError": "فشل تحميل المحاضرات المباشرة",
+    "noHostPeer": "البث المباشر غير متاح (معلومات الاتصال بالمضيف ناقصة).",
+    "endedNoRecording": "التسجيل غير متاح لهذه الجلسة.",
+    "upcomingSession": "جلسة قادمة",
+    "students": "طالب",
+    "instructor": "المحاضر",
+    "courseNotAvailable": "الكورس غير متاح",
+    "liveSession": "محاضرة مباشرة",
+    "joinDescription": "انضم إلى المحاضرة المباشرة الآن.",
+    "timeNotAvailable": "الوقت غير متاح",
+    "notScheduled": "غير محدد"
   },
   "exams": {
     "pageTitle": "الاختبارات والأسئلة",
@@ -997,7 +1450,6 @@
       "selectCourse": "اختر الدورة",
       "chapter": "الفصل",
       "selectChapter": "اختر الفصل",
-      "selectCourseFirst": "اختر دورة أولاً",
       "duration": "المدة (دقيقة)",
       "totalMarks": "الدرجات الكلية",
       "passingMarks": "درجة النجاح (%)",
@@ -1062,12 +1514,31 @@
     "pageDescription": "إدارة ملاحظات المدرسين والملخصات التي أنشأها الطلاب.",
     "searchPlaceholder": "بحث...",
     "addNote": "إضافة ملاحظة",
+    "all": "الكل",
+    "summary": "الملخصات",
+    "highlights": "النقاط المهمة",
+    "notes": "الملاحظات",
+    "course": "الكورس",
+    "lecture": "المحاضرة",
+    "published": "منشور",
+    "draft": "مسودة",
     "filters": {
       "allTypes": "جميع الأنواع",
       "summary": "ملخص",
       "highlight": "تظليل",
       "keyPoint": "نقطة رئيسية",
-      "importantNotice": "إشعار مهم"
+      "importantNotice": "إشعار مهم",
+      "pageTitle": "الملاحظات والملخصات",
+      "pageDescription": "اطلع على كل ملاحظاتك وملخصاتك وأهم النقاط",
+      "all": "الكل",
+      "searchPlaceholder": "ابحث في الملاحظات...",
+      "highlights": "النقاط المهمة",
+      "notes": "الملاحظات",
+      "noNotes": "لا توجد ملاحظات",
+      "course": "الكورس",
+      "lecture": "المحاضرة",
+      "published": "منشور",
+      "draft": "مسودة"
     },
     "table": {
       "title": "العنوان",
@@ -1507,10 +1978,6 @@
       "title": "الإعدادات العامة",
       "description": "اسم المنصة والمنطقة الزمنية والتكوين الأساسي."
     },
-    "profile": {
-      "title": "الملف الشخصي",
-      "description": "تحديث معلوماتك الشخصية وتفاصيل حسابك."
-    },
     "branding": {
       "title": "الهوية البصرية",
       "description": "الشعارات والألوان والهوية البصرية."
@@ -1687,9 +2154,306 @@
         "uploading": "جارٍ الرفع...",
         "preactivationResults": "نتائج التفعيل المسبق:",
         "success": "نجاح",
-        "failed": "فشل",
-        "uploadSuccess": "تم التفعيل المسبق بنجاح! تم معالجة {count} رقم هاتف."
+        "failed": "فشل"
       }
+    }
+  },
+  "studentHelp": {
+    "help": {
+      "title": "المساعدة والأسئلة الشائعة",
+      "description": "اعثر على إجابات للأسئلة الشائعة",
+      "searchPlaceholder": "ابحث عن مساعدة...",
+      "stillNeedHelp": "ما زلت تحتاج للمساعدة؟",
+      "stillNeedHelpDescription": "لم تجد ما تبحث عنه؟ تواصل مع فريق الدعم.",
+      "contactSupport": "تواصل مع الدعم",
+      "noResults": "لا توجد أسئلة مطابقة.",
+      "categories": {
+        "all": "الكل",
+        "account": "الحساب",
+        "courses": "الكورسات",
+        "exams": "الاختبارات",
+        "payments": "المدفوعات",
+        "technical": "الدعم الفني"
+      },
+      "faqs": {
+        "resetPassword": {
+          "question": "كيف يمكنني إعادة تعيين كلمة المرور؟",
+          "answer": "اذهب إلى الإعدادات > تغيير كلمة المرور، ثم أدخل كلمة المرور الحالية وأنشئ كلمة مرور جديدة. يمكنك أيضًا استخدام رابط نسيت كلمة المرور من صفحة تسجيل الدخول."
+        },
+        "accessPurchasedCourses": {
+          "question": "كيف يمكنني الوصول إلى الكورسات التي اشتريتها؟",
+          "answer": "اذهب إلى صفحة كورساتي، وستظهر كل الكورسات التي تم شراؤها أو تفعيلها تلقائيًا."
+        },
+        "retakeExam": {
+          "question": "هل يمكنني إعادة الاختبار إذا لم أنجح؟",
+          "answer": "يعتمد ذلك على إعدادات الاختبار. بعض الاختبارات تسمح بالإعادة، والبعض الآخر يحتاج إلى موافقة المدرس."
+        },
+        "activationCode": {
+          "question": "كيف أفعّل كورس باستخدام كود التفعيل؟",
+          "answer": "اذهب إلى صفحة تفعيل الكورس، أدخل كود التفعيل، ثم اضغط تأكيد لفتح الكورس."
+        },
+        "videoPlayerIssue": {
+          "question": "مشغل الفيديو لا يعمل، ماذا أفعل؟",
+          "answer": "قم بتحديث الصفحة، وتأكد من اتصال الإنترنت، وجرب متصفحًا آخر. إذا استمرت المشكلة تواصل مع الدعم."
+        },
+        "lectureWatchLimit": {
+          "question": "كم مرة يمكنني مشاهدة المحاضرة؟",
+          "answer": "عدد مرات المشاهدة يعتمد على إعدادات المحاضرة التي يحددها المدرس أو المركز."
+        },
+        "changeCenter": {
+          "question": "هل يمكنني تغيير المركز المسجل به؟",
+          "answer": "يرجى التواصل مع الدعم أو المركز الحالي لطلب تغيير المركز."
+        },
+        "downloadMaterials": {
+          "question": "كيف يمكنني تحميل ملفات الكورس؟",
+          "answer": "افتح درس الكورس وتحقق من قسم الملفات المرفقة. إذا كان التحميل متاحًا ستجد زر التحميل."
+        }
+      }
+    },
+    "legal": {
+      "title": "المعلومات القانونية",
+      "subtitle": "شروط الاستخدام وسياسة الخصوصية",
+      "tabs": {
+        "terms": "شروط الاستخدام",
+        "privacy": "سياسة الخصوصية"
+      },
+      "terms": {
+        "title": "شروط الاستخدام",
+        "lastUpdated": "آخر تحديث: 18 أبريل 2026",
+        "acceptance": {
+          "title": "1. قبول الشروط",
+          "content": "باستخدامك بوابة الطالب في Learnoo، فإنك توافق على الالتزام بهذه الشروط والأحكام."
+        },
+        "accounts": {
+          "title": "2. حسابات المستخدمين",
+          "content": "أنت مسؤول عن الحفاظ على سرية بيانات حسابك وكلمة المرور، وتتحمل مسؤولية جميع الأنشطة التي تتم من خلال حسابك."
+        },
+        "courseAccess": {
+          "title": "3. الوصول إلى الكورسات والمحتوى",
+          "content": "يتم توفير محتوى الكورسات لأغراض تعليمية فقط. يمنع مشاركة أو نسخ أو توزيع المواد التعليمية بدون إذن."
+        },
+        "examIntegrity": {
+          "title": "4. نزاهة الاختبارات",
+          "content": "يجب إكمال جميع الاختبارات والكويزات بأمانة وبشكل مستقل. أي محاولة غش أو انتحال أو مخالفة أكاديمية قد تؤدي إلى إيقاف الحساب."
+        },
+        "payments": {
+          "title": "5. المدفوعات والاسترداد",
+          "content": "تتم المدفوعات من خلال الطرق المعتمدة. قد تختلف سياسة الاسترداد حسب الكورس أو المركز، ويمكنك التواصل مع الدعم لمعرفة التفاصيل."
+        },
+        "termination": {
+          "title": "6. إيقاف الخدمة",
+          "content": "نحتفظ بالحق في إيقاف أو تعليق الوصول إلى الخدمة فورًا وبدون إشعار مسبق في حالة مخالفة شروط الاستخدام."
+        }
+      },
+      "privacy": {
+        "title": "سياسة الخصوصية",
+        "lastUpdated": "آخر تحديث: 18 أبريل 2026",
+        "collect": {
+          "title": "المعلومات التي نجمعها",
+          "content": "نقوم بجمع المعلومات التي تقدمها لنا مباشرة، وتشمل:",
+          "items": [
+            "الاسم والبريد الإلكتروني ورقم الهاتف",
+            "الصف الدراسي وبيانات ملف الطالب",
+            "بيانات الاشتراك في الكورسات والتقدم الدراسي",
+            "نتائج الكويزات والواجبات والأداء التعليمي",
+            "بيانات استخدام المنصة والتفاعل معها"
+          ]
+        },
+        "use": {
+          "title": "كيف نستخدم معلوماتك",
+          "content": "نستخدم المعلومات التي نجمعها من أجل:",
+          "items": [
+            "تقديم خدماتنا وتشغيلها وتحسينها",
+            "إدارة اشتراكات الكورسات والوصول إلى الدروس",
+            "إرسال الإشعارات ورسائل الدعم",
+            "الرد على استفساراتك وأسئلتك",
+            "متابعة وتحليل استخدام المنصة"
+          ]
+        },
+        "sharing": {
+          "title": "مشاركة المعلومات",
+          "content": "لا نشارك معلوماتك الشخصية مع أطراف خارجية إلا في الحالات التالية:",
+          "items": [
+            "بموافقتك",
+            "مع المدرسين أو المراكز التعليمية المعتمدة",
+            "للامتثال للالتزامات القانونية",
+            "لحماية حقوقنا ومنع الاحتيال"
+          ]
+        },
+        "security": {
+          "title": "أمان البيانات",
+          "content": "نطبق إجراءات أمان مناسبة لحماية معلوماتك الشخصية، ولكن لا توجد وسيلة نقل عبر الإنترنت آمنة بنسبة 100%."
+        },
+        "rights": {
+          "title": "حقوقك",
+          "content": "لديك الحق في الوصول إلى معلوماتك الشخصية أو تحديثها أو طلب حذفها. يمكنك التواصل مع الدعم لممارسة هذه الحقوق."
+        },
+        "contact": {
+          "title": "تواصل معنا",
+          "content": "إذا كان لديك أي أسئلة بخصوص سياسة الخصوصية، يمكنك التواصل معنا من خلال قنوات الدعم داخل المنصة."
+        }
+      }
+    }
+  },
+
+  "notesDetails": {
+    "backToNotes": "العودة إلى الملاحظات",
+    "goToLecture": "الذهاب إلى المحاضرة",
+    "download": "تحميل المحتوي",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "saving": "جاري الحفظ...",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "deleting": "جاري الحذف...",
+    "errorDownload": "حدث خطأ في التحميل. يرجى المحاولة مرة أخرى.",
+    "noteDownloaded": "تم تحميل الملاحظة بنجاح.",
+    "updateFailed": "فشل التحديث. يرجى المحاولة مرة أخرى.",
+    "updateSuccess": "تم تحديث الملاحظة بنجاح.",
+    "failedDelete": "فشل الحذف. يرجى المحاولة مرة أخرى.",
+    "deleteSuccess": "تم حذف الملاحظة بنجاح.",
+    "note": "ملاحظات",
+    "summary": "ملخص",
+    "highlights": "أهم النقاط"
+  },
+  "studentProfile": {
+    "title": "الملف الشخصي",
+    "description": "إدارة بياناتك الشخصية وتفاصيل حسابك",
+    "personalInformation": "المعلومات الشخصية",
+    "fullName": "الاسم الكامل",
+    "email": "البريد الإلكتروني",
+    "phone": "رقم الهاتف",
+    "studentCode": "كود الطالب",
+    "grade": "المرحلة الدراسية",
+    "parentName": "اسم ولي الأمر",
+    "parentPhone": "رقم ولي الأمر",
+    "address": "العنوان",
+    "accountStatus": "حالة الحساب",
+    "active": "نشط",
+    "inactive": "غير نشط",
+    "verified": "موثق",
+    "notVerified": "غير موثق",
+    "editProfile": "تعديل الملف الشخصي",
+    "settings": "الاعدادات",
+    "connected": "متصل",
+    "connect": "اتصال",
+    "notesCreated": "الملاحظات المنشورة",
+    "downloads": "التحميلات",
+    "liveAttendance": "الحضور في المحاضرة",
+    "communityPosts": "المنشورات في المجتمع",
+    "pageTitle": "الملف الشخصي",
+    "pageDescription": "إدارة بياناتك الشخصية وتفاصيل حسابك",
+    "download": "تحميل",
+    "backToProfile": "العودة إلى الملف الشخصي",
+    "editProfileStudent": {
+      "title": "تعديل الملف الشخصي",
+      "imageAlt": "صورة الملف الشخصي",
+      "uploadPhoto": "رفع صورة",
+      "imageHint": "JPG, PNG, WEBP بحد أقصى 5MB",
+      "fields": {
+        "firstName": "الاسم الأول",
+        "lastName": "اسم العائلة",
+        "email": "البريد الإلكتروني",
+        "phone": "رقم الهاتف"
+      },
+      "buttons": {
+        "cancel": "إلغاء",
+        "saving": "جاري الحفظ...",
+        "saveChanges": "حفظ التغييرات"
+      },
+      "toasts": {
+        "success": "تم تحديث الملف الشخصي بنجاح",
+        "error": "فشل تحديث الملف الشخصي"
+      }
+    },
+
+    "links": {
+      "title": "روابط سريعة"
+    },
+    "fields": {
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "university": "الجامعة",
+      "faculty": "الكلية",
+      "status": "الحالة",
+      "device": "الجهاز"
+    },
+    "quickActions": {
+      "title": "إجراءات سريعة",
+      "downloads": "تحميل المحتوي",
+      "liveAttendance": "الحضور في المحاضرة",
+      "communityPosts": "المنشورات في المجتمع",
+      "settings": "الاعدادات"
+    },
+   "qr": {
+  "title": "رمز الطالب",
+  "description": "امسح للتحقق من هوية الطالب",
+  "downloadSuccess": "تم تحميل رمز QR بنجاح",
+  "downloadError": "فشل تحميل رمز QR"
+}
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "description": "تابع آخر التحديثات والأنشطة الخاصة بك.",
+    "newCount": "{count} جديد",
+    "markAllAsRead": "تحديد الكل كمقروء",
+    "searchPlaceholder": "ابحث في الإشعارات...",
+    "empty": "لا توجد إشعارات.",
+    "fallbackTitle": "إشعار",
+    "fallbackMessage": "لديك إشعار جديد.",
+    "justNow": "الآن",
+    "filters": {
+      "all": "الكل",
+      "live": "مباشر",
+      "course": "الكورسات",
+      "exam": "الاختبارات",
+      "general": "عام"
+    }
+  },
+  "studentSettings": {
+    "title": "الإعدادات",
+    "description": "إدارة تفضيلات التطبيق وإعدادات الحساب",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "passwordMismatch": "كلمتا المرور غير متطابقتين",
+    "passwordChanged": "تم تغيير كلمة المرور بنجاح",
+          "errors": {
+  "passwordMin": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+  "confirmRequired": "يرجى تأكيد كلمة المرور",
+  "passwordMismatch": "كلمتا المرور غير متطابقتين"
+},
+    "preferences": {
+      "title": "التفضيلات",
+      "notifications": {
+        "title": "الإشعارات",
+        "description": "استقبال الإشعارات الفورية"
+      },
+
+      "darkMode": {
+        "title": "الوضع الداكن",
+        "description": "تفعيل المظهر الداكن"
+      },
+      "autoDownload": {
+        "title": "التحميل التلقائي عبر Wi-Fi",
+        "description": "تحميل المحتوى تلقائيًا"
+      }
+    },
+    "account": {
+      "title": "الحساب",
+      "changePassword": {
+        "title": "تغيير كلمة المرور",
+        "description": "تحديث كلمة المرور الخاصة بك",
+        "newPassword": "كلمة المرور الجديدة",
+        "confirmPassword": "تأكيد كلمة المرور"
+      },
+      "language": {
+        "title": "اللغة"
+      }
+    },
+    "support": {
+      "title": "الدعم",
+      "help": "المساعدة والأسئلة الشائعة",
+      "terms": "الشروط وسياسة الخصوصية"
     }
   }
 }

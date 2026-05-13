@@ -1,42 +1,29 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Plus,
   Trash2,
   ChevronDown,
-  ChevronRight,
   Clock,
   Calendar,
   FileText,
   Award,
   RotateCcw,
-  Loader2,
-  FolderOpen,
-  BookOpen,
-  X,
-  ImagePlus
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useCreateQuiz } from '@/src/hooks/useQuizzes';
-import { useUniversities } from '@/src/hooks/useUniversities';
-import { useFaculties } from '@/src/hooks/useFaculties';
-import { useCenters } from '@/src/hooks/useCenters';
-import { useDepartments } from '@/src/hooks/useDepartments';
-import type { University, Faculty, Center, Department, Course } from '@/src/types';
 
 interface Answer {
   id: string;
   text: string;
   isCorrect: boolean;
-  reason: string;
-  image?: File | null;
-  imagePreview?: string;
 }
 
 interface Question {
@@ -47,8 +34,6 @@ interface Question {
   score: number;
   autoCorrect: boolean;
   answers: Answer[];
-  image?: File | null;
-  imagePreview?: string;
 }
 
 interface ExamDetails {
@@ -66,311 +51,12 @@ interface ExamDetails {
   is_public: boolean;
 }
 
-type NodeType = 'university' | 'faculty' | 'center' | 'department' | 'course';
-
-interface TreeNode {
-  id: string;
-  type: NodeType;
-  name: string;
-  data: University | Faculty | Center | Department | Course;
-  children: TreeNode[];
-  level: number;
-  parentId?: string | null;
-}
-
-function buildCourseTree(
-  universities: University[],
-  faculties: Faculty[],
-  centers: Center[],
-  departments: Department[],
-  courses: Course[]
-): TreeNode[] {
-  const universityMap = new Map<string, TreeNode>();
-  const facultyMap = new Map<string, TreeNode>();
-  const centerMap = new Map<string, TreeNode>();
-  const departmentMap = new Map<string, TreeNode>();
-  const courseMap = new Map<string, TreeNode>();
-
-  universities.forEach((univ) => {
-    const univNode: TreeNode = {
-      id: `univ-${univ.id}`,
-      type: 'university',
-      name: univ.attributes.name,
-      data: univ,
-      children: [],
-      level: 0,
-    };
-    universityMap.set(univ.id, univNode);
-  });
-
-  faculties.forEach((faculty) => {
-    const facultyNode: TreeNode = {
-      id: `faculty-${faculty.id}`,
-      type: 'faculty',
-      name: faculty.attributes.name,
-      data: faculty,
-      children: [],
-      level: 0,
-    };
-    facultyMap.set(faculty.id, facultyNode);
-  });
-
-  centers.forEach((center) => {
-    const centerNode: TreeNode = {
-      id: `center-${center.id}`,
-      type: 'center',
-      name: center.name,
-      data: center,
-      children: [],
-      level: 0,
-    };
-    centerMap.set(center.id, centerNode);
-
-    if (center.childrens && Array.isArray(center.childrens)) {
-      center.childrens.forEach((child) => {
-        const childType = child.type || "department";
-        if (childType === "faculty") {
-          const facultyNode: TreeNode = {
-            id: `faculty-${child.id}`,
-            type: "faculty",
-            name: child.attributes.name,
-            data: { id: child.id, type: "faculty", attributes: child.attributes } as Faculty,
-            children: [],
-            level: centerNode.level + 1,
-            parentId: centerNode.id,
-          };
-          facultyMap.set(child.id, facultyNode);
-          centerNode.children.push(facultyNode);
-        }
-      });
-
-      center.childrens.forEach((child) => {
-        const childType = child.type || "department";
-        if (childType !== "faculty") {
-          const deptNode: TreeNode = {
-            id: `dept-${child.id}`,
-            type: "department",
-            name: child.attributes.name,
-            data: { id: child.id, type: "department", attributes: child.attributes } as Department,
-            children: [],
-            level: centerNode.level + 1,
-            parentId: centerNode.id,
-          };
-          const parentFacultyId = (child.attributes as any).parent?.data?.id;
-          if (parentFacultyId && facultyMap.has(String(parentFacultyId))) {
-            const parentFaculty = facultyMap.get(String(parentFacultyId))!;
-            deptNode.level = parentFaculty.level + 1;
-            deptNode.parentId = parentFaculty.id;
-            parentFaculty.children.push(deptNode);
-          } else {
-            centerNode.children.push(deptNode);
-          }
-          departmentMap.set(child.id, deptNode);
-        }
-      });
-    }
-  });
-
-  departments.forEach((dept) => {
-    if (departmentMap.has(dept.id)) return;
-    const deptNode: TreeNode = {
-      id: `dept-${dept.id}`,
-      type: 'department',
-      name: dept.attributes.name,
-      data: dept,
-      children: [],
-      level: 0,
-    };
-    departmentMap.set(dept.id, deptNode);
-  });
-
-  courses.forEach((course) => {
-    const courseNode: TreeNode = {
-      id: `course-${course.id}`,
-      type: 'course',
-      name: course.attributes.title,
-      data: course,
-      children: [],
-      level: 0,
-    };
-    courseMap.set(course.id, courseNode);
-  });
-
-  const rootNodes: TreeNode[] = [];
-
-  universityMap.forEach((univ) => {
-    rootNodes.push(univ);
-  });
-
-  centers.forEach((center) => {
-    const node = centerMap.get(center.id);
-    if (!node) return;
-    const parentId = center.parent?.data?.id || center.parent_id;
-    if (parentId && universityMap.has(String(parentId))) {
-      universityMap.get(String(parentId))!.children.push(node);
-      node.level = 1;
-    } else {
-      node.level = 0;
-      rootNodes.push(node);
-    }
-  });
-
-  facultyMap.forEach((faculty) => {
-    if (faculty.parentId) return;
-    const parentId = (faculty.data as Faculty).attributes.parent?.data?.id;
-    if (parentId && universityMap.has(parentId)) {
-      universityMap.get(parentId)!.children.push(faculty);
-      faculty.level = 1;
-    }
-  });
-
-  const processedDeptIds = new Set<string>();
-  departmentMap.forEach((dept) => {
-    if (processedDeptIds.has(dept.id)) return;
-    processedDeptIds.add(dept.id);
-    if (dept.parentId) return;
-    const parentId = (dept.data as Department).attributes.parent?.data?.id;
-    const centerId = (dept.data as Department).attributes.center_id;
-    if (parentId && facultyMap.has(parentId)) {
-      facultyMap.get(parentId)!.children.push(dept);
-      dept.level = 2;
-      dept.parentId = facultyMap.get(parentId)!.id;
-    } else if (centerId) {
-      let centerNode = centerMap.get(String(centerId));
-      if (!centerNode) centerNode = centerMap.get(`center-${centerId}`);
-      if (centerNode) {
-        centerNode.children.push(dept);
-        dept.level = 2;
-        dept.parentId = centerNode.id;
-      }
-    } else if (parentId) {
-      let parentDept = departmentMap.get(parentId);
-      if (!parentDept) parentDept = departmentMap.get(`dept-${parentId}`);
-      if (!parentDept) {
-        for (const [key, d] of departmentMap) {
-          if (key === parentId || key === `dept-${parentId}` || d.id === parentId || d.id === `dept-${parentId}`) {
-            parentDept = d;
-            break;
-          }
-        }
-      }
-      if (parentDept) {
-        parentDept.children.push(dept);
-        dept.level = parentDept.level + 1;
-        dept.parentId = parentDept.id;
-      }
-    } else {
-      dept.level = 1;
-      rootNodes.push(dept);
-    }
-  });
-
-  courseMap.forEach((course) => {
-    const deptId =
-      (course.data as Course).attributes.department?.data?.id ||
-      (course.data as Course).attributes.category?.data?.id;
-    if (deptId && departmentMap.has(String(deptId))) {
-      const dept = departmentMap.get(String(deptId))!;
-      course.level = dept.level + 1;
-      course.parentId = dept.id;
-      dept.children.push(course);
-    }
-  });
-
-  return rootNodes;
-}
-
-interface CourseTreeItemProps {
-  node: TreeNode;
-  expanded: Set<string>;
-  onToggle: (id: string) => void;
-  onSelect: (node: TreeNode) => void;
-  selectedCourseId: string;
-}
-
-function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }: CourseTreeItemProps) {
-  const isExpanded = expanded.has(node.id);
-  const hasChildren = node.children.length > 0;
-  const isSelected = node.type === 'course' && selectedCourseId === node.id.replace('course-', '');
-
-  const getNodeIcon = (type: NodeType) => {
-    switch (type) {
-      case 'university': return <FolderOpen className="w-4 h-4 text-blue-500" />;
-      case 'faculty': return <FolderOpen className="w-4 h-4 text-purple-500" />;
-      case 'center': return <FolderOpen className="w-4 h-4 text-green-500" />;
-      case 'department': return <FolderOpen className="w-4 h-4 text-orange-500" />;
-      case 'course': return <BookOpen className="w-4 h-4 text-indigo-500" />;
-      default: return <FolderOpen className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  return (
-    <div className="select-none">
-      <div
-        className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
-          isSelected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
-        }`}
-        style={{ paddingLeft: `${node.level * 24 + 12}px` }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (node.type === 'course') {
-            onSelect(node);
-          } else {
-            onToggle(node.id);
-          }
-        }}
-      >
-        {hasChildren ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggle(node.id);
-            }}
-            className="flex-shrink-0 w-5 h-5 flex items-center justify-center"
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            )}
-          </button>
-        ) : (
-          <div className="w-5" />
-        )}
-        {getNodeIcon(node.type)}
-        <span className="text-sm">{node.name}</span>
-      </div>
-      {hasChildren && isExpanded && (
-        <div>
-          {node.children.map((child) => (
-            <CourseTreeItem
-              key={child.id}
-              node={child}
-              expanded={expanded}
-              onToggle={onToggle}
-              onSelect={onSelect}
-              selectedCourseId={selectedCourseId}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function CreateExamPage() {
   const t = useTranslations('exams');
   const router = useRouter();
   const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { mutate: createQuiz, isLoading: isCreatingQuiz, isError: isQuizError, error: quizError } = useCreateQuiz();
-  const { data: universities } = useUniversities();
-  const { data: faculties } = useFaculties();
-  const { data: centers } = useCenters();
-  const { data: departments } = useDepartments();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
@@ -388,38 +74,6 @@ export default function CreateExamPage() {
     is_public: false
   });
 
-  // Tree selection state
-  const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
-
-  // Build course tree
-  const courseTree = useMemo(() => {
-    if (!universities || !faculties || !centers || !departments || !courses) {
-      return [];
-    }
-    return buildCourseTree(universities, faculties, centers, departments, courses);
-  }, [universities, faculties, centers, departments, courses]);
-
-  // Handle tree node toggle
-  const handleCourseTreeToggle = (nodeId: string) => {
-    setCourseTreeExpanded((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  };
-
-  // Handle tree node selection
-  const handleCourseTreeSelect = (node: TreeNode) => {
-    if (node.type === 'course') {
-      const courseId = node.id.replace('course-', '');
-      setExamDetails((prev) => ({ ...prev, course: courseId, chapter: '' }));
-    }
-  };
-
   // Filter chapters based on selected course
   const filteredChapters = examDetails.course
     ? chapters?.filter(ch => ch.attributes.course_id === parseInt(examDetails.course))
@@ -434,8 +88,8 @@ export default function CreateExamPage() {
       score: 1,
       autoCorrect: true,
       answers: [
-        { id: '1', text: '', isCorrect: false, reason: '' },
-        { id: '2', text: '', isCorrect: false, reason: '' }
+        { id: '1', text: '', isCorrect: false },
+        { id: '2', text: '', isCorrect: false }
       ]
     }
   ]);
@@ -449,11 +103,9 @@ export default function CreateExamPage() {
       type: 'single_choice',
       score: 1,
       autoCorrect: true,
-      image: null,
-      imagePreview: '',
       answers: [
-        { id: '1', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
-        { id: '2', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }
+        { id: '1', text: '', isCorrect: false },
+        { id: '2', text: '', isCorrect: false }
       ]
     }]);
   };
@@ -474,7 +126,7 @@ export default function CreateExamPage() {
         const newAnswerId = (q.answers.length + 1).toString();
         return {
           ...q,
-          answers: [...q.answers, { id: newAnswerId, text: '', isCorrect: false, reason: '' }]
+          answers: [...q.answers, { id: newAnswerId, text: '', isCorrect: false }]
         };
       }
       return q;
@@ -531,35 +183,6 @@ export default function CreateExamPage() {
     }));
   };
 
-  const handleQuestionImageChange = (qId: string, file: File | null) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId) {
-        return {
-          ...q,
-          image: file,
-          imagePreview: file ? URL.createObjectURL(file) : ''
-        };
-      }
-      return q;
-    }));
-  };
-
-  const handleAnswerImageChange = (qId: string, answerId: string, file: File | null) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId) {
-        return {
-          ...q,
-          answers: q.answers.map(a =>
-            a.id === answerId
-              ? { ...a, image: file, imagePreview: file ? URL.createObjectURL(file) : '' }
-              : a
-          )
-        };
-      }
-      return q;
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -586,23 +209,20 @@ export default function CreateExamPage() {
         status: examDetails.status.toLowerCase() as 'draft' | 'active',
         start_time: examDetails.startTime || null,
         end_time: examDetails.endTime || null,
-                questions: questions.map((q, i) => ({
+        questions: questions.map((q, i) => ({
           text: q.text,
           type: q.type,
           score: q.score,
           auto_correct: q.autoCorrect,
-          image: q.image || undefined,
           answers: q.type === 'short_answer' ? undefined : q.answers.map(a => ({
             text: a.text,
             is_correct: a.isCorrect,
-            reason: a.reason || undefined,
-            image: a.image || undefined,
           })),
           order: i + 1,
         })),
       };
 
-      const createdQuiz = await createQuiz(quizData as any);
+      const createdQuiz = await createQuiz(quizData);
 
       if (!createdQuiz) {
         throw new Error(t('create.error'));
@@ -655,38 +275,8 @@ export default function CreateExamPage() {
               />
             </div>
 
-            {/* Course Tree */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
-              <div className="border border-[#E2E8F0] rounded-xl max-h-64 overflow-y-auto">
-                {courseTree.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-500">{coursesLoading ? t('create.loading') : t('create.selectCourse')}</div>
-                ) : (
-                  <div className="py-2">
-                    {courseTree.map((node) => (
-                      <CourseTreeItem
-                        key={node.id}
-                        node={node}
-                        expanded={courseTreeExpanded}
-                        onToggle={handleCourseTreeToggle}
-                        onSelect={handleCourseTreeSelect}
-                        selectedCourseId={examDetails.course}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-              {examDetails.course && (
-                <div className="mt-1 p-2 bg-[#EEF2FF] rounded-lg border border-[#2137D6]/20">
-                  <p className="text-xs text-[#2137D6]">
-                    Selected: {courses?.find(c => c.id === examDetails.course)?.attributes.title || `Course ${examDetails.course}`}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Type, Chapter */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Type, Course, Chapter */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="flex flex-col gap-2 relative">
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.examType')} <span className="text-[#EF4444]">*</span></label>
                 <select
@@ -702,20 +292,34 @@ export default function CreateExamPage() {
               </div>
 
               <div className="flex flex-col gap-2 relative">
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
+                <select
+                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  value={examDetails.course}
+                  onChange={(e) => setExamDetails({...examDetails, course: e.target.value, chapter: ''})}
+                  required
+                  disabled={coursesLoading}
+                >
+                  <option value="">{coursesLoading ? t('create.loading') : t('create.selectCourse')}</option>
+                  {courses?.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.attributes.title}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                {coursesLoading && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
+              </div>
+
+              <div className="flex flex-col gap-2 relative">
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.chapter')}</label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={examDetails.chapter}
                   onChange={(e) => setExamDetails({...examDetails, chapter: e.target.value})}
-                  disabled={!examDetails.course || chaptersLoading}
+                  disabled={chaptersLoading}
                 >
-                  <option value="">
-                    {!examDetails.course
-                      ? t('create.selectCourseFirst')
-                      : chaptersLoading
-                        ? t('create.loading')
-                        : t('create.selectChapter')}
-                  </option>
+                  <option value="">{chaptersLoading ? t('create.loading') : t('create.selectChapter')}</option>
                   {filteredChapters?.map((chapter) => (
                     <option key={chapter.id} value={chapter.id}>
                       {chapter.attributes.title}
@@ -723,7 +327,7 @@ export default function CreateExamPage() {
                   ))}
                 </select>
                 <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
-                {chaptersLoading && examDetails.course && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
+                {chaptersLoading && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
               </div>
             </div>
 
@@ -925,55 +529,15 @@ export default function CreateExamPage() {
 
                 {/* Question Text */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')}</label>
+                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')} <span className="text-[#EF4444]">*</span></label>
                   <input
                     type="text"
                     placeholder={t('create.questionPlaceholder')}
                     className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                     value={q.text}
                     onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
+                    required
                   />
-                </div>
-
-                {/* Question Image */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#475569]">Question Image</label>
-                  {q.imagePreview ? (
-                    <div className="relative w-fit">
-                      <img
-                        src={q.imagePreview}
-                        alt="Question preview"
-                        className="h-32 w-auto rounded-xl border border-[#E2E8F0] object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleQuestionImageChange(q.id, null)}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-[#EF4444] rounded-full shadow-sm transition-all"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="relative w-fit">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        id={`q-img-${q.id}`}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          handleQuestionImageChange(q.id, file);
-                        }}
-                      />
-                      <label
-                        htmlFor={`q-img-${q.id}`}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
-                      >
-                        <ImagePlus className="w-4 h-4" />
-                        Upload Image
-                      </label>
-                    </div>
-                  )}
                 </div>
 
                 {/* Answers Section */}
@@ -995,87 +559,38 @@ export default function CreateExamPage() {
 
                     <div className="grid grid-cols-1 gap-3">
                       {q.answers.map((answer, ansIndex) => (
-                        <div key={answer.id} className="flex flex-col gap-2">
-                          <div className="flex items-center gap-3">
+                        <div key={answer.id} className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => toggleCorrectAnswer(q.id, answer.id)}
+                            className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                              answer.isCorrect
+                                ? 'bg-[#10B981] border-[#10B981] text-white'
+                                : 'border-[#E2E8F0] hover:border-[#10B981]'
+                            }`}
+                          >
+                            {answer.isCorrect && (
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                          <input
+                            type="text"
+                            placeholder={`${t('create.answer')} ${ansIndex + 1}`}
+                            className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                            value={answer.text}
+                            onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
+                            required
+                          />
+                          {q.answers.length > 2 && q.type !== 'true_false' && (
                             <button
                               type="button"
-                              onClick={() => toggleCorrectAnswer(q.id, answer.id)}
-                              className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
-                                answer.isCorrect
-                                  ? 'bg-[#10B981] border-[#10B981] text-white'
-                                  : 'border-[#E2E8F0] hover:border-[#10B981]'
-                              }`}
+                              onClick={() => removeAnswer(q.id, answer.id)}
+                              className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
                             >
-                              {answer.isCorrect && (
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
+                              <Trash2 className="w-4 h-4" />
                             </button>
-                            <input
-                              type="text"
-                              placeholder={`${t('create.answer')} ${ansIndex + 1}`}
-                              className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
-                              value={answer.text}
-                              onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
-                              required
-                            />
-                            {/* Answer reason */}
-                            <input
-                              type="text"
-                              placeholder={`Reason for answer ${ansIndex + 1}`}
-                              className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] mt-2"
-                              value={answer.reason}
-                              onChange={(e) => updateAnswer(q.id, answer.id, { reason: e.target.value })}
-                            />
-                            {/* Answer image toggle */}
-                            <div className="relative">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                id={`a-img-${q.id}-${answer.id}`}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] || null;
-                                  handleAnswerImageChange(q.id, answer.id, file);
-                                }}
-                              />
-                              <label
-                                htmlFor={`a-img-${q.id}-${answer.id}`}
-                                className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${
-                                  answer.imagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
-                                }`}
-                                title={answer.imagePreview ? 'Change image' : 'Add image'}
-                              >
-                                <ImagePlus className="w-4 h-4" />
-                              </label>
-                            </div>
-                            {q.answers.length > 2 && q.type !== 'true_false' && (
-                              <button
-                                type="button"
-                                onClick={() => removeAnswer(q.id, answer.id)}
-                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-                          {/* Answer image preview */}
-                          {answer.imagePreview && (
-                            <div className="flex items-center gap-2 ml-9">
-                              <img
-                                src={answer.imagePreview}
-                                alt={`Answer ${ansIndex + 1} preview`}
-                                className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
-                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
                           )}
                         </div>
                       ))}

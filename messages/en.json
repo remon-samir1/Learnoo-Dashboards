@@ -107,6 +107,35 @@
       "submit": "Reset Password"
     }
   },
+  "navbar": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "searchPlaceholder": "Search courses, lectures, exams...",
+    "notifications": "Notifications",
+    "new": "new",
+    "noNotifications": "No notifications found.",
+    "notificationFallbackTitle": "Notification",
+    "notificationFallbackMessage": "You have a new notification.",
+    "viewAllNotifications": "View all notifications",
+    "justNow": "Just now",
+    "notificationItems": {
+      "courseTitle": "New course uploaded",
+      "courseMessage": "Mathematics course is now available.",
+      "examTitle": "Exam reminder",
+      "examMessage": "Physics exam starts tomorrow.",
+      "lectureTitle": "New lecture",
+      "lectureMessage": "Chemistry lecture has been added.",
+      "time1": "5 min ago",
+      "time2": "1 hour ago",
+      "time3": "Today"
+    }
+  },
+  "studentDownloads": {
+    "title": "Downloads",
+    "headline": "Downloads coming soon",
+    "description": "This feature is under development."
+  },
   "sidebar": {
     "dashboard": "Dashboard",
     "academicStructure": "Academic Structure",
@@ -130,8 +159,10 @@
     "featureControl": "Feature Control",
     "otaUpload": "OTA Upload",
     "adminDashboard": "Admin Dashboard",
-    "instructorDashboard": "Instructor Dashboard",
-    "doctorDashboard": "Doctor Dashboard"
+    "doctorDashboard": "Doctor Dashboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "helpFaq": "Help & FAQ"
   },
   "header": {
     "titles": {
@@ -212,7 +243,63 @@
       "noAcademicStructure": "No academic structure available"
     }
   },
-  "students": {
+  "student": {
+    "home": {
+      "welcome": {
+        "title": "Welcome back",
+        "activeCourses": "Active Courses",
+        "liveToday": "Live Today",
+        "upcomingExams": "In Progress"
+      },
+      "library": {
+        "title": "My Library",
+        "fallbackTitle": "Library",
+        "fallbackDescription": "No library items found.",
+        "viewAll": "View All",
+        "empty": "No library items found."
+      },
+      "quickActivation": {
+        "title": "Quick Activation",
+        "description": "Enter your activation code to unlock your course or lecture.",
+        "button": "Activate Now",
+        "placeholder": "Enter activation code"
+      },
+      "continueWatching": {
+        "title": "Continue Watching",
+        "viewAll": "View All",
+        "continue": "Continue",
+        "fallbackCourse": "Advanced Sorting Algorithms",
+        "fallbackLecture": "Lecture"
+      },
+      "subjects": {
+        "title": "My Subjects",
+        "courses": "Courses",
+        "lectures": "Lectures",
+        "exams": "Exams",
+        "students": "Students"
+      },
+      "courses": {
+        "seeAll": "See All Courses"
+      },
+      "upcomingLive": {
+        "title": "Upcoming Live Classes",
+        "viewAll": "View All",
+        "setReminder": "Set Reminder",
+        "emptyTitle": "No live sessions now",
+        "emptyDescription": "There are no upcoming live classes at the moment. Check back later.",
+        "fallbackTitle": "Live Session",
+        "unknownInstructor": "Unknown Instructor",
+        "unknownCourse": "Course Not Available",
+        "unknownTime": "Time Not Available"
+      },
+      "notes": {
+        "title": "New Notes & Summaries",
+        "viewAll": "View All",
+        "empty": "No notes or summaries available now.",
+        "fallbackTitle": "Untitled Note",
+        "fallbackLecture": "General"
+      }
+    },
     "pageTitle": "Students Management",
     "pageDescription": "Manage student accounts, access, and details.",
     "addStudent": "Add Student",
@@ -259,6 +346,7 @@
         "profileImage": "Profile Image",
         "accountStatus": "Account Status"
       },
+
       "fields": {
         "firstName": "First Name",
         "lastName": "Last Name",
@@ -387,7 +475,330 @@
       "pending": "Pending",
       "declined": "Declined"
     },
+    "studentPageTitle": "My Courses",
+    "studentPageDescription": "Browse your active courses, view progress, and open course details.",
+    "studentTabs": {
+      "all": "All",
+      "courses": "Courses",
+      "finalRevision": "Final Revision",
+      "reviews": "Reviews",
+      "makeup": "Makeup"
+    },
+    "studentCategoryNames": {
+      "courses": "Courses",
+      "finalRevision": "Final Revision"
+    },
+    "studentTitleNames": {
+      "generalManagement": "General Management",
+      "financialAccounting": "Financial Accounting",
+      "microeconomics": "Microeconomics"
+    },
+    "studentResultsCount": "{count, plural, one {# course} other {# courses}}",
+    "studentCourseCard": {
+      "activateToAccess": "Activate to access",
+      "activateCourse": "Activate Course"
+    },
+    "studentActivation": {
+      "description": "Enter your activation code below to unlock full access to this course.",
+      "descriptionLibrary": "Enter your activation code below to unlock this library material.",
+      "codeLabel": "Activation code",
+      "codePlaceholder": "e.g. ABCD-1234",
+      "cancel": "Cancel",
+      "close": "Close",
+      "enterCode": "Please enter an activation code.",
+      "invalidCourse": "This course cannot be activated (invalid id).",
+      "invalidLibrary": "This library item cannot be activated (invalid id).",
+      "genericError": "Activation failed. Please try again.",
+      "success": "Course activated successfully!",
+      "successLibrary": "Library material activated successfully!"
+    },
+    "studentStatus": {
+      "active": "Active"
+    },
+    "studentDetails": {
+      "title": "Course details",
+      "back": "Back to courses",
+      "loading": "Loading…",
+      "error": "Error",
+      "notFound": "Course not found.",
+      "invalidId": "Invalid course id.",
+      "attributesHeading": "Attributes (from API)",
+      "tabs": {
+        "lectures": "Lectures",
+        "exams": "Exams",
+        "notes": "Notes"
+      },
+      "lectureNumber": "Lecture {number}",
+      "watch": "Watch",
+      "locked": "Locked",
+      "reactivate": "Re-activate",
+      "hasExam": "Has Exam",
+      "hasPdf": "Has PDF",
+      "viewsExhausted": "Views Exhausted",
+      "partsCount": "{count} parts",
+      "viewsRemaining": "{remaining}/{max} views left",
+      "viewsUnlimited": "Unlimited views left",
+      "openPdf": "PDF",
+      "heroLectureCount": "{count} Lectures",
+      "examsEmpty": "No exams for this course.",
+      "notesEmpty": "No notes for this course.",
+      "notes": {
+        "deleteTitle": "Delete note",
+        "deleteDescription": "Are you sure you want to delete «{title}»? This action cannot be undone.",
+        "deleting": "Deleting…",
+        "updateError": "Could not update the note. Try again.",
+        "deleteError": "Could not delete the note. Try again."
+      },
+      "lecturesEmpty": "No lectures available.",
+      "lectureHeading": "Lecture {number}: {title}",
+      "chapterItemHeading": "Chapter {number}: {title}",
+      "lectureNoParts": "No video parts in this lecture yet.",
+      "statLectures": "Lectures",
+      "statChapters": "Chapters",
+      "statNotes": "Notes",
+      "statExams": "Exams",
+      "viewPdf": "View PDF",
+      "openExamsTab": "Exam",
+      "examsAvailableNow": "Available Now",
+      "examsAvailableBadge": "Available",
+      "examsStartExam": "Start Exam",
+      "examsDurationMinutes": "{count} minutes",
+      "examsQuestionCount": "{count} questions",
+      "examsPassMarks": "Pass {passing} / {total} marks",
+      "examsAttemptsAllowed": "{count} attempts",
+      "examsDeadline": "Ends {date}",
+      "examsChapterCourse": "Course",
+      "examsChapterFallback": "Chapter {id}",
+      "examsNoActiveExams": "No exams are available to start right now.",
+      "examsUpcomingTitle": "Upcoming Exams",
+      "examsCompletedTitle": "Completed Exams",
+      "examsLockedTitle": "Locked Exams",
+      "examsDaysLeft": "{count, plural, one {# day left} other {# days left}}",
+      "examsUpcomingFallback": "Upcoming",
+      "examsScheduled": "Scheduled",
+      "examsViewResults": "View Results",
+      "examsNotAvailable": "Not Available",
+      "examsActivationRequired": "Activate course to access this exam",
+      "examsActivationRequiredSub": "Course activation required",
+      "examsActivateCourseForExam": "Activate course",
+      "examsQuestionsAndDuration": "{questions} questions • {minutes} minutes",
+      "examsTotalMarks": "Total {count} marks",
+      "examsTypeExam": "Exam",
+      "examsTypeHomework": "Homework",
+      "examsTypeRaw": "{type}",
+      "examsTypeLabel": "Type: {type}",
+      "examsAttemptsRemainingOfMax": "{remaining} attempts remaining out of {max}",
+      "examsAttemptsUsedOfMax": "{current} of {max} attempts used",
+      "examsAttemptsOverview": "{remaining} attempts remaining out of {max} ({current} used)",
+      "watchPageTitle": "Watch lecture",
+      "watchBack": "Back to course",
+      "watchNotFound": "This chapter could not be found.",
+      "watchNoVideo": "No video is available for this chapter.",
+      "watchMaterials": "Materials & downloads",
+      "watchOpenAttachment": "Open"
+    },
+    "studentWatch": {
+      "viewsLeftBadge": "Views left: {remaining}/{max}",
+      "subtitleChapter": "Chapter {number}",
+      "showPdf": "Show PDF",
+      "hidePdf": "Hide PDF",
+      "lectureMaterial": "Lecture material",
+      "pdfSyncHint": "PDF viewer — open the file alongside the video.",
+      "askMoment": "Ask About This Moment",
+      "addDiscussion": "Add discussion",
+      "lectureParts": "Lecture parts",
+      "lecturePartsToolbar": "Lecture Parts:",
+      "partLabel": "Part {number}",
+      "discussionsHeading": "Discussions",
+      "discussionsCount": "Discussions ({count})",
+      "noDiscussions": "No discussions yet.",
+      "jumpToTime": "Jump to time",
+      "timeAt": "{time}",
+      "badgeQuestion": "question",
+      "badgeComment": "comment",
+      "viewReplies": "View {count} replies",
+      "quizSectionTitle": "Quizzes",
+      "quizDuration": "{count} min",
+      "quizPassing": "Pass {passing} / {total} marks",
+      "startQuiz": "Start quiz",
+      "examBannerText": "This lecture has a linked exam",
+      "takeExam": "Take Exam",
+      "discussionModalTitle": "Add discussion",
+      "discussionModalClose": "Close",
+      "discussionModalLabel": "Your message",
+      "discussionModalPlaceholder": "Write your comment…",
+      "discussionModalCancel": "Cancel",
+      "discussionModalSubmit": "Post",
+      "discussionContentRequired": "Please enter a message.",
+      "discussionPosted": "Discussion posted.",
+      "discussionPostError": "Could not post discussion. Try again.",
+      "composerPlaceholder": "Ask about this moment…",
+      "composerPost": "Post",
+      "composerMomentLabel": "At {time}",
+      "anonymousUser": "Student",
+      "watchAccessDenied": "You can't watch this chapter.",
+      "watchAccessDeniedHint": "Activate your course or check your view limit. If you opened this link directly, use the course page to open chapters."
+    },
+    "studentStartExam": {
+      "back": "Back",
+      "loading": "Loading exam…",
+      "error": "Could not load this exam.",
+      "invalidId": "Invalid exam link.",
+      "notFound": "Exam not found.",
+      "durationLabel": "Duration",
+      "questionsLabel": "Questions",
+      "minutesUnit": "{count} minutes",
+      "rulesHeading": "Exam rules",
+      "rule1": "You must complete the exam in one sitting.",
+      "rule2": "Each question must be answered before moving to the next.",
+      "rule3": "No backtracking to previous questions.",
+      "rule4": "The exam will auto-submit when time expires.",
+      "rule5": "Ensure a stable internet connection.",
+      "noticeTitle": "Important notice",
+      "noticeBody": "This exam may include watermarked content. Taking screenshots or sharing exam material is prohibited and may result in automatic failure.",
+      "cancel": "Cancel",
+      "startExam": "Start Exam",
+      "startAttemptError": "Could not start the exam. Try again.",
+      "maxAttemptsReached": "You have used all allowed attempts for this exam.",
+      "typeExam": "Exam",
+      "typeHomework": "Homework",
+      "passingInfo": "Pass {passing} / {total} marks",
+      "cannotStart": "This exam is not available to start from here right now. Check with your instructor or try again later.",
+      "activationRequiredTitle": "Course activation required",
+      "activationRequiredBody": "Activate the course to access this exam.",
+      "goToCourse": "Open course",
+      "goToCourses": "My courses",
+      "takePlaceholderTitle": "Exam session",
+      "takePlaceholderBody": "Answer flow and scoring will be wired in the next step. Your quiz data was saved from the intro screen.",
+      "backToIntro": "Back to exam intro"
+    },
+    "studentTakeExam": {
+      "loadingSession": "Loading exam…",
+      "defaultExamTitle": "Exam",
+      "questionProgress": "Question {current} of {total}",
+      "questionBadge": "Question {n}",
+      "selectAnswerHint": "Please select an answer",
+      "nextQuestion": "Next Question",
+      "finishExam": "Finish",
+      "finishError": "Could not submit the exam. Try again.",
+      "selectMultipleHint": "Select all correct answers",
+      "noReturnWarning": "You cannot return to previous questions. Make sure of your answer before proceeding.",
+      "timeOutMessage": "Time is up. This attempt has ended."
+    },
+    "studentExamResult": {
+      "loading": "Loading results…",
+      "congratulationsTitle": "Congratulations!",
+      "passedSubtitle": "You passed the exam",
+      "failedTitle": "Exam not passed",
+      "failedSubtitle": "You did not reach the passing score for this exam.",
+      "yourScore": "Your Score",
+      "scoreMarks": "Score",
+      "passingScore": "Passing Score",
+      "finishedAt": "Finished at",
+      "timeTaken": "Time taken",
+      "timeTakenMinutes": "{value} min",
+      "backToHome": "Back to Home",
+      "reviewLectures": "Review Lectures",
+      "retryExam": "Retry Exam"
+    },
+    "studentExamsPage": {
+      "pageTitle": "Exams",
+      "pageSubtitle": "View and manage your course examinations.",
+      "loadError": "Could not load exams or attempts. Try again.",
+      "retryLoad": "Try again",
+      "loadingQuizzes": "Loading exams…",
+      "loadingAttempts": "Loading attempts…",
+      "emptyAvailable": "No exams are listed here yet. Open a course to see exams that are available to start.",
+      "emptyUpcoming": "No upcoming exams are listed here yet.",
+      "emptyCompleted": "You have no completed exam attempts yet.",
+      "emptyLocked": "No locked exams are listed here yet.",
+      "attemptStarted": "Started {date}",
+      "attemptFinished": "Finished {date}",
+      "attemptScoreLine": "Score {score} / {total}",
+      "attemptPassed": "Passed",
+      "attemptFailed": "Did not pass"
+    },
+    "studentCommunity": {
+      "pageTitle": "Community",
+      "pageSubtitle": "Connect with instructors and fellow students.",
+      "socialSectionTitle": "Social links",
+      "socialJoinCta": "Join our community",
+      "socialEmpty": "No social links are available yet.",
+      "socialError": "Could not load social links.",
+      "tabAll": "All",
+      "tabPosts": "Posts",
+      "tabSummaries": "Summaries",
+      "tabQuestions": "Questions",
+      "createPost": "Create post",
+      "postsEmpty": "No posts match this filter yet.",
+      "postsError": "Could not load posts. Please try again later.",
+      "toastCreated": "Your post was published.",
+      "toastCreateFailed": "Could not create the post. Please try again.",
+      "toastReactFailed": "Could not update your reaction. Please try again.",
+      "badgeInstructor": "Instructor",
+      "badgeStudent": "Student",
+      "commentsCount": "{count, plural, one {# comment} other {# comments}}",
+      "repliesCount": "{count, plural, one {# reply} other {# replies}}",
+      "reply": "Reply",
+      "addComment": "Add comment",
+      "replyModalTitle": "Add a comment",
+      "replyingTo": "Commenting on:",
+      "replyBodyLabel": "Your comment",
+      "replyBodyPlaceholder": "Write your comment…",
+      "replyBodyRequired": "Please enter a comment.",
+      "submitReply": "Post comment",
+      "toastReplyCreated": "Your comment was posted.",
+      "toastReplyFailed": "Could not post your comment. Please try again.",
+      "like": "Like",
+      "tagsLabel": "Tags (optional)",
+      "tagsPlaceholder": "e.g. math, calculus"
+    },
+    "studentLibrary": {
+      "pageTitle": "Electronic Library",
+      "pageSubtitle": "Access your course materials and reference books.",
+      "unlockBannerTitle": "How to unlock materials",
+      "unlockBannerBody": "Visit your center, pay for the material, receive an activation code, and unlock it here.",
+      "activateMaterial": "Activate material",
+      "searchPlaceholder": "Search materials…",
+      "tabAll": "All",
+      "tabUnlocked": "Unlocked",
+      "tabLocked": "Locked",
+      "loadError": "Could not load library materials. Please try again.",
+      "retryLoad": "Try again",
+      "empty": "No materials match this filter yet.",
+      "emptySearch": "No materials match your search.",
+      "locked": "Locked",
+      "unlock": "Unlock",
+      "lockedMaterial": "Locked material",
+      "activateCourseHint": "Activate the course to access this material.",
+      "openMaterial": "Open material",
+      "attachments": "Attachments",
+      "download": "Download",
+      "openInNewTab": "Open",
+      "openUnavailable": "Unavailable",
+      "attachmentLocked": "Locked",
+      "notDownloadable": "Not downloadable",
+      "priceLabel": "Price",
+      "courseRef": "Course #{id}",
+      "fileCount": "{count, plural, one {# file} other {# files}}",
+      "materialType": {
+        "booklet": "Booklet",
+        "reference": "Reference",
+        "guide": "Guide"
+      },
+      "invalidId": "Invalid material link.",
+      "backToLibrary": "Back to library",
+      "detailLoadError": "Could not load this material.",
+      "unlockedBadge": "Unlocked",
+      "descriptionHeading": "Description",
+      "noAttachments": "No attachments for this material.",
+      "pdfViewerTitle": "Document viewer",
+      "pdfViewerPlaceholder": "Page content would be rendered here for supported formats.",
+      "previewUnavailableTitle": "Preview not available",
+      "previewUnavailableBody": "Open the file in a new tab to view this format."
+    },
     "card": {
+      "progress": "Progress",
       "lectures": "lectures",
       "notes": "notes",
       "exams": "exams",
@@ -442,6 +853,8 @@
       "uploading": "Uploading..."
     },
     "view": {
+      "openCourse": "Open course",
+      "locked": "Locked",
       "loading": "Loading course details...",
       "error": "Error Loading Course",
       "notFound": "Course not found",
@@ -862,11 +1275,16 @@
     "deleteConfirm": "Are you sure you want to delete this session?",
     "deleteSuccess": "Session deleted successfully",
     "deleteError": "Failed to delete session",
+    "all": "All",
+    "live": "Live",
+    "upcoming": "Upcoming",
+    "ended": "Ended",
     "status": {
       "live": "LIVE",
       "upcoming": "UPCOMING",
       "ended": "ENDED",
-      "now": "Now"
+      "now": "Now",
+      "started": "STARTED"
     },
     "time": {
       "today": "Today",
@@ -953,7 +1371,44 @@
       "saveSuccess": "Settings saved successfully",
       "saveError": "Failed to save settings",
       "loadError": "Failed to load session settings"
-    }
+    },
+    "title": "Live Sessions",
+    "description": "Join live classes and watch recorded sessions",
+    "liveNow": "Live Now",
+    "upcomingSessions": "Upcoming Sessions",
+    "recordedSessions": "Recorded Sessions",
+    "joinNow": "Join Now",
+    "noLiveSessions": "No live sessions right now.",
+    "noUpcomingSessions": "No upcoming sessions scheduled.",
+    "noRecordedSessions": "No recorded sessions available yet.",
+    "chat": "Live Chat",
+    "viewer": "Viewer",
+    "hideChat": "Hide",
+    "showChat": "Show chat",
+    "connecting": "Connecting…",
+    "receivingStream": "Receiving stream…",
+    "connectionError": "Could not connect to the live session.",
+    "writeMessage": "Type a message…",
+    "send": "Send",
+    "upcomingMessage": "This session has not started yet.",
+    "sessionEnded": "This session has ended.",
+    "backToList": "Back to live sessions",
+    "watchRecording": "Watch recording",
+    "registered": "registered",
+    "liveBadge": "LIVE",
+    "watching": "watching",
+    "maxStudentsLabel": "Max students",
+    "loadListError": "Failed to load live sessions",
+    "noHostPeer": "Live stream is not available (missing host connection).",
+    "endedNoRecording": "Recording is not available for this session.",
+    "upcomingSession": "Upcoming Session",
+    "students": "students",
+    "instructor": "Instructor",
+    "courseNotAvailable": "Course not available",
+    "liveSession": "Live Session",
+    "joinDescription": "Join your live class now.",
+    "timeNotAvailable": "Time not available",
+    "notScheduled": "Not scheduled"
   },
   "exams": {
     "pageTitle": "Exams & Quizzes",
@@ -997,7 +1452,6 @@
       "selectCourse": "Select Course",
       "chapter": "Chapter",
       "selectChapter": "Select Chapter",
-      "selectCourseFirst": "Select a course first",
       "duration": "Duration (min)",
       "totalMarks": "Total Marks",
       "passingMarks": "Passing Marks (%)",
@@ -1062,12 +1516,31 @@
     "pageDescription": "Manage instructor notes and student-created summaries.",
     "searchPlaceholder": "Search...",
     "addNote": "Add Note",
+    "all": "All",
+    "summary": "Summary",
+    "highlights": "Highlights",
+    "notes": "Notes",
+    "course": "Course",
+    "lecture": "Lecture",
+    "published": "Published",
+    "draft": "Draft",
     "filters": {
       "allTypes": "All Types",
       "summary": "Summary",
       "highlight": "Highlight",
       "keyPoint": "Key Point",
-      "importantNotice": "Important Notice"
+      "importantNotice": "Important Notice",
+      "pageTitle": "Notes & Summaries",
+      "pageDescription": "Access all your course notes, summaries, and highlights",
+      "searchPlaceholder": "Search notes...",
+      "all": "All",
+      "highlights": "Highlights",
+      "notes": "Notes",
+      "noNotes": "No notes found",
+      "course": "Course",
+      "lecture": "Lecture",
+      "published": "Published",
+      "draft": "Draft"
     },
     "table": {
       "title": "Title",
@@ -1507,10 +1980,6 @@
       "title": "General Settings",
       "description": "Platform name, timezone, and basic configuration."
     },
-    "profile": {
-      "title": "Profile",
-      "description": "Update your personal information and account details."
-    },
     "branding": {
       "title": "Branding",
       "description": "Logos, colors, and visual identity."
@@ -1687,9 +2156,304 @@
         "uploading": "Uploading...",
         "preactivationResults": "Pre-activation Results:",
         "success": "Success",
-        "failed": "Failed",
-        "uploadSuccess": "Pre-activation completed successfully! {count} phone number(s) processed."
+        "failed": "Failed"
       }
+    }
+  },
+  "studentHelp": {
+    "help": {
+      "title": "Help & FAQ",
+      "description": "Find answers to common questions",
+      "searchPlaceholder": "Search for help...",
+      "stillNeedHelp": "Still need help?",
+      "stillNeedHelpDescription": "Can't find what you're looking for? Contact our support team.",
+      "contactSupport": "Contact Support",
+      "noResults": "No questions found.",
+      "categories": {
+        "all": "All",
+        "account": "Account",
+        "courses": "Courses",
+        "exams": "Exams",
+        "payments": "Payments",
+        "technical": "Technical"
+      },
+      "faqs": {
+        "resetPassword": {
+          "question": "How do I reset my password?",
+          "answer": "Go to Settings > Change Password, enter your current password and create a new one. You can also use the Forgot Password link on the login page."
+        },
+        "accessPurchasedCourses": {
+          "question": "How can I access my purchased courses?",
+          "answer": "Go to My Courses page. All purchased or activated courses will appear there automatically."
+        },
+        "retakeExam": {
+          "question": "Can I retake an exam if I fail?",
+          "answer": "This depends on the exam settings. Some exams allow retakes, while others may require instructor permission."
+        },
+        "activationCode": {
+          "question": "How do I activate a course with an activation code?",
+          "answer": "Go to the course activation page, enter your activation code, then submit it to unlock the course."
+        },
+        "videoPlayerIssue": {
+          "question": "The video player is not working. What should I do?",
+          "answer": "Refresh the page, check your internet connection, and try another browser. If the issue continues, contact support."
+        },
+        "lectureWatchLimit": {
+          "question": "How many times can I watch a lecture?",
+          "answer": "The number of views depends on the lecture settings set by your instructor or center."
+        },
+        "changeCenter": {
+          "question": "Can I change my enrolled center?",
+          "answer": "Please contact support or your current center to request changing your enrolled center."
+        },
+        "downloadMaterials": {
+          "question": "How do I download course materials?",
+          "answer": "Open the course lesson and check the attached files section. If downloads are available, you will see a download button."
+        }
+      }
+    },
+    "legal": {
+      "title": "Legal Information",
+      "subtitle": "Terms of Service and Privacy Policy",
+      "tabs": {
+        "terms": "Terms of Service",
+        "privacy": "Privacy Policy"
+      },
+      "terms": {
+        "title": "Terms of Service",
+        "lastUpdated": "Last updated: April 18, 2026",
+        "acceptance": {
+          "title": "1. Acceptance of Terms",
+          "content": "By accessing and using Learnoo Student Portal, you accept and agree to be bound by the terms and provisions of this agreement."
+        },
+        "accounts": {
+          "title": "2. User Accounts",
+          "content": "You are responsible for maintaining the confidentiality of your account and password. You agree to accept responsibility for all activities that occur under your account."
+        },
+        "courseAccess": {
+          "title": "3. Course Access and Content",
+          "content": "Course content is provided for educational purposes only. Sharing, copying, or distributing course materials without permission is strictly prohibited."
+        },
+        "examIntegrity": {
+          "title": "4. Exam Integrity",
+          "content": "All exams and quizzes must be completed honestly and independently. Any form of cheating, plagiarism, or academic dishonesty may result in account suspension."
+        },
+        "payments": {
+          "title": "5. Payment and Refunds",
+          "content": "All payments are processed through authorized methods. Refund policies may vary by course or center. Please contact support for refund information."
+        },
+        "termination": {
+          "title": "6. Termination",
+          "content": "We reserve the right to terminate or suspend access to our service immediately, without prior notice, for conduct that violates these Terms of Service."
+        }
+      },
+      "privacy": {
+        "title": "Privacy Policy",
+        "lastUpdated": "Last updated: April 18, 2026",
+        "collect": {
+          "title": "Information We Collect",
+          "content": "We collect information you provide directly to us, including:",
+          "items": [
+            "Name, email address, and phone number",
+            "Grade and student profile information",
+            "Course enrollment and progress data",
+            "Quiz, assignment, and academic performance data",
+            "Usage data and interaction with the platform"
+          ]
+        },
+        "use": {
+          "title": "How We Use Your Information",
+          "content": "We use the information we collect to:",
+          "items": [
+            "Provide, maintain, and improve our services",
+            "Process your course enrollments and lesson access",
+            "Send you notifications and support messages",
+            "Respond to your comments and questions",
+            "Monitor and analyze platform usage"
+          ]
+        },
+        "sharing": {
+          "title": "Information Sharing",
+          "content": "We do not share your personal information with third parties except:",
+          "items": [
+            "With your consent",
+            "With authorized teachers or educational centers",
+            "To comply with legal obligations",
+            "To protect our rights and prevent fraud"
+          ]
+        },
+        "security": {
+          "title": "Data Security",
+          "content": "We implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure."
+        },
+        "rights": {
+          "title": "Your Rights",
+          "content": "You have the right to access, update, or request deletion of your personal information. Contact support to exercise these rights."
+        },
+        "contact": {
+          "title": "Contact Us",
+          "content": "If you have questions about this Privacy Policy, please contact us through the platform support channels."
+        }
+      }
+    }
+  },
+
+  "notesDetails": {
+    "backToNotes": "Back to Notes",
+    "goToLecture": "Go to Lecture",
+    "download": "Download Content",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "errorDownload": "An error occurred while downloading. Please try again.",
+    "noteDownloaded": "Note downloaded successfully.",
+    "updateFailed": "Update failed. Please try again.",
+    "updateSuccess": "Note updated successfully.",
+    "failedDelete": "Delete failed. Please try again.",
+    "deleteSuccess": "Note deleted successfully.",
+    "note": "Notes",
+    "summary": "Summary",
+    "highlights": "Highlights"
+  },
+  "studentProfile": {
+    "title": "Profile",
+    "description": "Manage your personal information and account details",
+    "personalInformation": "Personal Information",
+    "fullName": "Full Name",
+    "email": "Email",
+    "phone": "Phone",
+    "studentCode": "Student Code",
+    "grade": "Grade",
+    "parentName": "Parent Name",
+    "parentPhone": "Parent Phone",
+    "address": "Address",
+    "accountStatus": "Account Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "verified": "Verified",
+    "notVerified": "Not Verified",
+    "editProfile": "Edit Profile",
+    "settings": "Settings",
+    "connected": "Connected",
+    "connect": "Connect",
+    "notesCreated": "Notes Created",
+    "downloads": "Downloads",
+    "liveAttendance": "Live Attendance",
+    "communityPosts": "Community Posts",
+    "pageTitle": "My Profile",
+    "pageDescription": "Manage your personal information and account details",
+    "download": "Download",
+    "backToProfile": "Back to Profile",
+    "editProfileStudent": {
+      "title": "Edit Profile",
+      "imageAlt": "Profile image",
+      "uploadPhoto": "Upload Photo",
+      "imageHint": "JPG, PNG, WEBP (max 5MB)",
+      "fields": {
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "email": "Email Address",
+        "phone": "Phone Number"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "saveChanges": "Save Changes"
+      },
+      "toasts": {
+        "success": "Profile updated successfully",
+        "error": "Failed to update profile"
+      }
+    },
+    "links": {
+      "title": "Quick Links"
+    },
+    "fields": {
+      "email": "Email",
+      "phone": "Phone",
+      "university": "University",
+      "faculty": "Faculty",
+      "status": "Status",
+      "device": "Device"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "downloads": "Download Content",
+      "liveAttendance": "Live Attendance",
+      "communityPosts": "Community Posts",
+      "settings": "Settings"
+    },
+   "qr": {
+  "title": "Student QR Code",
+  "description": "Scan to verify student identity",
+  "downloadSuccess": "QR Code downloaded successfully",
+  "downloadError": "Failed to download QR Code"
+}
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Stay updated with your latest activities.",
+    "newCount": "{count} new",
+    "markAllAsRead": "Mark all as read",
+    "searchPlaceholder": "Search notifications...",
+    "empty": "No notifications found.",
+    "fallbackTitle": "Notification",
+    "fallbackMessage": "You have a new notification.",
+    "justNow": "Just now",
+    "filters": {
+      "all": "All",
+      "live": "Live",
+      "course": "Courses",
+      "exam": "Exams",
+      "general": "General"
+    }
+  },
+  "studentSettings": {
+    "title": "Settings",
+    "description": "Manage your app preferences and account settings",
+    "save": "Save",
+    "cancel": "Cancel",
+    "passwordMismatch": "Passwords do not match",
+    "passwordChanged": "Password changed successfully",
+    "errors": {
+  "passwordMin": "Password must be at least 8 characters",
+  "confirmRequired": "Please confirm your password",
+  "passwordMismatch": "Passwords do not match"
+},
+    "preferences": {
+      "title": "Preferences",
+      "notifications": {
+        "title": "Notifications",
+        "description": "Receive push notifications"
+      },
+      "darkMode": {
+        "title": "Dark Mode",
+        "description": "Enable dark theme"
+      },
+      "autoDownload": {
+        "title": "Auto Download with Wi-Fi",
+        "description": "Download content automatically"
+      }
+    },
+    "account": {
+      "title": "Account",
+      "changePassword": {
+        "title": "Change Password",
+        "description": "Update your password",
+        "newPassword": "New Password",
+        "confirmPassword": "Confirm Password"
+      },
+      "language": {
+        "title": "Language"
+      }
+    },
+    "support": {
+      "title": "Support",
+      "help": "Help & FAQ",
+      "terms": "Terms & Privacy Policy"
     }
   }
 }

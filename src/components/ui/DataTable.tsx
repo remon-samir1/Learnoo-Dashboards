@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Edit, Trash2, Eye, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
+import { Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export interface Column<T> {
@@ -19,7 +19,6 @@ interface DataTableProps<T> {
   onDelete?: (item: T) => void;
   onEdit?: (item: T) => void;
   onView?: (item: T) => void;
-  onCopy?: (item: T) => void;
   editHref?: (item: T) => string;
   viewHref?: (item: T) => string;
   keyExtractor: (item: T) => string | number;
@@ -76,7 +75,6 @@ export function DataTable<T>({
   onDelete,
   onEdit,
   onView,
-  onCopy,
   editHref,
   viewHref,
   keyExtractor,
@@ -162,15 +160,6 @@ export function DataTable<T>({
                           title="Edit"
                         >
                           <Edit className="w-4 h-4" />
-                        </button>
-                      )}
-                      {onCopy && (
-                        <button
-                          onClick={() => onCopy(item)}
-                          className="p-2 text-[#64748B] hover:text-[#2137D6] hover:bg-blue-50 rounded-full transition-all"
-                          title="Copy"
-                        >
-                          <Copy className="w-4 h-4" />
                         </button>
                       )}
                       {onDelete && (

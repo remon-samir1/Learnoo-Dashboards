@@ -94,43 +94,37 @@ interface MenuItem {
 
 
 
-const getMenuItems = (t: (key: string) => string, role?: string | null, canUseActivations?: boolean): MenuItem[] => {
-  const isInstructor = role === 'Instructor';
+const getMenuItems = (t: (key: string) => string): MenuItem[] => [
 
-  const items: MenuItem[] = [
+  { name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' },
 
-    { name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' },
+  { name: t('sidebar.academicStructure'), icon: School, path: '/departments' },
 
-    { name: t('sidebar.academicStructure'), icon: School, path: '/departments' },
+  { name: t('sidebar.instructors'), icon: GraduationCap, path: '/instructors' },
 
-    ...(!isInstructor ? [{ name: t('sidebar.instructors'), icon: GraduationCap, path: '/instructors' }] : []),
+  { name: t('sidebar.students'), icon: Users2, path: '/students' },
 
-    ...(!isInstructor ? [{ name: t('sidebar.students'), icon: Users2, path: '/students' }] : []),
+  { name: t('sidebar.activation'), icon: Power, path: '/activation' },
 
-    ...(canUseActivations ? [{ name: t('sidebar.activation'), icon: Power, path: '/activation' }] : []),
+  { name: t('sidebar.liveSessions'), icon: Video, path: '/live-sessions' },
 
-    { name: t('sidebar.liveSessions'), icon: Video, path: '/live-sessions' },
+  { name: t('sidebar.examsAndQA'), icon: ClipboardList, path: '/exams' },
 
-    { name: t('sidebar.examsAndQA'), icon: ClipboardList, path: '/exams' },
+  { name: t('sidebar.community'), icon: MessageSquare, path: '/community' },
 
-    { name: t('sidebar.community'), icon: MessageSquare, path: '/community' },
+  { name: t('sidebar.electronicLibrary'), icon: BookOpen, path: '/electronic-library' },
 
-    { name: t('sidebar.electronicLibrary'), icon: BookOpen, path: '/electronic-library' },
+  { name: t('sidebar.notifications'), icon: Bell, path: '/notifications', comingSoon: true },
 
-    ...(!isInstructor ? [{ name: t('sidebar.notifications'), icon: Bell, path: '/notifications', comingSoon: true }] : []),
+  { name: t('sidebar.downloads'), icon: Download, path: '/downloads', comingSoon: true },
 
-    ...(!isInstructor ? [{ name: t('sidebar.downloads'), icon: Download, path: '/downloads', comingSoon: true }] : []),
+  { name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' },
 
-    { name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' },
+  { name: t('sidebar.featureControl'), icon: ShieldCheck, path: '/feature-control' },
 
-    ...(!isInstructor ? [{ name: t('sidebar.featureControl'), icon: ShieldCheck, path: '/feature-control' }] : []),
+  { name: t('sidebar.otaUpload'), icon: Smartphone, path: '/ota-upload' },
 
-    ...(!isInstructor ? [{ name: t('sidebar.otaUpload'), icon: Smartphone, path: '/ota-upload' }] : []),
-
-  ];
-
-  return items;
-};
+];
 
 
 
@@ -140,7 +134,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const pathname = usePathname();
 
-  const { user, fullName, role, canUseActivations } = useCurrentUser();
+  const { user, fullName, role } = useCurrentUser();
 
   const { data: features } = usePlatformFeature();
 
@@ -148,7 +142,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
 
 
-  const menuItems = getMenuItems(t, role, canUseActivations);
+  const menuItems = getMenuItems(t);
 
 
 
@@ -221,8 +215,6 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const getRoleDisplay = () => {
 
     if (role === 'Admin') return t('sidebar.adminDashboard');
-
-    if (role === 'Instructor') return t('sidebar.instructorDashboard');
 
     if (role === 'Doctor') return t('sidebar.doctorDashboard');
 
@@ -534,28 +526,33 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
           <div className="bg-white rounded-2xl p-3 shadow-sm border border-[#F1F5F9] mb-3 flex items-center gap-3">
 
-            {user?.attributes?.image ? (
-              <img 
-                src={user.attributes.image} 
-                alt={getDisplayName()} 
-                className="w-10 h-10 rounded-xl shrink-0 border border-[#F1F5F9] object-cover"
-              />
-            ) : (
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
-                style={{ 
-                  backgroundColor: `${primaryColor}15`,
-                  borderColor: `${primaryColor}20`,
-                }}
+            <div 
+
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
+
+              style={{ 
+
+                backgroundColor: `${primaryColor}15`,
+
+                borderColor: `${primaryColor}20`,
+
+              }}
+
+            >
+
+              <span 
+
+                className="text-[15px] font-bold"
+
+                style={{ color: primaryColor }}
+
               >
-                <span 
-                  className="text-[15px] font-bold"
-                  style={{ color: primaryColor }}
-                >
-                  {getInitials()}
-                </span>
-              </div>
-            )}
+
+                {getInitials()}
+
+              </span>
+
+            </div>
 
             <div className="flex flex-col min-w-0">
 
@@ -585,24 +582,25 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
           <div className="flex flex-col gap-4 items-center">
 
-            {user?.attributes?.image ? (
-              <img 
-                src={user.attributes.image} 
-                alt={getDisplayName()} 
-                className="w-10 h-10 rounded-xl shrink-0 border border-[#F1F5F9] shadow-sm object-cover"
-              />
-            ) : (
-              <div 
-                className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-[#F1F5F9] shadow-sm"
+            <div 
+
+              className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 border border-[#F1F5F9] shadow-sm"
+
+            >
+
+              <span 
+
+                className="text-[14px] font-bold"
+
+                style={{ color: primaryColor }}
+
               >
-                <span 
-                  className="text-[14px] font-bold"
-                  style={{ color: primaryColor }}
-                >
-                  {getInitials()}
-                </span>
-              </div>
-            )}
+
+                {getInitials()}
+
+              </span>
+
+            </div>
 
             <button
 

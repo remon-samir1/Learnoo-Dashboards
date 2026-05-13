@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "./providers";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,20 +22,32 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   const cookieStore = await cookies();
-  const locale = cookieStore.get('locale')?.value || 'en';
-  const isRTL = locale === 'ar';
+  const cookieLocale = cookieStore.get("locale")?.value;
 
-  // Load messages
-  const messages = (await import(`../messages/${locale}.json`)).default;
+  const locale =
+    cookieLocale === "ar" || cookieLocale === "en" ? cookieLocale : "en";
+
+  const isRTL = locale === "ar";
+
+  const messages =
+    locale === "ar"
+      ? (await import("../messages/ar.json")).default
+      : (await import("../messages/en.json")).default;
 
   return (
-    <html lang={locale} dir={isRTL ? 'rtl' : 'ltr'} className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>
+    <html
+      lang={locale}
+      dir={isRTL ? "rtl" : "ltr"}
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
+      {/* Extensions (e.g. ColorZilla: cz-shortcut-listen) mutate <body> before hydration */}
+      <body suppressHydrationWarning>
         <Providers messages={messages} locale={locale}>
+        <Toaster />
           {children}
         </Providers>
       </body>
