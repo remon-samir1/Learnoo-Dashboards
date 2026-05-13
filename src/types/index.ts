@@ -482,7 +482,7 @@ export interface UserAttributes {
 
 
 
-  role: 'Admin' | 'Instructor' | 'Doctor' | 'Student' | 'Unknown';
+  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown';
 
 
 
@@ -511,12 +511,6 @@ export interface UserAttributes {
 
 
   centers?: number[];
-
-
-
-  image?: string | null;
-
-  can_use_activations?: boolean;
 
 
 
@@ -818,8 +812,6 @@ export interface ChapterAttributes {
 
   is_free_preview: 0 | 1;
 
-  is_free_preview_attachment: 0 | 1;
-
 
 
   max_views: number;
@@ -898,6 +890,10 @@ export interface ChapterAttributes {
 
 
 
+  quizzes?: Quiz[];
+
+
+
   created_at: string | null;
 
 
@@ -950,10 +946,6 @@ export interface CreateChapterRequest {
 
 
 
-  is_free_preview_attachment?: 0 | 1;
-
-
-
   attachments: File[];
 
 
@@ -998,15 +990,14 @@ export interface UpdateChapterRequest {
 
 
 
-  is_free_preview?: 0 | 1,
+  is_free_preview?: 0 | 1;
 
 
 
-  is_preview_attachment?: 0 | 1,
+  max_views?: number;
 
 
 
-  max_views?: number,
   attachments?: File[];
 
 
@@ -1243,6 +1234,11 @@ export interface CourseAttributes {
 
 
 
+  /** When true, student sees locked card UI until course is activated. */
+  is_locked?: boolean;
+
+
+
   reason: string | null;
 
 
@@ -1284,6 +1280,10 @@ export interface CourseAttributes {
 
 
         full_name: string;
+
+
+
+        image?: string | null;
 
 
 
@@ -1876,6 +1876,24 @@ export interface CreateDiscussionRequest {
 
 
   content: string;
+
+
+
+  /** e.g. `"text"` for watch-page comments */
+
+  type?: string;
+
+
+
+  /** Playback position in seconds (or API-specific unit). */
+
+  moment?: number;
+
+
+
+  /** Reply thread; send `null` when not replying. */
+
+  parent_id?: number | null;
 
 
 
@@ -3019,6 +3037,24 @@ export interface PostAttributes {
 
 
 
+  /** Some API variants expose the URL under a different key. */
+  image_url?: string | null;
+
+
+
+  thumbnail?: string | null;
+
+
+
+  /** File URL or nested `{ url }` from API. */
+  attachment?: string | { url?: string | null; path?: string | null } | unknown[] | null;
+
+
+
+  attachments?: { url?: string | null; path?: string | null }[];
+
+
+
   status: 'draft' | 'published';
 
 
@@ -3151,6 +3187,14 @@ export interface CreatePostRequest {
 
 
 
+  tags?: string[];
+
+
+
+  parent_id?: number | null;
+
+
+
 }
 
 
@@ -3267,11 +3311,29 @@ export interface CreateCommentRequest {
 
 
 
-  parent_id: number;
+  /** Redundant with `commentsApi.create(parentId, …)`; optional for callers that still pass it. */
+  parent_id?: number;
 
 
 
   content: string;
+
+
+
+  /** Defaults to a trimmed prefix of `content` when omitted. */
+  title?: string;
+
+
+
+  status?: 'draft' | 'published';
+
+
+
+  type?: 'post' | 'question' | 'summary';
+
+
+
+  tags?: string[];
 
 
 
@@ -3439,7 +3501,7 @@ export interface QuizAttributes {
 
 
 
-  description: string;
+  description?: string;
 
 
 
@@ -3467,6 +3529,10 @@ export interface QuizAttributes {
 
 
 
+  has_activation?: boolean | number | string;
+
+
+
   status?: 'draft' | 'active';
 
 
@@ -3479,7 +3545,8 @@ export interface QuizAttributes {
 
 
 
-  reason?: string;
+  /** When false, API may restrict access; student UI can still show intro with messaging. */
+  can_view?: boolean;
 
 
 
@@ -3567,10 +3634,6 @@ export interface CreateQuizRequest {
 
 
 
-  reason?: string;
-
-
-
   questions?: CreateQuizQuestionRequest[];
 
 
@@ -3627,6 +3690,11 @@ export interface QuizQuestionAttributes {
 
 
 
+  /** Question image URL when present on the resource. */
+  image?: string | null;
+
+
+
   auto_correct?: boolean;
 
 
@@ -3671,11 +3739,12 @@ export interface QuizQuestionAnswerAttributes {
 
 
 
+  /** Answer image URL when present on the resource. */
+  image?: string | null;
+
+
+
   is_correct: boolean;
-
-
-
-  reason?: string;
 
 
 
@@ -3783,7 +3852,7 @@ export interface QuizAttemptAttributes {
 
 
 
-  user_id: number;
+  user_id: number | string;
 
 
 
@@ -3791,7 +3860,11 @@ export interface QuizAttemptAttributes {
 
 
 
-  submitted_at: string | null;
+  submitted_at?: string | null;
+
+
+
+  finished_at?: string | null;
 
 
 
@@ -3799,7 +3872,20 @@ export interface QuizAttemptAttributes {
 
 
 
-  status: 'in_progress' | 'submitted' | 'graded';
+  total_score?: number | null;
+
+
+
+  percentage?: number | null;
+
+
+
+  /** When present on list/detail payloads, use for pass/fail UI. */
+  passed?: boolean | null;
+
+
+
+  status?: 'in_progress' | 'submitted' | 'graded';
 
 
 
@@ -3807,7 +3893,17 @@ export interface QuizAttemptAttributes {
 
 
 
-  updated_at: string | null;
+  updated_at?: string | null;
+
+
+
+  /** When provided by the API after finish, used for the attempts banner. */
+  attempts_remaining?: number | null;
+
+
+
+  /** Included on some payloads (e.g. list with nested quiz). */
+  quiz?: unknown;
 
 
 
@@ -3843,23 +3939,151 @@ export interface StartQuizAttemptRequest {
 
 
 
-export interface SubmitQuizAttemptRequest {
+/** Body for PUT `/v1/quiz-attempt/{id}` (finish attempt). */
+export interface FinishQuizAttemptRequest {
 
 
 
-  answers: {
+  score: number;
 
 
 
-    question_id: number;
+  total_score: number;
 
 
 
-    answer: string;
+}
 
 
 
-  }[];
+/** One answer row inside a `correct_answers` entry (may include extra keys from API). */
+export interface QuizFinishAnswerReview {
+
+
+
+  text?: string | null;
+
+
+
+  image?: string | null;
+
+
+
+  reason?: string | null;
+
+
+
+}
+
+
+
+/** One question row in the finish response `correct_answers` array. */
+export interface QuizFinishCorrectAnswerEntry {
+
+
+
+  question_text?: string | null;
+
+
+
+  question_image?: string | null;
+
+
+
+  correct_answer_ids?: (string | number)[] | null;
+
+
+
+  correct_answers?: QuizFinishAnswerReview[] | null;
+
+
+
+  [key: string]: unknown;
+
+
+
+}
+
+
+
+export interface QuizFinishResultsBlock {
+
+
+
+  score: number;
+
+
+
+  total_score: number;
+
+
+
+  percentage: number;
+
+
+
+  passed: boolean;
+
+
+
+  finished_at: string;
+
+
+
+  time_taken: number;
+
+
+
+}
+
+
+
+export interface QuizFinishQuizInfo {
+
+
+
+  title: string;
+
+
+
+  passing_marks: number;
+
+
+
+  total_marks: number;
+
+
+
+}
+
+
+
+/** Response from PUT `/v1/quiz-attempt/{attemptId}` after finish. */
+export interface FinishQuizAttemptResponse {
+
+
+
+  attempt: {
+
+
+
+    data?: QuizAttempt | null;
+
+
+
+  };
+
+
+
+  results: QuizFinishResultsBlock;
+
+
+
+  quiz_info: QuizFinishQuizInfo;
+
+
+
+  correct_answers?: QuizFinishCorrectAnswerEntry[] | null;
 
 
 
@@ -4433,7 +4657,7 @@ export interface CreateStudentRequest {
 
 
 
-  phone?: string;
+  phone: string;
 
 
 
@@ -4473,7 +4697,7 @@ export interface CreateStudentRequest {
 
   image?: File;
 
-  can_use_activations?: boolean;
+
 
 }
 

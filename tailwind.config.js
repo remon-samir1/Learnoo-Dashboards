@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: "#2137D6",
+        "primary": "#2137D6",
         "primary-blue": "#2563EB",
         "text-main": "#33332F",
         "text-dark": "#111827",
@@ -18,6 +18,7 @@ module.exports = {
       },
       backgroundImage: {
         'auth-bg': 'linear-gradient(135deg, #EFF6FF 25%, #FFFFFF 60.36%, #F9FAFB 95.71%)',
+      
       },
       fontFamily: {
         sans: ["Inter", "sans-serif"],

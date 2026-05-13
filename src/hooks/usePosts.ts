@@ -28,3 +28,8 @@ export const useUpdatePost = createMutationHook(
 export const useDeletePost = createMutationHook(
   (id: number) => api.posts.delete(id).then(res => res.data)
 );
+
+export const useReactToPost = createMutationHook(
+  (postId: number, body: { type: 'like' }) =>
+    api.posts.react(postId, body).then((res) => res.data),
+);

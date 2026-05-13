@@ -59,7 +59,6 @@ import {
 
 import { useStudents } from "@/src/hooks/useStudents";
 import { useInstructors } from "@/src/hooks/useInstructors";
-import { useCurrentUser } from "@/src/hooks/useAuth";
 
 import { api } from "@/src/lib/api";
 
@@ -765,8 +764,6 @@ interface TreeItemProps {
   draggedNodeId?: string | null;
 
   isSelected: boolean;
-
-  isInstructor?: boolean;
 }
 
 function TreeItem({
@@ -781,7 +778,6 @@ function TreeItem({
   onDrop,
   draggedNodeId,
   isSelected,
-  isInstructor = false,
 }: TreeItemProps) {
   const t = useTranslations();
 
@@ -1019,7 +1015,7 @@ function TreeItem({
         >
           {/* Add child buttons */}
 
-          {node.type === "university" && !isInstructor && (
+          {node.type === "university" && (
             <button
               onClick={() => onAdd("center", node.id)}
               className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
@@ -1029,7 +1025,7 @@ function TreeItem({
             </button>
           )}
 
-          {node.type === "center" && !isInstructor && (
+          {node.type === "center" && (
             <button
               onClick={() => onAdd("faculty", node.id)}
               className="p-1.5 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-all"
@@ -1039,7 +1035,7 @@ function TreeItem({
             </button>
           )}
 
-          {node.type === "faculty" && !isInstructor && (
+          {node.type === "faculty" && (
             <button
               onClick={() => onAdd("department", node.id)}
               className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
@@ -1049,17 +1045,15 @@ function TreeItem({
             </button>
           )}
 
-          {node.type === "department" && !isInstructor && (
+          {node.type === "department" && (
             <>
-              {!isInstructor && (
-                <button
-                  onClick={() => onAdd("department", node.id)}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  title="Add sub-department"
-                >
-                  <GraduationCap className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={() => onAdd("department", node.id)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                title="Add sub-department"
+              >
+                <GraduationCap className="w-4 h-4" />
+              </button>
 
               <button
                 onClick={() => onAdd("course", node.id)}
@@ -1071,7 +1065,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "course" && !isInstructor && (
+          {node.type === "course" && (
             <>
               <button
                 onClick={() => onAdd("note", node.id)}
@@ -1121,27 +1115,23 @@ function TreeItem({
             </>
           )}
 
-          {/* Edit and Delete buttons - all actions for admin, only courses/lectures/chapters for instructors */}
+          {/* Edit button */}
 
-          {(!isInstructor || (node.type === 'chapter')) && (
-            <>
-              <button
-                onClick={() => onEdit(node)}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                title={t("common.edit")}
-              >
-                <Edit2 className="w-4 h-4" />
-              </button>
+          <button
+            onClick={() => onEdit(node)}
+            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+            title={t("common.edit")}
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
 
-              <button
-                onClick={() => onDelete(node)}
-                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                title={t("common.delete")}
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => onDelete(node)}
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+            title={t("common.delete")}
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -1163,7 +1153,6 @@ function TreeItem({
               onDrop={onDrop}
               draggedNodeId={draggedNodeId}
               isSelected={isSelected}
-              isInstructor={isInstructor}
             />
           ))}
         </div>
@@ -1174,8 +1163,6 @@ function TreeItem({
 
 export default function DepartmentsPage() {
   const t = useTranslations();
-  const { role, canUseActivations } = useCurrentUser();
-  const isInstructor = role === 'Instructor';
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -2261,14 +2248,12 @@ export default function DepartmentsPage() {
         case "chapter":
           const chapter = selectedNode.data as Chapter;
 
-          const chapterUpdateData: any = {
+          await updateChapter(rawId, {
             title: formData.title,
 
             duration: formData.duration,
 
             is_free_preview: formData.is_free_preview ?? false,
-
-            is_free_preview_attachment: formData.is_free_preview_attachment ?? false,
 
             lecture_id: chapter.attributes.lecture_id,
 
@@ -2281,14 +2266,7 @@ export default function DepartmentsPage() {
             video: formData.video,
 
             attachments: formData.attachments,
-          };
-
-          // Add attachments_to_delete if present
-          if (formData.attachments_to_delete) {
-            chapterUpdateData.attachments_to_delete = formData.attachments_to_delete;
-          }
-
-          await updateChapter(rawId, chapterUpdateData);
+          });
 
           resetUpdateChapter();
 
@@ -2427,8 +2405,6 @@ export default function DepartmentsPage() {
 
               is_free_preview: formData.is_free_preview ?? false,
 
-              is_free_preview_attachment: formData.is_free_preview_attachment ?? false,
-
               lecture_id: lectureId ? parseInt(lectureId) : undefined,
 
               thumbnail: formData.thumbnail,
@@ -2537,15 +2513,13 @@ export default function DepartmentsPage() {
           </p>
         </div>
 
-        {!isInstructor ? <>
-          <button
-            onClick={() => handleAdd("university")}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
-          >
-            <Plus className="w-4 h-4" />
-            Add University
-          </button>
-        </> : null}
+        <button
+          onClick={() => handleAdd("university")}
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
+        >
+          <Plus className="w-4 h-4" />
+          Add University
+        </button>
       </div>
 
       {/* Search and Controls */}
@@ -2638,7 +2612,6 @@ export default function DepartmentsPage() {
                     onDrop={handleDrop}
                     draggedNodeId={draggedNodeId}
                     isSelected={viewNode?.id === node.id}
-                    isInstructor={isInstructor}
                   />
                 ))}
               </div>
@@ -2763,59 +2736,76 @@ export default function DepartmentsPage() {
                   </div>
 
                   {/* Activation Codes Section */}
-                  {canUseActivations && (
-                    <div className="mt-4 pt-3 border-t border-gray-200">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <Power className="w-4 h-4 text-[#2137D6]" />
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Power className="w-4 h-4 text-[#2137D6]" />
 
-                          <label className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
-                            Activation
+                        <label className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
+                          Activation
+                        </label>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setGenerateCodeItemType("department");
+                          setGenerateCodeItemId(viewNode.data.id);
+                          setGenerateCodeModalOpen(true);
+                        }}
+                        className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
+                        title="Generate Codes"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
+                      <button
+                        onClick={() => setActivationTab("code")}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
+                      >
+                        By Code
+                      </button>
+
+                      <button
+                        onClick={() => setActivationTab("preactivation")}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
+                      >
+                        Preactivation
+                      </button>
+                    </div>
+
+                    {activationTab === "code" ? (
+                      <div className="flex flex-col gap-4">
+                        {/* Available Codes */}
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Available Codes (
+                            {(() => {
+                              const departmentCodes = getCodesForItem(
+                                "department",
+                                parseInt(viewNode.data.id),
+                              );
+                              return departmentCodes.filter(
+                                (c) => !c.attributes.is_used,
+                              ).length;
+                            })()}
+                            )
                           </label>
-                        </div>
 
-                        <button
-                          onClick={() => {
-                            setGenerateCodeItemType("department");
-                            setGenerateCodeItemId(viewNode.data.id);
-                            setGenerateCodeModalOpen(true);
-                          }}
-                          className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
-                          title="Generate Codes"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
-
-                      {/* Tabs */}
-                      <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
-                        <button
-                          onClick={() => setActivationTab("code")}
-                          className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                            }`}
-                        >
-                          By Code
-                        </button>
-
-                        <button
-                          onClick={() => setActivationTab("preactivation")}
-                          className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                            }`}
-                        >
-                          Preactivation
-                        </button>
-                      </div>
-
-                      {activationTab === "code" ? (
-                        <div className="flex flex-col gap-4">
-                          {/* Available Codes */}
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Available Codes (
+                          {codesLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
                               {(() => {
                                 const departmentCodes = getCodesForItem(
                                   "department",
@@ -2823,265 +2813,246 @@ export default function DepartmentsPage() {
                                 );
                                 return departmentCodes.filter(
                                   (c) => !c.attributes.is_used,
-                                ).length;
-                              })()}
-                              )
-                            </label>
-
-                            {codesLoading ? (
-                              <div className="flex items-center justify-center py-4">
-                                <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                {(() => {
-                                  const departmentCodes = getCodesForItem(
-                                    "department",
-                                    parseInt(viewNode.data.id),
-                                  );
-                                  return departmentCodes.filter(
-                                    (c) => !c.attributes.is_used,
-                                  ).map((code) => (
-                                    <label
-                                      key={code.id}
-                                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
-                                        ? "bg-[#EEF2FF] border border-[#2137D6]"
-                                        : "hover:bg-[#F8FAFC] border border-transparent"
-                                        }`}
-                                    >
-                                      <input
-                                        type="radio"
-                                        name="code"
-                                        value={code.id}
-                                        checked={selectedCode === code.id}
-                                        onChange={(e) =>
-                                          setSelectedCode(e.target.value)
-                                        }
-                                        className="w-4 h-4 text-[#2137D6]"
-                                      />
-                                      <Key className="w-4 h-4 text-[#2137D6]" />
-                                      <span className="text-sm font-mono text-gray-900">
-                                        {code.attributes.code}
-                                      </span>
-                                    </label>
-                                  ));
-                                })()}
-
-                                {(() => {
-                                  const departmentCodes = getCodesForItem(
-                                    "department",
-                                    parseInt(viewNode.data.id),
-                                  );
-                                  if (departmentCodes.filter((c) => !c.attributes.is_used).length === 0) {
-                                    return (
-                                      <p className="text-sm text-gray-400 text-center py-4">
-                                        No available codes
-                                      </p>
-                                    );
-                                  }
-                                  return null;
-                                })()}
-                              </div>
-                            )}
-                          </div>
-
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-4">
-                          <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
-                            <p className="text-xs text-[#2137D6]">
-                              <span className="font-bold">Preactivation:</span>{" "}
-                              Enter phone numbers manually or upload a file to pre-activate students
-                            </p>
-                          </div>
-
-                          {/* Manual Entry */}
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Enter Phone Numbers Manually
-                            </label>
-
-                            <p className="text-[10px] text-[#94A3B8] mb-2">
-                              Add phone numbers one by one
-                            </p>
-
-                            <div className="space-y-2">
-                              {preactivationNumbers.map((num, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={num}
-                                    onChange={(e) => {
-                                      const newNumbers = [...preactivationNumbers];
-                                      newNumbers[idx] = e.target.value;
-                                      setPreactivationNumbers(newNumbers);
-                                      setPreactivationResults(null);
-                                    }}
-                                    placeholder="+1234567890"
-                                    className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newNumbers = preactivationNumbers.filter((_, i) => i !== idx);
-                                      setPreactivationNumbers(newNumbers);
-                                      setPreactivationResults(null);
-                                    }}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                ).map((code) => (
+                                  <label
+                                    key={code.id}
+                                    className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
+                                      ? "bg-[#EEF2FF] border border-[#2137D6]"
+                                      : "hover:bg-[#F8FAFC] border border-transparent"
+                                      }`}
                                   >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ))}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setPreactivationNumbers([...preactivationNumbers, ""]);
-                                  setPreactivationResults(null);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
-                              >
-                                <Plus className="w-4 h-4" />
-                                Add Phone Number
-                              </button>
+                                    <input
+                                      type="radio"
+                                      name="code"
+                                      value={code.id}
+                                      checked={selectedCode === code.id}
+                                      onChange={(e) =>
+                                        setSelectedCode(e.target.value)
+                                      }
+                                      className="w-4 h-4 text-[#2137D6]"
+                                    />
+                                    <Key className="w-4 h-4 text-[#2137D6]" />
+                                    <span className="text-sm font-mono text-gray-900">
+                                      {code.attributes.code}
+                                    </span>
+                                  </label>
+                                ));
+                              })()}
+
+                              {(() => {
+                                const departmentCodes = getCodesForItem(
+                                  "department",
+                                  parseInt(viewNode.data.id),
+                                );
+                                if (departmentCodes.filter((c) => !c.attributes.is_used).length === 0) {
+                                  return (
+                                    <p className="text-sm text-gray-400 text-center py-4">
+                                      No available codes
+                                    </p>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </div>
-                          </div>
+                          )}
+                        </div>
 
-                          {/* Divider */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-px bg-gray-200"></div>
-                            <span className="text-xs text-gray-400">OR</span>
-                            <div className="flex-1 h-px bg-gray-200"></div>
-                          </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
+                          <p className="text-xs text-[#2137D6]">
+                            <span className="font-bold">Preactivation:</span>{" "}
+                            Enter phone numbers manually or upload a file to pre-activate students
+                          </p>
+                        </div>
 
-                          {/* File Upload */}
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Upload Phone Numbers File
-                            </label>
+                        {/* Manual Entry */}
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Enter Phone Numbers Manually
+                          </label>
 
-                            <p className="text-[10px] text-[#94A3B8] mb-2">
-                              Supported: .txt, .csv (one phone per line)
-                            </p>
+                          <p className="text-[10px] text-[#94A3B8] mb-2">
+                            Add phone numbers one by one
+                          </p>
 
-                            <input
-                              ref={preactivationFileRef}
-                              type="file"
-                              accept=".txt,.csv"
-                              onChange={handlePreactivationFileSelect}
-                              className="hidden"
-                            />
-
-                            <button
-                              onClick={() => preactivationFileRef.current?.click()}
-                              className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
-                            >
-                              <Upload className="w-4 h-4" />
-                              Select File
-                            </button>
-                          </div>
-
-                          {/* Phone Numbers Preview */}
-                          {preactivationNumbers.length > 0 && (
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-bold text-[#64748B]">
-                                  Phone Numbers ({preactivationNumbers.length})
-                                </label>
-
+                          <div className="space-y-2">
+                            {preactivationNumbers.map((num, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={num}
+                                  onChange={(e) => {
+                                    const newNumbers = [...preactivationNumbers];
+                                    newNumbers[idx] = e.target.value;
+                                    setPreactivationNumbers(newNumbers);
+                                    setPreactivationResults(null);
+                                  }}
+                                  placeholder="+1234567890"
+                                  className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                                />
                                 <button
-                                  onClick={clearPreactivationNumbers}
-                                  className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
+                                  type="button"
+                                  onClick={() => {
+                                    const newNumbers = preactivationNumbers.filter((_, i) => i !== idx);
+                                    setPreactivationNumbers(newNumbers);
+                                    setPreactivationResults(null);
+                                  }}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                 >
-                                  <X className="w-3 h-3" />
-                                  Clear
+                                  <X className="w-4 h-4" />
                                 </button>
                               </div>
-
-                              <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
-                                <div className="flex flex-wrap gap-2">
-                                  {preactivationNumbers.map((num, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
-                                    >
-                                      {num}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Pre-activate Button */}
-                          <button
-                            onClick={() => {
-                              // Create a file from the repeater fields
-                              const phoneNumbersContent = preactivationNumbers
-                                .filter(n => n.trim().length > 0)
-                                .join('\n');
-
-                              if (phoneNumbersContent.length === 0) {
-                                toast.error("Please add at least one phone number");
-                                return;
-                              }
-
-                              const blob = new Blob([phoneNumbersContent], { type: 'text/plain' });
-                              const file = new File([blob], 'phone_numbers.txt', { type: 'text/plain' });
-
-                              handlePreactivationUpload(
-                                parseInt(viewNode.data.id),
-                                "category",
-                                file,
-                              );
-                            }}
-                            disabled={
-                              preactivationNumbers.filter(n => n.trim().length > 0).length === 0 ||
-                              isUploadingPreActivation
-                            }
-                            className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            {isUploadingPreActivation ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Uploading...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-4 h-4" />
-                                Upload{" "}
-                                {preactivationNumbers.filter(n => n.trim().length > 0).length > 0 &&
-                                  `(${preactivationNumbers.filter(n => n.trim().length > 0).length})`}
-                              </>
-                            )}
-                          </button>
-
-                          {/* Pre-activation Results */}
-                          {preactivationResults && (
-                            <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                              <p className="text-xs font-bold text-[#1E293B] mb-2">
-                                Results:
-                              </p>
-
-                              <div className="flex items-center gap-4 mb-3">
-                                <span className="text-xs text-green-600 flex items-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Success: {preactivationResults.success}
-                                </span>
-
-                                {preactivationResults.failed > 0 && (
-                                  <span className="text-xs text-red-600 flex items-center gap-1">
-                                    <X className="w-3.5 h-3.5" />
-                                    Failed: {preactivationResults.failed}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreactivationNumbers([...preactivationNumbers, ""]);
+                                setPreactivationResults(null);
+                              }}
+                              className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add Phone Number
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
+
+                        {/* Divider */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                          <span className="text-xs text-gray-400">OR</span>
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                        </div>
+
+                        {/* File Upload */}
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Upload Phone Numbers File
+                          </label>
+
+                          <p className="text-[10px] text-[#94A3B8] mb-2">
+                            Supported: .txt, .csv (one phone per line)
+                          </p>
+
+                          <input
+                            ref={preactivationFileRef}
+                            type="file"
+                            accept=".txt,.csv"
+                            onChange={handlePreactivationFileSelect}
+                            className="hidden"
+                          />
+
+                          <button
+                            onClick={() => preactivationFileRef.current?.click()}
+                            className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
+                          >
+                            <Upload className="w-4 h-4" />
+                            Select File
+                          </button>
+                        </div>
+
+                        {/* Phone Numbers Preview */}
+                        {preactivationNumbers.length > 0 && (
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-xs font-bold text-[#64748B]">
+                                Phone Numbers ({preactivationNumbers.length})
+                              </label>
+
+                              <button
+                                onClick={clearPreactivationNumbers}
+                                className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
+                              >
+                                <X className="w-3 h-3" />
+                                Clear
+                              </button>
+                            </div>
+
+                            <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
+                              <div className="flex flex-wrap gap-2">
+                                {preactivationNumbers.map((num, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
+                                  >
+                                    {num}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Pre-activate Button */}
+                        <button
+                          onClick={() => {
+                            // Create a file from the repeater fields
+                            const phoneNumbersContent = preactivationNumbers
+                              .filter(n => n.trim().length > 0)
+                              .join('\n');
+
+                            if (phoneNumbersContent.length === 0) {
+                              toast.error("Please add at least one phone number");
+                              return;
+                            }
+
+                            const blob = new Blob([phoneNumbersContent], { type: 'text/plain' });
+                            const file = new File([blob], 'phone_numbers.txt', { type: 'text/plain' });
+
+                            handlePreactivationUpload(
+                              parseInt(viewNode.data.id),
+                              "category",
+                              file,
+                            );
+                          }}
+                          disabled={
+                            preactivationNumbers.filter(n => n.trim().length > 0).length === 0 ||
+                            isUploadingPreActivation
+                          }
+                          className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isUploadingPreActivation ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4" />
+                              Upload{" "}
+                              {preactivationNumbers.filter(n => n.trim().length > 0).length > 0 &&
+                                `(${preactivationNumbers.filter(n => n.trim().length > 0).length})`}
+                            </>
+                          )}
+                        </button>
+
+                        {/* Pre-activation Results */}
+                        {preactivationResults && (
+                          <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                            <p className="text-xs font-bold text-[#1E293B] mb-2">
+                              Results:
+                            </p>
+
+                            <div className="flex items-center gap-4 mb-3">
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Success: {preactivationResults.success}
+                              </span>
+
+                              {preactivationResults.failed > 0 && (
+                                <span className="text-xs text-red-600 flex items-center gap-1">
+                                  <X className="w-3.5 h-3.5" />
+                                  Failed: {preactivationResults.failed}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
@@ -3167,7 +3138,7 @@ export default function DepartmentsPage() {
                       </label>
 
                       <p className="text-sm font-semibold text-blue-600">
-                        EGP {(viewNode.data as Course).attributes.price}
+                        ${(viewNode.data as Course).attributes.price}
                       </p>
                     </div>
 
@@ -3244,466 +3215,465 @@ export default function DepartmentsPage() {
                   )}
 
                   {/* Activation Codes Section */}
-                  {canUseActivations && (
-                    <div className="mt-4 pt-3 border-t border-gray-200">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <Power className="w-4 h-4 text-[#2137D6]" />
 
-                          <label className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
-                            Activation
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Power className="w-4 h-4 text-[#2137D6]" />
+
+                        <label className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
+                          Activation
+                        </label>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setGenerateCodeItemType("course");
+
+                          setGenerateCodeItemId(
+                            parseInt(viewNode.data.id).toString(),
+                          );
+
+                          setGenerateCodeModalOpen(true);
+                        }}
+                        className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
+                        title="Generate Codes"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Tabs */}
+
+                    <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
+                      <button
+                        onClick={() => setActivationTab("code")}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
+                      >
+                        By Code
+                      </button>
+
+                      <button
+                        onClick={() => setActivationTab("preactivation")}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
+                      >
+                        Preactivation
+                      </button>
+                    </div>
+
+                    {activationTab === "code" ? (
+                      <div className="flex flex-col gap-4">
+                        {/* Available Codes */}
+
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Available Codes (
+                            {(() => {
+                              const courseCodes = getCodesForItem(
+                                "course",
+                                parseInt(viewNode.data.id),
+                              );
+
+                              return courseCodes.filter(
+                                (c) => !c.attributes.is_used,
+                              ).length;
+                            })()}
+                            )
                           </label>
+
+                          {codesLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
+                            </div>
+                          ) : (
+                            (() => {
+                              const courseCodes = getCodesForItem(
+                                "course",
+                                parseInt(viewNode.data.id),
+                              );
+
+                              const availableCodes = courseCodes.filter(
+                                (c) => !c.attributes.is_used,
+                              );
+
+                              return availableCodes.length > 0 ? (
+                                <div className="max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
+                                  {availableCodes.map((code) => (
+                                    <label
+                                      key={code.id}
+                                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
+                                        ? "bg-[#EEF2FF] border border-[#2137D6]"
+                                        : "hover:bg-[#F8FAFC] border border-transparent"
+                                        }`}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name="code"
+                                        value={code.id}
+                                        checked={selectedCode === code.id}
+                                        onChange={(e) =>
+                                          setSelectedCode(e.target.value)
+                                        }
+                                        className="w-4 h-4 text-[#2137D6]"
+                                      />
+
+                                      <span className="flex-1 font-mono text-xs text-[#1E293B]">
+                                        {code.attributes.code}
+                                      </span>
+
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+
+                                          handleCopyCode(code.attributes.code);
+                                        }}
+                                        className="p-1 hover:bg-[#EEF2FF] rounded transition-colors"
+                                      >
+                                        {copiedCode === code.attributes.code ? (
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                        ) : (
+                                          <Copy className="w-3.5 h-3.5 text-[#94A3B8]" />
+                                        )}
+                                      </button>
+                                    </label>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-[#94A3B8] italic">
+                                  No codes available
+                                </p>
+                              );
+                            })()
+                          )}
                         </div>
 
-                        <button
-                          onClick={() => {
-                            setGenerateCodeItemType("course");
+                        {/* Student Selection */}
 
-                            setGenerateCodeItemId(
-                              parseInt(viewNode.data.id).toString(),
-                            );
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Select Student
+                          </label>
 
-                            setGenerateCodeModalOpen(true);
-                          }}
-                          className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
-                          title="Generate Codes"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
 
-                      {/* Tabs */}
+                            <input
+                              type="text"
+                              placeholder="Search students"
+                              value={studentSearch}
+                              onChange={(e) => setStudentSearch(e.target.value)}
+                              className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                            />
+                          </div>
 
-                      <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
-                        <button
-                          onClick={() => setActivationTab("code")}
-                          className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                            }`}
-                        >
-                          By Code
-                        </button>
+                          {studentSearch && students && (
+                            <div className="mt-2 max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
+                              {students.data?.filter((student: any) => {
+                                const fullName =
+                                  `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
 
-                        <button
-                          onClick={() => setActivationTab("preactivation")}
-                          className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                            }`}
-                        >
-                          Preactivation
-                        </button>
-                      </div>
+                                const email =
+                                  student.attributes.email?.toLowerCase() || "";
 
-                      {activationTab === "code" ? (
-                        <div className="flex flex-col gap-4">
-                          {/* Available Codes */}
+                                const search = studentSearch.toLowerCase();
 
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Available Codes (
-                              {(() => {
-                                const courseCodes = getCodesForItem(
-                                  "course",
-                                  parseInt(viewNode.data.id),
+                                return (
+                                  fullName.includes(search) ||
+                                  email.includes(search)
                                 );
+                              }).length > 0 ? (
+                                students.data
+                                  .filter((student: any) => {
+                                    const fullName =
+                                      `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
 
-                                return courseCodes.filter(
-                                  (c) => !c.attributes.is_used,
-                                ).length;
-                              })()}
-                              )
-                            </label>
+                                    const email =
+                                      student.attributes.email?.toLowerCase() ||
+                                      "";
 
-                            {codesLoading ? (
-                              <div className="flex items-center justify-center py-4">
-                                <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
-                              </div>
-                            ) : (
-                              (() => {
-                                const courseCodes = getCodesForItem(
-                                  "course",
-                                  parseInt(viewNode.data.id),
-                                );
+                                    const search = studentSearch.toLowerCase();
 
-                                const availableCodes = courseCodes.filter(
-                                  (c) => !c.attributes.is_used,
-                                );
-
-                                return availableCodes.length > 0 ? (
-                                  <div className="max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
-                                    {availableCodes.map((code) => (
-                                      <label
-                                        key={code.id}
-                                        className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
-                                          ? "bg-[#EEF2FF] border border-[#2137D6]"
-                                          : "hover:bg-[#F8FAFC] border border-transparent"
-                                          }`}
-                                      >
+                                    return (
+                                      fullName.includes(search) ||
+                                      email.includes(search)
+                                    );
+                                  })
+                                  .map((student: any) => (
+                                    <label
+                                      key={student.id}
+                                      className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${selectedStudent === student.id
+                                        ? "bg-[#EEF2FF]"
+                                        : "hover:bg-[#F8FAFC]"
+                                        }`}
+                                    >
+                                      <div className="flex items-center gap-2">
                                         <input
                                           type="radio"
-                                          name="code"
-                                          value={code.id}
-                                          checked={selectedCode === code.id}
-                                          onChange={(e) =>
-                                            setSelectedCode(e.target.value)
+                                          name="student"
+                                          value={student.id}
+                                          checked={
+                                            selectedStudent === student.id
                                           }
+                                          onChange={(e) => {
+                                            setSelectedStudent(e.target.value);
+
+                                            setStudentSearch(
+                                              `${student.attributes.first_name} ${student.attributes.last_name}`,
+                                            );
+                                          }}
                                           className="w-4 h-4 text-[#2137D6]"
                                         />
 
-                                        <span className="flex-1 font-mono text-xs text-[#1E293B]">
-                                          {code.attributes.code}
+                                        <span className="text-xs font-medium text-[#1E293B]">
+                                          {student.attributes.first_name}{" "}
+                                          {student.attributes.last_name}
                                         </span>
+                                      </div>
 
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-
-                                            handleCopyCode(code.attributes.code);
-                                          }}
-                                          className="p-1 hover:bg-[#EEF2FF] rounded transition-colors"
-                                        >
-                                          {copiedCode === code.attributes.code ? (
-                                            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                                          ) : (
-                                            <Copy className="w-3.5 h-3.5 text-[#94A3B8]" />
-                                          )}
-                                        </button>
-                                      </label>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-[#94A3B8] italic">
-                                    No codes available
-                                  </p>
-                                );
-                              })()
-                            )}
-                          </div>
-
-                          {/* Student Selection */}
-
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Select Student
-                            </label>
-
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-
-                              <input
-                                type="text"
-                                placeholder="Search students"
-                                value={studentSearch}
-                                onChange={(e) => setStudentSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
-                              />
+                                      <span className="text-[10px] text-[#94A3B8] pl-6">
+                                        {student.attributes.email}
+                                      </span>
+                                    </label>
+                                  ))
+                              ) : (
+                                <p className="text-xs text-[#94A3B8] italic">
+                                  No students found
+                                </p>
+                              )}
                             </div>
+                          )}
+                        </div>
 
-                            {studentSearch && students && (
-                              <div className="mt-2 max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
-                                {students.data?.filter((student: any) => {
-                                  const fullName =
-                                    `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
+                        {/* Activate Button */}
 
-                                  const email =
-                                    student.attributes.email?.toLowerCase() || "";
+                        <button
+                          onClick={() =>
+                            handleActivate(parseInt(viewNode.data.id), "course")
+                          }
+                          disabled={
+                            isActivating || !selectedCode || !selectedStudent
+                          }
+                          className="w-full py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isActivating ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Activating...
+                            </>
+                          ) : (
+                            <>
+                              <Power className="w-4 h-4" />
+                              Activate
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
+                          <p className="text-xs text-[#2137D6]">
+                            <span className="font-bold">Preactivation:</span>{" "}
+                            Enter phone numbers manually or upload a file to pre-activate students
+                          </p>
+                        </div>
 
-                                  const search = studentSearch.toLowerCase();
+                        {/* Manual Entry */}
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Enter Phone Numbers Manually
+                          </label>
 
-                                  return (
-                                    fullName.includes(search) ||
-                                    email.includes(search)
-                                  );
-                                }).length > 0 ? (
-                                  students.data
-                                    .filter((student: any) => {
-                                      const fullName =
-                                        `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
+                          <p className="text-[10px] text-[#94A3B8] mb-2">
+                            Add phone numbers one by one
+                          </p>
 
-                                      const email =
-                                        student.attributes.email?.toLowerCase() ||
-                                        "";
-
-                                      const search = studentSearch.toLowerCase();
-
-                                      return (
-                                        fullName.includes(search) ||
-                                        email.includes(search)
-                                      );
-                                    })
-                                    .map((student: any) => (
-                                      <label
-                                        key={student.id}
-                                        className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${selectedStudent === student.id
-                                          ? "bg-[#EEF2FF]"
-                                          : "hover:bg-[#F8FAFC]"
-                                          }`}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <input
-                                            type="radio"
-                                            name="student"
-                                            value={student.id}
-                                            checked={
-                                              selectedStudent === student.id
-                                            }
-                                            onChange={(e) => {
-                                              setSelectedStudent(e.target.value);
-
-                                              setStudentSearch(
-                                                `${student.attributes.first_name} ${student.attributes.last_name}`,
-                                              );
-                                            }}
-                                            className="w-4 h-4 text-[#2137D6]"
-                                          />
-
-                                          <span className="text-xs font-medium text-[#1E293B]">
-                                            {student.attributes.first_name}{" "}
-                                            {student.attributes.last_name}
-                                          </span>
-                                        </div>
-
-                                        <span className="text-[10px] text-[#94A3B8] pl-6">
-                                          {student.attributes.email}
-                                        </span>
-                                      </label>
-                                    ))
-                                ) : (
-                                  <p className="text-xs text-[#94A3B8] italic">
-                                    No students found
-                                  </p>
-                                )}
+                          <div className="space-y-2">
+                            {preactivationNumbers.map((num, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={num}
+                                  onChange={(e) => {
+                                    const newNumbers = [...preactivationNumbers];
+                                    newNumbers[idx] = e.target.value;
+                                    setPreactivationNumbers(newNumbers);
+                                    setPreactivationResults(null);
+                                  }}
+                                  placeholder="+1234567890"
+                                  className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newNumbers = preactivationNumbers.filter((_, i) => i !== idx);
+                                    setPreactivationNumbers(newNumbers);
+                                    setPreactivationResults(null);
+                                  }}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
                               </div>
-                            )}
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreactivationNumbers([...preactivationNumbers, ""]);
+                                setPreactivationResults(null);
+                              }}
+                              className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add Phone Number
+                            </button>
                           </div>
+                        </div>
 
-                          {/* Activate Button */}
+                        {/* Divider */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                          <span className="text-xs text-gray-400">OR</span>
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                        </div>
+
+                        {/* File Upload */}
+
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Upload Phone Numbers File
+                          </label>
+
+                          <p className="text-[10px] text-[#94A3B8] mb-2">
+                            Supported: .txt, .csv (one phone per line)
+                          </p>
+
+                          <input
+                            ref={preactivationFileRef}
+                            type="file"
+                            accept=".txt,.csv"
+                            onChange={handlePreactivationFileSelect}
+                            className="hidden"
+                          />
 
                           <button
                             onClick={() =>
-                              handleActivate(parseInt(viewNode.data.id), "course")
+                              preactivationFileRef.current?.click()
                             }
-                            disabled={
-                              isActivating || !selectedCode || !selectedStudent
-                            }
-                            className="w-full py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
                           >
-                            {isActivating ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Activating...
-                              </>
-                            ) : (
-                              <>
-                                <Power className="w-4 h-4" />
-                                Activate
-                              </>
-                            )}
+                            <Upload className="w-4 h-4" />
+                            Select File
                           </button>
                         </div>
-                      ) : (
-                        <div className="flex flex-col gap-4">
-                          <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
-                            <p className="text-xs text-[#2137D6]">
-                              <span className="font-bold">Preactivation:</span>{" "}
-                              Enter phone numbers manually or upload a file to pre-activate students
-                            </p>
-                          </div>
 
-                          {/* Manual Entry */}
+                        {/* Phone Numbers Preview */}
+
+                        {preactivationNumbers.length > 0 && (
                           <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Enter Phone Numbers Manually
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-xs font-bold text-[#64748B]">
+                                Phone Numbers ({preactivationNumbers.length})
+                              </label>
 
-                            <p className="text-[10px] text-[#94A3B8] mb-2">
-                              Add phone numbers one by one
-                            </p>
-
-                            <div className="space-y-2">
-                              {preactivationNumbers.map((num, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={num}
-                                    onChange={(e) => {
-                                      const newNumbers = [...preactivationNumbers];
-                                      newNumbers[idx] = e.target.value;
-                                      setPreactivationNumbers(newNumbers);
-                                      setPreactivationResults(null);
-                                    }}
-                                    placeholder="+1234567890"
-                                    className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newNumbers = preactivationNumbers.filter((_, i) => i !== idx);
-                                      setPreactivationNumbers(newNumbers);
-                                      setPreactivationResults(null);
-                                    }}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ))}
                               <button
-                                type="button"
-                                onClick={() => {
-                                  setPreactivationNumbers([...preactivationNumbers, ""]);
-                                  setPreactivationResults(null);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
+                                onClick={clearPreactivationNumbers}
+                                className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
                               >
-                                <Plus className="w-4 h-4" />
-                                Add Phone Number
+                                <X className="w-3 h-3" />
+                                Clear
                               </button>
                             </div>
+
+                            <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
+                              <div className="flex flex-wrap gap-2">
+                                {preactivationNumbers.map((num, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
+                                  >
+                                    {num}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           </div>
+                        )}
 
-                          {/* Divider */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-px bg-gray-200"></div>
-                            <span className="text-xs text-gray-400">OR</span>
-                            <div className="flex-1 h-px bg-gray-200"></div>
-                          </div>
+                        {/* Pre-activate Button */}
+                        <button
+                          onClick={() => {
+                            // Create a file from the repeater fields
+                            const phoneNumbersContent = preactivationNumbers
+                              .filter(n => n.trim().length > 0)
+                              .join('\n');
 
-                          {/* File Upload */}
+                            if (phoneNumbersContent.length === 0) {
+                              toast.error("Please add at least one phone number");
+                              return;
+                            }
 
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Upload Phone Numbers File
-                            </label>
+                            const blob = new Blob([phoneNumbersContent], { type: 'text/plain' });
+                            const file = new File([blob], 'phone_numbers.txt', { type: 'text/plain' });
 
-                            <p className="text-[10px] text-[#94A3B8] mb-2">
-                              Supported: .txt, .csv (one phone per line)
+                            handlePreactivationUpload(
+                              parseInt(viewNode.data.id),
+                              "course",
+                              file,
+                            );
+                          }}
+                          disabled={
+                            preactivationNumbers.filter(n => n.trim().length > 0).length === 0 ||
+                            isUploadingPreActivation
+                          }
+                          className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isUploadingPreActivation ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4" />
+                              Upload{" "}
+                              {preactivationNumbers.filter(n => n.trim().length > 0).length > 0 &&
+                                `(${preactivationNumbers.filter(n => n.trim().length > 0).length})`}
+                            </>
+                          )}
+                        </button>
+
+                        {/* Pre-activation Results */}
+
+                        {preactivationResults && (
+                          <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                            <p className="text-xs font-bold text-[#1E293B] mb-2">
+                              Results:
                             </p>
 
-                            <input
-                              ref={preactivationFileRef}
-                              type="file"
-                              accept=".txt,.csv"
-                              onChange={handlePreactivationFileSelect}
-                              className="hidden"
-                            />
+                            <div className="flex items-center gap-4 mb-3">
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Success: {preactivationResults.success}
+                              </span>
 
-                            <button
-                              onClick={() =>
-                                preactivationFileRef.current?.click()
-                              }
-                              className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
-                            >
-                              <Upload className="w-4 h-4" />
-                              Select File
-                            </button>
-                          </div>
-
-                          {/* Phone Numbers Preview */}
-
-                          {preactivationNumbers.length > 0 && (
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-bold text-[#64748B]">
-                                  Phone Numbers ({preactivationNumbers.length})
-                                </label>
-
-                                <button
-                                  onClick={clearPreactivationNumbers}
-                                  className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
-                                >
-                                  <X className="w-3 h-3" />
-                                  Clear
-                                </button>
-                              </div>
-
-                              <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
-                                <div className="flex flex-wrap gap-2">
-                                  {preactivationNumbers.map((num, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
-                                    >
-                                      {num}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Pre-activate Button */}
-                          <button
-                            onClick={() => {
-                              // Create a file from the repeater fields
-                              const phoneNumbersContent = preactivationNumbers
-                                .filter(n => n.trim().length > 0)
-                                .join('\n');
-
-                              if (phoneNumbersContent.length === 0) {
-                                toast.error("Please add at least one phone number");
-                                return;
-                              }
-
-                              const blob = new Blob([phoneNumbersContent], { type: 'text/plain' });
-                              const file = new File([blob], 'phone_numbers.txt', { type: 'text/plain' });
-
-                              handlePreactivationUpload(
-                                parseInt(viewNode.data.id),
-                                "course",
-                                file,
-                              );
-                            }}
-                            disabled={
-                              preactivationNumbers.filter(n => n.trim().length > 0).length === 0 ||
-                              isUploadingPreActivation
-                            }
-                            className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            {isUploadingPreActivation ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Uploading...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-4 h-4" />
-                                Upload{" "}
-                                {preactivationNumbers.filter(n => n.trim().length > 0).length > 0 &&
-                                  `(${preactivationNumbers.filter(n => n.trim().length > 0).length})`}
-                              </>
-                            )}
-                          </button>
-
-                          {/* Pre-activation Results */}
-
-                          {preactivationResults && (
-                            <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                              <p className="text-xs font-bold text-[#1E293B] mb-2">
-                                Results:
-                              </p>
-
-                              <div className="flex items-center gap-4 mb-3">
-                                <span className="text-xs text-green-600 flex items-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Success: {preactivationResults.success}
+                              {preactivationResults.failed > 0 && (
+                                <span className="text-xs text-red-600 flex items-center gap-1">
+                                  <X className="w-3.5 h-3.5" />
+                                  Failed: {preactivationResults.failed}
                                 </span>
-
-                                {preactivationResults.failed > 0 && (
-                                  <span className="text-xs text-red-600 flex items-center gap-1">
-                                    <X className="w-3.5 h-3.5" />
-                                    Failed: {preactivationResults.failed}
-                                  </span>
-                                )}
-                              </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Objectives */}
 
@@ -3837,469 +3807,468 @@ export default function DepartmentsPage() {
                     )}
 
                   {/* Activation Codes Section */}
-                  {canUseActivations && (
-                    <div className="mt-4 pt-3 border-t border-gray-200">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          <Power className="w-4 h-4 text-[#2137D6]" />
 
-                          <label className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
-                            Activation
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Power className="w-4 h-4 text-[#2137D6]" />
+
+                        <label className="text-xs font-bold text-[#1E293B] uppercase tracking-wider">
+                          Activation
+                        </label>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setGenerateCodeItemType("chapter");
+
+                          setGenerateCodeItemId(
+                            parseInt(viewNode.data.id).toString(),
+                          );
+
+                          setGenerateCodeModalOpen(true);
+                        }}
+                        className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
+                        title="Generate Codes"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Tabs */}
+
+                    <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
+                      <button
+                        onClick={() => setActivationTab("code")}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
+                      >
+                        By Code
+                      </button>
+
+                      <button
+                        onClick={() => setActivationTab("preactivation")}
+                        className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
+                          ? "bg-white text-[#2137D6] shadow-sm"
+                          : "text-[#64748B] hover:text-[#1E293B]"
+                          }`}
+                      >
+                        Preactivation
+                      </button>
+                    </div>
+
+                    {activationTab === "code" ? (
+                      <div className="flex flex-col gap-4">
+                        {/* Available Codes */}
+
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Available Codes (
+                            {(() => {
+                              const chapterCodes = getCodesForItem(
+                                "chapter",
+                                parseInt(viewNode.data.id),
+                              );
+
+                              return chapterCodes.filter(
+                                (c) => !c.attributes.is_used,
+                              ).length;
+                            })()}
+                            )
                           </label>
+
+                          {codesLoading ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
+                            </div>
+                          ) : (
+                            (() => {
+                              const chapterCodes = getCodesForItem(
+                                "chapter",
+                                parseInt(viewNode.data.id),
+                              );
+
+                              const availableCodes = chapterCodes.filter(
+                                (c) => !c.attributes.is_used,
+                              );
+
+                              return availableCodes.length > 0 ? (
+                                <div className="max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
+                                  {availableCodes.map((code) => (
+                                    <label
+                                      key={code.id}
+                                      className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
+                                        ? "bg-[#EEF2FF] border border-[#2137D6]"
+                                        : "hover:bg-[#F8FAFC] border border-transparent"
+                                        }`}
+                                    >
+                                      <input
+                                        type="radio"
+                                        name="code"
+                                        value={code.id}
+                                        checked={selectedCode === code.id}
+                                        onChange={(e) =>
+                                          setSelectedCode(e.target.value)
+                                        }
+                                        className="w-4 h-4 text-[#2137D6]"
+                                      />
+
+                                      <span className="flex-1 font-mono text-xs text-[#1E293B]">
+                                        {code.attributes.code}
+                                      </span>
+
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+
+                                          handleCopyCode(code.attributes.code);
+                                        }}
+                                        className="p-1 hover:bg-[#EEF2FF] rounded transition-colors"
+                                      >
+                                        {copiedCode === code.attributes.code ? (
+                                          <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                                        ) : (
+                                          <Copy className="w-3.5 h-3.5 text-[#94A3B8]" />
+                                        )}
+                                      </button>
+                                    </label>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-[#94A3B8] italic">
+                                  No codes available
+                                </p>
+                              );
+                            })()
+                          )}
                         </div>
 
-                        <button
-                          onClick={() => {
-                            setGenerateCodeItemType("chapter");
+                        {/* Student Selection */}
 
-                            setGenerateCodeItemId(
-                              parseInt(viewNode.data.id).toString(),
-                            );
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Select Student
+                          </label>
 
-                            setGenerateCodeModalOpen(true);
-                          }}
-                          className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
-                          title="Generate Codes"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </div>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
 
-                      {/* Tabs */}
+                            <input
+                              type="text"
+                              placeholder="Search students"
+                              value={studentSearch}
+                              onChange={(e) => setStudentSearch(e.target.value)}
+                              className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                            />
+                          </div>
 
-                      <div className="flex items-center gap-1 mb-4 bg-[#F8FAFC] rounded-lg p-1">
-                        <button
-                          onClick={() => setActivationTab("code")}
-                          className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "code"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                            }`}
-                        >
-                          By Code
-                        </button>
+                          {studentSearch && students && (
+                            <div className="mt-2 max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
+                              {students.data?.filter((student: any) => {
+                                const fullName =
+                                  `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
 
-                        <button
-                          onClick={() => setActivationTab("preactivation")}
-                          className={`flex-1 py-1.5 px-3 text-xs font-medium rounded-md transition-all ${activationTab === "preactivation"
-                            ? "bg-white text-[#2137D6] shadow-sm"
-                            : "text-[#64748B] hover:text-[#1E293B]"
-                            }`}
-                        >
-                          Preactivation
-                        </button>
-                      </div>
+                                const email =
+                                  student.attributes.email?.toLowerCase() || "";
 
-                      {activationTab === "code" ? (
-                        <div className="flex flex-col gap-4">
-                          {/* Available Codes */}
+                                const search = studentSearch.toLowerCase();
 
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Available Codes (
-                              {(() => {
-                                const chapterCodes = getCodesForItem(
-                                  "chapter",
-                                  parseInt(viewNode.data.id),
+                                return (
+                                  fullName.includes(search) ||
+                                  email.includes(search)
                                 );
+                              }).length > 0 ? (
+                                students.data
+                                  .filter((student: any) => {
+                                    const fullName =
+                                      `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
 
-                                return chapterCodes.filter(
-                                  (c) => !c.attributes.is_used,
-                                ).length;
-                              })()}
-                              )
-                            </label>
+                                    const email =
+                                      student.attributes.email?.toLowerCase() ||
+                                      "";
 
-                            {codesLoading ? (
-                              <div className="flex items-center justify-center py-4">
-                                <Loader2 className="w-5 h-5 animate-spin text-[#2137D6]" />
-                              </div>
-                            ) : (
-                              (() => {
-                                const chapterCodes = getCodesForItem(
-                                  "chapter",
-                                  parseInt(viewNode.data.id),
-                                );
+                                    const search = studentSearch.toLowerCase();
 
-                                const availableCodes = chapterCodes.filter(
-                                  (c) => !c.attributes.is_used,
-                                );
-
-                                return availableCodes.length > 0 ? (
-                                  <div className="max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
-                                    {availableCodes.map((code) => (
-                                      <label
-                                        key={code.id}
-                                        className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${selectedCode === code.id
-                                          ? "bg-[#EEF2FF] border border-[#2137D6]"
-                                          : "hover:bg-[#F8FAFC] border border-transparent"
-                                          }`}
-                                      >
+                                    return (
+                                      fullName.includes(search) ||
+                                      email.includes(search)
+                                    );
+                                  })
+                                  .map((student: any) => (
+                                    <label
+                                      key={student.id}
+                                      className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${selectedStudent === student.id
+                                        ? "bg-[#EEF2FF]"
+                                        : "hover:bg-[#F8FAFC]"
+                                        }`}
+                                    >
+                                      <div className="flex items-center gap-2">
                                         <input
                                           type="radio"
-                                          name="code"
-                                          value={code.id}
-                                          checked={selectedCode === code.id}
-                                          onChange={(e) =>
-                                            setSelectedCode(e.target.value)
+                                          name="student"
+                                          value={student.id}
+                                          checked={
+                                            selectedStudent === student.id
                                           }
+                                          onChange={(e) => {
+                                            setSelectedStudent(e.target.value);
+
+                                            setStudentSearch(
+                                              `${student.attributes.first_name} ${student.attributes.last_name}`,
+                                            );
+                                          }}
                                           className="w-4 h-4 text-[#2137D6]"
                                         />
 
-                                        <span className="flex-1 font-mono text-xs text-[#1E293B]">
-                                          {code.attributes.code}
+                                        <span className="text-xs font-medium text-[#1E293B]">
+                                          {student.attributes.first_name}{" "}
+                                          {student.attributes.last_name}
                                         </span>
+                                      </div>
 
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-
-                                            handleCopyCode(code.attributes.code);
-                                          }}
-                                          className="p-1 hover:bg-[#EEF2FF] rounded transition-colors"
-                                        >
-                                          {copiedCode === code.attributes.code ? (
-                                            <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                                          ) : (
-                                            <Copy className="w-3.5 h-3.5 text-[#94A3B8]" />
-                                          )}
-                                        </button>
-                                      </label>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-xs text-[#94A3B8] italic">
-                                    No codes available
-                                  </p>
-                                );
-                              })()
-                            )}
-                          </div>
-
-                          {/* Student Selection */}
-
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Select Student
-                            </label>
-
-                            <div className="relative">
-                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-
-                              <input
-                                type="text"
-                                placeholder="Search students"
-                                value={studentSearch}
-                                onChange={(e) => setStudentSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
-                              />
+                                      <span className="text-[10px] text-[#94A3B8] pl-6">
+                                        {student.attributes.email}
+                                      </span>
+                                    </label>
+                                  ))
+                              ) : (
+                                <p className="text-xs text-[#94A3B8] italic">
+                                  No students found
+                                </p>
+                              )}
                             </div>
+                          )}
+                        </div>
 
-                            {studentSearch && students && (
-                              <div className="mt-2 max-h-32 overflow-y-auto border border-[#E2E8F0] rounded-xl p-2 flex flex-col gap-1">
-                                {students.data?.filter((student: any) => {
-                                  const fullName =
-                                    `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
+                        {/* Activate Button */}
 
-                                  const email =
-                                    student.attributes.email?.toLowerCase() || "";
+                        <button
+                          onClick={() =>
+                            handleActivate(
+                              parseInt(viewNode.data.id),
+                              "chapter",
+                            )
+                          }
+                          disabled={
+                            isActivating || !selectedCode || !selectedStudent
+                          }
+                          className="w-full py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isActivating ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Activating...
+                            </>
+                          ) : (
+                            <>
+                              <Power className="w-4 h-4" />
+                              Activate
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
+                          <p className="text-xs text-[#2137D6]">
+                            <span className="font-bold">Preactivation:</span>{" "}
+                            Enter phone numbers manually or upload a file to pre-activate students
+                          </p>
+                        </div>
 
-                                  const search = studentSearch.toLowerCase();
+                        {/* Manual Entry */}
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Enter Phone Numbers Manually
+                          </label>
 
-                                  return (
-                                    fullName.includes(search) ||
-                                    email.includes(search)
-                                  );
-                                }).length > 0 ? (
-                                  students.data
-                                    .filter((student: any) => {
-                                      const fullName =
-                                        `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
+                          <p className="text-[10px] text-[#94A3B8] mb-2">
+                            Add phone numbers one by one
+                          </p>
 
-                                      const email =
-                                        student.attributes.email?.toLowerCase() ||
-                                        "";
-
-                                      const search = studentSearch.toLowerCase();
-
-                                      return (
-                                        fullName.includes(search) ||
-                                        email.includes(search)
-                                      );
-                                    })
-                                    .map((student: any) => (
-                                      <label
-                                        key={student.id}
-                                        className={`flex flex-col p-2 rounded-lg cursor-pointer transition-colors ${selectedStudent === student.id
-                                          ? "bg-[#EEF2FF]"
-                                          : "hover:bg-[#F8FAFC]"
-                                          }`}
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <input
-                                            type="radio"
-                                            name="student"
-                                            value={student.id}
-                                            checked={
-                                              selectedStudent === student.id
-                                            }
-                                            onChange={(e) => {
-                                              setSelectedStudent(e.target.value);
-
-                                              setStudentSearch(
-                                                `${student.attributes.first_name} ${student.attributes.last_name}`,
-                                              );
-                                            }}
-                                            className="w-4 h-4 text-[#2137D6]"
-                                          />
-
-                                          <span className="text-xs font-medium text-[#1E293B]">
-                                            {student.attributes.first_name}{" "}
-                                            {student.attributes.last_name}
-                                          </span>
-                                        </div>
-
-                                        <span className="text-[10px] text-[#94A3B8] pl-6">
-                                          {student.attributes.email}
-                                        </span>
-                                      </label>
-                                    ))
-                                ) : (
-                                  <p className="text-xs text-[#94A3B8] italic">
-                                    No students found
-                                  </p>
-                                )}
+                          <div className="space-y-2">
+                            {preactivationNumbers.map((num, idx) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={num}
+                                  onChange={(e) => {
+                                    const newNumbers = [...preactivationNumbers];
+                                    newNumbers[idx] = e.target.value;
+                                    setPreactivationNumbers(newNumbers);
+                                    setPreactivationResults(null);
+                                  }}
+                                  placeholder="+1234567890"
+                                  className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newNumbers = preactivationNumbers.filter((_, i) => i !== idx);
+                                    setPreactivationNumbers(newNumbers);
+                                    setPreactivationResults(null);
+                                  }}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
                               </div>
-                            )}
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreactivationNumbers([...preactivationNumbers, ""]);
+                                setPreactivationResults(null);
+                              }}
+                              className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add Phone Number
+                            </button>
                           </div>
+                        </div>
 
-                          {/* Activate Button */}
+                        {/* Divider */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                          <span className="text-xs text-gray-400">OR</span>
+                          <div className="flex-1 h-px bg-gray-200"></div>
+                        </div>
+
+                        {/* File Upload */}
+
+                        <div>
+                          <label className="text-xs font-bold text-[#64748B] mb-2 block">
+                            Upload Phone Numbers File
+                          </label>
+
+                          <p className="text-[10px] text-[#94A3B8] mb-2">
+                            Supported: .txt, .csv (one phone per line)
+                          </p>
+
+                          <input
+                            ref={preactivationFileRef}
+                            type="file"
+                            accept=".txt,.csv"
+                            onChange={handlePreactivationFileSelect}
+                            className="hidden"
+                          />
 
                           <button
                             onClick={() =>
-                              handleActivate(
-                                parseInt(viewNode.data.id),
-                                "chapter",
-                              )
+                              preactivationFileRef.current?.click()
                             }
-                            disabled={
-                              isActivating || !selectedCode || !selectedStudent
-                            }
-                            className="w-full py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
                           >
-                            {isActivating ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Activating...
-                              </>
-                            ) : (
-                              <>
-                                <Power className="w-4 h-4" />
-                                Activate
-                              </>
-                            )}
+                            <Upload className="w-4 h-4" />
+                            Select File
                           </button>
                         </div>
-                      ) : (
-                        <div className="flex flex-col gap-4">
-                          <div className="p-3 bg-[#EEF2FF] rounded-xl border border-[#2137D6]/20">
-                            <p className="text-xs text-[#2137D6]">
-                              <span className="font-bold">Preactivation:</span>{" "}
-                              Enter phone numbers manually or upload a file to pre-activate students
-                            </p>
-                          </div>
 
-                          {/* Manual Entry */}
+                        {/* Phone Numbers Preview */}
+
+                        {preactivationNumbers.length > 0 && (
                           <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Enter Phone Numbers Manually
-                            </label>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-xs font-bold text-[#64748B]">
+                                Phone Numbers ({preactivationNumbers.length})
+                              </label>
 
-                            <p className="text-[10px] text-[#94A3B8] mb-2">
-                              Add phone numbers one by one
-                            </p>
-
-                            <div className="space-y-2">
-                              {preactivationNumbers.map((num, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={num}
-                                    onChange={(e) => {
-                                      const newNumbers = [...preactivationNumbers];
-                                      newNumbers[idx] = e.target.value;
-                                      setPreactivationNumbers(newNumbers);
-                                      setPreactivationResults(null);
-                                    }}
-                                    placeholder="+1234567890"
-                                    className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const newNumbers = preactivationNumbers.filter((_, i) => i !== idx);
-                                      setPreactivationNumbers(newNumbers);
-                                      setPreactivationResults(null);
-                                    }}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ))}
                               <button
-                                type="button"
-                                onClick={() => {
-                                  setPreactivationNumbers([...preactivationNumbers, ""]);
-                                  setPreactivationResults(null);
-                                }}
-                                className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-2"
+                                onClick={clearPreactivationNumbers}
+                                className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
                               >
-                                <Plus className="w-4 h-4" />
-                                Add Phone Number
+                                <X className="w-3 h-3" />
+                                Clear
                               </button>
                             </div>
+
+                            <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
+                              <div className="flex flex-wrap gap-2">
+                                {preactivationNumbers.map((num, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
+                                  >
+                                    {num}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
                           </div>
+                        )}
 
-                          {/* Divider */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-px bg-gray-200"></div>
-                            <span className="text-xs text-gray-400">OR</span>
-                            <div className="flex-1 h-px bg-gray-200"></div>
-                          </div>
+                        {/* Pre-activate Button */}
+                        <button
+                          onClick={() => {
+                            // Create a file from the repeater fields
+                            const phoneNumbersContent = preactivationNumbers
+                              .filter(n => n.trim().length > 0)
+                              .join('\n');
 
-                          {/* File Upload */}
+                            if (phoneNumbersContent.length === 0) {
+                              toast.error("Please add at least one phone number");
+                              return;
+                            }
 
-                          <div>
-                            <label className="text-xs font-bold text-[#64748B] mb-2 block">
-                              Upload Phone Numbers File
-                            </label>
+                            const blob = new Blob([phoneNumbersContent], { type: 'text/plain' });
+                            const file = new File([blob], 'phone_numbers.txt', { type: 'text/plain' });
 
-                            <p className="text-[10px] text-[#94A3B8] mb-2">
-                              Supported: .txt, .csv (one phone per line)
+                            handlePreactivationUpload(
+                              parseInt(viewNode.data.id),
+                              "chapter",
+                              file,
+                            );
+                          }}
+                          disabled={
+                            preactivationNumbers.filter(n => n.trim().length > 0).length === 0 ||
+                            isUploadingPreActivation
+                          }
+                          className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          {isUploadingPreActivation ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4" />
+                              Upload{" "}
+                              {preactivationNumbers.filter(n => n.trim().length > 0).length > 0 &&
+                                `(${preactivationNumbers.filter(n => n.trim().length > 0).length})`}
+                            </>
+                          )}
+                        </button>
+
+                        {/* Pre-activation Results */}
+
+                        {preactivationResults && (
+                          <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
+                            <p className="text-xs font-bold text-[#1E293B] mb-2">
+                              Results:
                             </p>
 
-                            <input
-                              ref={preactivationFileRef}
-                              type="file"
-                              accept=".txt,.csv"
-                              onChange={handlePreactivationFileSelect}
-                              className="hidden"
-                            />
+                            <div className="flex items-center gap-4 mb-3">
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Success: {preactivationResults.success}
+                              </span>
 
-                            <button
-                              onClick={() =>
-                                preactivationFileRef.current?.click()
-                              }
-                              className="w-full py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:bg-[#EEF2FF] hover:border-[#2137D6] text-[#475569] rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2"
-                            >
-                              <Upload className="w-4 h-4" />
-                              Select File
-                            </button>
-                          </div>
-
-                          {/* Phone Numbers Preview */}
-
-                          {preactivationNumbers.length > 0 && (
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-bold text-[#64748B]">
-                                  Phone Numbers ({preactivationNumbers.length})
-                                </label>
-
-                                <button
-                                  onClick={clearPreactivationNumbers}
-                                  className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
-                                >
-                                  <X className="w-3 h-3" />
-                                  Clear
-                                </button>
-                              </div>
-
-                              <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
-                                <div className="flex flex-wrap gap-2">
-                                  {preactivationNumbers.map((num, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
-                                    >
-                                      {num}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Pre-activate Button */}
-                          <button
-                            onClick={() => {
-                              // Create a file from the repeater fields
-                              const phoneNumbersContent = preactivationNumbers
-                                .filter(n => n.trim().length > 0)
-                                .join('\n');
-
-                              if (phoneNumbersContent.length === 0) {
-                                toast.error("Please add at least one phone number");
-                                return;
-                              }
-
-                              const blob = new Blob([phoneNumbersContent], { type: 'text/plain' });
-                              const file = new File([blob], 'phone_numbers.txt', { type: 'text/plain' });
-
-                              handlePreactivationUpload(
-                                parseInt(viewNode.data.id),
-                                "chapter",
-                                file,
-                              );
-                            }}
-                            disabled={
-                              preactivationNumbers.filter(n => n.trim().length > 0).length === 0 ||
-                              isUploadingPreActivation
-                            }
-                            className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          >
-                            {isUploadingPreActivation ? (
-                              <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Uploading...
-                              </>
-                            ) : (
-                              <>
-                                <Upload className="w-4 h-4" />
-                                Upload{" "}
-                                {preactivationNumbers.filter(n => n.trim().length > 0).length > 0 &&
-                                  `(${preactivationNumbers.filter(n => n.trim().length > 0).length})`}
-                              </>
-                            )}
-                          </button>
-
-                          {/* Pre-activation Results */}
-
-                          {preactivationResults && (
-                            <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                              <p className="text-xs font-bold text-[#1E293B] mb-2">
-                                Results:
-                              </p>
-
-                              <div className="flex items-center gap-4 mb-3">
-                                <span className="text-xs text-green-600 flex items-center gap-1">
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  Success: {preactivationResults.success}
+                              {preactivationResults.failed > 0 && (
+                                <span className="text-xs text-red-600 flex items-center gap-1">
+                                  <X className="w-3.5 h-3.5" />
+                                  Failed: {preactivationResults.failed}
                                 </span>
-
-                                {preactivationResults.failed > 0 && (
-                                  <span className="text-xs text-red-600 flex items-center gap-1">
-                                    <X className="w-3.5 h-3.5" />
-                                    Failed: {preactivationResults.failed}
-                                  </span>
-                                )}
-                              </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Attachments & Resources */}
 
@@ -4476,35 +4445,28 @@ export default function DepartmentsPage() {
                     </>
                   )}
 
-                  {viewNode.type === "chapter" ?
-                    <>
-                      <button
-                        onClick={() => handleEdit(viewNode)}
-                        // className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${viewNode.type === "department"
-                        //   ? "bg-blue-600 hover:bg-blue-700"
-                        //   : viewNode.type === "course"
-                        //     ? "bg-green-600 hover:bg-green-700"
-                        //     : viewNode.type === "lecture"
-                        //       ? "bg-purple-600 hover:bg-purple-700"
-                        //       : "bg-orange-600 hover:bg-orange-700"
-                        //   }`}
-                        className="flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors bg-orange-600 hover:bg-orange-700"
-                      >
-                        Edit{" "}
-                        {viewNode.type.charAt(0).toUpperCase() +
-                          viewNode.type.slice(1)}
-                      </button>
+                  <button
+                    onClick={() => handleEdit(viewNode)}
+                    className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors ${viewNode.type === "department"
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : viewNode.type === "course"
+                        ? "bg-green-600 hover:bg-green-700"
+                        : viewNode.type === "lecture"
+                          ? "bg-purple-600 hover:bg-purple-700"
+                          : "bg-orange-600 hover:bg-orange-700"
+                      }`}
+                  >
+                    Edit{" "}
+                    {viewNode.type.charAt(0).toUpperCase() +
+                      viewNode.type.slice(1)}
+                  </button>
 
-                      <button
-                        onClick={() => handleDelete(viewNode)}
-                        className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors"
-                      >
-                        Delete
-                      </button>
-                    </>
-                    : null}
-
-
+                  <button
+                    onClick={() => handleDelete(viewNode)}
+                    className="px-4 py-2 bg-red-50 text-red-600 text-sm font-medium rounded-lg hover:bg-red-100 transition-colors"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
@@ -4995,8 +4957,6 @@ function EditModal({
 
           is_free_preview: chapter.attributes.is_free_preview ?? false,
 
-          is_free_preview_attachment: chapter.attributes.is_free_preview_attachment ?? false,
-
           max_views: chapter.attributes.max_views,
 
           view_by_minute: chapter.attributes.view_by_minute,
@@ -5073,8 +5033,6 @@ function EditModal({
     return [];
   });
 
-  const [attachmentsToDelete, setAttachmentsToDelete] = useState<string[]>([]);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
@@ -5086,12 +5044,7 @@ function EditModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Include attachments_to_delete if there are any
-    const submitData = attachmentsToDelete.length > 0 
-      ? { ...formData, attachments_to_delete: attachmentsToDelete }
-      : formData;
-
-    onSubmit(submitData);
+    onSubmit(formData);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -5172,14 +5125,6 @@ function EditModal({
   };
 
   const handleRemoveAttachment = (index: number) => {
-    const attachmentToRemove = attachments[index];
-    const isExistingAttachment = attachmentToRemove.attributes;
-    
-    // If it's an existing attachment, add its ID to the delete list
-    if (isExistingAttachment && attachmentToRemove.id) {
-      setAttachmentsToDelete(prev => [...prev, attachmentToRemove.id]);
-    }
-    
     const newAttachments = attachments.filter((_, i) => i !== index);
     setAttachments(newAttachments);
     setFormData({ ...formData, attachments: newAttachments });
@@ -5773,7 +5718,7 @@ function EditModal({
                   />
 
                   {thumbnailPreview ? (
-                    <div className="relative group flex justify-center">
+                    <div className="relative group mx-auto">
                       <div
                         onClick={handleThumbnailClick}
                         className="cursor-pointer rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm w-32 h-24"
@@ -5974,38 +5919,6 @@ function EditModal({
 
                     <span
                       className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview ? "translate-x-5" : ""}`}
-                    />
-                  </div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
-                <label
-                  htmlFor="edit_is_free_preview_attachment"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Is Preview Attachment
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div
-                    className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview_attachment ? "bg-orange-500" : "bg-gray-200"}`}
-                  >
-                    <input
-                      type="checkbox"
-                      id="edit_is_free_preview_attachment"
-                      checked={formData.is_free_preview_attachment}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_free_preview_attachment: e.target.checked,
-                        })
-                      }
-                      className="sr-only"
-                    />
-
-                    <span
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview_attachment ? "translate-x-5" : ""}`}
                     />
                   </div>
                 </label>
@@ -6841,7 +6754,7 @@ function AddModal({
                   />
 
                   {thumbnailPreview ? (
-                    <div className="relative group flex justify-center">
+                    <div className="relative group mx-auto">
                       <div
                         onClick={handleThumbnailClick}
                         className="cursor-pointer rounded-xl overflow-hidden border-2 border-gray-200 shadow-sm w-32 h-24"
@@ -7032,38 +6945,6 @@ function AddModal({
 
                     <span
                       className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview ? "translate-x-5" : ""}`}
-                    />
-                  </div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
-                <label
-                  htmlFor="add_is_free_preview_attachment"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Is Preview Attachment
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div
-                    className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview_attachment ? "bg-orange-500" : "bg-gray-200"}`}
-                  >
-                    <input
-                      type="checkbox"
-                      id="add_is_free_preview_attachment"
-                      checked={formData.is_free_preview_attachment}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_free_preview_attachment: e.target.checked,
-                        })
-                      }
-                      className="sr-only"
-                    />
-
-                    <span
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview_attachment ? "translate-x-5" : ""}`}
                     />
                   </div>
                 </label>

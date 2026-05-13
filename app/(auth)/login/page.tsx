@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Cookies, { CookieAttributes } from '@/lib/cookies';
 import AuthPageLayout from '../components/AuthLayout';
 
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const locale = useLocale() || "ar";
 
   return (
     <AuthPageLayout
@@ -69,7 +70,7 @@ export default function LoginPage() {
         )}
 
         {/* Sign In Button */}
-        <button
+        <button 
           onClick={handleLogin}
           disabled={loading}
           className="w-full h-9 bg-primary border-none rounded-lg font-sans font-medium text-[11.9px] leading-5 text-white cursor-pointer hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -107,7 +108,7 @@ export default function LoginPage() {
         body: JSON.stringify({
           phone_or_email: email,
           password: password,
-          device_name: 'dashboard-login'
+          device_name: 'learnoo-web',
         }),
       });
 
@@ -135,28 +136,23 @@ export default function LoginPage() {
       Cookies.set('user_role', userRole, cookieOptions);
       Cookies.set('user_data', JSON.stringify(data.data), cookieOptions);
 
-      if (userRole === 'Admin' || userRole === 'Instructor') {
-        router.push('/dashboard');
-      } else {
-          setError(t('errors.noPermission'));
-          // Clear cookies if role is not authorized
-          Cookies.remove('token');
-          Cookies.remove('user_role');
-          Cookies.remove('user_data');
-      }
-
       // Redirect based on role
-      // if (userRole === 'Admin') {
-      //   router.push('/dashboard');
-      // } else if (userRole === 'Doctor') {
-      //   router.push('/doctor/dashboard');
-      // } else {
-      //   setError(t('errors.noPermission'));
-      //   // Clear cookies if role is not authorized
-      //   Cookies.remove('token');
-      //   Cookies.remove('user_role');
-      //   Cookies.remove('user_data');
-      // }
+      if (userRole === 'Admin') {
+        router.push('/dashboard');
+      } else if (userRole === 'Doctor') {
+        router.push('/doctor/dashboard');
+      } 
+       else if (userRole === 'Student') {
+        router.push(`/${locale}/student`);
+      } 
+      
+      else {
+        setError(t('errors.noPermission'));
+        // Clear cookies if role is not authorized
+        Cookies.remove('token');
+        Cookies.remove('user_role');
+        Cookies.remove('user_data');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {

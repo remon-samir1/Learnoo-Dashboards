@@ -1,5 +1,4 @@
-"use client";
-
+"use client"
 import React, { useState } from 'react';
 import DoctorSidebar from '../../components/DoctorSidebar';
 import DoctorHeader from '../../components/DoctorHeader';

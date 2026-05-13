@@ -1,19 +1,25 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import getUserDataFromJWT from './lib/server.utils';
 
 export function proxy(request: NextRequest) {
+  
   const token = request.cookies.get('token')?.value;
   const userRole = request.cookies.get('user_role')?.value;
   const locale = request.cookies.get('locale')?.value || 'en';
-  
+ 
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/forgot-password', '/create-account', '/'];
   if (publicRoutes.includes(pathname)) {
-    // If already logged in, redirect to dashboard
-    if (token && (userRole === 'Admin' || userRole === 'Instructor')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+    // If already logged in, redirect to appropriate dashboard
+    if (token && userRole) {
+      if (userRole === 'Admin') {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      } else if (userRole === 'Doctor') {
+        return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
+      }
     }
     return NextResponse.next();
   }
@@ -24,30 +30,35 @@ export function proxy(request: NextRequest) {
   }
 
   // Role-based route protection
-  const adminRoutes = ['/dashboard', '/centers', '/community', '/departments', '/courses',
-    '/downloads', '/electronic-library', '/exams', '/feature-control', '/live-sessions',
+  const adminRoutes = ['/dashboard', '/centers', '/community', '/departments', '/courses', 
+    '/downloads', '/electronic-library', '/exams', '/feature-control', '/live-sessions', 
     '/notes-summaries', '/notifications', '/settings', '/students'];
-
-  // Routes restricted to Admin only (Instructors cannot access)
-  const adminOnlyRoutes = ['/downloads', '/notifications', '/ota-upload', '/feature-control', '/students', '/instructors'];
-  const adminOnlySettings = ['/settings/general', '/settings/branding', '/settings/notifications', '/settings/language', '/settings/terms', '/settings/watermark'];
+  
+  const doctorRoutes = ['/doctor'];
+  const studentRoutes = ['/student'];
 
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
-  const isAdminOnlyRoute = adminOnlyRoutes.some(route => pathname.startsWith(route)) ||
-    adminOnlySettings.some(route => pathname.startsWith(route));
-
-  // Only Admin and Instructor can access admin routes
-  if (isAdminRoute && userRole !== 'Admin' && userRole !== 'Instructor') {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
-  // Instructors cannot access admin-only routes
-  if (isAdminOnlyRoute && userRole === 'Instructor') {
+  const isDoctorRoute = doctorRoutes.some(route => pathname.startsWith(route));
+  const isStudentRoute = studentRoutes.some(route => pathname.startsWith(`/${locale}/${route}`));
+ 
+  // Admin trying to access doctor routes
+  if (isDoctorRoute && userRole !== 'Doctor') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // Unknown role - redirect to login (Admin and Instructor are valid roles)
-  if (!userRole || (userRole !== 'Admin' && userRole !== 'Instructor')) {
+  // Doctor trying to access admin routes
+  if (isAdminRoute && userRole !== 'Admin') {
+    return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
+  }
+ 
+  // student trying to access admin routes || doctor roles || student main page
+  if (isStudentRoute && userRole === 'Student' || pathname === "/student") {
+    return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
+  }
+
+
+  // Unknown role - redirect to login
+  if (!userRole || (userRole !== 'Admin' && userRole !== 'Doctor' && userRole !== 'Student')) {
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('token');
     response.cookies.delete('user_role');

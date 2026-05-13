@@ -11,10 +11,9 @@ import {
   Mail,
   Phone,
   User,
-  Key,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useInstructors, useDeleteInstructor, useResetInstructorPassword, useToggleCanUseActivations } from '@/src/hooks/useInstructors';
+import { useInstructors, useDeleteInstructor } from '@/src/hooks/useInstructors';
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
 import type { Student } from '@/src/types';
 import { StudentStatusLabels } from '@/src/types';
@@ -40,8 +39,6 @@ export default function InstructorsPage() {
 
   const { data: instructorsResponse, isLoading, error, refetch } = useInstructors(filter, {});
   const { mutate: deleteInstructor, isLoading: isDeleting } = useDeleteInstructor();
-  const { mutate: resetPassword, isLoading: isResetting } = useResetInstructorPassword();
-  const { mutate: toggleCanUseActivations, isLoading: isToggling } = useToggleCanUseActivations();
 
   const instructors = instructorsResponse?.data || [];
   const meta = instructorsResponse?.meta as any;
@@ -51,35 +48,6 @@ export default function InstructorsPage() {
       try {
         await deleteInstructor(id);
         refetch();
-      } catch {
-        // Error handled by hook
-      }
-    }
-  };
-
-  const handleResetPassword = async (instructor: Student) => {
-    const newPassword = prompt('Enter new password for ' + getFullName(instructor) + ':');
-    if (!newPassword || newPassword.trim() === '') {
-      return;
-    }
-    
-    if (confirm(`Are you sure you want to reset the password for ${getFullName(instructor)}?`)) {
-      try {
-        await resetPassword({ instructorId: instructor.id, password: newPassword.trim() });
-        alert('Password reset successfully!');
-      } catch {
-        // Error handled by hook
-      }
-    }
-  };
-
-  const handleToggleCanUseActivations = async (instructor: Student) => {
-    const newValue = !instructor.attributes.can_use_activations;
-    
-    if (confirm(`Are you sure you want to ${newValue ? 'enable' : 'disable'} activations for ${getFullName(instructor)}?`)) {
-      try {
-        await toggleCanUseActivations({ instructorId: instructor.id, canUseActivations: newValue });
-        refetch(); // Refresh data to show updated value
       } catch {
         // Error handled by hook
       }
@@ -160,9 +128,6 @@ export default function InstructorsPage() {
                   <th className="text-left px-6 py-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                     {t('status')}
                   </th>
-                  <th className="text-center px-6 py-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                    Can Use Activations
-                  </th>
                   <th className="text-right px-6 py-4 text-xs font-semibold text-[#64748B] uppercase tracking-wider">
                     {tc('actions')}
                   </th>
@@ -220,33 +185,7 @@ export default function InstructorsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex justify-center">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={instructor.attributes.can_use_activations || false}
-                            onChange={() => handleToggleCanUseActivations(instructor)}
-                            disabled={isToggling}
-                            className="sr-only peer"
-                          />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </label>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleResetPassword(instructor)}
-                          disabled={isResetting}
-                          className="p-2 hover:bg-[#FEF3C7] rounded-lg transition-colors text-[#64748B] hover:text-[#F59E0B] disabled:opacity-50"
-                          title="Reset Password"
-                        >
-                          {isResetting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <Key className="w-4 h-4" />
-                          )}
-                        </button>
                         <Link
                           href={`/instructors/${instructor.id}/edit`}
                           className="p-2 hover:bg-[#F1F5F9] rounded-lg transition-colors text-[#64748B] hover:text-[#2137D6]"
