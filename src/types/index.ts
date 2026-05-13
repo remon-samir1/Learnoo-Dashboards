@@ -514,6 +514,10 @@ export interface UserAttributes {
 
 
 
+  image?: string | null;
+
+
+
 }
 
 

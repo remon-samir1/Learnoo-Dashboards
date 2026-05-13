@@ -27,6 +27,7 @@ interface AuthState {
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
+  updateUser: (user: User) => void;
   clearError: () => void;
 }
 
@@ -243,6 +244,20 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      updateUser: (user) => {
+        Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
+          expires: 30,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+        });
+        Cookies.set(USER_ROLE_COOKIE_NAME, user.attributes.role, {
+          expires: 30,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+        });
+        set({ user });
+      },
+
       clearError: () => set({ error: null }),
     }),
     {
@@ -321,6 +336,7 @@ export function useAuthActions() {
       register: state.register,
       logout: state.logout,
       fetchCurrentUser: state.fetchCurrentUser,
+      updateUser: state.updateUser,
       clearError: state.clearError,
     }))
   );
