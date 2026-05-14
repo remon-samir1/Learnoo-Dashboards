@@ -179,14 +179,14 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
               <BookOpen size={18} className="shrink-0" aria-hidden />
               {t("goToLecture")}
             </Link>
-            <button
+            {/* <button
               type="button"
               onClick={handleDownload}
               className="inline-flex h-12 min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-white px-4 text-sm font-semibold text-[#1E293B] shadow-sm transition hover:bg-[#F8FAFC] active:scale-[0.99] sm:h-11 sm:min-h-[44px] sm:flex-initial"
             >
               <Download size={18} className="shrink-0" aria-hidden />
               {t("download")}
-            </button>
+            </button> */}
             {isEditing ? (
               <>
                 <button
@@ -211,7 +211,7 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
               </>
             ) : (
               <div className="flex w-full flex-col gap-3 sm:ms-auto sm:w-auto sm:flex-1 sm:flex-row sm:justify-end">
-                <button
+                {/* <button
                   type="button"
                   onClick={() => setIsEditing(true)}
                   className="inline-flex h-12 min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 text-sm font-semibold text-[#1E293B] transition hover:bg-[#F1F5F9] active:scale-[0.99] sm:h-11 sm:min-h-[44px] sm:flex-initial"
@@ -228,7 +228,7 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
                 >
                   <Trash2 size={18} aria-hidden />
                   {isPending ? `${t("deleting")}` : `${t("delete")}`}
-                </button>
+                </button> */}
               </div>
             )}
           </div>

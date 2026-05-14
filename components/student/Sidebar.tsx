@@ -43,12 +43,12 @@ const sections: SidebarItem[][] = [
     { key: "examsAndQA", href: "/student/exams", icon: NotebookText },
     { key: "notesSummaries", href: "/student/notes", icon: FileText },
     { key: "electronicLibrary", href: "/student/library", icon: Library },
-    {
-      key: "downloads",
-      href: "/student/downloads",
-      icon: Download,
-      comingSoon: true,
-    },
+    // {
+    //   key: "downloads",
+    //   href: "/student/downloads",
+    //   icon: Download,
+    //   comingSoon: true,
+    // },
   ],
   [
     { key: "profile", href: "/student/profile", icon: User },
@@ -361,7 +361,7 @@ export default function Sidebar({
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           aria-controls="student-sidebar-drawer"
-          className={`fixed start-3 top-[calc(4.25rem+env(safe-area-inset-top,0px))] z-[100] flex size-11 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--primary)] shadow-md transition hover:bg-blue-50 ${mobileOpen ? "pointer-events-none opacity-0" : ""
+          className={`fixed start-3 bottom-[calc(4.25rem+env(safe-area-inset-top,0px))] z-[100] flex size-11 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--primary)] shadow-md transition hover:bg-blue-50 ${mobileOpen ? "pointer-events-none opacity-0" : ""
             }`}
         >
           <Menu size={22} />
