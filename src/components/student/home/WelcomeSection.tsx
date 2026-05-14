@@ -21,7 +21,7 @@ const WelcomeSection = ({
   return (
     <section className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] px-4 py-5 text-white sm:gap-4 sm:px-6 sm:py-6 md:p-8">
       <h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl lg:text-5xl">
-        {`${t("title")} ${student.first_name} 👋`}
+        {`${t("title")} ${student?.first_name || "Student"} 👋`}
       </h2>
       <p className="text-sm text-white/95 sm:text-base">
         {student?.university?.data?.attributes.name || tC("notFound")}

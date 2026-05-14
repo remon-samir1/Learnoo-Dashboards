@@ -106,7 +106,7 @@ const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
     return;
   }
  const res = await updateUserPassword(passwords.password);
- console.log(res)
+ 
  if (!res.success) {
   toast.error(res.message || t("errors.changePasswordFailed"));
  } else {

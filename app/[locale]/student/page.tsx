@@ -46,14 +46,14 @@ export default async function StudentPage() {
   const coursesCount = courses?.length;
   const progressCount = progress?.length;
   const liveSessionsCount = liveSessions?.length;
-
+const studentData = student?.data?.data?.attributes ?? null;
 
   return (
     <div className="flex max-w-full flex-col gap-4 sm:gap-6">
       <WelcomeSection
         coursesCount={coursesCount}
         progressCount={progressCount}
-        student={student}
+        student={studentData}
         liveSessionsCount={liveSessionsCount}
       />
 
