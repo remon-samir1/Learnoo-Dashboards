@@ -24,17 +24,17 @@ import { Clock, Video } from "lucide-react";
 
 const content = {
   ar: {
-    title: "التحميلات",
+    title: "الجلسات المباشرة",
     headline: "قريبًا جدًا",
     description:
-      "نعمل حاليًا على تجهيز قسم التحميلات لتوفير جميع الملفات والمحاضرات الخاصة بك بسهولة وفي مكان واحد.",
+      "نعمل حاليًا على تجهيز قسم الجلسات المباشرة لتتمكن من حضور المحاضرات والتفاعل مع المدرسين بسهولة وفي مكان واحد.",
   },
 
   en: {
-    title: "Downloads",
+    title: "Live Sessions",
     headline: "Coming Soon",
     description:
-      "We are currently preparing the downloads section to provide all your files and lectures easily in one place.",
+      "We are currently preparing the live sessions section so you can attend lectures and interact with instructors easily in one place.",
   },
 };
 
