@@ -3,47 +3,68 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import SettingsCard from '@/components/settings/SettingsCard';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 
 export default function PlatformSettingsPage() {
   const t = useTranslations('header.titles');
   const tSettings = useTranslations('platformSettings');
+  const { role } = useCurrentUser();
+  const isInstructor = role === 'Instructor';
 
-  const settingsCategories = [
+  const allSettingsCategories = [
     {
       icon: 'Settings' as const,
       titleKey: 'generalSettings',
-      href: '/settings/general'
+      href: '/settings/general',
+      adminOnly: true
+    },
+    {
+      icon: 'User' as const,
+      titleKey: 'profile',
+      href: '/settings/profile',
+      adminOnly: false,
+      soon: false,
+      disabled: false
     },
     {
       icon: 'Palette' as const,
       titleKey: 'branding',
-      href: '/settings/branding'
+      href: '/settings/branding',
+      adminOnly: true
     },
     {
       icon: 'Bell' as const,
       titleKey: 'notifications',
       href: '/settings/notifications',
       soon: true,
-      disabled: true
+      disabled: true,
+      adminOnly: true
     },
     {
       icon: 'Globe' as const,
       titleKey: 'languageRegion',
       href: '/settings/language',
       soon: true,
-      disabled: true
+      disabled: true,
+      adminOnly: true
     },
     {
       icon: 'FileText' as const,
       titleKey: 'termsPrivacy',
-      href: '/settings/terms'
+      href: '/settings/terms',
+      adminOnly: true
     },
     {
       icon: 'Image' as const,
       titleKey: 'watermark',
-      href: '/settings/watermark'
+      href: '/settings/watermark',
+      adminOnly: true
     }
   ];
+
+  const settingsCategories = isInstructor
+    ? allSettingsCategories.filter(c => !c.adminOnly)
+    : allSettingsCategories;
 
   return (
     <div className="flex flex-col h-full">

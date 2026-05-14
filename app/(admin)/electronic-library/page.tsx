@@ -188,7 +188,7 @@ export default function ElectronicLibraryPage() {
                 <p className="text-xs text-[#64748B] line-clamp-2 mb-4">{item.attributes.description}</p>
                 
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-bold text-[#2137D6]">${Number(item.attributes.price).toFixed(2)}</span>
+                  <span className="text-sm font-bold text-[#2137D6]">EGP {Number(item.attributes.price).toFixed(2)}</span>
                   <span className="text-xs text-[#94A3B8]">{formatDate(item.attributes.created_at)}</span>
                 </div>
 

@@ -35,13 +35,14 @@ export default function EditInstructorPage() {
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    phone: '',
     email: '',
     password: '',
+    confirmPassword: '',
     specialization: '',
     status: 1 as StudentStatus,
     image: null as File | null,
     existingImage: null as string | null,
+    can_use_activations: false,
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -73,32 +74,44 @@ export default function EditInstructorPage() {
       setFormData({
         first_name: attrs.first_name || '',
         last_name: attrs.last_name || '',
-        phone: attrs.phone?.toString() || '',
         email: attrs.email || '',
         password: '', // Don't pre-fill password
+        confirmPassword: '', // Don't pre-fill confirm password
         specialization: attrs.specialization || '',
         status: (attrs.status ?? 1) as StudentStatus,
         image: null,
         existingImage: attrs.image || null,
+        can_use_activations: attrs.can_use_activations || false,
       });
       
       setPreviewUrl(attrs.image || null);
     }
   }, [instructorResponse]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    // Validate passwords match if password is provided
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      // Show error message
+      const errorElement = document.createElement('div');
+      errorElement.className = 'p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium';
+      errorElement.textContent = 'Passwords do not match';
+      e.currentTarget.insertBefore(errorElement, e.currentTarget.firstChild);
+      setTimeout(() => errorElement.remove(), 3000);
+      return;
+    }
     
     try {
       const payload: CreateStudentRequest = {
         first_name: formData.first_name,
         last_name: formData.last_name,
-        phone: formData.phone,
         email: formData.email,
         password: formData.password || undefined,
         specialization: formData.specialization,
         status: formData.status,
-        image: formData.image || undefined
+        image: formData.image || undefined,
+        can_use_activations: formData.can_use_activations,
       };
 
       await updateInstructor(instructorId, payload);
@@ -185,31 +198,6 @@ export default function EditInstructorPage() {
               />
             </div>
 
-            {/* Phone */}
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.phone')} *</label>
-              <input
-                type="tel"
-                required
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                placeholder={t('instructors.form.phonePlaceholder')}
-              />
-            </div>
-
-            {/* Specialization */}
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.specialization')}</label>
-              <input
-                type="text"
-                value={formData.specialization}
-                onChange={(e) => setFormData(prev => ({ ...prev, specialization: e.target.value }))}
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                placeholder={t('instructors.form.specializationPlaceholder')}
-              />
-            </div>
-
             {/* Status */}
             <div className="flex flex-col gap-2 relative">
               <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.status')}</label>
@@ -236,6 +224,31 @@ export default function EditInstructorPage() {
                 placeholder={t('instructors.form.passwordPlaceholder')}
               />
               <p className="text-xs text-[#64748B]">{t('instructors.form.passwordHint')}</p>
+            </div>
+
+            {/* Confirm Password */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-[#1E293B]">Confirm Password</label>
+              <input
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                placeholder="Confirm password"
+              />
+              <p className="text-xs text-[#64748B]">Leave blank to keep current password</p>
+            </div>
+
+            {/* Specialization */}
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className="text-sm font-medium text-[#1E293B]">{t('instructors.form.specialization')}</label>
+              <input
+                type="text"
+                value={formData.specialization}
+                onChange={(e) => setFormData(prev => ({ ...prev, specialization: e.target.value }))}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                placeholder={t('instructors.form.specializationPlaceholder')}
+              />
             </div>
 
             {/* Profile Image */}

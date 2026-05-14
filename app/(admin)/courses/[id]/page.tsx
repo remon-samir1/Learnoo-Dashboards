@@ -29,6 +29,7 @@ import { useCourse } from '@/src/hooks/useCourses';
 import { useLectures } from '@/src/hooks/useLectures';
 import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export default function CourseDetailPage() {
@@ -42,6 +43,7 @@ export default function CourseDetailPage() {
   const { mutate: activateCode, isLoading: isActivating } = useActivateCode();
   const { mutate: uploadPreActivation, isLoading: isUploadingPreActivation } = useUploadPreActivation();
   const { data: students } = useStudents();
+  const { canUseActivations } = useCurrentUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const preactivationFileRef = useRef<HTMLInputElement>(null);
 
@@ -144,11 +146,11 @@ export default function CourseDetailPage() {
     try {
       const result = await uploadPreActivation({ item_id: courseId, item_type: 'course', file });
       setPreactivationResults({
-        success: result.data.count || 0,
-        failed: preactivationNumbers.length - (result.data.count || 0),
-        count: result.data.count || 0
+        success: result.activated || 0,
+        failed: result.skipped || 0,
+        count: result.total_phones || 0
       });
-      toast.success(result.data.message || `${t('courses.view.preactivation.success')} ${result.data.count}`);
+      toast.success(result.message || `${t('courses.view.preactivation.success')} ${result.total_phones || 0}`);
       refetchCodes();
       // Clear the file after successful upload
       if (preactivationFileRef.current) {
@@ -331,6 +333,7 @@ export default function CourseDetailPage() {
           </section>
 
           {/* Activation Card */}
+          {canUseActivations && (
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -582,6 +585,7 @@ export default function CourseDetailPage() {
               </div>
             )}
           </section>
+          )}
         </div>
       </div>
     </div>

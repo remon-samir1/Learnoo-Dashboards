@@ -9,6 +9,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useLibrary, useDeleteLibrary } from '@/src/hooks/useLibraries';
 import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 function formatDate(dateString: string | null): string {
@@ -33,6 +34,7 @@ export default function LibraryDetailPage() {
 
   const { data: library, isLoading, error } = useLibrary(libraryId);
   const { mutate: deleteLibrary, isLoading: isDeleting } = useDeleteLibrary();
+  const { canUseActivations } = useCurrentUser();
 
   // Activation State
   const [libraryActivationTab, setLibraryActivationTab] = useState<'code' | 'preactivation'>('code');
@@ -40,6 +42,8 @@ export default function LibraryDetailPage() {
   const [selectedLibraryStudent, setSelectedLibraryStudent] = useState('');
   const [libraryStudentSearch, setLibraryStudentSearch] = useState('');
   const [libraryPreactivationNumbers, setLibraryPreactivationNumbers] = useState<string[]>([]);
+  const [libraryPreactivationManualInput, setLibraryPreactivationManualInput] = useState('');
+  const [libraryPreactivationSuccessMessage, setLibraryPreactivationSuccessMessage] = useState('');
   const [libraryPreactivationResults, setLibraryPreactivationResults] = useState<{ success: number; failed: number; count: number } | null>(null);
   const libraryFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,13 +112,23 @@ export default function LibraryDetailPage() {
   const clearLibraryPreactivationNumbers = () => {
     setLibraryPreactivationNumbers([]);
     setLibraryPreactivationResults(null);
+    setLibraryPreactivationSuccessMessage('');
     if (libraryFileInputRef.current) {
       libraryFileInputRef.current.value = '';
     }
   };
 
   const handleLibraryPreactivationUpload = async () => {
-    const file = libraryFileInputRef.current?.files?.[0];
+    const selectedFile = libraryFileInputRef.current?.files?.[0];
+
+    const file =
+      selectedFile ||
+      (libraryPreactivationNumbers.length > 0
+        ? new File([libraryPreactivationNumbers.join('\n')], `preactivation-library-${libraryId}.txt`, {
+            type: 'text/plain',
+          })
+        : null);
+
     if (!file) {
       toast.error(t('courses.view.preactivation.selectFile'));
       return;
@@ -123,19 +137,39 @@ export default function LibraryDetailPage() {
     try {
       const result = await uploadPreActivation({ item_id: libraryId, item_type: 'library', file });
       setLibraryPreactivationResults({
-        success: result.data.count || 0,
-        failed: libraryPreactivationNumbers.length - (result.data.count || 0),
-        count: result.data.count || 0
+        success: result.activated || 0,
+        failed: result.skipped || 0,
+        count: result.total_phones || 0
       });
-      toast.success(result.data.message || `${t('courses.view.preactivation.success')} ${result.data.count}`);
+      const successMsg = t('electronicLibrary.detail.activation.uploadSuccess', { count: result.total_phones || 0 });
+      setLibraryPreactivationSuccessMessage(successMsg);
+      toast.success(successMsg);
       refetchCodes();
       if (libraryFileInputRef.current) {
         libraryFileInputRef.current.value = '';
       }
       setLibraryPreactivationNumbers([]);
+      setLibraryPreactivationManualInput('');
     } catch {
       toast.error(t('courses.view.preactivation.failed'));
     }
+  };
+
+  const addLibraryManualNumbers = () => {
+    const raw = libraryPreactivationManualInput;
+    const numbers = raw
+      .split(/[\n,\r;]/)
+      .map((n) => n.trim())
+      .filter((n) => n.length > 0);
+
+    if (numbers.length === 0) return;
+
+    setLibraryPreactivationNumbers((prev) => {
+      const merged = [...prev, ...numbers];
+      return Array.from(new Set(merged));
+    });
+    setLibraryPreactivationResults(null);
+    setLibraryPreactivationManualInput('');
   };
 
   const handleDelete = async () => {
@@ -231,7 +265,7 @@ export default function LibraryDetailPage() {
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-2xl font-bold text-[#2137D6]">${Number(library.attributes.price).toFixed(2)}</span>
+                <span className="text-2xl font-bold text-[#2137D6]">EGP {Number(library.attributes.price).toFixed(2)}</span>
                 <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-wide ${
                   library.attributes.is_publish
                     ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100'
@@ -273,6 +307,7 @@ export default function LibraryDetailPage() {
               </div>
 
               {/* Code Activation */}
+              {canUseActivations && (
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-[#FEF3C7] rounded-xl flex items-center justify-center shrink-0 border border-amber-50">
                   <Lock className="w-5 h-5 text-[#D97706]" />
@@ -282,6 +317,7 @@ export default function LibraryDetailPage() {
                   <span className="text-sm font-bold text-[#1E293B]">{library.attributes.code_activation ? t('electronicLibrary.detail.fields.yes') : t('electronicLibrary.detail.fields.no')}</span>
                 </div>
               </div>
+              )}
 
               {/* Attachments */}
               {library.attributes.attachments && library.attributes.attachments.length > 0 && (
@@ -343,6 +379,7 @@ export default function LibraryDetailPage() {
           </section>
 
           {/* Library Activation Section */}
+          {canUseActivations && (
           <section className="bg-white rounded-2xl border border-[#F1F5F9] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -506,6 +543,35 @@ export default function LibraryDetailPage() {
                   </button>
                 </div>
 
+                {/* Manual Add */}
+                <div>
+                  <label className="text-xs font-bold text-[#64748B] mb-2 block">Phone numbers (manual)</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={libraryPreactivationManualInput}
+                      onChange={(e) => setLibraryPreactivationManualInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addLibraryManualNumbers();
+                        }
+                      }}
+                      placeholder="Enter number(s) and press Enter"
+                      className="flex-1 px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={addLibraryManualNumbers}
+                      disabled={!libraryPreactivationManualInput.trim()}
+                      className="px-4 py-2 bg-white border border-[#E2E8F0] text-[#475569] rounded-xl text-xs font-bold hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-[#94A3B8] mt-2">Separate multiple numbers with comma or new line.</p>
+                </div>
+
                 {/* Phone Numbers Preview */}
                 {libraryPreactivationNumbers.length > 0 && (
                   <div>
@@ -553,27 +619,17 @@ export default function LibraryDetailPage() {
                   )}
                 </button>
 
-                {/* Pre-activation Results */}
-                {libraryPreactivationResults && (
-                  <div className="mt-2 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
-                    <p className="text-xs font-bold text-[#1E293B] mb-2">{t('electronicLibrary.detail.activation.preactivationResults')}</p>
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs text-green-600 flex items-center gap-1">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        {t('electronicLibrary.detail.activation.success')}: {libraryPreactivationResults.success}
-                      </span>
-                      {libraryPreactivationResults.failed > 0 && (
-                        <span className="text-xs text-red-600 flex items-center gap-1">
-                          <X className="w-3.5 h-3.5" />
-                          {t('electronicLibrary.detail.activation.failed')}: {libraryPreactivationResults.failed}
-                        </span>
-                      )}
-                    </div>
+                {libraryPreactivationSuccessMessage && (
+                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <p className="text-xs font-bold text-green-800">{libraryPreactivationSuccessMessage}</p>
                   </div>
                 )}
-              </div>
+
+                              </div>
             )}
           </section>
+          )}
         </div>
       </div>
     </div>
