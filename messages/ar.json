@@ -737,6 +737,7 @@
       "retryExam": "إعادة الاختبار",
       "reviewAnswers": "مراجعة الإجابات",
       "answerReviewTitle": "مراجعة الإجابات",
+      "reviewPreviousQuestion": "السابق",
       "backFromReview": "العودة إلى النتيجة",
       "reviewReadOnlyHint": "عرض تلخيصي لقراءة فقط لاختياراتك. لا يمكن تعديل الإجابات أو إعادة الإرسال من هذه الشاشة.",
       "reviewQuestionBadge": "السؤال {n}",

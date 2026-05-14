@@ -153,15 +153,12 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
                   <ChevronLeft className="size-4 shrink-0 rtl:rotate-180" strokeWidth={2} aria-hidden />
                   {t('backFromReview')}
                 </button>
-                <h2 className="text-start text-lg font-semibold leading-snug text-[#0F172A] sm:text-xl">
-                  {t('answerReviewTitle')}
-                </h2>
-                <p className="text-sm text-slate-600">{quizTitle}</p>
               </div>
               <ExamAnswersReview
                 quiz={quizForReview}
                 selections={selectionsForReview}
                 locale={locale}
+                onExitReview={() => setShowAnswerReview(false)}
               />
             </>
           ) : (
