@@ -10,7 +10,7 @@ export interface IStudentNote {
     lecture_title?: string | null;
     content?: string | null;
     is_publish?: boolean | null;
-    createdAt?: string | null;
+    createdAt?: string | null | number | Date;
     updatedAt?: string | null;
     created_at?: string | null;
     updated_at?: string | null;
