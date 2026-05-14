@@ -66,6 +66,7 @@
       "signingIn": "Signing in...",
       "noAccount": "Don't have an account?",
       "createAccount": "Create account",
+      "registeredSuccess": "Account created successfully. Sign in with your email and password.",
       "errors": {
         "missingFields": "Please enter both email and password",
         "loginFailed": "Login failed",
@@ -86,11 +87,26 @@
       "firstName": "First Name",
       "lastName": "Last Name",
       "email": "Email Address",
+      "phone": "Phone",
       "password": "Password",
       "confirmPassword": "Confirm Password",
+      "firstNamePlaceholder": "Jane",
+      "lastNamePlaceholder": "Doe",
+      "emailPlaceholder": "you@example.com",
+      "phonePlaceholder": "201200000000",
+      "passwordPlaceholder": "Create a strong password",
+      "confirmPasswordPlaceholder": "Confirm your password",
       "submit": "Create Account",
+      "creatingAccount": "Creating account…",
       "haveAccount": "Already have an account?",
-      "login": "Login"
+      "login": "Login",
+      "errors": {
+        "missingFields": "Please fill in all fields",
+        "passwordMismatch": "Passwords do not match",
+        "noToken": "No token received from server",
+        "noPermission": "You do not have permission to access this platform",
+        "registerFailed": "Registration failed. Please try again."
+      }
     },
     "verification": {
       "title": "Verification Code",

@@ -66,6 +66,7 @@
       "signingIn": "جارٍ تسجيل الدخول...",
       "noAccount": "ليس لديك حساب؟",
       "createAccount": "إنشاء حساب",
+      "registeredSuccess": "تم إنشاء الحساب بنجاح. سجّل الدخول بالبريد الإلكتروني وكلمة المرور.",
       "errors": {
         "missingFields": "الرجاء إدخال البريد الإلكتروني وكلمة المرور",
         "loginFailed": "فشل تسجيل الدخول",
@@ -86,11 +87,26 @@
       "firstName": "الاسم الأول",
       "lastName": "الاسم الأخير",
       "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
       "password": "كلمة المرور",
       "confirmPassword": "تأكيد كلمة المرور",
+      "firstNamePlaceholder": "فاطمة",
+      "lastNamePlaceholder": "أحمد",
+      "emailPlaceholder": "example@learnoo.com",
+      "phonePlaceholder": "201200000000",
+      "passwordPlaceholder": "أنشئ كلمة مرور قوية",
+      "confirmPasswordPlaceholder": "أكد كلمة المرور",
       "submit": "إنشاء حساب",
+      "creatingAccount": "جاري إنشاء الحساب…",
       "haveAccount": "لديك حساب بالفعل؟",
-      "login": "تسجيل الدخول"
+      "login": "تسجيل الدخول",
+      "errors": {
+        "missingFields": "يرجى تعبئة جميع الحقول",
+        "passwordMismatch": "كلمتا المرور غير متطابقتين",
+        "noToken": "لم يتم استلام رمز من الخادم",
+        "noPermission": "ليس لديك صلاحية للوصول إلى هذه المنصة",
+        "registerFailed": "فشل التسجيل. حاول مرة أخرى."
+      }
     },
     "verification": {
       "title": "رمز التحقق",

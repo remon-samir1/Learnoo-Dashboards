@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import Cookies, { CookieAttributes } from '@/lib/cookies';
+import { getPostAuthHref } from '@/src/lib/auth-post-login-redirect';
 import AuthPageLayout from '../components/AuthLayout';
 
 export default function LoginPage() {
@@ -15,7 +16,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [justRegistered, setJustRegistered] = useState(false);
   const locale = useLocale() || "ar";
+
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get('registered') !== '1') return;
+    setJustRegistered(true);
+    sp.delete('registered');
+    const qs = sp.toString();
+    const path = `${window.location.pathname}${qs ? `?${qs}` : ''}`;
+    window.history.replaceState(null, '', path);
+  }, []);
 
   return (
     <AuthPageLayout
@@ -23,6 +35,12 @@ export default function LoginPage() {
       subtitle={t('subtitle')}
     >
       <div className="flex flex-col gap-6">
+        {justRegistered ? (
+          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
+            <p className="font-sans text-xs leading-5 text-emerald-800">{t('registeredSuccess')}</p>
+          </div>
+        ) : null}
+
         {/* Email */}
         <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('email')}</label>
@@ -133,26 +151,10 @@ export default function LoginPage() {
       };
 
       Cookies.set('token', token, cookieOptions);
-      Cookies.set('user_role', userRole, cookieOptions);
+      Cookies.set('user_role', userRole ?? '', cookieOptions);
       Cookies.set('user_data', JSON.stringify(data.data), cookieOptions);
 
-      // Redirect based on role
-      if (userRole === 'Admin') {
-        router.push('/dashboard');
-      } else if (userRole === 'Doctor') {
-        router.push('/doctor/dashboard');
-      } 
-       else if (userRole === 'Student') {
-        router.push(`/${locale}/student`);
-      } 
-      
-      else {
-        setError(t('errors.noPermission'));
-        // Clear cookies if role is not authorized
-        Cookies.remove('token');
-        Cookies.remove('user_role');
-        Cookies.remove('user_data');
-      }
+      router.push(getPostAuthHref(locale, userRole));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {

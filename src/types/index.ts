@@ -278,7 +278,8 @@ export interface AuthMeta {
 
 
 
-  expires_at: string | null;
+  /** ISO datetime or numeric TTL in seconds (register/login meta). */
+  expires_at: string | number | null;
 
 
 
@@ -306,7 +307,8 @@ export interface RegisterRequest {
 
 
 
-  phone?: number;
+  /** E.164 or local digits as returned by the API (string). */
+  phone: string;
 
 
 

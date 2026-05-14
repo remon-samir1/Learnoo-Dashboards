@@ -39,9 +39,22 @@ const AUTH_COOKIE_NAME = 'token';
 const USER_COOKIE_NAME = 'user_data';
 const USER_ROLE_COOKIE_NAME = 'user_role';
 
+function cookieExpiryFromAuthMeta(meta: AuthMeta): number | Date {
+  const exp = meta.expires_at;
+  if (exp == null) return 30;
+  if (typeof exp === 'number' && Number.isFinite(exp) && exp > 0 && exp < 1e10) {
+    return new Date(Date.now() + exp * 1000);
+  }
+  if (typeof exp === 'string') {
+    const d = new Date(exp);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  return 30;
+}
+
 function setAuthCookies(user: User, meta: AuthMeta) {
   Cookies.set(AUTH_COOKIE_NAME, meta.token, {
-    expires: meta.expires_at ? new Date(meta.expires_at) : 30,
+    expires: cookieExpiryFromAuthMeta(meta),
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
@@ -177,7 +190,7 @@ export const useAuthStore = create<AuthState>()(
         
         try {
           await authApi.logout();
-        } catch (error) {
+        } catch {
           // Silently ignore logout API errors
         } finally {
           clearAuthCookies();
@@ -231,7 +244,7 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
-        } catch (error) {
+        } catch {
           clearAuthCookies();
           
           set({
