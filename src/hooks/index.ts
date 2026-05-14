@@ -27,6 +27,25 @@ export type QueryOptions = {
   initialData?: unknown;
 };
 
+/** Keys allowed on the optional trailing `QueryOptions` argument to hooks from `createQueryHook`. */
+const QUERY_OPTION_KEYS = new Set<string>([
+  'enabled',
+  'refetchOnWindowFocus',
+  'refetchInterval',
+  'initialData',
+]);
+
+function isTrailingQueryOptions(value: unknown): value is QueryOptions {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  const keys = Object.keys(value as Record<string, unknown>);
+  if (keys.length === 0) {
+    return false;
+  }
+  return keys.every((k) => QUERY_OPTION_KEYS.has(k));
+}
+
 // ============================================
 // Base Query Hook Factory
 // ============================================
@@ -36,12 +55,11 @@ export function createQueryHook<T, P extends unknown[] = []>(
   defaultOptions: QueryOptions = {}
 ) {
   return function useQuery(...paramsAndOptions: [...P, QueryOptions?]) {
-    const maybeOptions = paramsAndOptions.length > 0 &&
-      typeof paramsAndOptions[paramsAndOptions.length - 1] === 'object' &&
-      paramsAndOptions[paramsAndOptions.length - 1] !== null &&
-      !Array.isArray(paramsAndOptions[paramsAndOptions.length - 1])
-      ? (paramsAndOptions.pop() as QueryOptions)
-      : {};
+    const maybeOptions =
+      paramsAndOptions.length > 0 &&
+      isTrailingQueryOptions(paramsAndOptions[paramsAndOptions.length - 1])
+        ? (paramsAndOptions.pop() as QueryOptions)
+        : {};
     const params = paramsAndOptions as unknown as P;
     const options = maybeOptions;
 

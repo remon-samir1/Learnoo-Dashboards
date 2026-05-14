@@ -123,7 +123,7 @@ export function hubQuizTypeLabel(
   return t('examsTypeRaw', { type: String(raw).trim() });
 }
 
-export type HubQuizBucket = 'available' | 'upcoming' | 'locked' | 'hidden';
+export type HubQuizBucket = 'available' | 'upcoming' | 'locked' | 'expired' | 'hidden';
 
 export function classifyHubQuizRow(row: HubQuizListRow, nowMs: number): HubQuizBucket {
   const attrs = hubQuizAttrs(row);
@@ -149,7 +149,7 @@ export function classifyHubQuizRow(row: HubQuizListRow, nowMs: number): HubQuizB
     return 'upcoming';
   }
   if (!Number.isNaN(end) && end < nowMs) {
-    return 'locked';
+    return 'expired';
   }
   if (rem === 0) {
     return 'locked';

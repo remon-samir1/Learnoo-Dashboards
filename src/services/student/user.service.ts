@@ -71,8 +71,12 @@ export const getStudentCourses = async (categoryId?: number | string) => {
   const token = userData?.token;
 
   try {
-    const query = categoryId ? `?category_id=${categoryId}` : "";
-    const res = await fetch(`https://api.learnoo.app/v1/course${query}`, {
+    const params = new URLSearchParams();
+    params.set("activated", "1");
+    if (categoryId != null && String(categoryId).trim() !== "") {
+      params.set("category_id", String(categoryId));
+    }
+    const res = await fetch(`https://api.learnoo.app/v1/course?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

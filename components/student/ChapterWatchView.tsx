@@ -14,6 +14,7 @@ import {
   Play,
   Send,
 } from 'lucide-react';
+import type { ErrorDetails } from 'hls.js';
 import toast from 'react-hot-toast';
 import type { Chapter, Quiz } from '@/src/types';
 import { api, ApiError } from '@/src/lib/api';
@@ -29,10 +30,8 @@ import {
   discussionTypeLabel,
   normalizeDiscussions,
 } from '@/components/student/watch/watchChapterDiscussionUtils';
-
-function chapterExtras(ch: Chapter) {
-  return ch.attributes as Chapter['attributes'] & { playlist?: string };
-}
+import { HlsVideoPlayer } from '@/components/student/watch/HlsVideoPlayer';
+import { pickChapterStreams } from '@/src/lib/chapter-playback-urls';
 
 type ChapterAttachment = NonNullable<Chapter['attributes']['attachments']>[number];
 
@@ -69,7 +68,7 @@ function formatDiscussionTime(iso: string | null, locale: string): string | null
   }
 }
 
-function formatMomentSeconds(sec: number | null, locale: string): string | null {
+function formatMomentSeconds(sec: number | null): string | null {
   if (sec == null || !Number.isFinite(sec) || sec < 0) return null;
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
@@ -120,13 +119,16 @@ export default function ChapterWatchView({
   const chapterNumericId = Number.parseInt(chapterId, 10);
   const chapterIdForApi = Number.isFinite(chapterNumericId) ? chapterNumericId : NaN;
 
-  const videoSrc = useMemo(() => {
-    if (!chapter) return '';
+  const { primarySrc: videoSrc, mp4FallbackUrl } = useMemo(() => {
+    if (!chapter) return { primarySrc: '', mp4FallbackUrl: '' };
     const attrs = chapter.attributes;
-    const extras = chapterExtras(chapter);
-    const v = attrs.video?.trim();
-    const p = extras.playlist?.trim();
-    return v || p || '';
+    const cid = Number.parseInt(String(chapter.id), 10);
+    return pickChapterStreams(Number.isFinite(cid) ? cid : 0, {
+      video: attrs.video,
+      playlist: attrs.playlist,
+      video_hls_url: attrs.video_hls_url,
+      video_mp4_url: attrs.video_mp4_url,
+    });
   }, [chapter]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
@@ -191,9 +193,9 @@ export default function ChapterWatchView({
   }, [playbackSec, videoSrc]);
 
   const momentDisplay = useMemo(() => {
-    const label = formatMomentSeconds(momentForPost, locale);
+    const label = formatMomentSeconds(momentForPost);
     return label ? t('composerMomentLabel', { time: label }) : null;
-  }, [momentForPost, locale, t]);
+  }, [momentForPost, t]);
 
   const viewByMinute = useMemo(
     () => Math.max(0, Number(chapter?.attributes?.view_by_minute ?? 0) || 0),
@@ -239,6 +241,14 @@ export default function ChapterWatchView({
       router.refresh();
     },
     [router]
+  );
+
+  const onFatalPlaybackError = useCallback(
+    (info: { reason: string; hlsDetails?: ErrorDetails }) => {
+      console.error('[ChapterWatchView] Fatal HLS playback:', info.reason, info.hlsDetails ?? '');
+      toast.error(t('hlsPlaybackError'));
+    },
+    [t]
   );
 
   useChapterViewRecording({
@@ -410,18 +420,21 @@ export default function ChapterWatchView({
                     </Link>
                   </div>
                 ) : (
-                  <video
+                  <HlsVideoPlayer
                     id="watch-chapter-video"
+                    key={`${videoSrc}|${mp4FallbackUrl}`}
                     ref={videoRef}
-                    key={videoSrc}
                     src={videoSrc}
+                    mp4FallbackUrl={mp4FallbackUrl}
+                    switchingPlaybackLabel={t('switchingPlaybackMethod')}
                     controls
                     playsInline
                     className="aspect-video w-full object-contain"
                     preload="metadata"
+                    onFatalPlaybackError={onFatalPlaybackError}
                   >
                     {tDetails('watchNoVideo')}
-                  </video>
+                  </HlsVideoPlayer>
                 )
               ) : (
                 <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
@@ -577,7 +590,7 @@ export default function ChapterWatchView({
                   const author = discussionAuthorName(d) ?? t('anonymousUser');
                   const created = formatDiscussionTime(discussionCreatedAt(d), locale);
                   const momentSec = discussionMoment(d);
-                  const momentLabel = formatMomentSeconds(momentSec, locale);
+                  const momentLabel = formatMomentSeconds(momentSec);
                   const typeTag = discussionTypeLabel(d);
                   const isQuestion = typeTag === 'question';
 

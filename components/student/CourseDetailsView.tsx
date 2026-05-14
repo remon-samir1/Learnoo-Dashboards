@@ -16,15 +16,23 @@ import {
   ListOrdered,
   Lock,
   Play,
+  Power,
+  Radio,
   Tag,
   Target,
+  XCircle,
 } from 'lucide-react';
 import { useCourse } from '@/src/hooks/useCourses';
+import {
+  coerceCanWatchExplicitTrue,
+  getChapterPreviewAccess,
+} from '@/src/lib/student-chapter-access';
 import { courseIsLocked } from '@/src/lib/student-course-lock';
 import { quizRequiresCourseActivationLock } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import type { Chapter, Course, Lecture, Note } from '@/src/types';
 import StudentCourseNotesTab from '@/components/student/StudentCourseNotesTab';
+import StudentCommunityFeed from '@/components/student/community/StudentCommunityFeed';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
 
@@ -32,9 +40,14 @@ import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/
 const C_PRIMARY = '#2D43D1';
 const C_SECTION_BG = '#F8F9FB';
 
-type DetailTab = 'lectures' | 'exams' | 'notes';
+type DetailTab = 'lectures' | 'liveSession' | 'exams' | 'notes' | 'community';
 
 type StudentDetailsT = ReturnType<typeof useTranslations<'courses.studentDetails'>>;
+
+type ActivationModalTarget =
+  | { mode: 'course'; itemId: string; title: string }
+  | { mode: 'chapter'; itemId: string; title: string }
+  | { mode: 'quiz'; itemId: string; title: string };
 
 function hasPdfAttachment(ch: Chapter): boolean {
   const atts = ch.attributes.attachments ?? [];
@@ -75,7 +88,15 @@ function sortedLectures(lectures: Lecture[] | undefined): Lecture[] {
 
 function detailTabFromSearchParams(searchParams: URLSearchParams): DetailTab {
   const q = searchParams.get('tab');
-  if (q === 'exams' || q === 'notes' || q === 'lectures') return q;
+  if (
+    q === 'exams' ||
+    q === 'notes' ||
+    q === 'lectures' ||
+    q === 'community' ||
+    q === 'liveSession'
+  ) {
+    return q;
+  }
   return 'lectures';
 }
 
@@ -95,7 +116,7 @@ function examRequiresCourseActivation(
 }
 
 /** Buckets for student exam UI. `null` = hide (e.g. draft). */
-type StudentExamBucket = 'active' | 'upcoming' | 'completed' | 'locked';
+type StudentExamBucket = 'active' | 'upcoming' | 'completed' | 'locked' | 'expired';
 
 function classifyExamBucket(
   exam: NonNullable<Course['attributes']['exams']>[number]
@@ -106,11 +127,13 @@ function classifyExamBucket(
 
   if (examRequiresCourseActivation(exam)) return 'locked';
 
-  // Keep “active” strict: only this token (case-insensitive) → Available Now / Start Exam.
-  if (s === 'active') return 'active';
-
-  const upcoming = ['upcoming', 'scheduled', 'pending', 'not_started', 'notstarted', 'soon', 'waiting'];
-  if (upcoming.includes(s)) return 'upcoming';
+  const rawAttrs = (exam?.attributes ?? {}) as Record<string, unknown>;
+  const startRaw = rawAttrs.start_time;
+  const endRaw = rawAttrs.end_time;
+  const startTs =
+    typeof startRaw === 'string' && startRaw.trim() ? new Date(startRaw).getTime() : NaN;
+  const endTs = typeof endRaw === 'string' && endRaw.trim() ? new Date(endRaw).getTime() : NaN;
+  const now = Date.now();
 
   const completed = [
     'completed',
@@ -124,19 +147,29 @@ function classifyExamBucket(
   ];
   if (completed.includes(s)) return 'completed';
 
+  if (s.includes('complete') || s.includes('finish') || s.includes('graded')) return 'completed';
+
+  if (!Number.isNaN(endTs) && endTs < now) {
+    return 'expired';
+  }
+
+  // Align with student Exams hub (`classifyHubQuizRow`): `active` still respects start window.
+  if (s === 'active') {
+    if (!Number.isNaN(startTs) && startTs > now) return 'upcoming';
+    return 'active';
+  }
+
+  const upcoming = ['upcoming', 'scheduled', 'pending', 'not_started', 'notstarted', 'soon', 'waiting'];
+  if (upcoming.includes(s)) return 'upcoming';
+
   const locked = ['locked', 'lock', 'unavailable', 'disabled', 'closed', 'inactive'];
   if (locked.includes(s)) return 'locked';
 
-  if (s.includes('complete') || s.includes('finish') || s.includes('graded')) return 'completed';
   if (s.includes('upcome') || s.includes('schedule') || s.includes('pend')) return 'upcoming';
   if (s.includes('lock') || s.includes('close')) return 'locked';
 
   if (!s) {
-    const rawStart = (exam?.attributes as { start_time?: string | null } | undefined)?.start_time;
-    if (rawStart?.trim()) {
-      const ts = new Date(rawStart).getTime();
-      if (!Number.isNaN(ts) && ts > Date.now()) return 'upcoming';
-    }
+    if (!Number.isNaN(startTs) && startTs > now) return 'upcoming';
     return 'locked';
   }
 
@@ -165,6 +198,7 @@ type LooseExamAttrs = {
   obtained_marks?: number;
   has_activation?: unknown;
   is_public?: unknown;
+  course_id?: number | string | null;
 };
 
 function looseExamAttrs(exam: NonNullable<Course['attributes']['exams']>[number]): LooseExamAttrs {
@@ -373,7 +407,7 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [activationOpen, setActivationOpen] = useState(false);
+  const [activationTarget, setActivationTarget] = useState<ActivationModalTarget | null>(null);
 
   const numericId = Number.parseInt(courseId, 10);
   const idValid = Number.isFinite(numericId) && numericId > 0;
@@ -421,8 +455,10 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
 
   const tabs: { key: DetailTab; label: string }[] = [
     { key: 'lectures', label: t('tabs.lectures') },
+    { key: 'liveSession', label: t('tabs.liveSession') },
     { key: 'exams', label: t('tabs.exams') },
     { key: 'notes', label: t('tabs.notes') },
+    { key: 'community', label: t('tabs.community') },
   ];
 
   if (!idValid) {
@@ -517,7 +553,13 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
               <p className="text-sm font-medium text-[#475569]">{tCard('activateToAccess')}</p>
               <button
                 type="button"
-                onClick={() => setActivationOpen(true)}
+                onClick={() =>
+                  setActivationTarget({
+                    mode: 'course',
+                    itemId: courseId,
+                    title: lockedTitle,
+                  })
+                }
                 className="mt-6 inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-[#2137D6] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] active:bg-[#162699]"
               >
                 {tCard('activateCourse')}
@@ -527,10 +569,17 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
         </div>
 
         <StudentCourseActivationModal
-          open={activationOpen}
-          onClose={() => setActivationOpen(false)}
-          courseId={courseId}
-          courseTitle={lockedTitle}
+          open={activationTarget !== null}
+          onClose={() => setActivationTarget(null)}
+          courseId={activationTarget?.itemId ?? courseId}
+          courseTitle={activationTarget?.title ?? lockedTitle}
+          activationItemType={
+            activationTarget?.mode === 'chapter'
+              ? 'chapter'
+              : activationTarget?.mode === 'quiz'
+                ? 'quiz'
+                : 'course'
+          }
           onActivated={async () => {
             await refetch();
           }}
@@ -631,12 +680,35 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
           <div className="min-h-[120px]">
             {tab === 'lectures' && (
               <LecturesTab
-                courseId={courseId}
                 locale={locale}
                 lectures={lectures}
                 exams={course.attributes.exams}
                 t={t}
+                onRequestChapterActivation={(chapterId, chapterTitle) =>
+                  setActivationTarget({
+                    mode: 'chapter',
+                    itemId: chapterId,
+                    title: chapterTitle,
+                  })
+                }
               />
+            )}
+            {tab === 'liveSession' && (
+              <div
+                className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[#E5E7EB] bg-white px-6 py-14 text-center sm:py-16"
+                role="status"
+                aria-live="polite"
+              >
+                <div
+                  className="flex size-14 items-center justify-center rounded-full bg-[#EEF2FF] text-[#2D43D1]"
+                  aria-hidden
+                >
+                  <Radio className="size-7" strokeWidth={1.75} />
+                </div>
+                <p className="max-w-md text-sm font-medium text-[#0F172A] sm:text-base">
+                  {t('liveSessionUnderDevelopment')}
+                </p>
+              </div>
             )}
             {tab === 'exams' && (
               <ExamsTab
@@ -646,7 +718,13 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
                 locale={locale}
                 lectures={lectures}
                 t={t}
-                onRequestCourseActivation={() => setActivationOpen(true)}
+                onRequestQuizActivation={(quizId, title) =>
+                  setActivationTarget({
+                    mode: 'quiz',
+                    itemId: quizId,
+                    title,
+                  })
+                }
               />
             )}
             {tab === 'notes' && (
@@ -659,16 +737,26 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
                 }}
               />
             )}
+            {tab === 'community' && (
+              <StudentCommunityFeed courseId={numericId} embedded />
+            )}
           </div>
         </div>
       )}
 
       {!isLoading && !error && course && (
         <StudentCourseActivationModal
-          open={activationOpen}
-          onClose={() => setActivationOpen(false)}
-          courseId={courseId}
-          courseTitle={course.attributes.title ?? ''}
+          open={activationTarget !== null}
+          onClose={() => setActivationTarget(null)}
+          courseId={activationTarget?.itemId ?? courseId}
+          courseTitle={activationTarget?.title ?? (course.attributes.title ?? '')}
+          activationItemType={
+            activationTarget?.mode === 'chapter'
+              ? 'chapter'
+              : activationTarget?.mode === 'quiz'
+                ? 'quiz'
+                : 'course'
+          }
           onActivated={async () => {
             await refetch();
           }}
@@ -679,18 +767,20 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
 }
 
 function LecturesTab({
-  courseId,
   locale,
   lectures,
   exams,
   t,
+  onRequestChapterActivation,
 }: {
-  courseId: string;
   locale: string;
   lectures: Lecture[];
   exams: Course['attributes']['exams'] | undefined;
   t: StudentDetailsT;
+  onRequestChapterActivation: (chapterId: string, chapterTitle: string) => void;
 }) {
+  const chapterIdsWithExams = useMemo(() => chapterIdsLinkedToExams(exams), [exams]);
+
   if (!lectures.length) {
     return (
       <p className="rounded-2xl border border-[#E5E7EB] bg-white px-6 py-10 text-center text-sm text-[#64748B]">
@@ -698,8 +788,6 @@ function LecturesTab({
       </p>
     );
   }
-
-  const chapterIdsWithExams = useMemo(() => chapterIdsLinkedToExams(exams), [exams]);
 
   return (
     <div className="flex flex-col gap-8 sm:gap-10">
@@ -729,13 +817,13 @@ function LecturesTab({
                 chapters.map((chapter, chIdx) => (
                   <ChapterRow
                     key={chapter.id}
-                    courseId={courseId}
                     locale={locale}
                     chapter={chapter}
                     itemIndexWithinLecture={chIdx + 1}
                     partCount={partCount}
                     chapterHasExam={chapterIdsWithExams.has(String(chapter.id))}
                     t={t}
+                    onRequestChapterActivation={onRequestChapterActivation}
                   />
                 ))
               )}
@@ -748,30 +836,57 @@ function LecturesTab({
 }
 
 function ChapterRow({
-  courseId,
   locale,
   chapter,
   itemIndexWithinLecture,
   partCount,
   chapterHasExam,
   t,
+  onRequestChapterActivation,
 }: {
-  courseId: string;
   locale: string;
   chapter: Chapter;
   itemIndexWithinLecture: number;
   partCount: number;
   chapterHasExam: boolean;
   t: StudentDetailsT;
+  onRequestChapterActivation: (chapterId: string, chapterTitle: string) => void;
 }) {
   const attrs = chapter.attributes;
   const hasPdf = hasPdfAttachment(chapter);
   const pdfUrl = getFirstPdfUrl(chapter);
   const exhausted = isViewsExhausted(chapter);
-  /** Treat missing `can_watch` as allowed; only explicit `false` blocks. */
-  const cannotWatch = attrs.can_watch === false;
+  const canWatchExplicitTrue = coerceCanWatchExplicitTrue(attrs.can_watch);
+  /** CASE 2: views exhausted without explicit `can_watch` → block + activation. */
+  const viewsAccessBlocked = exhausted && !canWatchExplicitTrue;
+  /** CASE 2: exhausted + explicit allow → full access (overrides preview-only locks). */
+  const postExhaustionAccess = exhausted && canWatchExplicitTrue;
   const chapterLocked = attrs.is_locked === true;
-  const locked = cannotWatch || chapterLocked;
+  const previewAccess = getChapterPreviewAccess({
+    is_free_preview: attrs.is_free_preview,
+    is_free_preview_attachment: attrs.is_free_preview_attachment,
+  });
+  /** CASE 1: preview flags only. `can_watch` is not read while views remain. */
+  const lectureAllowed =
+    postExhaustionAccess || (!exhausted && previewAccess.canWatchLecture);
+  const attachmentsAllowed =
+    postExhaustionAccess || (!exhausted && previewAccess.canAccessAttachments);
+  const videoPlayable =
+    !chapterLocked && !viewsAccessBlocked && lectureAllowed;
+  const pdfLinkActive = Boolean(
+    pdfUrl && !chapterLocked && !viewsAccessBlocked && attachmentsAllowed,
+  );
+  const canActivateChapter =
+    !viewsAccessBlocked &&
+    !chapterLocked &&
+    !exhausted &&
+    !previewAccess.canWatchLecture;
+  const canOpenActivationForPdf = Boolean(
+    pdfUrl && (viewsAccessBlocked || canActivateChapter),
+  );
+  const chapterTitleForModal = attrs.title?.trim() ?? '';
+  const openChapterActivation = () =>
+    onRequestChapterActivation(String(chapter.id), chapterTitleForModal);
   const duration = attrs.duration ?? '—';
   const maxViews = attrs.max_views;
   const remaining =
@@ -790,23 +905,28 @@ function ChapterRow({
   let iconColor = C_PRIMARY;
   let IconEl: typeof Play | typeof Lock = Play;
 
-  if (locked) {
+  if (chapterLocked) {
     iconWrap =
       'flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12';
     iconColor = '#94A3B8';
     IconEl = Lock;
-  } else if (exhausted) {
+  } else if (viewsAccessBlocked) {
     iconWrap =
       'flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12';
     iconColor = '#D97706';
     IconEl = Play;
+  } else if (!previewAccess.canWatchLecture && !postExhaustionAccess) {
+    iconWrap =
+      'flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12';
+    iconColor = '#94A3B8';
+    IconEl = Lock;
   }
 
   const badgeBase =
     'inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight';
 
   const pdfBadge = hasPdf ? (
-    pdfUrl ? (
+    pdfUrl && pdfLinkActive ? (
       <a
         href={pdfUrl}
         target="_blank"
@@ -815,8 +935,16 @@ function ChapterRow({
       >
         {t('hasPdf')}
       </a>
+    ) : pdfUrl && canOpenActivationForPdf ? (
+      <button
+        type="button"
+        onClick={openChapterActivation}
+        className={`${badgeBase} cursor-pointer bg-[#F1F5F9] text-[#64748B] transition hover:bg-[#E2E8F0]`}
+      >
+        {t('hasPdf')}
+      </button>
     ) : (
-      <span className={`${badgeBase} bg-[#EFF6FF] text-[#1E40AF]`}>{t('hasPdf')}</span>
+      <span className={`${badgeBase} bg-[#F1F5F9] text-[#64748B]`}>{t('hasPdf')}</span>
     )
   ) : null;
 
@@ -828,7 +956,7 @@ function ChapterRow({
   return (
     <div className="flex flex-col gap-5 py-6 sm:flex-row sm:items-stretch sm:gap-8 sm:py-6 md:gap-10">
       <div className="flex min-w-0 flex-1 flex-row items-start gap-4 sm:items-center sm:gap-6">
-        {!locked && !exhausted ? (
+        {videoPlayable ? (
           <Link
             href={watchHref}
             prefetch
@@ -842,8 +970,8 @@ function ChapterRow({
         ) : (
           <div
             className={`${iconWrap} shrink-0`}
-            style={{ color: locked || exhausted ? undefined : iconColor }}
-            aria-hidden={locked}
+            style={{ color: !videoPlayable ? undefined : iconColor }}
+            aria-hidden={!videoPlayable}
           >
             <IconEl className="size-[22px] sm:size-5" strokeWidth={2} fill="none" />
           </div>
@@ -880,8 +1008,17 @@ function ChapterRow({
         </div>
       </div>
 
-      <div className="flex w-full shrink-0 flex-col gap-2.5 sm:w-[10rem] sm:justify-center sm:gap-3 md:w-[10.5rem]">
-        {locked ? (
+      <div className="flex w-full shrink-0 flex-col gap-2.5 sm:min-w-[10.5rem] sm:w-auto sm:justify-center sm:gap-3 md:min-w-[12rem]">
+        {videoPlayable ? (
+          <Link
+            href={watchHref}
+            prefetch
+            className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
+          >
+            {t('watch')}
+            <ChevronRight className="size-4 shrink-0 rtl:rotate-180" strokeWidth={2.5} />
+          </Link>
+        ) : chapterLocked ? (
           <button
             type="button"
             disabled
@@ -889,13 +1026,31 @@ function ChapterRow({
           >
             {t('locked')}
           </button>
-        ) : exhausted ? (
+        ) : viewsAccessBlocked ? (
           <button
             type="button"
+            onClick={openChapterActivation}
             className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
           >
             {t('reactivate')}
           </button>
+        ) : !previewAccess.canWatchLecture ? (
+          <div className="flex w-full flex-col gap-2">
+            <div className="flex flex-wrap items-stretch justify-end gap-2">
+              <span className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs font-semibold text-[#64748B] sm:min-h-10 sm:flex-none sm:px-3.5 sm:text-[13px]">
+                <Lock className="size-3.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
+                {t('locked')}
+              </span>
+              <button
+                type="button"
+                onClick={openChapterActivation}
+                className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2D43D1] px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:flex-1 sm:px-4 sm:text-sm"
+              >
+                <Power className="size-3.5 shrink-0 opacity-95 sm:size-4" strokeWidth={2} aria-hidden />
+                {t('activateChapter')}
+              </button>
+            </div>
+          </div>
         ) : (
           <Link
             href={watchHref}
@@ -925,7 +1080,7 @@ function ExamsTab({
   locale,
   lectures,
   t,
-  onRequestCourseActivation,
+  onRequestQuizActivation,
 }: {
   exams: Course['attributes']['exams'] | undefined;
   courseTitle: string;
@@ -933,14 +1088,15 @@ function ExamsTab({
   locale: string;
   lectures: Lecture[];
   t: StudentDetailsT;
-  onRequestCourseActivation: () => void;
+  onRequestQuizActivation: (quizId: string, title: string) => void;
 }) {
-  const { active, upcoming, completed, locked } = useMemo(() => {
+  const { active, upcoming, completed, locked, expired } = useMemo(() => {
     const buckets: Record<StudentExamBucket, CourseExamItem[]> = {
       active: [],
       upcoming: [],
       completed: [],
       locked: [],
+      expired: [],
     };
     if (!exams?.length) return buckets;
     for (const exam of exams) {
@@ -1302,6 +1458,99 @@ function ExamsTab({
         </section>
       ) : null}
 
+      {expired.length > 0 ? (
+        <section className="space-y-4 sm:space-y-5">
+          <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">{t('examsExpiredTitle')}</h2>
+          <ul className={gridCls}>
+            {expired.map((exam) => {
+              const examId = String(exam?.attributes?.id ?? exam?.id ?? '');
+              const attrs = looseExamAttrs(exam);
+              const title = attrs.title?.trim() || '—';
+              const chapterLine = chapterLineForExam(exam, lectures, t);
+              const endStr = formatExamDate(attrs.end_time ?? null, locale);
+              const typeLabel = examTypeDisplayLabel(attrs, t);
+              const attemptsLines = attemptsSummaryLinesForCourseExam(exam, t);
+              const durationMin =
+                typeof attrs.duration === 'number' && Number.isFinite(attrs.duration) ? attrs.duration : 0;
+              const totalMarksNum =
+                typeof attrs.total_marks === 'number' && Number.isFinite(attrs.total_marks)
+                  ? attrs.total_marks
+                  : null;
+              const passingMarksNum =
+                typeof attrs.passing_marks === 'number' && Number.isFinite(attrs.passing_marks)
+                  ? attrs.passing_marks
+                  : null;
+              const showPassMarks = totalMarksNum != null && passingMarksNum != null;
+
+              return (
+                <li key={examId || title} className={`${cardBase} border-rose-100`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-bold leading-snug text-[#0F172A] sm:text-lg">{title}</h3>
+                      <p className="mt-1.5 text-sm text-[#64748B]">{examSubtitle(attrs, courseTitle)}</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-800 sm:text-xs">
+                      {t('examsExpiredBadge')}
+                    </span>
+                  </div>
+                  <div className="mt-3 rounded-lg border border-rose-200/90 bg-rose-50/90 px-3 py-2.5">
+                    <div className="flex gap-2">
+                      <XCircle className="mt-0.5 size-4 shrink-0 text-rose-700" strokeWidth={2} aria-hidden />
+                      <p className="text-sm font-medium leading-snug text-rose-950">{t('examsExpiredHint')}</p>
+                    </div>
+                    {endStr ? (
+                      <p className="mt-2 text-xs font-medium text-rose-900/90">{t('examsEndedOn', { date: endStr })}</p>
+                    ) : null}
+                  </div>
+                  <div className="mt-4 space-y-2.5 text-sm text-[#64748B]">
+                    <div className="flex items-center gap-2.5">
+                      <BookOpen className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+                      <span>{chapterLine}</span>
+                    </div>
+                    {typeLabel ? (
+                      <div className="flex items-center gap-2.5">
+                        <Tag className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+                        <span>{t('examsTypeLabel', { type: typeLabel })}</span>
+                      </div>
+                    ) : null}
+                    {durationMin > 0 ? (
+                      <div className="flex items-center gap-2.5">
+                        <Clock className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+                        <span>{t('examsDurationMinutes', { count: durationMin })}</span>
+                      </div>
+                    ) : null}
+                    {showPassMarks ? (
+                      <div className="flex items-center gap-2.5">
+                        <Target className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+                        <span>
+                          {t('examsPassMarks', {
+                            passing: passingMarksNum ?? 0,
+                            total: totalMarksNum ?? 0,
+                          })}
+                        </span>
+                      </div>
+                    ) : null}
+                    {attemptsLines.map((line, li) => (
+                      <div key={`e-${li}-${line}`} className="flex items-center gap-2.5">
+                        <ListOrdered className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+                        <span>{line}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    disabled
+                    className="mt-5 w-full cursor-not-allowed rounded-lg bg-[#F1F5F9] py-3 text-center text-sm font-semibold text-[#94A3B8] sm:mt-6"
+                  >
+                    {t('examsExpiredClosed')}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+
       {locked.length > 0 ? (
         <section className="space-y-4 sm:space-y-5">
           <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
@@ -1346,7 +1595,17 @@ function ExamsTab({
                   {needsActivation ? (
                     <div className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
                       <p className="text-sm font-semibold text-amber-950">{t('examsActivationRequired')}</p>
+                      <p className="mt-1 text-xs font-medium text-amber-900/85">{t('examsPrivateExamHint')}</p>
                       <p className="mt-1 text-xs font-medium text-amber-900/85">{t('examsActivationRequiredSub')}</p>
+                      {(() => {
+                        const cid =
+                          attrs.course_id != null && String(attrs.course_id).trim() !== ''
+                            ? String(attrs.course_id)
+                            : courseId.trim() || null;
+                        return cid ? (
+                          <p className="mt-2 text-xs font-semibold text-amber-950">{t('examsCourseIdLabel', { id: cid })}</p>
+                        ) : null;
+                      })()}
                     </div>
                   ) : null}
                   <div className="mt-4 space-y-2.5 text-sm text-[#94A3B8]">
@@ -1399,10 +1658,10 @@ function ExamsTab({
                   {needsActivation ? (
                     <button
                       type="button"
-                      onClick={onRequestCourseActivation}
+                      onClick={() => onRequestQuizActivation(examId, title)}
                       className="mt-5 w-full rounded-xl bg-[#2137D6] px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] sm:mt-6"
                     >
-                      {t('examsActivateCourseForExam')}
+                      {t('examsActivateQuizForAccess')}
                     </button>
                   ) : (
                     <button

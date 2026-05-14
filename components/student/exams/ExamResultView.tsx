@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { BookOpen, CircleX, Home, RefreshCw, Trophy } from 'lucide-react';
+import { BookOpen, ChevronLeft, CircleX, Home, ListChecks, RefreshCw, Trophy } from 'lucide-react';
+import { ExamAnswersReview } from '@/components/student/exams/ExamAnswersReview';
+import { normalizeQuestions } from '@/src/lib/student-exam-question-utils';
 import {
   clearStudentQuizResultPayload,
   readStudentQuizResultPayload,
@@ -43,9 +45,11 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
   const t = useTranslations('courses.studentExamResult');
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const [payload, setPayload] = useState<StudentQuizResultPayload | null | undefined>(undefined);
+  const [showAnswerReview, setShowAnswerReview] = useState(false);
 
   useEffect(() => {
     const p = readStudentQuizResultPayload(quizId);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from sessionStorage once per quizId (no external store subscription)
     setPayload(p);
   }, [quizId]);
 
@@ -94,6 +98,14 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
     router.push(retryHref);
   };
 
+  const quizForReview = payload.quizForReview;
+  const selectionsForReview = payload.selectionsForReview;
+  const canAnswerReview = Boolean(
+    quizForReview &&
+      selectionsForReview &&
+      normalizeQuestions(quizForReview).length > 0,
+  );
+
   const bannerBg = passed ? '#16A34A' : '#DC2626';
   const quizTitle = quizInfo.title?.trim() || '—';
 
@@ -130,68 +142,106 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
         </header>
 
         <div className="flex flex-1 flex-col gap-10 px-6 py-10 sm:px-12 sm:py-12">
-          <h2 className="text-center text-lg font-semibold leading-snug text-[#0F172A] sm:text-xl">{quizTitle}</h2>
+          {showAnswerReview && canAnswerReview && quizForReview && selectionsForReview ? (
+            <>
+              <div className="flex flex-col gap-4 border-b border-slate-100 pb-6">
+                <button
+                  type="button"
+                  onClick={() => setShowAnswerReview(false)}
+                  className="inline-flex w-fit items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-[#334155] transition-colors hover:bg-slate-100"
+                >
+                  <ChevronLeft className="size-4 shrink-0 rtl:rotate-180" strokeWidth={2} aria-hidden />
+                  {t('backFromReview')}
+                </button>
+                <h2 className="text-start text-lg font-semibold leading-snug text-[#0F172A] sm:text-xl">
+                  {t('answerReviewTitle')}
+                </h2>
+                <p className="text-sm text-slate-600">{quizTitle}</p>
+              </div>
+              <ExamAnswersReview
+                quiz={quizForReview}
+                selections={selectionsForReview}
+                locale={locale}
+              />
+            </>
+          ) : (
+            <>
+              <h2 className="text-center text-lg font-semibold leading-snug text-[#0F172A] sm:text-xl">{quizTitle}</h2>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
-            <div className="rounded-xl border border-[#E8ECF2] bg-white px-5 py-6 text-center shadow-sm">
-              <p className="text-3xl font-bold tabular-nums sm:text-[2rem]" style={{ color: PRIMARY }}>
-                {yourPct != null ? formatPercent(yourPct) : '—'}
-              </p>
-              <p className="mt-2 text-[13px] font-medium text-[#64748B]">{t('yourScore')}</p>
-            </div>
-            <div className="rounded-xl border border-[#E8ECF2] bg-white px-5 py-6 text-center shadow-sm">
-              <p className="text-3xl font-bold tabular-nums text-[#0F172A] sm:text-[2rem]">{scoreMarksLine}</p>
-              <p className="mt-2 text-[13px] font-medium text-[#64748B]">{t('scoreMarks')}</p>
-            </div>
-            <div className="rounded-xl border border-[#E8ECF2] bg-white px-5 py-6 text-center shadow-sm">
-              <p className="text-3xl font-bold tabular-nums text-[#0F172A] sm:text-[2rem]">
-                {passPct != null ? formatPercent(passPct) : '—'}
-              </p>
-              <p className="mt-2 text-[13px] font-medium text-[#64748B]">{t('passingScore')}</p>
-            </div>
-          </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
+                <div className="rounded-xl border border-[#E8ECF2] bg-white px-5 py-6 text-center shadow-sm">
+                  <p className="text-3xl font-bold tabular-nums sm:text-[2rem]" style={{ color: PRIMARY }}>
+                    {yourPct != null ? formatPercent(yourPct) : '—'}
+                  </p>
+                  <p className="mt-2 text-[13px] font-medium text-[#64748B]">{t('yourScore')}</p>
+                </div>
+                <div className="rounded-xl border border-[#E8ECF2] bg-white px-5 py-6 text-center shadow-sm">
+                  <p className="text-3xl font-bold tabular-nums text-[#0F172A] sm:text-[2rem]">{scoreMarksLine}</p>
+                  <p className="mt-2 text-[13px] font-medium text-[#64748B]">{t('scoreMarks')}</p>
+                </div>
+                <div className="rounded-xl border border-[#E8ECF2] bg-white px-5 py-6 text-center shadow-sm">
+                  <p className="text-3xl font-bold tabular-nums text-[#0F172A] sm:text-[2rem]">
+                    {passPct != null ? formatPercent(passPct) : '—'}
+                  </p>
+                  <p className="mt-2 text-[13px] font-medium text-[#64748B]">{t('passingScore')}</p>
+                </div>
+              </div>
 
-          <dl className="grid gap-3 rounded-xl border border-[#E8ECF2] bg-[#F8FAFC] px-4 py-4 text-sm sm:grid-cols-2 sm:px-6 sm:py-5">
-            <div>
-              <dt className="font-medium text-[#64748B]">{t('finishedAt')}</dt>
-              <dd className="mt-1 font-semibold text-[#0F172A]">{formatFinishedAt(results.finished_at, locale)}</dd>
-            </div>
-            <div>
-              <dt className="font-medium text-[#64748B]">{t('timeTaken')}</dt>
-              <dd className="mt-1 font-semibold text-[#0F172A]">
-                {timeTakenVal != null
-                  ? t('timeTakenMinutes', { value: timeTakenVal.toLocaleString(locale, { maximumFractionDigits: 2 }) })
-                  : '—'}
-              </dd>
-            </div>
-          </dl>
+              <dl className="grid gap-3 rounded-xl border border-[#E8ECF2] bg-[#F8FAFC] px-4 py-4 text-sm sm:grid-cols-2 sm:px-6 sm:py-5">
+                <div>
+                  <dt className="font-medium text-[#64748B]">{t('finishedAt')}</dt>
+                  <dd className="mt-1 font-semibold text-[#0F172A]">{formatFinishedAt(results.finished_at, locale)}</dd>
+                </div>
+                <div>
+                  <dt className="font-medium text-[#64748B]">{t('timeTaken')}</dt>
+                  <dd className="mt-1 font-semibold text-[#0F172A]">
+                    {timeTakenVal != null
+                      ? t('timeTakenMinutes', {
+                          value: timeTakenVal.toLocaleString(locale, { maximumFractionDigits: 2 }),
+                        })
+                      : '—'}
+                  </dd>
+                </div>
+              </dl>
 
-          <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:justify-center sm:gap-4">
-            <Link
-              href={homeHref}
-              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#F1F5F9] px-5 text-sm font-semibold text-[#334155] transition-colors hover:bg-[#E2E8F0] sm:max-w-[200px] sm:flex-none"
-            >
-              <Home className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-              {t('backToHome')}
-            </Link>
-            <Link
-              href={reviewHref}
-              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-colors sm:max-w-[220px] sm:flex-none"
-              style={{ backgroundColor: '#E8EEFC', color: PRIMARY }}
-            >
-              <BookOpen className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-              {t('reviewLectures')}
-            </Link>
-            <button
-              type="button"
-              onClick={handleRetry}
-              className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold text-white transition-colors hover:opacity-95 sm:max-w-[200px] sm:flex-none"
-              style={{ backgroundColor: PRIMARY }}
-            >
-              <RefreshCw className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-              {t('retryExam')}
-            </button>
-          </div>
+              <div className="mt-auto flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center sm:gap-4">
+                <Link
+                  href={homeHref}
+                  className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-[#F1F5F9] px-5 text-sm font-semibold text-[#334155] transition-colors hover:bg-[#E2E8F0] sm:max-w-[200px] sm:flex-none"
+                >
+                  <Home className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  {t('backToHome')}
+                </Link>
+                {canAnswerReview ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAnswerReview(true)}
+                    className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl border border-[#C7D2FE] bg-[#EEF2FF] px-5 text-sm font-semibold text-[#3730A3] transition-colors hover:bg-[#E0E7FF] sm:max-w-[240px] sm:flex-none"
+                  >
+                    <ListChecks className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                    {t('reviewAnswers')}
+                  </button>
+                ) : null}
+                <Link
+                  href={reviewHref}
+                  className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition-colors sm:max-w-[220px] sm:flex-none"
+                  style={{ backgroundColor: '#E8EEFC', color: PRIMARY }}
+                >
+                  <BookOpen className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  {t('reviewLectures')}
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="inline-flex h-12 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-sm font-bold text-white transition-colors hover:opacity-95 sm:max-w-[200px] sm:flex-none"
+                  style={{ backgroundColor: PRIMARY }}
+                >
+                  <RefreshCw className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  {t('retryExam')}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

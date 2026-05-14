@@ -14,6 +14,13 @@ import type { CreatePostRequest, Post, SocialLink } from '@/src/types';
 
 const POST_TIME_AGO_PREFIX = 'community.posts.timeAgo';
 
+export type StudentCommunityFeedProps = {
+  /** Scope posts & social GETs to this course; new posts send `course_id`. */
+  courseId?: number;
+  /** Hide page-level heading (e.g. embedded in course details tab). */
+  embedded?: boolean;
+};
+
 type FeedTab = 'all' | 'post' | 'summary' | 'question';
 
 function isTopLevelPublishedPost(p: Post): boolean {
@@ -87,13 +94,20 @@ function SocialLinkCard({ link, joinLabel }: { link: SocialLink; joinLabel: stri
   );
 }
 
-export default function StudentCommunityFeed() {
+export default function StudentCommunityFeed({
+  courseId,
+  embedded = false,
+}: StudentCommunityFeedProps = {}) {
   const locale = useLocale();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const t = useTranslations();
   const tPage = useTranslations('courses.studentCommunity');
-  const { data: postsRaw, isLoading: postsLoading, error: postsError, refetch: refetchPosts } = usePosts();
-  const { data: socialRaw, isLoading: socialLoading, error: socialError } = useSocialLinks();
+  const scopedCourseId =
+    courseId !== undefined && Number.isFinite(courseId) && courseId > 0 ? courseId : undefined;
+  const { data: postsRaw, isLoading: postsLoading, error: postsError, refetch: refetchPosts } =
+    usePosts(scopedCourseId != null ? scopedCourseId : null);
+  const { data: socialRaw, isLoading: socialLoading, error: socialError } =
+    useSocialLinks(scopedCourseId != null ? scopedCourseId : null);
   const { mutate: createPost, isLoading: isCreating } = useCreatePost();
   const { mutate: createComment, isLoading: isReplying } = useCreateComment();
   const { mutate: reactToPost } = useReactToPost();
@@ -103,17 +117,32 @@ export default function StudentCommunityFeed() {
   const [replyTarget, setReplyTarget] = useState<Post | null>(null);
   const [reactingId, setReactingId] = useState<string | null>(null);
 
-  const socialLinks = useMemo(() => socialRaw ?? [], [socialRaw]);
+  const socialLinks = useMemo(() => {
+    const list = socialRaw ?? [];
+    if (scopedCourseId == null) return list;
+    return list.filter(
+      (l) =>
+        l.attributes.course_id == null ||
+        Number(l.attributes.course_id) === scopedCourseId,
+    );
+  }, [socialRaw, scopedCourseId]);
 
   const topPosts = useMemo(() => {
     const list = postsRaw ?? [];
-    const roots = list.filter(isTopLevelPublishedPost);
+    let roots = list.filter(isTopLevelPublishedPost);
+    if (scopedCourseId != null) {
+      roots = roots.filter(
+        (p) =>
+          p.attributes.course_id == null ||
+          Number(p.attributes.course_id) === scopedCourseId,
+      );
+    }
     return [...roots].sort((a, b) => {
       const ta = new Date(a.attributes.created_at || 0).getTime();
       const tb = new Date(b.attributes.created_at || 0).getTime();
       return tb - ta;
     });
-  }, [postsRaw]);
+  }, [postsRaw, scopedCourseId]);
 
   const filteredPosts = useMemo(() => {
     if (tab === 'all') return topPosts;
@@ -139,7 +168,10 @@ export default function StudentCommunityFeed() {
   const handleCreate = useCallback(
     async (payload: CreatePostRequest) => {
       try {
-        await createPost(payload);
+        await createPost({
+          ...payload,
+          ...(scopedCourseId != null ? { course_id: scopedCourseId } : {}),
+        });
         setModalOpen(false);
         setReplyTarget(null);
         toast.success(tPage('toastCreated'));
@@ -148,7 +180,7 @@ export default function StudentCommunityFeed() {
         toast.error(tPage('toastCreateFailed'));
       }
     },
-    [createPost, refetchPosts, tPage],
+    [createPost, refetchPosts, tPage, scopedCourseId],
   );
 
   const handleSubmitReply = useCallback(
@@ -215,11 +247,13 @@ export default function StudentCommunityFeed() {
   );
 
   return (
-    <div className="w-full pb-12 pt-2" dir={dir}>
-      <header className="mb-8 max-w-4xl">
-        <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">{tPage('pageTitle')}</h1>
-        <p className="mt-2 text-sm text-[#64748B] sm:text-base">{tPage('pageSubtitle')}</p>
-      </header>
+    <div className={`w-full ${embedded ? 'pb-6 pt-0' : 'pb-12 pt-2'}`} dir={dir}>
+      {!embedded ? (
+        <header className="mb-8 max-w-4xl">
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">{tPage('pageTitle')}</h1>
+          <p className="mt-2 text-sm text-[#64748B] sm:text-base">{tPage('pageSubtitle')}</p>
+        </header>
+      ) : null}
 
       <section className="mb-10">
         <h2 className="mb-4 text-lg font-bold text-[#1E293B]">{tPage('socialSectionTitle')}</h2>

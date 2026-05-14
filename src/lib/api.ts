@@ -561,7 +561,7 @@ export const preActivationApi = {
 // ============================================
 
 export const coursesApi = {
-  list: (params?: { category_id?: number }) =>
+  list: (params?: { category_id?: number; activated?: number }) =>
     get<ApiListResponse<Course>>('/v1/course', params),
 
   get: (id: number) => get<ApiResponse<Course>>(`/v1/course/${id}`),
@@ -787,7 +787,8 @@ export const notesApi = {
 // ============================================
 
 export const postsApi = {
-  list: () => get<ApiListResponse<Post>>('/v1/post'),
+  list: (params?: { course_id?: number | string }) =>
+    get<ApiListResponse<Post>>('/v1/post', params),
 
   get: (id: number) => get<ApiResponse<Post>>(`/v1/post/${id}`),
 
@@ -1006,7 +1007,8 @@ export const instructorsApi = {
 // ============================================
 
 export const socialLinksApi = {
-  list: () => get<ApiListResponse<SocialLink>>('/v1/social-link'),
+  list: (params?: { course_id?: number | string }) =>
+    get<ApiListResponse<SocialLink>>('/v1/social-link', params),
 
   get: (id: number) => get<ApiResponse<SocialLink>>(`/v1/social-link/${id}`),
 

@@ -501,6 +501,8 @@
     "studentActivation": {
       "description": "Enter your activation code below to unlock full access to this course.",
       "descriptionLibrary": "Enter your activation code below to unlock this library material.",
+      "descriptionChapter": "Enter your activation code below to unlock this chapter (video and attachments).",
+      "descriptionQuiz": "Enter your activation code below to unlock this exam or quiz for your account.",
       "codeLabel": "Activation code",
       "codePlaceholder": "e.g. ABCD-1234",
       "cancel": "Cancel",
@@ -508,9 +510,13 @@
       "enterCode": "Please enter an activation code.",
       "invalidCourse": "This course cannot be activated (invalid id).",
       "invalidLibrary": "This library item cannot be activated (invalid id).",
+      "invalidChapter": "This chapter cannot be activated (invalid id).",
+      "invalidQuiz": "This quiz cannot be activated (invalid id).",
       "genericError": "Activation failed. Please try again.",
       "success": "Course activated successfully!",
-      "successLibrary": "Library material activated successfully!"
+      "successLibrary": "Library material activated successfully!",
+      "successChapter": "Chapter activated successfully!",
+      "successQuiz": "Exam activated successfully!"
     },
     "studentStatus": {
       "active": "Active"
@@ -525,12 +531,17 @@
       "attributesHeading": "Attributes (from API)",
       "tabs": {
         "lectures": "Lectures",
+        "liveSession": "Live session",
         "exams": "Exams",
-        "notes": "Notes"
+        "notes": "Notes & Summaries",
+        "community": "Community"
       },
+      "liveSessionUnderDevelopment": "This section is still under development.",
       "lectureNumber": "Lecture {number}",
       "watch": "Watch",
+      "watchAccessPending": "Use your activation code — watching unlocks when access is granted (check after entering the code).",
       "locked": "Locked",
+      "activateChapter": "Activate",
       "reactivate": "Re-activate",
       "hasExam": "Has Exam",
       "hasPdf": "Has PDF",
@@ -541,7 +552,7 @@
       "openPdf": "PDF",
       "heroLectureCount": "{count} Lectures",
       "examsEmpty": "No exams for this course.",
-      "notesEmpty": "No notes for this course.",
+      "notesEmpty": "No notes or summaries for this course.",
       "notes": {
         "deleteTitle": "Delete note",
         "deleteDescription": "Are you sure you want to delete «{title}»? This action cannot be undone.",
@@ -573,6 +584,11 @@
       "examsUpcomingTitle": "Upcoming Exams",
       "examsCompletedTitle": "Completed Exams",
       "examsLockedTitle": "Locked Exams",
+      "examsExpiredTitle": "Ended exams",
+      "examsExpiredBadge": "Ended",
+      "examsExpiredHint": "The deadline for this exam has passed. You can no longer start or submit it.",
+      "examsEndedOn": "Ended {date}",
+      "examsExpiredClosed": "Deadline passed",
       "examsDaysLeft": "{count, plural, one {# day left} other {# days left}}",
       "examsUpcomingFallback": "Upcoming",
       "examsScheduled": "Scheduled",
@@ -580,7 +596,10 @@
       "examsNotAvailable": "Not Available",
       "examsActivationRequired": "Activate course to access this exam",
       "examsActivationRequiredSub": "Course activation required",
+      "examsPrivateExamHint": "This exam is not public — activate the course on your account to access it.",
+      "examsCourseIdLabel": "Course #{id}",
       "examsActivateCourseForExam": "Activate course",
+      "examsActivateQuizForAccess": "Activate with code",
       "examsQuestionsAndDuration": "{questions} questions • {minutes} minutes",
       "examsTotalMarks": "Total {count} marks",
       "examsTypeExam": "Exam",
@@ -637,7 +656,9 @@
       "composerMomentLabel": "At {time}",
       "anonymousUser": "Student",
       "watchAccessDenied": "You can't watch this chapter.",
-      "watchAccessDeniedHint": "Activate your course or check your view limit. If you opened this link directly, use the course page to open chapters."
+      "watchAccessDeniedHint": "Activate your course or check your view limit. If you opened this link directly, use the course page to open chapters.",
+      "hlsPlaybackError": "The video stream could not be played. Check your connection and try again.",
+      "switchingPlaybackMethod": "Switching playback method…"
     },
     "studentStartExam": {
       "back": "Back",
@@ -699,7 +720,14 @@
       "timeTakenMinutes": "{value} min",
       "backToHome": "Back to Home",
       "reviewLectures": "Review Lectures",
-      "retryExam": "Retry Exam"
+      "retryExam": "Retry Exam",
+      "reviewAnswers": "Review answers",
+      "answerReviewTitle": "Answer review",
+      "backFromReview": "Back to results",
+      "reviewReadOnlyHint": "Read-only summary of your choices. You cannot change answers or resubmit from this screen.",
+      "reviewQuestionBadge": "Question {n}",
+      "reviewMultipleType": "Multiple choice",
+      "reviewNoAnswerOptions": "This question has no listed answer options."
     },
     "studentExamsPage": {
       "pageTitle": "Exams",
@@ -712,6 +740,7 @@
       "emptyUpcoming": "No upcoming exams are listed here yet.",
       "emptyCompleted": "You have no completed exam attempts yet.",
       "emptyLocked": "No locked exams are listed here yet.",
+      "emptyExpired": "No exams with a past deadline are listed here.",
       "attemptStarted": "Started {date}",
       "attemptFinished": "Finished {date}",
       "attemptScoreLine": "Score {score} / {total}",

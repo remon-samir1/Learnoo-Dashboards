@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { Play } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { HlsVideoPlayer } from "@/components/student/watch/HlsVideoPlayer";
+import { pickChapterStreams } from "@/src/lib/chapter-playback-urls";
 import { IUserProgress } from "@/src/interfaces/progress.interface";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getCourseById } from "@/src/services/student/course.service";
 import { ICourse } from "@/src/interfaces/courses.interface";
 
@@ -21,6 +23,25 @@ export default function ContinueWatchingSection({
   const list = Array.isArray(progress) ? progress : [];
   const latest = list.length > 0 ? list[list.length - 1] : undefined;
   const lastChapter = latest?.attributes?.chapter?.data?.attributes;
+  const chapterProgressId = latest?.attributes?.chapter?.data?.id;
+  const chapterNumericId = useMemo(() => {
+    if (chapterProgressId == null) return NaN;
+    const n = Number.parseInt(String(chapterProgressId), 10);
+    return Number.isFinite(n) ? n : NaN;
+  }, [chapterProgressId]);
+
+  const { primarySrc: previewPlaybackSrc, mp4FallbackUrl: previewMp4Fallback } = useMemo(() => {
+    if (!lastChapter || !Number.isFinite(chapterNumericId)) {
+      return { primarySrc: "", mp4FallbackUrl: "" };
+    }
+    return pickChapterStreams(chapterNumericId, {
+      video: lastChapter.video,
+      playlist: lastChapter.playlist,
+      video_hls_url: lastChapter.video_hls_url,
+      video_mp4_url: lastChapter.video_mp4_url,
+    });
+  }, [chapterNumericId, lastChapter]);
+
   const courseId = lastChapter?.course_id;
 
   useEffect(() => {
@@ -97,10 +118,13 @@ export default function ContinueWatchingSection({
       <div className="grid grid-cols-1 gap-4 rounded-xl bg-[#F7F8FA] p-3 sm:p-4 lg:grid lg:grid-cols-4 lg:items-center lg:gap-4">
         <div className="relative w-full min-w-0 overflow-hidden rounded-2xl bg-black lg:col-span-1">
           <div className="relative aspect-video w-full max-h-[40vh] sm:max-h-[20rem] lg:max-h-none">
-            {lastChapter.video ? (
-              <video
-                src={lastChapter.video as string}
+            {previewPlaybackSrc ? (
+              <HlsVideoPlayer
+                key={`${previewPlaybackSrc}|${previewMp4Fallback}`}
+                src={previewPlaybackSrc}
+                mp4FallbackUrl={previewMp4Fallback}
                 className="absolute inset-0 h-full w-full object-cover"
+                controls={false}
                 muted
                 playsInline
                 preload="metadata"

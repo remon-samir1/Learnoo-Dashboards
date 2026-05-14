@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { StudentCourseCard } from '@/components/student/StudentCourseCard';
 import { CourseCardSkeleton } from '@/src/components/ui/Skeleton';
-import { useCourses } from '@/src/hooks/useCourses';
+import { STUDENT_COURSES_LIST_PARAMS, useCourses } from '@/src/hooks/useCourses';
 import { useStudentCourseListActivation } from '@/src/hooks/useStudentCourseListActivation';
 import { courseIsLocked } from '@/src/lib/student-course-lock';
 import type { Course } from '@/src/types';
@@ -31,12 +31,12 @@ export default function StudentCoursesPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('courses');
-  const { data: courses, isLoading, error, refetch } = useCourses();
+  const { data: courses, isLoading, error, refetch } = useCourses(STUDENT_COURSES_LIST_PARAMS);
   const [selectedTab, setSelectedTab] = useState<StudentCourseTab>('all');
   const activation = useStudentCourseListActivation();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
-  /** All enrolled courses; lock UI follows `attributes.is_locked` only. */
+  /** Activated enrollments only (`?activated=1`); lock vs unlock follows `attributes.is_locked` (or equivalent). */
   const displayCourses = useMemo(() => courses ?? [], [courses]);
 
   const titleTabs = useMemo(() => {

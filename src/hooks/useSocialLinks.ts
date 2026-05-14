@@ -6,8 +6,15 @@ import { createQueryHook, createMutationHook } from './index';
 // Social Links Hooks
 // ============================================
 
-export const useSocialLinks = createQueryHook<SocialLink[]>(
-  () => api.socialLinks.list().then(res => res.data)
+export const useSocialLinks = createQueryHook<SocialLink[], [number | null]>(
+  (courseId) =>
+    api.socialLinks
+      .list(
+        courseId !== null && Number.isFinite(courseId) && courseId > 0
+          ? { course_id: courseId }
+          : undefined,
+      )
+      .then((res) => res.data),
 );
 
 export const useSocialLink = createQueryHook(

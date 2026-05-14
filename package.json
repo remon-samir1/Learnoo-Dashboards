@@ -13,6 +13,7 @@
     "@tanstack/react-query": "^5.99.0",
     "@tanstack/react-query-devtools": "^5.99.0",
     "@types/xlsx": "^0.0.35",
+    "hls.js": "^1.6.16",
     "js-cookie": "^3.0.5",
     "laravel-echo": "^2.3.4",
     "lucide-react": "^1.7.0",

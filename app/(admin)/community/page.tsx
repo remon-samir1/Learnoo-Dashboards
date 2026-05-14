@@ -387,13 +387,13 @@ function getStatusColor(status: string): string {
 
 export default function CommunityModerationPage() {
   const t = useTranslations();
-  const { data: postsData, isLoading, error, refetch } = usePosts();
+  const { data: postsData, isLoading, error, refetch } = usePosts(null);
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
   const { mutate: updatePost } = useUpdatePost();
   const { mutate: createPost, isLoading: isCreating } = useCreatePost();
   
   // Social Links hooks
-  const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks();
+  const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks(null);
   const { mutate: createSocialLink } = useCreateSocialLink();
   const { mutate: updateSocialLink } = useUpdateSocialLink();
   const { mutate: deleteSocialLink } = useDeleteSocialLink();

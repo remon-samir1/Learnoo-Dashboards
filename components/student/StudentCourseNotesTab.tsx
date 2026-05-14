@@ -180,22 +180,7 @@ function StudentNoteCard({
         ) : null}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-[#F1F5F9] pt-5">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex h-10 shrink-0 items-center justify-center rounded-full border border-[#E2E8F0] bg-white px-6 text-sm font-semibold text-[#475569] shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-[#CBD5E1] hover:bg-[#F8FAFC] active:scale-[0.98]"
-        >
-          {editLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-[#EF4444] px-6 text-sm font-semibold text-white shadow-[0_1px_3px_rgba(239,68,68,0.35)] transition hover:bg-[#DC2626] hover:shadow-[0_2px_6px_rgba(220,38,38,0.35)] active:scale-[0.98]"
-        >
-          {deleteLabel}
-        </button>
-      </div>
+  
     </li>
   );
 }

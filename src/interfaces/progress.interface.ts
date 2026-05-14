@@ -28,6 +28,8 @@ export interface IUserProgressChapterAttributes {
   thumbnail: string | null;
   video: string | null;
   playlist: string | null;
+  video_hls_url?: string | null;
+  video_mp4_url?: string | null;
   duration: string;
   is_free_preview: boolean;
   max_views: number;

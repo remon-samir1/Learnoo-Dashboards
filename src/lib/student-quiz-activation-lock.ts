@@ -1,6 +1,7 @@
 /**
- * Course activation gate for quizzes/exams on the student side.
- * Locked when: has_activation === true AND is_public === false (API may send loose types).
+ * Course / quiz activation gate on the student side.
+ * When `is_public === false`, the quiz is treated as locked until the student redeems a code;
+ * the backend sets `is_public` to true after successful POST `/v1/code/activate` with `item_type: "quiz"`.
  */
 
 export function coerceAttrBoolean(v: unknown): boolean | undefined {
@@ -22,7 +23,5 @@ export function quizRequiresCourseActivationLock(
   attrs: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!attrs) return false;
-  const hasActivation = coerceAttrBoolean(attrs.has_activation);
-  const isPublic = coerceAttrBoolean(attrs.is_public);
-  return hasActivation === true && isPublic === false;
+  return coerceAttrBoolean(attrs.is_public) === false;
 }
