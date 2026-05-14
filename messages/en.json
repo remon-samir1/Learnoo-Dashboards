@@ -739,6 +739,7 @@
       "retryExam": "Retry Exam",
       "reviewAnswers": "Review answers",
       "answerReviewTitle": "Answer review",
+      "reviewPreviousQuestion": "Previous",
       "backFromReview": "Back to results",
       "reviewReadOnlyHint": "Read-only summary of your choices. You cannot change answers or resubmit from this screen.",
       "reviewQuestionBadge": "Question {n}",
