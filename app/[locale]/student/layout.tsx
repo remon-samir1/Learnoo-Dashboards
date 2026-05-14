@@ -27,20 +27,21 @@ export default async function StudentLayout({
     userResponse.success && userResponse.data ? userResponse.data : null;
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar currentUser={currentUser} />
+     <div className="flex min-h-screen bg-gray-50">
+    <Sidebar currentUser={currentUser} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Navbar
-          initialNotifications={notifications}
-          currentUser={currentUser}
-        />
+    <div className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
+      <Navbar
+        initialNotifications={notifications}
+        currentUser={currentUser}
+      />
 
-        <main className="min-w-0 flex-1 px-4 py-4 pb-6 sm:px-5 sm:py-5 lg:px-16 lg:py-5">
-          {children}
-        </main>
-        <StudentToaster />
-      </div>
+      <main className="min-w-0 flex-1 px-4 py-4 pb-6 sm:px-5 sm:py-5 lg:px-16 lg:py-5">
+        {children}
+      </main>
+
+      <StudentToaster />
     </div>
+  </div>
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
-import Link from "next/link";
+import Cookies from "@/lib/cookies";
+import type { CurrentUser } from "@/src/interfaces/current-user.interface";
+import { getUserAttributes, getUserInitials } from "@/src/lib/current-user";
+import { getPusherClient } from "@/src/lib/pusher.client";
+import { userLogout } from "@/src/services/student/auth.service";
 import {
   Bell,
   BookOpen,
@@ -12,18 +13,16 @@ import {
   Globe2,
   LogOut,
   MessageCircle,
-  Search,
   Settings,
   User,
-  Video,
+  Video
 } from "lucide-react";
-import Cookies from "@/lib/cookies";
-import { useDebouncedCallback } from "use-debounce";
-import { getPusherClient } from "@/src/lib/pusher.client";
-import type { CurrentUser } from "@/src/interfaces/current-user.interface";
-import { getUserAttributes, getUserInitials } from "@/src/lib/current-user";
+import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { userLogout } from "@/src/services/student/auth.service";
+import { useDebouncedCallback } from "use-debounce";
 import SearchBox from "./SearchBox";
 
 type DropdownType = "language" | "notifications" | "profile" | null;
@@ -106,21 +105,21 @@ export default function Navbar({
     () => getUserAttributes(currentUser ?? null),
     [currentUser],
   );
-const handleLogout = async () => {
-  const res = await userLogout();
+  const handleLogout = async () => {
+    const res = await userLogout();
 
-  if (!res.success) {
-    toast.error(res.message || "Logout failed");
-    return;
-  }
+    if (!res.success) {
+      toast.error(res.message || "Logout failed");
+      return;
+    }
 
-  toast.success(res.message || "Logged out successfully");
+    toast.success(res.message || "Logged out successfully");
 
-  Cookies.remove("token");
+    Cookies.remove("token");
 
-  router.push("/login");
-  router.refresh();
-};
+    router.push("/login");
+    router.refresh();
+  };
   const initials = useMemo(() => {
     const source =
       user.full_name?.trim() ||
@@ -144,7 +143,9 @@ const handleLogout = async () => {
 
   const emailDisplay = user.email?.trim() || "";
   const avatarSrc =
-    typeof user.image === "string" && user.image.trim() ? user.image.trim() : null;
+    typeof user.image === "string" && user.image.trim()
+      ? user.image.trim()
+      : null;
 
   const [search, setSearch] = useState("");
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
@@ -157,8 +158,8 @@ const handleLogout = async () => {
 
   useEffect(() => {
     const handleNavClick = () => {
-  setOpenDropdown(null);
-};
+      setOpenDropdown(null);
+    };
   }, [pathname]);
 
   useEffect(() => {
@@ -208,11 +209,9 @@ const handleLogout = async () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[var(--border-color)] bg-[var(--card-bg)] px-5">
+    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-[var(--border-color)] bg-[var(--card-bg)] px-5">
       <div className="relative max-w-[760px] flex-1">
-     <SearchBox />
-
-     
+        <SearchBox />
       </div>
 
       <div className="ms-4 flex items-center gap-3">
@@ -353,11 +352,7 @@ const handleLogout = async () => {
           >
             {avatarSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={avatarSrc}
-                alt=""
-                className="size-full object-cover"
-              />
+              <img src={avatarSrc} alt="" className="size-full object-cover" />
             ) : (
               <span>{initials}</span>
             )}
