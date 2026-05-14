@@ -484,7 +484,7 @@ export interface UserAttributes {
 
 
 
-  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown';
+  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown' | 'Instructor';
 
 
 
@@ -517,6 +517,11 @@ export interface UserAttributes {
 
 
   image?: string | null;
+
+
+
+  /** When true, user may use course/chapter activation flows (API-dependent). */
+  can_use_activations?: boolean;
 
 
 
@@ -961,6 +966,11 @@ export interface CreateChapterRequest {
 
 
   is_free_preview?: 0 | 1;
+
+
+
+  /** When true, chapter free-preview includes attachment(s) per API. */
+  is_free_preview_attachment?: boolean;
 
 
 
@@ -3813,6 +3823,11 @@ export interface QuizAnswerRequest {
 
 
 
+  /** Optional per-option explanation (matches QuizQuestionAnswerAttributes.reason). */
+  reason?: string | null;
+
+
+
 }
 
 
@@ -4658,6 +4673,11 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
 
 
 
+  /** When set, instructor may use course activation flows (API-dependent). */
+  can_use_activations?: boolean;
+
+
+
   used_codes?: Code[];
 
 
@@ -4690,7 +4710,7 @@ export interface CreateStudentRequest {
 
 
 
-  phone: string;
+  phone?: string;
 
 
 
@@ -4725,6 +4745,11 @@ export interface CreateStudentRequest {
 
 
   status?: StudentStatus;
+
+
+
+  /** Instructor-only: allow activation-related features. */
+  can_use_activations?: boolean;
 
 
 

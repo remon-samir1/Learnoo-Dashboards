@@ -370,7 +370,7 @@ export default function EditExamPage() {
   const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { data: quiz, isLoading: quizLoading } = useQuiz(parseInt(examId));
-  const { mutate: updateQuiz, isLoading: isUpdating, progress: updateProgress } = useUpdateQuiz();
+  const { mutate: updateQuiz, isLoading: isUpdating } = useUpdateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: universities } = useUniversities();
   const { data: faculties } = useFaculties();

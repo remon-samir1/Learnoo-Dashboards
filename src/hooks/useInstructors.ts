@@ -111,3 +111,15 @@ export function useUpdateInstructor() {
 export const useDeleteInstructor = createMutationHook(
   (id: string) => api.instructors.delete(id)
 );
+
+export const useResetInstructorPassword = createMutationHook(
+  (payload: { instructorId: string; password: string }) =>
+    api.instructors.resetPassword(payload.instructorId, payload.password)
+);
+
+export const useToggleCanUseActivations = createMutationHook(
+  (payload: { instructorId: string; canUseActivations: boolean }) =>
+    api.instructors.update(payload.instructorId, {
+      can_use_activations: payload.canUseActivations,
+    })
+);

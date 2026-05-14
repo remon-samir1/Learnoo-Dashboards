@@ -1496,6 +1496,7 @@
       "course": "Course",
       "loading": "Loading...",
       "selectCourse": "Select Course",
+      "selectCourseFirst": "Select a course first",
       "chapter": "Chapter",
       "selectChapter": "Select Chapter",
       "duration": "Duration (min)",

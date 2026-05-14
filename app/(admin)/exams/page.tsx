@@ -18,7 +18,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import Link from 'next/link';
-import { useQuizzes, useDeleteQuiz, useUpdateQuiz, useCreateQuiz, useCreateQuizWithoutFiles } from '@/src/hooks/useQuizzes';
+import { useQuizzes, useDeleteQuiz, useUpdateQuiz, useCreateQuiz } from '@/src/hooks/useQuizzes';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useUniversities } from '@/src/hooks/useUniversities';
@@ -381,7 +381,6 @@ export default function ExamsPage() {
   };
 
   const { mutate: createQuiz } = useCreateQuiz();
-  const { mutate: createQuizWithoutFiles } = useCreateQuizWithoutFiles();
 
   const handleCopy = (quiz: Quiz) => {
     setSelectedQuiz(quiz);
@@ -418,7 +417,6 @@ export default function ExamsPage() {
         status: 'draft' as const,
         start_time: selectedQuiz.attributes.start_time,
         end_time: selectedQuiz.attributes.end_time,
-        reason: selectedQuiz.attributes.reason || undefined,
         // Reset chapter since course changed
         chapter_id: null,
         // Copy questions if they exist
@@ -430,6 +428,7 @@ export default function ExamsPage() {
           answers: q.attributes.answers?.map((ans) => ({
             text: ans.attributes.text,
             is_correct: ans.attributes.is_correct,
+            reason: ans.attributes.reason?.trim() || undefined,
           })),
         })),
       };
@@ -437,7 +436,7 @@ export default function ExamsPage() {
       console.log('Copy data being sent:', copyData);
       console.log('Course ID type:', typeof copyData.course_id, copyData.course_id);
       
-      // Use createQuiz instead of createQuizWithoutFiles to avoid potential auth issues
+      // createQuiz with JSON payload (no multipart files on copy)
       await createQuiz(copyData as any);
       await refetch();
       setCopyModalOpen(false);

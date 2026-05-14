@@ -9,6 +9,7 @@ import {
   Globe, 
   FileText,
   Image,
+  User,
   ChevronRight 
 } from 'lucide-react';
 
@@ -18,7 +19,8 @@ const iconMap = {
   Bell,
   Globe,
   FileText,
-  Image
+  Image,
+  User,
 };
 
 type IconName = keyof typeof iconMap;

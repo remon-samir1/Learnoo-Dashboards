@@ -18,7 +18,7 @@ interface AuthState {
   error: string | null;
 
   // Getters
-  getUserRole: () => 'Admin' | 'Doctor' | 'Student' | 'Unknown' | null;
+  getUserRole: () => 'Admin' | 'Doctor' | 'Student' | 'Unknown' | 'Instructor' | null;
   isAdmin: () => boolean;
   isDoctor: () => boolean;
 

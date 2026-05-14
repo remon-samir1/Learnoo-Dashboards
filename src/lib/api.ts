@@ -528,6 +528,15 @@ export interface PreActivationUploadRequest {
   file: File;
 }
 
+/** Flat JSON body from `POST /v1/pre-activation/upload` (field names depend on backend). */
+export interface PreActivationUploadResponse {
+  message?: string;
+  count?: number;
+  activated?: number;
+  skipped?: number;
+  total_phones?: number;
+}
+
 export interface PreActivation {
   id: number;
   attributes: {
@@ -547,7 +556,7 @@ export const preActivationApi = {
     formData.append('item_id', data.item_id.toString());
     formData.append('item_type', data.item_type);
     formData.append('file', data.file);
-    return postMultipart<ApiResponse<{ message: string; count: number }>>('/v1/pre-activation/upload', formData);
+    return postMultipart<PreActivationUploadResponse>('/v1/pre-activation/upload', formData);
   },
 
   list: (itemId?: number, itemType?: string) =>
@@ -1000,6 +1009,12 @@ export const instructorsApi = {
   },
 
   delete: (id: string) => del<ApiResponse<Student>>(`/v1/student/${id}`),
+
+  resetPassword: (id: string, password: string) => {
+    const formData = new FormData();
+    formData.append('password', password);
+    return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData);
+  },
 };
 
 // ============================================
