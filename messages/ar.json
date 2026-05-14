@@ -499,6 +499,8 @@
     "studentActivation": {
       "description": "أدخل رمز التفعيل أدناه لفتح الوصول الكامل إلى هذه الدورة.",
       "descriptionLibrary": "أدخل رمز التفعيل أدناه لفتح مادة المكتبة هذه.",
+      "descriptionChapter": "أدخل رمز التفعيل أدناه لفتح هذا الفصل (الفيديو والمرفقات).",
+      "descriptionQuiz": "أدخل رمز التفعيل أدناه لفتح هذا الامتحان أو الاختبار على حسابك.",
       "codeLabel": "رمز التفعيل",
       "codePlaceholder": "مثال: ABCD-1234",
       "cancel": "إلغاء",
@@ -506,9 +508,13 @@
       "enterCode": "يرجى إدخال رمز التفعيل.",
       "invalidCourse": "لا يمكن تفعيل هذه الدورة (معرّف غير صالح).",
       "invalidLibrary": "لا يمكن تفعيل عنصر المكتبة هذا (معرّف غير صالح).",
+      "invalidChapter": "لا يمكن تفعيل هذا الفصل (معرّف غير صالح).",
+      "invalidQuiz": "لا يمكن تفعيل هذا الاختبار (معرّف غير صالح).",
       "genericError": "فشل التفعيل. حاول مرة أخرى.",
       "success": "تم تفعيل الدورة بنجاح!",
-      "successLibrary": "تم تفعيل مادة المكتبة بنجاح!"
+      "successLibrary": "تم تفعيل مادة المكتبة بنجاح!",
+      "successChapter": "تم تفعيل الفصل بنجاح!",
+      "successQuiz": "تم تفعيل الامتحان بنجاح!"
     },
     "studentStatus": {
       "active": "نشط"
@@ -523,12 +529,17 @@
       "attributesHeading": "الخصائص (من واجهة البرمجة)",
       "tabs": {
         "lectures": "المحاضرات",
+        "liveSession": "جلسة مباشرة",
         "exams": "الاختبارات",
-        "notes": "الملاحظات"
+        "notes": "الملاحظات والملخصات",
+        "community": "المجتمع"
       },
+      "liveSessionUnderDevelopment": "هذا القسم لا يزال قيد التطوير.",
       "lectureNumber": "محاضرة {number}",
       "watch": "مشاهدة",
+      "watchAccessPending": "استخدم رمز التفعيل — تُفتح المشاهدة عند منح الصلاحية (تحقق بعد إدخال الرمز).",
       "locked": "مقفل",
+      "activateChapter": "تفعيل",
       "reactivate": "إعادة التفعيل",
       "hasExam": "يحتوي على امتحان",
       "hasPdf": "يحتوي على PDF",
@@ -539,7 +550,7 @@
       "openPdf": "PDF",
       "heroLectureCount": "{count} محاضرات",
       "examsEmpty": "لا توجد اختبارات لهذه الدورة.",
-      "notesEmpty": "لا توجد ملاحظات لهذه الدورة.",
+      "notesEmpty": "لا توجد ملاحظات أو ملخصات لهذه الدورة.",
       "notes": {
         "deleteTitle": "حذف الملاحظة",
         "deleteDescription": "هل أنت متأكد أنك تريد حذف «{title}»؟ لا يمكن التراجع عن هذا الإجراء.",
@@ -571,6 +582,11 @@
       "examsUpcomingTitle": "الامتحانات القادمة",
       "examsCompletedTitle": "الامتحانات المكتملة",
       "examsLockedTitle": "الامتحانات المقفلة",
+      "examsExpiredTitle": "امتحانات انتهت المهلة",
+      "examsExpiredBadge": "منتهية",
+      "examsExpiredHint": "انتهت فترة التقديم لهذا الامتحان ولا يمكن البدء أو التسليم بعد الآن.",
+      "examsEndedOn": "انتهى في {date}",
+      "examsExpiredClosed": "انتهت المهلة",
       "examsDaysLeft": "{count, plural, one {يوم واحد متبقي} other {{count} أيام متبقية}}",
       "examsUpcomingFallback": "قادم",
       "examsScheduled": "مجدول",
@@ -578,7 +594,10 @@
       "examsNotAvailable": "غير متاح",
       "examsActivationRequired": "يجب تفعيل الكورس للوصول لهذا الامتحان",
       "examsActivationRequiredSub": "تفعيل الكورس مطلوب",
+      "examsPrivateExamHint": "هذا الامتحان غير عام — فعّل الدورة على حسابك للوصول إليه.",
+      "examsCourseIdLabel": "الدورة رقم {id}",
       "examsActivateCourseForExam": "تفعيل الكورس",
+      "examsActivateQuizForAccess": "تفعيل بالرمز",
       "examsQuestionsAndDuration": "{questions} سؤال • {minutes} دقيقة",
       "examsTotalMarks": "إجمالي {count} درجة",
       "examsTypeExam": "امتحان",
@@ -635,7 +654,9 @@
       "composerMomentLabel": "عند {time}",
       "anonymousUser": "طالب",
       "watchAccessDenied": "لا يمكنك مشاهدة هذا الفصل.",
-      "watchAccessDeniedHint": "فعّل الدورة أو راجع حد المشاهدات. إذا فتحت الرابط مباشرة، ادخل من صفحة الدورة لفتح الفصول."
+      "watchAccessDeniedHint": "فعّل الدورة أو راجع حد المشاهدات. إذا فتحت الرابط مباشرة، ادخل من صفحة الدورة لفتح الفصول.",
+      "hlsPlaybackError": "تعذّر تشغيل بث الفيديو. تحقق من الاتصال وحاول مرة أخرى.",
+      "switchingPlaybackMethod": "جاري تغيير طريقة التشغيل…"
     },
     "studentStartExam": {
       "back": "رجوع",
@@ -697,7 +718,14 @@
       "timeTakenMinutes": "{value} دقيقة",
       "backToHome": "العودة إلى الرئيسية",
       "reviewLectures": "مراجعة المحاضرات",
-      "retryExam": "إعادة الاختبار"
+      "retryExam": "إعادة الاختبار",
+      "reviewAnswers": "مراجعة الإجابات",
+      "answerReviewTitle": "مراجعة الإجابات",
+      "backFromReview": "العودة إلى النتيجة",
+      "reviewReadOnlyHint": "عرض تلخيصي لقراءة فقط لاختياراتك. لا يمكن تعديل الإجابات أو إعادة الإرسال من هذه الشاشة.",
+      "reviewQuestionBadge": "السؤال {n}",
+      "reviewMultipleType": "اختيار من متعدد",
+      "reviewNoAnswerOptions": "لا توجد خيارات إجابة مدرجة لهذا السؤال."
     },
     "studentExamsPage": {
       "pageTitle": "الامتحانات",
@@ -710,6 +738,7 @@
       "emptyUpcoming": "لا توجد امتحانات قادمة مدرجة هنا بعد.",
       "emptyCompleted": "لا توجد محاولات امتحان مكتملة بعد.",
       "emptyLocked": "لا توجد امتحانات مقفلة مدرجة هنا بعد.",
+      "emptyExpired": "لا توجد امتحانات بمهلة انتهت مدرجة هنا.",
       "attemptStarted": "بدأ في {date}",
       "attemptFinished": "انتهى في {date}",
       "attemptScoreLine": "الدرجة {score} / {total}",

@@ -22,6 +22,10 @@ export type StudentQuizResultPayload = {
   backHref: string;
   /** Full body from PUT `/v1/quiz-attempt/{attemptId}` after finish. */
   finishResponse: FinishQuizAttemptResponse;
+  /** Quiz snapshot at submit time — used only for “Review answers” (not sent to API). */
+  quizForReview?: Quiz;
+  /** Student selections keyed by question id — same shape as during the exam. */
+  selectionsForReview?: Record<string, string[]>;
 };
 
 export function studentTakeSessionKey(quizId: string): string {

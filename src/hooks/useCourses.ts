@@ -7,8 +7,12 @@ import { createQueryHook, createMutationHook, MutationState } from './index';
 // Courses Hooks
 // ============================================
 
+/** Static filter for student course lists: `GET /v1/course?activated=1` (activated enrollments only). Lock vs unlock still comes from each course’s `is_locked` (or equivalent) in the payload. */
+export const STUDENT_COURSES_LIST_PARAMS: { activated: number } = { activated: 1 };
+
 export const useCourses = createQueryHook(
-  (params?: { category_id?: number }) => api.courses.list(params).then(res => res.data),
+  (params?: { category_id?: number; activated?: number }) =>
+    api.courses.list(params).then((res) => res.data),
   { enabled: true }
 );
 

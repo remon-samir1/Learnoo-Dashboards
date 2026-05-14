@@ -26,7 +26,7 @@ export const getCourses = async (): Promise<ServiceListResponse<Course>> => {
   const token = userData?.token
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/course`, {
+    const res = await fetch(`https://api.learnoo.app/v1/course?activated=1`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

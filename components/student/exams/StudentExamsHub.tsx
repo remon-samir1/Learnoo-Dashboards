@@ -44,6 +44,7 @@ import {
 import { quizRequiresCourseActivationLock } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
+import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 
 function normalizeQuizListRow(raw: unknown): HubQuizListRow | null {
   if (raw == null || typeof raw !== 'object') return null;
@@ -82,6 +83,9 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
   const [attemptList, setAttemptList] = useState<QuizAttempt[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [quizActivationTarget, setQuizActivationTarget] = useState<{ id: string; title: string } | null>(
+    null
+  );
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -110,18 +114,38 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     void loadAll();
   }, [loadAll]);
 
-  const { available, upcoming, locked } = useMemo(() => {
-    const buckets: { available: HubQuizListRow[]; upcoming: HubQuizListRow[]; locked: HubQuizListRow[] } = {
+  const { available, upcoming, expired, locked } = useMemo(() => {
+    const buckets: {
+      available: HubQuizListRow[];
+      upcoming: HubQuizListRow[];
+      expired: HubQuizListRow[];
+      locked: HubQuizListRow[];
+    } = {
       available: [],
       upcoming: [],
+      expired: [],
       locked: [],
     };
     if (!quizList?.length) return buckets;
     const now = Date.now();
     for (const row of quizList) {
       const b = classifyHubQuizRow(row, now);
-      if (b === 'hidden') continue;
-      buckets[b].push(row);
+      switch (b) {
+        case 'available':
+          buckets.available.push(row);
+          break;
+        case 'upcoming':
+          buckets.upcoming.push(row);
+          break;
+        case 'expired':
+          buckets.expired.push(row);
+          break;
+        case 'locked':
+          buckets.locked.push(row);
+          break;
+        default:
+          break;
+      }
     }
     return buckets;
   }, [quizList]);
@@ -338,6 +362,64 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
 
         <section className="space-y-4 sm:space-y-5">
           <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
+            {tDetails('examsExpiredTitle')}
+          </h2>
+          {loading ? (
+            <p className="rounded-xl border border-[#E5E7EB] bg-white px-5 py-10 text-center text-sm text-[#64748B]">
+              {t('loadingQuizzes')}
+            </p>
+          ) : expired.length === 0 ? (
+            <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-5 py-8 text-center text-sm text-[#64748B]">
+              {t('emptyExpired')}
+            </p>
+          ) : (
+            <ul className={STUDENT_EXAM_GRID}>
+              {expired.map((row) => {
+                const title = hubQuizTitle(row);
+                const attrs = hubQuizAttrs(row);
+                const endRaw = attrs.end_time;
+                const endStr =
+                  typeof endRaw === 'string' && endRaw.trim() ? formatIsoDate(endRaw, locale) : null;
+                return (
+                  <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} border-rose-100`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-bold leading-snug text-[#0F172A] sm:text-lg">{title}</h3>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-800 sm:text-xs">
+                        {tDetails('examsExpiredBadge')}
+                      </span>
+                    </div>
+                    <div className="mt-3 rounded-lg border border-rose-200/90 bg-rose-50/90 px-3 py-2.5">
+                      <div className="flex gap-2">
+                        <XCircle className="mt-0.5 size-4 shrink-0 text-rose-700" strokeWidth={2} aria-hidden />
+                        <p className="text-sm font-medium leading-snug text-rose-950">
+                          {tDetails('examsExpiredHint')}
+                        </p>
+                      </div>
+                      {endStr ? (
+                        <p className="mt-2 text-xs font-medium text-rose-900/90">
+                          {tDetails('examsEndedOn', { date: endStr })}
+                        </p>
+                      ) : null}
+                    </div>
+                    {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
+                    <button
+                      type="button"
+                      disabled
+                      className="mt-5 w-full cursor-not-allowed rounded-lg bg-[#F1F5F9] py-3 text-center text-sm font-semibold text-[#94A3B8] sm:mt-6"
+                    >
+                      {tDetails('examsExpiredClosed')}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        <section className="space-y-4 sm:space-y-5">
+          <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
             {tDetails('examsCompletedTitle')}
           </h2>
           {loading ? (
@@ -459,10 +541,6 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                 const attrs = hubQuizAttrs(row);
                 const needsActivation = quizRequiresCourseActivationLock(attrs);
                 const cid = attrs.course_id;
-                const courseHref =
-                  cid != null && String(cid).trim() !== ''
-                    ? `/${locale}/student/courses/course-details/${encodeURIComponent(String(cid))}`
-                    : null;
 
                 return (
                   <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} text-[#64748B]`}>
@@ -475,19 +553,26 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                     {needsActivation ? (
                       <div className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
                         <p className="text-sm font-semibold text-amber-950">{tDetails('examsActivationRequired')}</p>
+                        <p className="mt-1 text-xs font-medium text-amber-900/85">{tDetails('examsPrivateExamHint')}</p>
                         <p className="mt-1 text-xs font-medium text-amber-900/85">
                           {tDetails('examsActivationRequiredSub')}
                         </p>
+                        {cid != null && String(cid).trim() !== '' ? (
+                          <p className="mt-2 text-xs font-semibold text-amber-950">
+                            {tDetails('examsCourseIdLabel', { id: String(cid) })}
+                          </p>
+                        ) : null}
                       </div>
                     ) : null}
                     {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
-                    {needsActivation && courseHref ? (
-                      <Link
-                        href={courseHref}
+                    {needsActivation ? (
+                      <button
+                        type="button"
+                        onClick={() => setQuizActivationTarget({ id: row.id, title })}
                         className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[#2137D6] px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] sm:mt-6"
                       >
-                        {tDetails('examsActivateCourseForExam')}
-                      </Link>
+                        {tDetails('examsActivateQuizForAccess')}
+                      </button>
                     ) : (
                       <button
                         type="button"
@@ -504,6 +589,17 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
           )}
         </section>
       </div>
+
+      <StudentCourseActivationModal
+        open={quizActivationTarget !== null}
+        onClose={() => setQuizActivationTarget(null)}
+        courseId={quizActivationTarget?.id ?? ''}
+        courseTitle={quizActivationTarget?.title}
+        activationItemType="quiz"
+        onActivated={async () => {
+          await loadAll();
+        }}
+      />
     </div>
   );
 }

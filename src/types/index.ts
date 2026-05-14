@@ -810,11 +810,23 @@ export interface ChapterAttributes {
 
 
 
+  /** HLS master/playlist URL when provided separately from `video`. */
+  playlist?: string | null;
+
+  video_hls_url?: string | null;
+
+  video_mp4_url?: string | null;
+
+
+
   duration: string;
 
 
 
   is_free_preview: 0 | 1;
+
+  /** Reserved for later scenarios; scenario 1 uses only `is_free_preview`. */
+  is_free_preview_attachment?: 0 | 1 | boolean;
 
 
 
@@ -3067,6 +3079,11 @@ export interface PostAttributes {
 
 
 
+  /** When set, post belongs to this course (community / course tab). */
+  course_id?: number;
+
+
+
   tags: string[];
 
 
@@ -3196,6 +3213,11 @@ export interface CreatePostRequest {
 
 
   parent_id?: number | null;
+
+
+
+  /** Associate a new top-level post with a course (multipart create). */
+  course_id?: number;
 
 
 
@@ -3749,6 +3771,11 @@ export interface QuizQuestionAnswerAttributes {
 
 
   is_correct: boolean;
+
+
+
+  /** Optional per-option explanation shown after submission / in review. */
+  reason?: string | null;
 
 
 

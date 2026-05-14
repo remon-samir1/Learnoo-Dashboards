@@ -1,24 +1,24 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, Power, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useActivateCode } from '@/src/hooks';
 import { ApiError } from '@/src/lib/api';
 
-export type StudentActivationItemType = 'course' | 'library';
+export type StudentActivationItemType = 'course' | 'library' | 'chapter' | 'quiz';
 
 export interface StudentCourseActivationModalProps {
   open: boolean;
   onClose: () => void;
   /**
    * Target resource id for POST `/v1/code/activate` as `item_id` (string form of integer).
-   * For courses: course id. For library: **library** material id (not `course_id`).
+   * Course id, chapter id, or library material id depending on `activationItemType`.
    */
   courseId: string;
   courseTitle?: string;
-  /** `item_type` sent to `/v1/code/activate`. Defaults to `course` for course flows. */
+  /** `item_type` sent to `/v1/code/activate`. Defaults to `course`. */
   activationItemType?: StudentActivationItemType;
   onActivated?: () => void | Promise<void>;
 }
@@ -29,8 +29,44 @@ function parseItemId(rawId: string): number | null {
   return n;
 }
 
-export function StudentCourseActivationModal({
-  open,
+function invalidToastKey(
+  type: StudentActivationItemType
+): 'invalidLibrary' | 'invalidChapter' | 'invalidCourse' | 'invalidQuiz' {
+  if (type === 'library') return 'invalidLibrary';
+  if (type === 'chapter') return 'invalidChapter';
+  if (type === 'quiz') return 'invalidQuiz';
+  return 'invalidCourse';
+}
+
+function successToastKey(
+  type: StudentActivationItemType
+): 'successLibrary' | 'successChapter' | 'successQuiz' | 'success' {
+  if (type === 'library') return 'successLibrary';
+  if (type === 'chapter') return 'successChapter';
+  if (type === 'quiz') return 'successQuiz';
+  return 'success';
+}
+
+function descriptionKey(
+  type: StudentActivationItemType
+): 'descriptionLibrary' | 'descriptionChapter' | 'descriptionQuiz' | 'description' {
+  if (type === 'library') return 'descriptionLibrary';
+  if (type === 'chapter') return 'descriptionChapter';
+  if (type === 'quiz') return 'descriptionQuiz';
+  return 'description';
+}
+
+export function StudentCourseActivationModal(props: StudentCourseActivationModalProps) {
+  if (!props.open) return null;
+  return (
+    <StudentCourseActivationModalInner
+      key={`${props.activationItemType ?? 'course'}-${props.courseId}`}
+      {...props}
+    />
+  );
+}
+
+function StudentCourseActivationModalInner({
   onClose,
   courseId,
   courseTitle,
@@ -41,12 +77,6 @@ export function StudentCourseActivationModal({
   const tView = useTranslations('courses.view');
   const [code, setCode] = useState('');
   const { mutate: activateCode, isLoading } = useActivateCode();
-
-  useEffect(() => {
-    if (!open) setCode('');
-  }, [open]);
-
-  if (!open) return null;
 
   const itemId = parseItemId(courseId);
   const itemType = activationItemType;
@@ -59,7 +89,7 @@ export function StudentCourseActivationModal({
       return;
     }
     if (itemId == null) {
-      toast.error(itemType === 'library' ? t('invalidLibrary') : t('invalidCourse'));
+      toast.error(t(invalidToastKey(itemType)));
       return;
     }
 
@@ -69,12 +99,11 @@ export function StudentCourseActivationModal({
         item_id: itemId,
         item_type: itemType,
       });
-      toast.success(itemType === 'library' ? t('successLibrary') : t('success'));
+      toast.success(t(successToastKey(itemType)));
       await onActivated?.();
       onClose();
     } catch (err) {
-      const message =
-        err instanceof ApiError ? err.message : t('genericError');
+      const message = err instanceof ApiError ? err.message : t('genericError');
       toast.error(message);
     }
   };
@@ -115,9 +144,7 @@ export function StudentCourseActivationModal({
           {courseTitle?.trim() ? (
             <p className="mt-3 text-sm font-medium text-[#475569]">{courseTitle.trim()}</p>
           ) : null}
-          <p className="mt-2 text-xs text-[#64748B]">
-            {itemType === 'library' ? t('descriptionLibrary') : t('description')}
-          </p>
+          <p className="mt-2 text-xs text-[#64748B]">{t(descriptionKey(itemType))}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-6">

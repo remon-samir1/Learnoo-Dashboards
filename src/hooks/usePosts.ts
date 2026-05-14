@@ -6,9 +6,16 @@ import { createQueryHook, createMutationHook } from './index';
 // Posts Hooks (Community)
 // ============================================
 
-export const usePosts = createQueryHook(
-  () => api.posts.list().then(res => res.data),
-  { enabled: true }
+export const usePosts = createQueryHook<Post[], [number | null]>(
+  (courseId) =>
+    api.posts
+      .list(
+        courseId !== null && Number.isFinite(courseId) && courseId > 0
+          ? { course_id: courseId }
+          : undefined,
+      )
+      .then((res) => res.data),
+  { enabled: true },
 );
 
 export const usePost = createQueryHook(

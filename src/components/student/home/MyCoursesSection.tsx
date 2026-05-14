@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { StudentCourseActivationModal } from "@/components/student/StudentCourseActivationModal";
 import { StudentCourseCard } from "@/components/student/StudentCourseCard";
 import { CourseCardSkeleton } from "@/src/components/ui/Skeleton";
-import { useCourses } from "@/src/hooks/useCourses";
+import { STUDENT_COURSES_LIST_PARAMS, useCourses } from "@/src/hooks/useCourses";
 import { useStudentCourseListActivation } from "@/src/hooks/useStudentCourseListActivation";
 import { courseIsLocked } from "@/src/lib/student-course-lock";
 import type { Course } from "@/src/types";
@@ -19,7 +19,7 @@ export default function MyCoursesSection() {
   const locale = useLocale();
   const t = useTranslations("courses");
   const tH = useTranslations("student.home.courses");
-  const { data: courses, isLoading, error, refetch } = useCourses();
+  const { data: courses, isLoading, error, refetch } = useCourses(STUDENT_COURSES_LIST_PARAMS);
   const activation = useStudentCourseListActivation();
    
   function getCourseProgress(course: Course) {
