@@ -39,6 +39,7 @@ import {
   isStudentChapterPdfVisible,
   isStudentChapterVideoPlayable,
 } from '@/src/lib/student-chapter-access';
+import PdfPreviewModal from './PdfPreviewModal';
 
 type ChapterAttachment = NonNullable<Chapter['attributes']['attachments']>[number];
 
@@ -485,11 +486,12 @@ export default function ChapterWatchView({
                     <span className="text-sm font-semibold text-slate-800">{t('lectureMaterial')}</span>
                   </div>
                   <div className="relative min-h-[240px] flex-1 bg-slate-100 lg:min-h-[320px]">
-                    <iframe
+                    {/* <iframe
                       title={t('lectureMaterial')}
                       src={pdfUrl}
                       className="absolute inset-0 h-full w-full border-0"
-                    />
+                    /> */}
+                    <PdfPreviewModal title={t('lectureMaterial')} open={pdfPanelVisible} onClose={() => setShowPdf(false)} pdfUrl={pdfUrl} />
                     <p className="pointer-events-none absolute bottom-3 left-3 right-3 text-center text-[11px] text-slate-500">
                       {t('pdfSyncHint')}
                     </p>
