@@ -29,7 +29,7 @@ export function StudentVideoStaticOverlay({ subtitle }: StudentVideoStaticOverla
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-[25] col-start-1 row-start-1 flex items-start justify-end p-1 sm:justify-start sm:p-2.5"
+      className="pointer-events-none absolute inset-0 z-[25] col-start-1 row-start-1 flex items-start justify-end p-1 sm:justify-start sm:p-2.5 opacity-50"
       role="note"
       aria-label={`${name}. ID ${id}. ${subtitle?.trim() ?? ''}`}
     >

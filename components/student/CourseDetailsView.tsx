@@ -875,6 +875,7 @@ function ChapterRow({
   const needsPlaybackActivation = !chapterLocked && !canWatchOk;
   const videoPlayable = isStudentChapterVideoPlayable(chapter);
   const pdfVisible = isStudentChapterPdfVisible(chapter);
+  
   const pdfLinkActive = Boolean(pdfUrl && pdfVisible);
   const chapterTitleForModal = attrs.title?.trim() ?? '';
   const openChapterActivation = () =>
@@ -914,20 +915,19 @@ function ChapterRow({
     'inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight';
 
   const pdfBadge =
-    hasPdf && pdfVisible ? (
-      pdfUrl && pdfLinkActive ? (
+    hasPdf && pdfVisible ?  (
+      pdfUrl && pdfLinkActive  &&  attrs.can_watch &&
         <a
           href={pdfUrl}
           target="_blank"
+          
           rel="noopener noreferrer"
           className={`${badgeBase} bg-[#EFF6FF] text-[#1E40AF] transition hover:opacity-90`}
         >
           {t('hasPdf')}
         </a>
-      ) : (
-        <span className={`${badgeBase} bg-[#F1F5F9] text-[#64748B]`}>{t('hasPdf')}</span>
-      )
-    ) : null;
+      ) :null
+
 
   const heading = t('chapterItemHeading', {
     number: itemIndexWithinLecture,

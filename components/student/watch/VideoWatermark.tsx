@@ -350,7 +350,7 @@ export function VideoWatermark({
 
   const layer = (
     <div
-      className="pointer-events-none relative h-full w-full select-none overflow-visible max-sm:[&_span]:!text-[11px] max-sm:[&_span]:!leading-snug max-sm:[&_span]:!font-semibold"
+      className="pointer-events-none  relative h-full w-full select-none overflow-visible max-sm:[&_span]:!text-[11px] max-sm:[&_span]:!leading-snug max-sm:[&_span]:!font-semibold"
       aria-hidden
     >
       {config.position === 'full' && !config.dynamicPosition ? (
