@@ -1,5 +1,6 @@
 import Navbar from "@/components/student/Navbar";
 import Sidebar from "@/components/student/Sidebar";
+import { StudentAuthStoreInit } from "@/components/student/StudentAuthStoreInit";
 import { StudentToaster } from "@/components/student/StudentToaster";
 import { getCurrentUser } from "@/src/services/auth/me.service";
 import { getStudentNotifications } from "@/src/services/student/user.service";
@@ -28,6 +29,7 @@ export default async function StudentLayout({
 
   return (
      <div className="flex min-h-screen bg-gray-50">
+    <StudentAuthStoreInit />
     <Sidebar currentUser={currentUser} />
 
     <div className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">

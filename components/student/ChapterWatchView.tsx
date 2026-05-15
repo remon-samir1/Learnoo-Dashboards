@@ -10,6 +10,7 @@ import {
   ChevronDown,
   FileText,
   Loader2,
+  Lock,
   MessageCircle,
   Play,
   Send,
@@ -18,7 +19,7 @@ import type { ErrorDetails } from 'hls.js';
 import toast from 'react-hot-toast';
 import type { Chapter, Quiz } from '@/src/types';
 import { api, ApiError } from '@/src/lib/api';
-import { quizRequiresCourseActivationLock } from '@/src/lib/student-quiz-activation-lock';
+import { quizStudentMustActivateOrReactivate } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import {
@@ -32,6 +33,12 @@ import {
 } from '@/components/student/watch/watchChapterDiscussionUtils';
 import { HlsVideoPlayer } from '@/components/student/watch/HlsVideoPlayer';
 import { pickChapterStreams } from '@/src/lib/chapter-playback-urls';
+import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
+import {
+  coerceCanWatchExplicitTrue,
+  isStudentChapterPdfVisible,
+  isStudentChapterVideoPlayable,
+} from '@/src/lib/student-chapter-access';
 
 type ChapterAttachment = NonNullable<Chapter['attributes']['attachments']>[number];
 
@@ -88,6 +95,7 @@ export default function ChapterWatchView({
   lectureChapters,
   lectureTitle,
   watchAccessDenied,
+  initialWatermarkResolution,
 }: {
   chapterId: string;
   chapter: Chapter | null;
@@ -96,6 +104,8 @@ export default function ChapterWatchView({
   lectureTitle: string;
   /** Server says `can_watch` is false — user cannot use this chapter URL to stream. */
   watchAccessDenied: boolean;
+  /** From server `GET /v1/feature` + bucket resolution; used until client query settles. */
+  initialWatermarkResolution?: WatermarkResolution | null;
 }) {
   const locale = useLocale();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
@@ -158,7 +168,7 @@ export default function ChapterWatchView({
 
   const examLockedByActivation = useMemo(() => {
     if (!examQuiz?.attributes) return false;
-    return quizRequiresCourseActivationLock(examQuiz.attributes as unknown as Record<string, unknown>);
+    return quizStudentMustActivateOrReactivate(examQuiz.attributes as unknown as Record<string, unknown>);
   }, [examQuiz]);
 
   const backHref = useMemo(() => {
@@ -169,16 +179,20 @@ export default function ChapterWatchView({
     return `/${locale}/student/courses`;
   }, [chapter, locale]);
 
+  const pdfPanelVisible = useMemo(
+    () => (chapter ? isStudentChapterPdfVisible(chapter) : false),
+    [chapter]
+  );
+
   const viewsBadge = useMemo(() => {
     if (!chapter) return null;
     const maxViews = chapter.attributes.max_views;
     const current = chapter.attributes.current_user_views;
     if (maxViews != null && maxViews > 0) {
-      const remaining = Math.max(0, maxViews - current);
-      return t('viewsLeftBadge', { remaining, max: maxViews });
+      return tDetails('viewsUsageBadge', { current, max: maxViews });
     }
     return null;
-  }, [chapter, t]);
+  }, [chapter, tDetails]);
 
   const chapterThumb = useMemo(() => {
     const u = chapter?.attributes?.thumbnail?.trim();
@@ -210,14 +224,21 @@ export default function ChapterWatchView({
   }, [chapterId]);
 
   useEffect(() => {
+    if (!pdfPanelVisible) setShowPdf(false);
+  }, [pdfPanelVisible]);
+
+  useEffect(() => {
     if (!Number.isFinite(chapterIdForApi) || watchAccessDenied) return;
     let cancelled = false;
     (async () => {
       try {
         const res = await api.chapters.get(chapterIdForApi, { skipAuthRedirect: true });
         if (cancelled) return;
-        if (res.data.attributes.can_watch === false) {
+        if (!coerceCanWatchExplicitTrue(res.data.attributes.can_watch)) {
           setClientPlaybackBlocked(true);
+          setPlaybackBlockMessage(null);
+        } else {
+          setClientPlaybackBlocked(false);
           setPlaybackBlockMessage(null);
         }
       } catch (err) {
@@ -361,225 +382,257 @@ export default function ChapterWatchView({
       : null;
 
   return (
-    <div className="min-h-screen bg-[#0b1426] pb-10 text-slate-100" dir={dir}>
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div
+      className="min-h-screen overflow-x-clip bg-[#0b1426] pb-28 text-slate-100 [-webkit-tap-highlight-color:transparent] sm:pb-[max(2.5rem,env(safe-area-inset-bottom,0px))]"
+      dir={dir}
+    >
+      <div className="mx-auto w-full max-w-6xl px-6 pt-2 pb-1 sm:px-6 sm:pb-2 sm:pt-6 lg:px-8">
+        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <Link
               href={backHref}
-              className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition hover:text-white"
+              className="mb-2 inline-flex min-h-[44px] items-center gap-2 py-1 text-sm font-medium text-slate-400 transition hover:text-white sm:mb-3"
             >
-              <ArrowLeft className="size-4 rtl:rotate-180" />
+              <ArrowLeft className="size-4 shrink-0 rtl:rotate-180" />
               {tDetails('watchBack')}
             </Link>
-            <h1 className="text-2xl font-bold leading-tight text-white sm:text-3xl">{attrs.title}</h1>
-            <p className="mt-2 text-sm text-slate-400">
+            <h1 className="text-xl font-bold leading-snug text-white sm:text-2xl sm:leading-tight lg:text-3xl">
+              {attrs.title}
+            </h1>
+            <p className="mt-1.5 text-xs leading-relaxed text-slate-400 sm:mt-2 sm:text-sm">
               {lectureTitle ? (
                 <>
                   <span className="text-slate-300">{lectureTitle}</span>
-                  <span className="mx-2 text-slate-600">•</span>
+                  <span className="mx-1.5 text-slate-600 sm:mx-2">•</span>
                 </>
               ) : null}
               <span>{t('subtitleChapter', { number: currentPartIndex + 1 })}</span>
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 lg:justify-end">
             {viewsBadge ? (
-              <span className="rounded-lg border border-slate-600 bg-slate-900/80 px-3 py-1.5 text-xs font-semibold text-slate-200">
+              <span className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-600 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-slate-200 sm:min-h-0 sm:py-1.5">
                 {viewsBadge}
               </span>
             ) : null}
-            {pdfUrl ? (
+            {pdfUrl && pdfPanelVisible ? (
               <button
                 type="button"
                 onClick={() => setShowPdf((v) => !v)}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-transparent px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10 active:bg-white/15 sm:min-h-0 sm:w-auto sm:bg-transparent sm:px-4 sm:py-2 sm:text-sm"
               >
-                <FileText className="size-4" aria-hidden />
-                {showPdf ? t('hidePdf') : t('showPdf')}
+                <FileText className="size-4 shrink-0" aria-hidden />
+                <span className="truncate">{showPdf ? t('hidePdf') : t('showPdf')}</span>
               </button>
             ) : null}
           </div>
         </div>
+      </div>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-700 bg-[#070d18] shadow-xl">
-          <div className={`grid gap-0 ${showPdf && pdfUrl ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
-            <div className="border-slate-700 bg-black/50 lg:border-e lg:border-slate-700">
-              {videoSrc ? (
-                accessDenied ? (
-                  <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
-                    <p className="max-w-md text-sm font-medium text-slate-200">
-                      {playbackBlockMessage ?? t('watchAccessDenied')}
-                    </p>
-                    <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
-                    <Link
-                      href={backHref}
-                      className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+      <div className="relative left-1/2 w-screen max-w-[100dvw] -translate-x-1/2 [overscroll-behavior-x:contain] sm:static sm:left-auto sm:w-full sm:max-w-none sm:translate-x-0">
+        <div className="mx-auto w-full max-w-6xl sm:px-6 lg:px-8">
+          <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
+            <div className={`grid gap-0 ${showPdf && pdfUrl && pdfPanelVisible ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
+              <div className="border-slate-700 bg-black/50 lg:border-e lg:border-slate-700">
+                {videoSrc ? (
+                  accessDenied ? (
+                    <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
+                      <p className="max-w-md text-sm font-medium text-slate-200">
+                        {playbackBlockMessage ?? t('watchAccessDenied')}
+                      </p>
+                      <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
+                      <Link
+                        href={backHref}
+                        className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                      >
+                        {tDetails('watchBack')}
+                      </Link>
+                    </div>
+                  ) : (
+                    <HlsVideoPlayer
+                      id="watch-chapter-video"
+                      key={`${videoSrc}|${mp4FallbackUrl}`}
+                      ref={videoRef}
+                      src={videoSrc}
+                      mp4FallbackUrl={mp4FallbackUrl}
+                      switchingPlaybackLabel={t('switchingPlaybackMethod')}
+                      showCustomControls
+                      playsInline
+                      className="aspect-video w-full object-contain"
+                      preload="metadata"
+                      onFatalPlaybackError={onFatalPlaybackError}
+                      initialWatermarkResolution={initialWatermarkResolution ?? null}
+                      staticOverlaySubtitle={lectureTitle.trim() || attrs.title?.trim() || undefined}
                     >
-                      {tDetails('watchBack')}
-                    </Link>
-                  </div>
+                      {tDetails('watchNoVideo')}
+                    </HlsVideoPlayer>
+                  )
                 ) : (
-                  <HlsVideoPlayer
-                    id="watch-chapter-video"
-                    key={`${videoSrc}|${mp4FallbackUrl}`}
-                    ref={videoRef}
-                    src={videoSrc}
-                    mp4FallbackUrl={mp4FallbackUrl}
-                    switchingPlaybackLabel={t('switchingPlaybackMethod')}
-                    controls
-                    playsInline
-                    className="aspect-video w-full object-contain"
-                    preload="metadata"
-                    onFatalPlaybackError={onFatalPlaybackError}
-                  >
-                    {tDetails('watchNoVideo')}
-                  </HlsVideoPlayer>
-                )
-              ) : (
-                <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
-                  <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
-                    <Play className="size-8 translate-x-0.5" fill="currentColor" />
+                  <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
+                    <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
+                      <Play className="size-8 translate-x-0.5" fill="currentColor" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
+                    <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
                   </div>
-                  <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
-                  <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
+                )}
+              </div>
+
+              {showPdf && pdfUrl && pdfPanelVisible ? (
+                <div className="flex min-h-[280px] flex-col border-t border-slate-700 bg-white lg:min-h-0 lg:border-t-0">
+                  <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
+                    <span className="text-sm font-semibold text-slate-800">{t('lectureMaterial')}</span>
+                  </div>
+                  <div className="relative min-h-[240px] flex-1 bg-slate-100 lg:min-h-[320px]">
+                    <iframe
+                      title={t('lectureMaterial')}
+                      src={pdfUrl}
+                      className="absolute inset-0 h-full w-full border-0"
+                    />
+                    <p className="pointer-events-none absolute bottom-3 left-3 right-3 text-center text-[11px] text-slate-500">
+                      {t('pdfSyncHint')}
+                    </p>
+                  </div>
                 </div>
-              )}
+              ) : null}
             </div>
 
-            {showPdf && pdfUrl ? (
-              <div className="flex min-h-[280px] flex-col border-t border-slate-700 bg-white lg:min-h-0 lg:border-t-0">
-                <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
-                  <span className="text-sm font-semibold text-slate-800">{t('lectureMaterial')}</span>
+            {/* Under video: stacked on small screens; desktop = one row like design (Ask | Lecture parts inline | Discussions). */}
+            <div className="border-t border-slate-800/80 bg-[#050915] px-0 py-0 sm:px-6 sm:py-3.5">
+              <div className="flex flex-col gap-3 px-7 pb-7 pt-7 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
+                <div className="flex justify-stretch max-md:-mx-7 max-md:border-b max-md:border-slate-800/90 md:min-w-0 md:justify-start">
+                  {Number.isFinite(chapterIdForApi) ? (
+                    <button
+                      type="button"
+                      onClick={() => setComposerOpen((o) => !o)}
+                      className={`inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] max-md:rounded-none max-md:px-12 sm:min-h-0 sm:w-auto sm:px-7 sm:py-2.5 md:shrink-0 ${composerOpen
+                        ? 'bg-[#2436b0] sm:ring-2 sm:ring-white/20'
+                        : 'bg-[#2D43D1] hover:bg-[#2436b0]'
+                        }`}
+                    >
+                      <MessageCircle className="size-4 shrink-0 stroke-[2]" aria-hidden />
+                      {t('askMoment')}
+                    </button>
+                  ) : (
+                    <span className="h-10" aria-hidden />
+                  )}
                 </div>
-                <div className="relative min-h-[240px] flex-1 bg-slate-100 lg:min-h-[320px]">
-                  <iframe
-                    title={t('lectureMaterial')}
-                    src={pdfUrl}
-                    className="absolute inset-0 h-full w-full border-0"
-                  />
-                  <p className="pointer-events-none absolute bottom-3 left-3 right-3 text-center text-[11px] text-slate-500">
-                    {t('pdfSyncHint')}
-                  </p>
+
+                <div className="min-w-0 md:flex md:justify-center md:px-1">
+                  <div className="flex flex-col items-center gap-2 md:flex-row md:items-center md:justify-center md:gap-2.5 md:overflow-x-auto md:py-0.5">
+                    <span className="w-full text-center text-xs font-medium text-slate-400 sm:text-sm md:w-auto md:shrink-0 md:text-start">
+                      {t('lecturePartsToolbar')}
+                    </span>
+                    <div className="-mx-1 flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 md:justify-center md:pb-0 [&::-webkit-scrollbar]:hidden">
+                      {partChapters.map((ch, idx) => {
+                        const active = String(ch.id) === String(chapterId);
+                        const href = `/${locale}/student/courses/watch/${ch.id}`;
+                        const partPlayable = isStudentChapterVideoPlayable(ch);
+                        if (partPlayable) {
+                          return (
+                            <Link
+                              key={ch.id}
+                              href={href}
+                              prefetch
+                              className={`snap-start whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-semibold transition md:rounded-lg md:px-4 md:py-2 md:text-sm ${active
+                                ? 'bg-[#2D43D1] text-white'
+                                : 'border border-slate-600/90 bg-slate-800/90 text-slate-200 hover:border-slate-500 hover:bg-slate-800'
+                                }`}
+                            >
+                              {t('partLabel', { number: idx + 1 })}
+                            </Link>
+                          );
+                        }
+                        return (
+                          <span
+                            key={ch.id}
+                            title={t('partLockedTooltip')}
+                            className={`inline-flex snap-start cursor-not-allowed items-center gap-1 whitespace-nowrap rounded-lg border px-3.5 py-2 text-xs font-semibold opacity-80 md:rounded-lg md:px-4 md:py-2 md:text-sm ${active
+                              ? 'border-amber-500/60 bg-slate-900/90 text-amber-100'
+                              : 'border-slate-600/80 bg-slate-800/80 text-slate-400'
+                              }`}
+                            aria-disabled
+                          >
+                            <Lock className="size-3.5 shrink-0 opacity-90" aria-hidden />
+                            {t('partLabel', { number: idx + 1 })}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-stretch md:min-w-0 md:justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setDiscussionsOpen((o) => !o)}
+                    className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:inline-flex md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
+                    aria-expanded={discussionsOpen}
+                  >
+                    {t('discussionsCount', { count: discussions.length })}
+                    <ChevronDown
+                      className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
+                      aria-hidden
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {Number.isFinite(chapterIdForApi) && composerOpen ? (
+              <div className="border-t border-slate-800/80 bg-[#050915] px-7 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-2 sm:px-6 sm:pb-5 sm:pt-1">
+                <div className="flex gap-3">
+                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
+                    <Image src={chapterThumb} alt="" fill className="object-cover" sizes="56px" />
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <textarea
+                      ref={composerTextareaRef}
+                      rows={3}
+                      value={composerText}
+                      onChange={(e) => setComposerText(e.target.value)}
+                      disabled={composerSubmitting}
+                      placeholder={t('composerPlaceholder')}
+                      className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60 sm:text-sm"
+                    />
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      {momentDisplay ? (
+                        <span className="rounded-md border border-slate-700 bg-slate-800/90 px-2.5 py-1.5 text-[11px] font-semibold text-slate-300">
+                          {momentDisplay}
+                        </span>
+                      ) : (
+                        <span />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void submitComposer()}
+                        disabled={composerSubmitting}
+                        className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-[#2D43D1] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2436b0] active:scale-[0.99] disabled:opacity-50 sm:min-h-0 sm:px-4 sm:py-2"
+                      >
+                        {composerSubmitting ? (
+                          <Loader2 className="size-4 animate-spin" aria-hidden />
+                        ) : (
+                          <Send className="size-4 rtl:rotate-180" aria-hidden />
+                        )}
+                        {t('composerPost')}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : null}
           </div>
-
-          {/* Figma: single toolbar row under video — Ask | Lecture Parts | Discussions */}
-          <div className="border-t border-slate-800/80 bg-[#050915] px-3 py-3 sm:px-5 sm:py-3.5">
-            <div className="flex flex-col gap-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:items-center md:gap-3">
-              <div className="flex justify-start md:min-w-0">
-                {Number.isFinite(chapterIdForApi) ? (
-                  <button
-                    type="button"
-                    onClick={() => setComposerOpen((o) => !o)}
-                    className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition sm:px-5 ${
-                      composerOpen
-                        ? 'bg-[#2436b0] ring-2 ring-white/20'
-                        : 'bg-[#2D43D1] hover:bg-[#2436b0]'
-                    }`}
-                  >
-                    <MessageCircle className="size-4 shrink-0 stroke-[2]" aria-hidden />
-                    {t('askMoment')}
-                  </button>
-                ) : (
-                  <span className="h-10" aria-hidden />
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-2 md:justify-center">
-                <span className="text-sm font-normal text-slate-400">{t('lecturePartsToolbar')}</span>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {partChapters.map((ch, idx) => {
-                    const active = String(ch.id) === String(chapterId);
-                    const href = `/${locale}/student/courses/watch/${ch.id}`;
-                    return (
-                      <Link
-                        key={ch.id}
-                        href={href}
-                        prefetch
-                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                          active
-                            ? 'bg-[#2D43D1] text-white'
-                            : 'border border-slate-700/80 bg-slate-800/90 text-white hover:border-slate-600 hover:bg-slate-800'
-                        }`}
-                      >
-                        {t('partLabel', { number: idx + 1 })}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex justify-end md:min-w-0">
-                <button
-                  type="button"
-                  onClick={() => setDiscussionsOpen((o) => !o)}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 md:inline-flex md:w-auto"
-                  aria-expanded={discussionsOpen}
-                >
-                  {t('discussionsCount', { count: discussions.length })}
-                  <ChevronDown
-                    className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
-                    aria-hidden
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {Number.isFinite(chapterIdForApi) && composerOpen ? (
-            <div className="border-t border-slate-800/80 bg-[#050915] px-3 pb-4 pt-1 sm:px-5 sm:pb-5">
-              <div className="flex gap-3">
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
-                  <Image src={chapterThumb} alt="" fill className="object-cover" sizes="56px" />
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <textarea
-                    ref={composerTextareaRef}
-                    rows={2}
-                    value={composerText}
-                    onChange={(e) => setComposerText(e.target.value)}
-                    disabled={composerSubmitting}
-                    placeholder={t('composerPlaceholder')}
-                    className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60"
-                  />
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    {momentDisplay ? (
-                      <span className="rounded-md border border-slate-700 bg-slate-800/90 px-2.5 py-1 text-[11px] font-semibold text-slate-300">
-                        {momentDisplay}
-                      </span>
-                    ) : (
-                      <span />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => void submitComposer()}
-                      disabled={composerSubmitting}
-                      className="inline-flex items-center gap-2 rounded-lg bg-[#2D43D1] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#2436b0] disabled:opacity-50"
-                    >
-                      {composerSubmitting ? (
-                        <Loader2 className="size-4 animate-spin" aria-hidden />
-                      ) : (
-                        <Send className="size-4 rtl:rotate-180" aria-hidden />
-                      )}
-                      {t('composerPost')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : null}
         </div>
+      </div>
 
+      <div className="mx-auto mt-[30px] w-full max-w-6xl space-y-6 px-5 pb-4 sm:space-y-8 sm:px-6 sm:pb-6 lg:px-8">
         {discussionsOpen ? (
-          <section className="mt-6 space-y-3">
+          <section className="space-y-3 sm:space-y-4">
             <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
               {t('discussionsHeading')}
             </h2>
             {discussions.length === 0 ? (
-              <p className="rounded-xl border border-slate-700 bg-slate-900/40 px-4 py-8 text-center text-sm text-slate-400">
+              <p className="rounded-xl border border-slate-700 bg-slate-900/40 px-3 py-10 text-center text-sm text-slate-400 sm:px-4">
                 {t('noDiscussions')}
               </p>
             ) : (
@@ -598,14 +651,14 @@ export default function ChapterWatchView({
                     if (momentSec == null || !videoRef.current) return;
                     const el = videoRef.current;
                     el.currentTime = Math.min(momentSec, el.duration || momentSec);
-                    void el.play().catch(() => {});
+                    void el.play().catch(() => { });
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   };
 
                   return (
                     <article
                       key={discussionKey(d, i)}
-                      className="rounded-xl border border-slate-700/80 bg-slate-900/50 p-4 shadow-sm"
+                      className="rounded-xl border border-slate-700/80 bg-slate-900/50 p-3.5 shadow-sm sm:p-4"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-3">
@@ -626,11 +679,10 @@ export default function ChapterWatchView({
                             </p>
                             {typeTag ? (
                               <span
-                                className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                                  isQuestion
-                                    ? 'bg-orange-500/20 text-orange-300'
-                                    : 'bg-[#2D43D1]/25 text-[#93B4FF]'
-                                }`}
+                                className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isQuestion
+                                  ? 'bg-orange-500/20 text-orange-300'
+                                  : 'bg-[#2D43D1]/25 text-[#93B4FF]'
+                                  }`}
                               >
                                 {isQuestion ? t('badgeQuestion') : t('badgeComment')}
                               </span>
@@ -641,7 +693,7 @@ export default function ChapterWatchView({
                           <button
                             type="button"
                             onClick={jump}
-                            className="shrink-0 text-xs font-semibold text-[#5B8DEF] hover:underline"
+                            className="-me-1 min-h-[44px] shrink-0 px-2 py-2 text-xs font-semibold text-[#5B8DEF] hover:underline sm:me-0 sm:min-h-0 sm:px-0 sm:py-0"
                           >
                             {t('jumpToTime')}
                             {momentLabel ? (
@@ -659,7 +711,7 @@ export default function ChapterWatchView({
         ) : null}
 
         {examQuiz && (startExamHref || examLockedByActivation) ? (
-          <div className="mt-6 flex flex-col items-stretch justify-between gap-3 overflow-hidden rounded-2xl border border-[#5c3d28]/80 bg-[#3d2818] px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+          <div className="flex flex-col items-stretch justify-between gap-3 overflow-hidden rounded-2xl border border-[#5c3d28]/80 bg-[#3d2818] px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
             <div className="flex min-w-0 items-center gap-3 text-sm font-semibold text-[#f5e6d6]">
               <FileText className="size-5 shrink-0 text-[#f59e0b]" aria-hidden />
               {t('examBannerText')}

@@ -154,6 +154,7 @@
   },
   "sidebar": {
     "dashboard": "Dashboard",
+    "home": "Home",
     "academicStructure": "Academic Structure",
     "universities": "Universities",
     "faculties": "Faculties",
@@ -517,7 +518,7 @@
     "studentActivation": {
       "description": "Enter your activation code below to unlock full access to this course.",
       "descriptionLibrary": "Enter your activation code below to unlock this library material.",
-      "descriptionChapter": "Enter your activation code below to unlock this chapter (video and attachments).",
+      "descriptionChapter": "Enter your activation code below to unlock this chapter’s video.",
       "descriptionQuiz": "Enter your activation code below to unlock this exam or quiz for your account.",
       "codeLabel": "Activation code",
       "codePlaceholder": "e.g. ABCD-1234",
@@ -532,7 +533,8 @@
       "success": "Course activated successfully!",
       "successLibrary": "Library material activated successfully!",
       "successChapter": "Chapter activated successfully!",
-      "successQuiz": "Exam activated successfully!"
+      "successQuiz": "Exam activated successfully!",
+      "quizActivationNotEffective": "This code did not unlock the exam yet. Check the code or try again."
     },
     "studentStatus": {
       "active": "Active"
@@ -564,6 +566,7 @@
       "viewsExhausted": "Views Exhausted",
       "partsCount": "{count} parts",
       "viewsRemaining": "{remaining}/{max} views left",
+      "viewsUsageBadge": "{current} / {max} views",
       "viewsUnlimited": "Unlimited views left",
       "openPdf": "PDF",
       "heroLectureCount": "{count} Lectures",
@@ -613,6 +616,8 @@
       "examsActivationRequired": "Activate course to access this exam",
       "examsActivationRequiredSub": "Course activation required",
       "examsPrivateExamHint": "This exam is not public — activate the course on your account to access it.",
+      "examsReactivateAttemptsTitle": "No attempts left",
+      "examsReactivateAttemptsBody": "You used all attempts for this private exam. Enter a new activation code to unlock more attempts.",
       "examsCourseIdLabel": "Course #{id}",
       "examsActivateCourseForExam": "Activate course",
       "examsActivateQuizForAccess": "Activate with code",
@@ -644,6 +649,7 @@
       "lectureParts": "Lecture parts",
       "lecturePartsToolbar": "Lecture Parts:",
       "partLabel": "Part {number}",
+      "partLockedTooltip": "This part is locked — use the course page to activate access or open allowed parts.",
       "discussionsHeading": "Discussions",
       "discussionsCount": "Discussions ({count})",
       "noDiscussions": "No discussions yet.",
@@ -672,9 +678,17 @@
       "composerMomentLabel": "At {time}",
       "anonymousUser": "Student",
       "watchAccessDenied": "You can't watch this chapter.",
-      "watchAccessDeniedHint": "Activate your course or check your view limit. If you opened this link directly, use the course page to open chapters.",
+      "watchAccessDeniedHint": "Activate your course or chapter from the course page. If you opened this link directly, go back and open the chapter there so your access can update.",
       "hlsPlaybackError": "The video stream could not be played. Check your connection and try again.",
-      "switchingPlaybackMethod": "Switching playback method…"
+      "switchingPlaybackMethod": "Switching playback method…",
+      "videoControlsGroup": "Video playback controls",
+      "videoControlsPlay": "Play",
+      "videoControlsPause": "Pause",
+      "videoControlsSeek": "Seek",
+      "videoControlsMute": "Mute",
+      "videoControlsUnmute": "Unmute",
+      "videoControlsFullscreen": "Enter fullscreen",
+      "videoControlsExitFullscreen": "Exit fullscreen"
     },
     "studentStartExam": {
       "back": "Back",
@@ -701,9 +715,13 @@
       "typeHomework": "Homework",
       "passingInfo": "Pass {passing} / {total} marks",
       "cannotStart": "This exam is not available to start from here right now. Check with your instructor or try again later.",
-      "activationRequiredTitle": "Course activation required",
-      "activationRequiredBody": "Activate the course to access this exam.",
-      "goToCourse": "Open course",
+      "examActivationRequiredTitle": "Exam activation required",
+      "examActivationRequiredBody": "This exam is private. Open your course, go to the Exams tab, and tap “Activate with code” for this exam — use your exam activation code, not the course code.",
+      "examReactivationRequiredTitle": "No attempts left",
+      "examReactivationRequiredBody": "You used all attempts for this private exam. Open your course’s Exams tab and use “Activate with code” again with a new exam code to unlock more attempts.",
+      "examAccessDeniedTitle": "Exam not available yet",
+      "examAccessDeniedBody": "We could not open this exam from here. If it is a private exam, open your course’s Exams tab and activate it with your code, then try starting again.",
+      "goToCourseExams": "Open course — Exams",
       "goToCourses": "My courses",
       "takePlaceholderTitle": "Exam session",
       "takePlaceholderBody": "Answer flow and scoring will be wired in the next step. Your quiz data was saved from the intro screen.",

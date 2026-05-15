@@ -130,6 +130,7 @@
   },
   "sidebar": {
     "dashboard": "لوحة التحكم",
+    "home": "الرئيسية",
     "academicStructure": "الهيكل الأكاديمي",
     "universities": "الجامعات",
     "faculties": "الكليات",
@@ -515,7 +516,7 @@
     "studentActivation": {
       "description": "أدخل رمز التفعيل أدناه لفتح الوصول الكامل إلى هذه الدورة.",
       "descriptionLibrary": "أدخل رمز التفعيل أدناه لفتح مادة المكتبة هذه.",
-      "descriptionChapter": "أدخل رمز التفعيل أدناه لفتح هذا الفصل (الفيديو والمرفقات).",
+      "descriptionChapter": "أدخل رمز التفعيل أدناه لفتح فيديو هذا الفصل.",
       "descriptionQuiz": "أدخل رمز التفعيل أدناه لفتح هذا الامتحان أو الاختبار على حسابك.",
       "codeLabel": "رمز التفعيل",
       "codePlaceholder": "مثال: ABCD-1234",
@@ -530,7 +531,8 @@
       "success": "تم تفعيل الدورة بنجاح!",
       "successLibrary": "تم تفعيل مادة المكتبة بنجاح!",
       "successChapter": "تم تفعيل الفصل بنجاح!",
-      "successQuiz": "تم تفعيل الامتحان بنجاح!"
+      "successQuiz": "تم تفعيل الامتحان بنجاح!",
+      "quizActivationNotEffective": "لم يفتح هذا الرمز الامتحان بعد. تحقق من الرمز أو حاول مرة أخرى."
     },
     "studentStatus": {
       "active": "نشط"
@@ -562,6 +564,7 @@
       "viewsExhausted": "انتهت المشاهدات",
       "partsCount": "{count} أجزاء",
       "viewsRemaining": "{remaining}/{max} مشاهدات متبقية",
+      "viewsUsageBadge": "{current} / {max} مشاهدة",
       "viewsUnlimited": "مشاهدات غير محدودة",
       "openPdf": "PDF",
       "heroLectureCount": "{count} محاضرات",
@@ -611,6 +614,8 @@
       "examsActivationRequired": "يجب تفعيل الكورس للوصول لهذا الامتحان",
       "examsActivationRequiredSub": "تفعيل الكورس مطلوب",
       "examsPrivateExamHint": "هذا الامتحان غير عام — فعّل الدورة على حسابك للوصول إليه.",
+      "examsReactivateAttemptsTitle": "لا توجد محاولات متبقية",
+      "examsReactivateAttemptsBody": "استخدمت جميع المحاولات لهذا الامتحان الخاص. أدخل رمز تفعيل جديد لفتح المزيد من المحاولات.",
       "examsCourseIdLabel": "الدورة رقم {id}",
       "examsActivateCourseForExam": "تفعيل الكورس",
       "examsActivateQuizForAccess": "تفعيل بالرمز",
@@ -642,6 +647,7 @@
       "lectureParts": "أجزاء المحاضرة",
       "lecturePartsToolbar": "أجزاء المحاضرة:",
       "partLabel": "الجزء {number}",
+      "partLockedTooltip": "هذا الجزء مقفل — استخدم صفحة الدورة لتفعيل الوصول أو افتح الأجزاء المسموح بها.",
       "discussionsHeading": "النقاشات",
       "discussionsCount": "النقاشات ({count})",
       "noDiscussions": "لا توجد نقاشات بعد.",
@@ -670,9 +676,17 @@
       "composerMomentLabel": "عند {time}",
       "anonymousUser": "طالب",
       "watchAccessDenied": "لا يمكنك مشاهدة هذا الفصل.",
-      "watchAccessDeniedHint": "فعّل الدورة أو راجع حد المشاهدات. إذا فتحت الرابط مباشرة، ادخل من صفحة الدورة لفتح الفصول.",
+      "watchAccessDeniedHint": "فعّل الدورة أو الفصل من صفحة الدورة. إذا فتحت الرابط مباشرة، ارجع وافتح الفصل من هناك حتى يُحدَّث وصولك.",
       "hlsPlaybackError": "تعذّر تشغيل بث الفيديو. تحقق من الاتصال وحاول مرة أخرى.",
-      "switchingPlaybackMethod": "جاري تغيير طريقة التشغيل…"
+      "switchingPlaybackMethod": "جاري تغيير طريقة التشغيل…",
+      "videoControlsGroup": "عناصر التحكم في التشغيل",
+      "videoControlsPlay": "تشغيل",
+      "videoControlsPause": "إيقاف مؤقت",
+      "videoControlsSeek": "الانتقال في المدة",
+      "videoControlsMute": "كتم الصوت",
+      "videoControlsUnmute": "إلغاء الكتم",
+      "videoControlsFullscreen": "ملء الشاشة",
+      "videoControlsExitFullscreen": "الخروج من ملء الشاشة"
     },
     "studentStartExam": {
       "back": "رجوع",
@@ -699,9 +713,13 @@
       "typeHomework": "واجب",
       "passingInfo": "النجاح {passing} / {total} درجة",
       "cannotStart": "لا يمكن بدء هذا الاختبار من هنا حالياً. راجع المدرّس أو حاول لاحقاً.",
-      "activationRequiredTitle": "تفعيل الكورس مطلوب",
-      "activationRequiredBody": "يجب تفعيل الكورس للوصول لهذا الامتحان.",
-      "goToCourse": "فتح الدورة",
+      "examActivationRequiredTitle": "تفعيل الامتحان مطلوب",
+      "examActivationRequiredBody": "هذا الامتحان خاص. افتح الدورة، ثم تبويب الامتحانات، واضغط «تفعيل بالرمز» لهذا الامتحان — استخدم رمز تفعيل الامتحان وليس رمز الدورة.",
+      "examReactivationRequiredTitle": "لا توجد محاولات متبقية",
+      "examReactivationRequiredBody": "استخدمت جميع المحاولات لهذا الامتحان الخاص. افتح تبويب الامتحانات في الدورة واستخدم «تفعيل بالرمز» مرة أخرى برمز امتحان جديد للحصول على محاولات إضافية.",
+      "examAccessDeniedTitle": "الامتحان غير متاح بعد",
+      "examAccessDeniedBody": "تعذّر فتح هذا الامتحان من هنا. إذا كان الامتحان خاصاً، افتح الدورة ثم تبويب الامتحانات وفعّله بالرمز، ثم حاول البدء مرة أخرى.",
+      "goToCourseExams": "فتح الدورة — الامتحانات",
       "goToCourses": "دوراتي",
       "takePlaceholderTitle": "جلسة الاختبار",
       "takePlaceholderBody": "سيتم ربط الأسئلة والتصحيح في الخطوة التالية. تم حفظ بيانات الاختبار من شاشة المقدمة.",

@@ -36,7 +36,7 @@ type SidebarItem = {
 
 const sections: SidebarItem[][] = [
   [
-    { key: "dashboard", href: "/student", icon: Home },
+    { key: "home", href: "/student", icon: Home },
     { key: "myCourses", href: "/student/courses", icon: BookOpen },
     { key: "community", href: "/student/community", icon: Users },
     { key: "liveSessions", href: "/student/live-sessions", icon: Video },
@@ -95,8 +95,8 @@ function NavItem({
     >
       <span
         className={`absolute start-0 top-1/2 w-1 -translate-y-1/2 rounded-e-full bg-[var(--primary)] transition-all duration-200 ${active
-            ? "h-6 opacity-100"
-            : "h-0 opacity-0 group-hover:h-5 group-hover:opacity-70"
+          ? "h-6 opacity-100"
+          : "h-0 opacity-0 group-hover:h-5 group-hover:opacity-70"
           }`}
       />
 
@@ -109,8 +109,8 @@ function NavItem({
         <span className="flex min-w-0 flex-1 items-center gap-2">
           <span
             className={`min-w-0 truncate transition-all duration-200 ${active
-                ? "font-semibold text-[var(--primary)]"
-                : "text-[var(--text-muted)] group-hover:text-[var(--primary)]"
+              ? "font-semibold text-[var(--primary)]"
+              : "text-[var(--text-muted)] group-hover:text-[var(--primary)]"
               }`}
           >
             {label}
@@ -188,11 +188,11 @@ export default function Sidebar({
   }, []);
 
   useEffect(() => {
-   const handleNavigate = () => {
-  if (isMobile) {
-    setMobileOpen(false);
-  }
-};
+    const handleNavigate = () => {
+      if (isMobile) {
+        setMobileOpen(false);
+      }
+    };
   }, [pathname, closeMobile]);
 
 
@@ -361,7 +361,7 @@ export default function Sidebar({
           aria-label="Open menu"
           aria-expanded={mobileOpen}
           aria-controls="student-sidebar-drawer"
-          className={`fixed start-3 bottom-[calc(4.25rem+env(safe-area-inset-top,0px))] z-[100] flex size-11 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--primary)] shadow-md transition hover:bg-blue-50 ${mobileOpen ? "pointer-events-none opacity-0" : ""
+          className={`fixed end-3 bottom-[calc(5.25rem+env(safe-area-inset-bottom,0px))] z-[100] flex size-11 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] text-[var(--primary)] shadow-md shadow-black/10 transition hover:bg-blue-50 ${mobileOpen ? "pointer-events-none opacity-0" : ""
             }`}
         >
           <Menu size={22} />
@@ -369,8 +369,8 @@ export default function Sidebar({
 
         <div
           className={`fixed inset-0 z-[90] bg-black/40 transition-opacity duration-300 md:hidden ${mobileOpen
-              ? "pointer-events-auto opacity-100"
-              : "pointer-events-none opacity-0"
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
             }`}
           aria-hidden={!mobileOpen}
           onClick={closeMobile}
@@ -379,8 +379,8 @@ export default function Sidebar({
         <aside
           id="student-sidebar-drawer"
           className={`fixed inset-y-0 start-0 z-[95] flex h-[100dvh] w-[min(100vw-3rem,280px)] max-w-[100vw] border-e border-[var(--border-color)] bg-[var(--card-bg)] shadow-xl transition-transform duration-300 ease-out md:hidden ${mobileOpen
-              ? "translate-x-0"
-              : "pointer-events-none ltr:-translate-x-full rtl:translate-x-full"
+            ? "translate-x-0"
+            : "pointer-events-none ltr:-translate-x-full rtl:translate-x-full"
             }`}
           aria-hidden={!mobileOpen}
         >
@@ -398,28 +398,27 @@ export default function Sidebar({
       </div>
 
       <aside
-        className={`sticky top-0 z-50 hidden h-screen shrink-0 border-e border-[var(--border-color)] bg-[var(--card-bg)] transition-all duration-300 md:block ${
-          collapsed ? "w-[100px]" : "w-[240px]"
-        }`}
+        className={`sticky top-0 z-50 hidden h-screen shrink-0 border-e border-[var(--border-color)] bg-[var(--card-bg)] transition-all duration-300 md:block ${collapsed ? "w-[100px]" : "w-[240px]"
+          }`}
       >
         <button
           type="button"
           onClick={() => setCollapsed((prev) => !prev)}
           aria-label="Toggle sidebar"
           className={`absolute -end-3 top-20 z-50 hidden size-7 items-center justify-center rounded-full border shadow-md transition-all duration-300 md:flex ${collapsed
-              ? "border-white bg-[var(--primary)] text-white hover:opacity-90"
-              : "border-[var(--primary)] bg-[var(--card-bg)] text-[var(--primary)] hover:bg-blue-50"
+            ? "border-white bg-[var(--primary)] text-white hover:opacity-90"
+            : "border-[var(--primary)] bg-[var(--card-bg)] text-[var(--primary)] hover:bg-blue-50"
             }`}
         >
           <ChevronLeft
             size={16}
             className={`transition-transform duration-300 ${collapsed
-                ? locale === "en"
-                  ? "rotate-180"
-                  : ""
-                : locale === "ar"
-                  ? "rotate-180"
-                  : ""
+              ? locale === "en"
+                ? "rotate-180"
+                : ""
+              : locale === "ar"
+                ? "rotate-180"
+                : ""
               }`}
           />
         </button>

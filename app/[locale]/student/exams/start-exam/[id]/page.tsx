@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { StartExamIntro } from '@/components/student/exams/StartExamIntro';
-import { quizRequiresCourseActivationLock } from '@/src/lib/student-quiz-activation-lock';
+import {
+  quizNeedsReactivationAfterExhaustedAttempts,
+  quizStudentMustActivateOrReactivate,
+} from '@/src/lib/student-quiz-activation-lock';
 import {
   isLikelyQuizAccessDeniedError,
   sanitizeNumericCourseQueryParam,
@@ -17,23 +20,54 @@ interface StartExamPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
+type StartExamActivationReason = 'exam_first' | 'exam_reactivate' | 'exam_access_denied';
+
+function quizAttrsForActivationPolicy(quiz: Quiz): Record<string, unknown> {
+  const a = quiz.attributes as unknown as Record<string, unknown>;
+  const top = quiz as unknown as Record<string, unknown>;
+  return {
+    ...a,
+    remaining_attempts: a.remaining_attempts ?? top.remaining_attempts,
+    current_attempts: a.current_attempts ?? top.current_attempts,
+    max_attempts: a.max_attempts ?? top.max_attempts,
+    maxAttempts: a.maxAttempts ?? top.maxAttempts,
+    has_activation: a.has_activation ?? top.has_activation,
+    is_public: a.is_public ?? top.is_public,
+  };
+}
+
 function StartExamActivationPanel(props: {
   locale: string;
   examsHref: string;
-  courseDetailHref: string | null;
+  /** Course details URL with `tab=exams` so the student can use exam activation (not course-wide activation). */
+  courseExamsHref: string | null;
+  reason: StartExamActivationReason;
   t: Awaited<ReturnType<typeof getTranslations>>;
 }) {
-  const { locale, examsHref, courseDetailHref, t } = props;
+  const { locale, examsHref, courseExamsHref, reason, t } = props;
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const coursesHref = `/${locale}/student/courses`;
-  const primaryHref = courseDetailHref ?? coursesHref;
-  const primaryLabel = courseDetailHref ? t('goToCourse') : t('goToCourses');
+  const primaryHref = courseExamsHref ?? coursesHref;
+  const primaryLabel = courseExamsHref ? t('goToCourseExams') : t('goToCourses');
+
+  const titleKey =
+    reason === 'exam_reactivate'
+      ? 'examReactivationRequiredTitle'
+      : reason === 'exam_access_denied'
+        ? 'examAccessDeniedTitle'
+        : 'examActivationRequiredTitle';
+  const bodyKey =
+    reason === 'exam_reactivate'
+      ? 'examReactivationRequiredBody'
+      : reason === 'exam_access_denied'
+        ? 'examAccessDeniedBody'
+        : 'examActivationRequiredBody';
 
   return (
     <div className="w-full pb-10 pt-2" dir={dir}>
       <div className="mx-auto max-w-[672px] rounded-xl border border-amber-200 bg-amber-50 px-5 py-6">
-        <p className="text-base font-semibold text-amber-950">{t('activationRequiredTitle')}</p>
-        <p className="mt-2 text-sm text-amber-900/90">{t('activationRequiredBody')}</p>
+        <p className="text-base font-semibold text-amber-950">{t(titleKey)}</p>
+        <p className="mt-2 text-sm text-amber-900/90">{t(bodyKey)}</p>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link
             href={primaryHref}
@@ -94,14 +128,15 @@ export default async function StartExamPage({ params, searchParams }: StartExamP
   if (!result.success || !result.data?.data) {
     const msg = result.message ?? t('error');
     if (isLikelyQuizAccessDeniedError({ httpStatus: result.httpStatus, message: msg })) {
-      const courseDetailHref = courseFromQuery
-        ? `/${locale}/student/courses/course-details/${encodeURIComponent(courseFromQuery)}`
+      const courseExamsHref = courseFromQuery
+        ? `/${locale}/student/courses/course-details/${encodeURIComponent(courseFromQuery)}?tab=exams`
         : null;
       return (
         <StartExamActivationPanel
           locale={locale}
           examsHref={examsHref}
-          courseDetailHref={courseDetailHref}
+          courseExamsHref={courseExamsHref}
+          reason="exam_access_denied"
           t={t}
         />
       );
@@ -130,21 +165,24 @@ export default async function StartExamPage({ params, searchParams }: StartExamP
       ? `/${locale}/student/courses/course-details/${courseId}`
       : examsHref;
 
-  const lockAttrs = quiz.attributes as unknown as Record<string, unknown>;
-  if (quizRequiresCourseActivationLock(lockAttrs)) {
+  const policyAttrs = quizAttrsForActivationPolicy(quiz);
+  if (quizStudentMustActivateOrReactivate(policyAttrs)) {
     const cid = quiz.attributes.course_id;
-    const courseDetailHref =
-      cid != null && String(cid).trim() !== ''
-        ? `/${locale}/student/courses/course-details/${encodeURIComponent(String(cid))}`
-        : courseFromQuery
-          ? `/${locale}/student/courses/course-details/${encodeURIComponent(courseFromQuery)}`
-          : null;
+    const courseIdForLink =
+      cid != null && String(cid).trim() !== '' ? String(cid) : courseFromQuery != null ? courseFromQuery : null;
+    const courseExamsHref = courseIdForLink
+      ? `/${locale}/student/courses/course-details/${encodeURIComponent(courseIdForLink)}?tab=exams`
+      : null;
+    const reason: StartExamActivationReason = quizNeedsReactivationAfterExhaustedAttempts(policyAttrs)
+      ? 'exam_reactivate'
+      : 'exam_first';
 
     return (
       <StartExamActivationPanel
         locale={locale}
         examsHref={examsHref}
-        courseDetailHref={courseDetailHref}
+        courseExamsHref={courseExamsHref}
+        reason={reason}
         t={t}
       />
     );

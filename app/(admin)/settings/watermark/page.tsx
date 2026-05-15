@@ -6,33 +6,18 @@ import { ArrowLeft, Save, Eye, Layers } from 'lucide-react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import { usePlatformFeature, useUpdatePlatformFeature } from '@/src/hooks';
+import {
+  DEFAULT_WATERMARK_CONFIG,
+  type AnimationStyle,
+  type EasingType,
+  type MovementPattern,
+  type WatermarkConfig,
+  type WatermarkContentType,
+  type WatermarkPosition,
+  type WatermarkSize,
+} from '@/src/types/watermark-config';
 
-type WatermarkPosition = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center' | 'full';
-type WatermarkSize = 'small' | 'medium' | 'large';
-type ContentType = 'chapters' | 'exams' | 'library' | 'videos' | 'liveStreams' | 'files';
-type MovementPattern = 'random' | 'circular' | 'zigzag' | 'bounce' | 'edge';
-type AnimationStyle = 'slide' | 'fade' | 'scale' | 'rotate' | 'glide';
-type EasingType = 'linear' | 'ease' | 'easeInOut' | 'bounce' | 'elastic';
-
-interface WatermarkConfig {
-  enabled: boolean;
-  text: string;
-  useStudentCode: boolean;
-  usePhoneNumber: boolean;
-  color: string;
-  opacity: number;
-  rotation: number;
-  position: WatermarkPosition;
-  size: WatermarkSize;
-  dynamicPosition: boolean;
-  dynamicInterval: number;
-  movementPattern: MovementPattern;
-  animationStyle: AnimationStyle;
-  easingType: EasingType;
-  randomCoordinates: boolean;
-  voiceEnabled: boolean;
-  voiceInterval: number;
-}
+type ContentType = WatermarkContentType;
 
 interface WatermarkSettings {
   [key: string]: WatermarkConfig;
@@ -47,25 +32,7 @@ const contentTypes: { key: ContentType; labelKey: string }[] = [
   { key: 'files', labelKey: 'applyToFiles' },
 ];
 
-const defaultConfig: WatermarkConfig = {
-  enabled: false,
-  text: 'Learnoo',
-  useStudentCode: false,
-  usePhoneNumber: false,
-  color: '#000000',
-  opacity: 20,
-  rotation: -12,
-  position: 'full',
-  size: 'medium',
-  dynamicPosition: false,
-  dynamicInterval: 2,
-  movementPattern: 'random',
-  animationStyle: 'glide',
-  easingType: 'easeInOut',
-  randomCoordinates: false,
-  voiceEnabled: false,
-  voiceInterval: 5,
-};
+const defaultConfig: WatermarkConfig = { ...DEFAULT_WATERMARK_CONFIG };
 
 interface PreviewSettings {
   previewText: string;

@@ -6,6 +6,8 @@ import { Loader2, Power, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useActivateCode } from '@/src/hooks';
 import { ApiError } from '@/src/lib/api';
+import { activateCodeResponseUnlocksQuiz } from '@/src/lib/student-quiz-activation-lock';
+import type { ActivateCodeResponse } from '@/src/types';
 
 export type StudentActivationItemType = 'course' | 'library' | 'chapter' | 'quiz';
 
@@ -20,7 +22,7 @@ export interface StudentCourseActivationModalProps {
   courseTitle?: string;
   /** `item_type` sent to `/v1/code/activate`. Defaults to `course`. */
   activationItemType?: StudentActivationItemType;
-  onActivated?: () => void | Promise<void>;
+  onActivated?: (result?: ActivateCodeResponse) => void | Promise<void>;
 }
 
 function parseItemId(rawId: string): number | null {
@@ -94,13 +96,17 @@ function StudentCourseActivationModalInner({
     }
 
     try {
-      await activateCode({
+      const result = await activateCode({
         code: trimmed,
         item_id: itemId,
         item_type: itemType,
       });
+      if (itemType === 'quiz' && !activateCodeResponseUnlocksQuiz(result)) {
+        toast.error(t('quizActivationNotEffective'));
+        return;
+      }
       toast.success(t(successToastKey(itemType)));
-      await onActivated?.();
+      await onActivated?.(result);
       onClose();
     } catch (err) {
       const message = err instanceof ApiError ? err.message : t('genericError');

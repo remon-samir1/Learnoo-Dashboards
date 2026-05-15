@@ -58,13 +58,13 @@ function setAuthCookies(user: User, meta: AuthMeta) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
-  
+
   Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
     expires: 30,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
-  
+
   Cookies.set(USER_ROLE_COOKIE_NAME, user.attributes.role, {
     expires: 30,
     secure: process.env.NODE_ENV === 'production',
@@ -127,13 +127,13 @@ export const useAuthStore = create<AuthState>()(
       // Actions
       login: async (credentials) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const response = await authApi.login(credentials);
           const { data: user, meta } = response;
-          
+
           setAuthCookies(user, meta);
-          
+
           set({
             user,
             token: meta.token,
@@ -142,10 +142,10 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
-          const message = error instanceof ApiError 
-            ? error.message 
+          const message = error instanceof ApiError
+            ? error.message
             : 'Failed to login. Please try again.';
-          
+
           set({
             isLoading: false,
             error: message,
@@ -157,13 +157,13 @@ export const useAuthStore = create<AuthState>()(
 
       register: async (data) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const response = await authApi.register(data);
           const { data: user, meta } = response;
-          
+
           setAuthCookies(user, meta);
-          
+
           set({
             user,
             token: meta.token,
@@ -172,10 +172,10 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error) {
-          const message = error instanceof ApiError 
-            ? error.message 
+          const message = error instanceof ApiError
+            ? error.message
             : 'Failed to register. Please try again.';
-          
+
           set({
             isLoading: false,
             error: message,
@@ -187,14 +187,14 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         set({ isLoading: true });
-        
+
         try {
           await authApi.logout();
         } catch {
           // Silently ignore logout API errors
         } finally {
           clearAuthCookies();
-          
+
           set({
             user: null,
             token: null,
@@ -202,7 +202,7 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             error: null,
           });
-          
+
           // Redirect to login page
           if (typeof window !== 'undefined') {
             window.location.href = '/login';
@@ -212,31 +212,31 @@ export const useAuthStore = create<AuthState>()(
 
       fetchCurrentUser: async () => {
         const token = getTokenFromCookies();
-        
+
         if (!token) {
           set({ isAuthenticated: false, user: null });
           return;
         }
 
         set({ isLoading: true });
-        
+
         try {
           const response = await authApi.me();
           const user = response.data;
-          
+
           // Update cookies with fresh user data
           Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
             expires: 30,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
           });
-          
+
           Cookies.set(USER_ROLE_COOKIE_NAME, user.attributes.role, {
             expires: 30,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
           });
-          
+
           set({
             user,
             token,
@@ -246,7 +246,7 @@ export const useAuthStore = create<AuthState>()(
           });
         } catch {
           clearAuthCookies();
-          
+
           set({
             user: null,
             token: null,
@@ -312,7 +312,7 @@ export const useAuthStore = create<AuthState>()(
 export function initializeAuthStore() {
   const token = getTokenFromCookies();
   const user = getUserFromCookies();
-  
+
   if (token && user) {
     useAuthStore.setState({
       user,

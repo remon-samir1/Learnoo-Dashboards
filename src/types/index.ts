@@ -832,7 +832,7 @@ export interface ChapterAttributes {
 
   is_free_preview: 0 | 1;
 
-  /** Reserved for later scenarios; scenario 1 uses only `is_free_preview`. */
+  /** Student attachment/PDF visibility: show when true, hide when false (student UI). */
   is_free_preview_attachment?: 0 | 1 | boolean;
 
 
@@ -1178,6 +1178,13 @@ export interface ActivateCodeRequest {
 
 
 
+}
+
+/** Payload inside `ApiResponse.data` for `POST /v1/code/activate` (fields vary by backend). */
+export interface ActivateCodeResponse {
+  message?: string;
+  done?: boolean;
+  has_activation?: boolean;
 }
 
 

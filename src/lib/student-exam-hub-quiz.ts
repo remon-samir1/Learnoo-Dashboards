@@ -2,7 +2,10 @@
  * Helpers for GET /v1/quiz list rows on the student Exams hub (loose API shape).
  */
 
-import { quizRequiresCourseActivationLock } from '@/src/lib/student-quiz-activation-lock';
+import {
+  quizRequiresCourseActivationLock,
+  readRemainingAttemptsFromQuizAttributes,
+} from '@/src/lib/student-quiz-activation-lock';
 
 export type HubQuizListRow = {
   id: string;
@@ -62,14 +65,15 @@ export function readHubQuizCurrentAttempts(row: HubQuizListRow): number | null {
 
 export function readHubQuizRemainingAttempts(row: HubQuizListRow): number | null {
   const attrs = hubQuizAttrs(row);
-  const direct =
-    coerceNonNegativeInt(attrs.remaining_attempts) ??
-    coerceNonNegativeInt((row as Record<string, unknown>).remaining_attempts);
-  if (direct != null) return direct;
-  const max = readHubQuizMaxAttempts(row);
-  const cur = readHubQuizCurrentAttempts(row);
-  if (max != null && cur != null) return Math.max(0, max - cur);
-  return null;
+  const top = row as Record<string, unknown>;
+  const merged: Record<string, unknown> = {
+    ...attrs,
+    remaining_attempts: attrs.remaining_attempts ?? top.remaining_attempts,
+    current_attempts: attrs.current_attempts ?? top.current_attempts,
+    max_attempts: attrs.max_attempts ?? top.max_attempts,
+    maxAttempts: attrs.maxAttempts ?? top.maxAttempts,
+  };
+  return readRemainingAttemptsFromQuizAttributes(merged);
 }
 
 export function hubQuizAttemptsSummaryLines(

@@ -25,10 +25,14 @@ import {
 import { useCourse } from '@/src/hooks/useCourses';
 import {
   coerceCanWatchExplicitTrue,
-  getChapterPreviewAccess,
+  isStudentChapterPdfVisible,
+  isStudentChapterVideoPlayable,
 } from '@/src/lib/student-chapter-access';
 import { courseIsLocked } from '@/src/lib/student-course-lock';
-import { quizRequiresCourseActivationLock } from '@/src/lib/student-quiz-activation-lock';
+import {
+  quizNeedsReactivationAfterExhaustedAttempts,
+  quizRequiresCourseActivationLock,
+} from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import type { Chapter, Course, Lecture, Note } from '@/src/types';
 import StudentCourseNotesTab from '@/components/student/StudentCourseNotesTab';
@@ -71,12 +75,6 @@ function getFirstPdfUrl(ch: Chapter): string | null {
     }
   }
   return null;
-}
-
-function isViewsExhausted(ch: Chapter): boolean {
-  const max = ch.attributes.max_views;
-  if (max == null || max <= 0) return false;
-  return ch.attributes.current_user_views >= max;
 }
 
 function sortedLectures(lectures: Lecture[] | undefined): Lecture[] {
@@ -203,6 +201,22 @@ type LooseExamAttrs = {
 
 function looseExamAttrs(exam: NonNullable<Course['attributes']['exams']>[number]): LooseExamAttrs {
   return (exam?.attributes ?? {}) as LooseExamAttrs;
+}
+
+function examAttrsForQuizPolicy(
+  exam: NonNullable<Course['attributes']['exams']>[number],
+): Record<string, unknown> {
+  const a = looseExamAttrs(exam) as Record<string, unknown>;
+  const e = exam as Record<string, unknown>;
+  return {
+    ...a,
+    remaining_attempts: a.remaining_attempts ?? e.remaining_attempts,
+    current_attempts: a.current_attempts ?? e.current_attempts,
+    max_attempts: a.max_attempts ?? e.max_attempts,
+    maxAttempts: a.maxAttempts ?? e.maxAttempts,
+    has_activation: a.has_activation ?? e.has_activation,
+    is_public: a.is_public ?? e.is_public,
+  };
 }
 
 /** Parse a positive integer from API (number, or numeric string like `"3"`). */
@@ -855,47 +869,21 @@ function ChapterRow({
   const attrs = chapter.attributes;
   const hasPdf = hasPdfAttachment(chapter);
   const pdfUrl = getFirstPdfUrl(chapter);
-  const exhausted = isViewsExhausted(chapter);
-  const canWatchExplicitTrue = coerceCanWatchExplicitTrue(attrs.can_watch);
-  /** CASE 2: views exhausted without explicit `can_watch` → block + activation. */
-  const viewsAccessBlocked = exhausted && !canWatchExplicitTrue;
-  /** CASE 2: exhausted + explicit allow → full access (overrides preview-only locks). */
-  const postExhaustionAccess = exhausted && canWatchExplicitTrue;
   const chapterLocked = attrs.is_locked === true;
-  const previewAccess = getChapterPreviewAccess({
-    is_free_preview: attrs.is_free_preview,
-    is_free_preview_attachment: attrs.is_free_preview_attachment,
-  });
-  /** CASE 1: preview flags only. `can_watch` is not read while views remain. */
-  const lectureAllowed =
-    postExhaustionAccess || (!exhausted && previewAccess.canWatchLecture);
-  const attachmentsAllowed =
-    postExhaustionAccess || (!exhausted && previewAccess.canAccessAttachments);
-  const videoPlayable =
-    !chapterLocked && !viewsAccessBlocked && lectureAllowed;
-  const pdfLinkActive = Boolean(
-    pdfUrl && !chapterLocked && !viewsAccessBlocked && attachmentsAllowed,
-  );
-  const canActivateChapter =
-    !viewsAccessBlocked &&
-    !chapterLocked &&
-    !exhausted &&
-    !previewAccess.canWatchLecture;
-  const canOpenActivationForPdf = Boolean(
-    pdfUrl && (viewsAccessBlocked || canActivateChapter),
-  );
+  const canWatchOk = coerceCanWatchExplicitTrue(attrs.can_watch);
+  /** Backend denied playback (`can_watch` not true) — chapter activation; not client view math. */
+  const needsPlaybackActivation = !chapterLocked && !canWatchOk;
+  const videoPlayable = isStudentChapterVideoPlayable(chapter);
+  const pdfVisible = isStudentChapterPdfVisible(chapter);
+  const pdfLinkActive = Boolean(pdfUrl && pdfVisible);
   const chapterTitleForModal = attrs.title?.trim() ?? '';
   const openChapterActivation = () =>
     onRequestChapterActivation(String(chapter.id), chapterTitleForModal);
   const duration = attrs.duration ?? '—';
   const maxViews = attrs.max_views;
-  const remaining =
-    maxViews != null && maxViews > 0
-      ? Math.max(0, maxViews - attrs.current_user_views)
-      : null;
   const viewsLabel =
     maxViews != null && maxViews > 0
-      ? t('viewsRemaining', { remaining: remaining ?? 0, max: maxViews })
+      ? t('viewsUsageBadge', { current: attrs.current_user_views, max: maxViews })
       : t('viewsUnlimited');
 
   const watchHref = `/${locale}/student/courses/watch/${chapter.id}`;
@@ -910,12 +898,12 @@ function ChapterRow({
       'flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12';
     iconColor = '#94A3B8';
     IconEl = Lock;
-  } else if (viewsAccessBlocked) {
+  } else if (needsPlaybackActivation) {
     iconWrap =
       'flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12';
     iconColor = '#D97706';
     IconEl = Play;
-  } else if (!previewAccess.canWatchLecture && !postExhaustionAccess) {
+  } else if (!videoPlayable) {
     iconWrap =
       'flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12';
     iconColor = '#94A3B8';
@@ -925,28 +913,21 @@ function ChapterRow({
   const badgeBase =
     'inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight';
 
-  const pdfBadge = hasPdf ? (
-    pdfUrl && pdfLinkActive ? (
-      <a
-        href={pdfUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={`${badgeBase} bg-[#EFF6FF] text-[#1E40AF] transition hover:opacity-90`}
-      >
-        {t('hasPdf')}
-      </a>
-    ) : pdfUrl && canOpenActivationForPdf ? (
-      <button
-        type="button"
-        onClick={openChapterActivation}
-        className={`${badgeBase} cursor-pointer bg-[#F1F5F9] text-[#64748B] transition hover:bg-[#E2E8F0]`}
-      >
-        {t('hasPdf')}
-      </button>
-    ) : (
-      <span className={`${badgeBase} bg-[#F1F5F9] text-[#64748B]`}>{t('hasPdf')}</span>
-    )
-  ) : null;
+  const pdfBadge =
+    hasPdf && pdfVisible ? (
+      pdfUrl && pdfLinkActive ? (
+        <a
+          href={pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${badgeBase} bg-[#EFF6FF] text-[#1E40AF] transition hover:opacity-90`}
+        >
+          {t('hasPdf')}
+        </a>
+      ) : (
+        <span className={`${badgeBase} bg-[#F1F5F9] text-[#64748B]`}>{t('hasPdf')}</span>
+      )
+    ) : null;
 
   const heading = t('chapterItemHeading', {
     number: itemIndexWithinLecture,
@@ -999,11 +980,9 @@ function ChapterRow({
               </span>
             )}
             {pdfBadge}
-            {exhausted && (
-              <span className={`${badgeBase} bg-[#F1F5F9] text-[#475569]`}>
-                {t('viewsExhausted')}
-              </span>
-            )}
+            {needsPlaybackActivation ? (
+              <span className={`${badgeBase} bg-amber-50 text-amber-900`}>{t('watchAccessPending')}</span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -1026,41 +1005,16 @@ function ChapterRow({
           >
             {t('locked')}
           </button>
-        ) : viewsAccessBlocked ? (
+        ) : needsPlaybackActivation ? (
           <button
             type="button"
             onClick={openChapterActivation}
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
           >
-            {t('reactivate')}
+            <Power className="size-4 shrink-0 opacity-95" strokeWidth={2} aria-hidden />
+            {t('activateChapter')}
           </button>
-        ) : !previewAccess.canWatchLecture ? (
-          <div className="flex w-full flex-col gap-2">
-            <div className="flex flex-wrap items-stretch justify-end gap-2">
-              <span className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-3 py-2 text-xs font-semibold text-[#64748B] sm:min-h-10 sm:flex-none sm:px-3.5 sm:text-[13px]">
-                <Lock className="size-3.5 shrink-0 opacity-80" strokeWidth={2} aria-hidden />
-                {t('locked')}
-              </span>
-              <button
-                type="button"
-                onClick={openChapterActivation}
-                className="inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2D43D1] px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:flex-1 sm:px-4 sm:text-sm"
-              >
-                <Power className="size-3.5 shrink-0 opacity-95 sm:size-4" strokeWidth={2} aria-hidden />
-                {t('activateChapter')}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <Link
-            href={watchHref}
-            prefetch
-            className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-          >
-            {t('watch')}
-            <ChevronRight className="size-4 shrink-0 rtl:rotate-180" strokeWidth={2.5} />
-          </Link>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -1141,6 +1095,8 @@ function ExamsTab({
     const showTotalMarksOnly =
       typeof attrs.total_marks === 'number' && Number.isFinite(attrs.total_marks);
     const startHref = buildStudentStartExamHref(locale, examId, courseId);
+    const policyAttrs = examAttrsForQuizPolicy(exam);
+    const needsReactivateAttempts = quizNeedsReactivationAfterExhaustedAttempts(policyAttrs);
 
     return (
       <li
@@ -1212,13 +1168,29 @@ function ExamsTab({
             </div>
           ) : null}
         </div>
-        <Link
-          href={startHref}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A63E] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#009035] active:bg-[#007d2f] sm:mt-6 sm:py-3.5"
-        >
-          <Play className="size-[18px] shrink-0 text-white" strokeWidth={2.5} />
-          <span>{t('examsStartExam')}</span>
-        </Link>
+        {needsReactivateAttempts ? (
+          <>
+            <div className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
+              <p className="text-sm font-semibold text-amber-950">{t('examsReactivateAttemptsTitle')}</p>
+              <p className="mt-1 text-xs font-medium text-amber-900/85">{t('examsReactivateAttemptsBody')}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onRequestQuizActivation(examId, title)}
+              className="mt-5 w-full rounded-xl bg-[#2137D6] px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] sm:mt-6"
+            >
+              {t('examsActivateQuizForAccess')}
+            </button>
+          </>
+        ) : (
+          <Link
+            href={startHref}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#00A63E] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#009035] active:bg-[#007d2f] sm:mt-6 sm:py-3.5"
+          >
+            <Play className="size-[18px] shrink-0 text-white" strokeWidth={2.5} />
+            <span>{t('examsStartExam')}</span>
+          </Link>
+        )}
       </li>
     );
   };
@@ -1385,6 +1357,8 @@ function ExamsTab({
                   : null;
               const showPassMarks = totalMarksNum != null && passingMarksNum != null;
               const resultHref = `/${locale}/student/exams/result/${encodeURIComponent(examId)}`;
+              const policyAttrs = examAttrsForQuizPolicy(exam);
+              const needsReactivateAttempts = quizNeedsReactivationAfterExhaustedAttempts(policyAttrs);
 
               return (
                 <li key={examId || title} className={cardBase}>
@@ -1443,10 +1417,25 @@ function ExamsTab({
                       </div>
                     ) : null}
                   </div>
+                  {needsReactivateAttempts ? (
+                    <>
+                      <div className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
+                        <p className="text-sm font-semibold text-amber-950">{t('examsReactivateAttemptsTitle')}</p>
+                        <p className="mt-1 text-xs font-medium text-amber-900/85">{t('examsReactivateAttemptsBody')}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => onRequestQuizActivation(examId, title)}
+                        className="mt-3 w-full rounded-xl bg-[#2137D6] px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3]"
+                      >
+                        {t('examsActivateQuizForAccess')}
+                      </button>
+                    </>
+                  ) : null}
                   {examId ? (
                     <Link
                       href={resultHref}
-                      className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:mt-6"
+                      className={`inline-flex w-full items-center justify-center rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] ${needsReactivateAttempts ? 'mt-3' : 'mt-5 sm:mt-6'}`}
                     >
                       {t('examsViewResults')}
                     </Link>
