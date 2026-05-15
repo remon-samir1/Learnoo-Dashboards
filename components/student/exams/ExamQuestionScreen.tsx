@@ -1,10 +1,16 @@
 'use client';
 
 import Image from 'next/image';
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { QuizQuestion, QuizQuestionAnswer } from '@/src/types';
 import { resolveStudentExamMediaUrl } from '@/src/lib/student-exam-media';
-
+import { useCurrentUser } from '@/src/hooks';
+import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
+import {
+  resolveEnabledWatermarkBucket,
+  type WatermarkResolution,
+} from '@/src/lib/watermark-from-features';
+import ExamWatermark from './WaterMarkDyna';
 export type ExamQuestionScreenMode = 'take' | 'review';
 
 function answerReasonText(a: QuizQuestionAnswer): string | null {
@@ -89,6 +95,56 @@ export function ExamQuestionScreen({
 }: ExamQuestionScreenProps) {
   const qNum = currentQuestionNumber;
   const questionImageSrc = resolveStudentExamMediaUrl(question.attributes.image);
+const { user } = useCurrentUser();
+
+const [watermarkConfig, setWatermarkConfig] =
+  useState<WatermarkResolution | null>(null);
+
+  useEffect(() => {
+  let mounted = true;
+
+  const loadWatermark = async () => {
+    try {
+      const features = await getStudentPlatformFeatures();
+
+      const resolution = resolveEnabledWatermarkBucket(
+        features,
+        'exams'
+      );
+
+      if (mounted) {
+        setWatermarkConfig(resolution);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  loadWatermark();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+const watermarkText = useMemo(() => {
+  const config = watermarkConfig?.config;
+
+  if (!config?.enabled) return '';
+
+  const attrs = user?.attributes;
+
+  const parts: string[] = [];
+
+  if (config.useStudentCode && attrs?.student_code) {
+    parts.push(String(attrs.student_code));
+  }
+
+  if (config.usePhoneNumber && attrs?.phone) {
+    parts.push(String(attrs.phone));
+  }
+
+  return parts.join(' · ');
+}, [watermarkConfig, user]);
 
   const headerInner = (
     <header className="box-border flex min-h-[52px] w-full min-w-0 items-center justify-between gap-3 border-b border-[#EEEEEE] bg-white py-2.5 ps-5 pe-8 sm:ps-6 sm:pe-12 lg:ps-8 lg:pe-16">
@@ -110,8 +166,12 @@ export function ExamQuestionScreen({
         <div className="mb-4 w-full shrink-0">{headerInner}</div>
       )}
 
-      <div className="mx-auto flex w-full max-w-[832px] flex-col gap-4 sm:gap-5">
-        <article className="flex w-full flex-col gap-4 overflow-y-auto rounded-xl border border-[#E8ECF2] bg-white px-4 py-4 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:gap-5 sm:rounded-2xl sm:px-5 sm:py-5">
+      <div className="mx-auto   flex w-full max-w-[832px] flex-col gap-4 sm:gap-5">
+        
+        <article className="flex-col gap-4  flex w-full relative overflow-hidden   rounded-xl border border-[#E8ECF2] bg-white px-4 py-4 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:gap-5 sm:rounded-2xl sm:px-5 sm:py-5">
+          {watermarkConfig?.config.enabled && (
+            <ExamWatermark text={watermarkText} watermarkConfig={watermarkConfig}/>
+          )}
           {studentName ? (
             <p className="text-[11px] font-medium text-[#94A3B8] sm:text-[12px]">{studentName}</p>
           ) : null}
@@ -161,6 +221,7 @@ export function ExamQuestionScreen({
                     }`}
                   >
                     <div className="flex items-start gap-2.5 sm:gap-3">
+                      
                       <input
                         type={multi ? 'checkbox' : 'radio'}
                         name={`question-${question.id}`}
@@ -192,6 +253,7 @@ export function ExamQuestionScreen({
             </div>
           ) : (
             <div className="flex flex-col gap-2 sm:gap-2.5">
+              
               {answers.length === 0 ? (
                 <p className="text-sm text-slate-600">{noAnswerOptionsText}</p>
               ) : (
@@ -212,6 +274,7 @@ export function ExamQuestionScreen({
                         questionCorrect: reviewQuestionCorrect,
                       })}`}
                     >
+                      
                       <div className="flex items-start gap-2.5 sm:gap-3">
                         <span
                           className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[10px] font-bold text-slate-600 sm:mt-1 sm:size-[18px] sm:text-[11px]"
