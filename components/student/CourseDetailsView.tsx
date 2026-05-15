@@ -39,6 +39,7 @@ import StudentCourseNotesTab from '@/components/student/StudentCourseNotesTab';
 import StudentCommunityFeed from '@/components/student/community/StudentCommunityFeed';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
+import PdfPreviewModal from './PdfPreviewModal';
 
 /** Figma-aligned tokens for this page */
 const C_PRIMARY = '#2D43D1';
@@ -449,7 +450,6 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
 
   const heroThumb =
     course?.attributes?.thumbnail?.trim() || '/logo.svg';
-
   const instructorName =
     course?.attributes?.instructor?.data?.attributes?.full_name?.trim() ?? '';
   const centerName =
@@ -808,7 +808,7 @@ function LecturesTab({
       {lectures.map((lecture) => {
         const chapters = lecture.attributes.chapters ?? [];
         const partCount = chapters.length;
-
+      
         return (
           <div
             key={lecture.id}
@@ -866,6 +866,7 @@ function ChapterRow({
   t: StudentDetailsT;
   onRequestChapterActivation: (chapterId: string, chapterTitle: string) => void;
 }) {
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const attrs = chapter.attributes;
   const hasPdf = hasPdfAttachment(chapter);
   const pdfUrl = getFirstPdfUrl(chapter);
@@ -913,20 +914,29 @@ function ChapterRow({
 
   const badgeBase =
     'inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight';
-
-  const pdfBadge =
-    hasPdf && pdfVisible ?  (
-      pdfUrl && pdfLinkActive  &&  attrs.can_watch &&
-        <a
-          href={pdfUrl}
-          target="_blank"
-          
-          rel="noopener noreferrer"
-          className={`${badgeBase} bg-[#EFF6FF] text-[#1E40AF] transition hover:opacity-90`}
-        >
-          {t('hasPdf')}
-        </a>
-      ) :null
+const pdfUnlocked = Boolean(
+  hasPdf &&
+  pdfVisible &&
+  pdfUrl &&
+  pdfLinkActive &&
+  !chapterLocked &&
+  canWatchOk
+);
+const pdfBadge = hasPdf ? (
+  pdfUnlocked ? (
+    <button
+      type="button"
+      onClick={() => setPdfPreviewOpen(true)}
+      className={`${badgeBase} bg-[#EFF6FF] text-[#1E40AF] transition hover:opacity-90`}
+    >
+      {t('hasPdf')}
+    </button>
+  ) : (
+    <span className={`${badgeBase} cursor-not-allowed bg-[#F1F5F9] text-[#94A3B8] opacity-70`}>
+      {t('hasPdf')}
+    </span>
+  )
+) : null;
 
 
   const heading = t('chapterItemHeading', {
@@ -1016,6 +1026,13 @@ function ChapterRow({
           </button>
         ) : null}
       </div>
+    
+    <PdfPreviewModal
+  open={pdfPreviewOpen}
+  onClose={() => setPdfPreviewOpen(false)}
+  pdfUrl={pdfUrl}
+  title={attrs.title}
+/>
     </div>
   );
 }

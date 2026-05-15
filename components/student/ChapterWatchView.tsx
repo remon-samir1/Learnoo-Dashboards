@@ -464,6 +464,7 @@ export default function ChapterWatchView({
                       initialWatermarkResolution={initialWatermarkResolution ?? null}
                       staticOverlaySubtitle={lectureTitle.trim() || attrs.title?.trim() || undefined}
                     >
+                      
                       {tDetails('watchNoVideo')}
                     </HlsVideoPlayer>
                   )

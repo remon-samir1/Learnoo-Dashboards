@@ -77,6 +77,7 @@ export function useCurrentUser() {
     fullName: user ? `${user.attributes.first_name} ${user.attributes.last_name}` : null,
     email: user?.attributes.email || null,
     role: user?.attributes.role || null,
+    
     canUseActivations: Boolean(user?.attributes.can_use_activations),
   }), [user, isAuthenticated, isLoading]);
 }

@@ -523,6 +523,8 @@ export interface UserAttributes {
   /** When true, user may use course/chapter activation flows (API-dependent). */
   can_use_activations?: boolean;
 
+  //added by mohamed ahmed
+  student_code: string;
 
 
 }
