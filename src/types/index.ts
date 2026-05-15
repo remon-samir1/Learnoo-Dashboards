@@ -4580,7 +4580,7 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
 
 
 
-  student_code?: string;
+  student_code: string;
 
 
 
