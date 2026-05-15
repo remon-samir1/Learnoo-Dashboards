@@ -52,7 +52,7 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
   useStudentCode: false,
   usePhoneNumber: false,
   color: '#000000',
-  opacity: 20,
+  opacity: 10,
   rotation: -12,
   position: 'full',
   size: 'medium',

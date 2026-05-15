@@ -33,7 +33,7 @@ export function buildWatermarkText(user: User | null, config: WatermarkConfig): 
   } else {
     line = config.text?.trim() || DEFAULT_FALLBACK_TEXT;
   }
-  return appendUserId(user, line);
+  return line
 }
 
 const DEFAULT_FALLBACK_TEXT = 'Learnoo';
