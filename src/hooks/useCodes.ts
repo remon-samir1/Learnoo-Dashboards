@@ -1,5 +1,11 @@
 import { api } from '@/src/lib/api';
-import type { Code, CreateCodeRequest, UpdateCodeRequest, ActivateCodeRequest } from '@/src/types';
+import type {
+  Code,
+  CreateCodeRequest,
+  UpdateCodeRequest,
+  ActivateCodeRequest,
+  ActivateCodeResponse,
+} from '@/src/types';
 import { createQueryHook, createMutationHook } from './index';
 
 // ============================================
@@ -29,6 +35,6 @@ export const useDeleteCode = createMutationHook(
   (id: number) => api.codes.delete(id).then(res => res.data)
 );
 
-export const useActivateCode = createMutationHook(
-  (data: ActivateCodeRequest) => api.codes.activate(data).then(res => res.data)
+export const useActivateCode = createMutationHook<ActivateCodeResponse, [ActivateCodeRequest]>(
+  (data: ActivateCodeRequest) => api.codes.activate(data).then((res) => res.data)
 );

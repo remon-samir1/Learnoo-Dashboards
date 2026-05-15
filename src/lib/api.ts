@@ -23,6 +23,7 @@ import type {
   Code,
   CreateCodeRequest,
   ActivateCodeRequest,
+  ActivateCodeResponse,
   // Course types
   Course,
   CreateCourseRequest,
@@ -515,7 +516,7 @@ export const codesApi = {
   delete: (id: number) => del<ApiResponse<Code>>(`/v1/code/${id}`),
 
   activate: (data: ActivateCodeRequest) =>
-    post<ApiResponse<{ message: string }>>('/v1/code/activate', data),
+    post<ApiResponse<ActivateCodeResponse>>('/v1/code/activate', data),
 };
 
 // ============================================
@@ -1072,7 +1073,8 @@ export const dashboardApi = {
 // ============================================
 
 export const platformFeatureApi = {
-  get: () => get<ApiResponse<PlatformFeature[]>>('/v1/feature'),
+  /** Skip auth redirect on failure so student pages (e.g. watch) are not logged out if /v1/feature is restricted. */
+  get: () => get<ApiResponse<PlatformFeature[]>>('/v1/feature', undefined, true),
 
   storeOrUpdate: (data: UpdatePlatformFeatureRequest) =>
     post<ApiResponse<PlatformFeature>>('/v1/feature/store-or-update', data),

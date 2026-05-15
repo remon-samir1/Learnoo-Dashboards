@@ -209,21 +209,21 @@ export default function Navbar({
   };
 
   return (
-    <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-[var(--border-color)] bg-[var(--card-bg)] px-5">
-      <div className="relative max-w-[760px] flex-1">
+    <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-[var(--border-color)] bg-[var(--card-bg)] px-3 sm:h-16 sm:gap-3 sm:px-5">
+      <div className="relative min-w-0 max-w-[760px] flex-1">
         <SearchBox />
       </div>
 
-      <div className="ms-4 flex items-center gap-3">
+      <div className="ms-1 flex shrink-0 items-center gap-1.5 sm:ms-4 sm:gap-3">
         <div className="relative">
           <button
             type="button"
             onClick={() => toggleDropdown("language")}
-            className="flex h-10 items-center gap-2 rounded-full bg-gray-50 px-3 text-sm font-semibold text-[var(--text-muted)] transition hover:bg-blue-50 hover:text-primary"
+            className="flex h-9 items-center gap-1.5 rounded-full bg-gray-50 px-2 text-xs font-semibold text-[var(--text-muted)] transition hover:bg-blue-50 hover:text-primary sm:h-10 sm:gap-2 sm:px-3 sm:text-sm"
           >
-            <Globe2 size={17} />
+            <Globe2 className="size-4 sm:size-[17px]" />
             <span>{currentLanguage.short}</span>
-            <ChevronDown size={15} />
+            <ChevronDown className="size-3.5 sm:size-[15px]" />
           </button>
 
           {openDropdown === "language" && (
@@ -251,9 +251,9 @@ export default function Navbar({
           <button
             type="button"
             onClick={() => toggleDropdown("notifications")}
-            className="relative flex size-10 items-center justify-center rounded-full bg-gray-50 text-[var(--text-muted)] transition hover:bg-blue-50 hover:text-primary"
+            className="relative flex size-9 items-center justify-center rounded-full bg-gray-50 text-[var(--text-muted)] transition hover:bg-blue-50 hover:text-primary sm:size-10"
           >
-            <Bell size={19} />
+            <Bell className="size-[17px] sm:size-[19px]" />
 
             {unreadCount > 0 && (
               <span className="absolute end-2.5 top-2.5 size-2 rounded-full bg-red-500 ring-2 ring-white" />
@@ -261,7 +261,7 @@ export default function Navbar({
           </button>
 
           {openDropdown === "notifications" && (
-            <div className="absolute end-0 top-12 z-50 w-[350px] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] shadow-xl">
+            <div className="absolute end-0 top-11 z-50 w-[min(100vw-1.5rem,350px)] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] shadow-xl sm:top-12">
               <div className="flex items-center justify-between px-4 py-4">
                 <h3 className="text-base font-bold text-dark">
                   {t("notifications")}
@@ -342,7 +342,7 @@ export default function Navbar({
           <button
             type="button"
             onClick={() => toggleDropdown("profile")}
-            className={`relative flex size-10 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] text-xs font-bold transition hover:opacity-90 ${
+            className={`relative flex size-9 items-center justify-center overflow-hidden rounded-full border border-[var(--border-color)] text-[10px] font-bold transition hover:opacity-90 sm:size-10 sm:text-xs ${
               avatarSrc
                 ? "bg-gray-50 text-[var(--text-dark)]"
                 : "bg-[var(--primary)] text-white"

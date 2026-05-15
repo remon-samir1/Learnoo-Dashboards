@@ -1,6 +1,9 @@
 import ChapterWatchView from '@/components/student/ChapterWatchView';
+import { coerceCanWatchExplicitTrue } from '@/src/lib/student-chapter-access';
+import { resolveEnabledWatermarkBucket } from '@/src/lib/watermark-from-features';
 import { getChapterById } from '@/src/services/student/chapter.service';
 import { getLectureById } from '@/src/services/student/lecture.service';
+import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
 import type { Chapter, Lecture } from '@/src/types';
 
 interface WatchChapterPageProps {
@@ -50,7 +53,10 @@ export default async function WatchChapterPage({ params }: WatchChapterPageProps
   }
 
   const watchAccessDenied =
-    chapter != null && chapter.attributes.can_watch === false;
+    chapter != null && !coerceCanWatchExplicitTrue(chapter.attributes.can_watch);
+
+  const platformFeatures = await getStudentPlatformFeatures();
+  const initialWatermarkResolution = resolveEnabledWatermarkBucket(platformFeatures, 'chapters');
 
   return (
     <ChapterWatchView
@@ -60,6 +66,7 @@ export default async function WatchChapterPage({ params }: WatchChapterPageProps
       lectureChapters={lectureChapters}
       lectureTitle={lectureTitle}
       watchAccessDenied={watchAccessDenied}
+      initialWatermarkResolution={initialWatermarkResolution}
     />
   );
 }

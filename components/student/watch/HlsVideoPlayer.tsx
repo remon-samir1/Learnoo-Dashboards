@@ -12,7 +12,12 @@
   } from 'react';
   import Hls, { type ErrorData, ErrorDetails, Events, type HlsConfig } from 'hls.js';
   import { toProxiedLearnooHlsUrl } from '@/src/lib/learnoo-hls-proxy';
+  import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
   import { isHlsStreamUrl, isMp4StreamUrl } from '@/src/lib/video-stream-detect';
+  import type { WatermarkContentType } from '@/src/types/watermark-config';
+  import { HlsVideoCustomControls } from '@/components/student/watch/HlsVideoCustomControls';
+  import { StudentVideoStaticOverlay } from '@/components/student/watch/StudentVideoStaticOverlay';
+  import { VideoWatermark } from '@/components/student/watch/VideoWatermark';
 
   const LOG_PREFIX = '[HlsVideoPlayer]';
 
@@ -182,6 +187,15 @@
     ]
       .filter(Boolean)
       .join(' | ');
+
+    const http = response?.code;
+    const manifestNotFound =
+      http === 404 && data.details === ErrorDetails.MANIFEST_LOAD_ERROR;
+    if (manifestNotFound) {
+      console.debug(`${LOG_PREFIX} Hls.Events.ERROR ${summary}`);
+      return;
+    }
+
     console.error(`${LOG_PREFIX} Hls.Events.ERROR ${summary}`);
   }
 
@@ -248,6 +262,17 @@
     switchingPlaybackLabel?: string;
     onFatalPlaybackError?: OnFatalPlaybackError;
     hlsConfig?: Partial<HlsConfig>;
+    /** When true, native `controls` are disabled and a React control bar is shown (watermark-safe). */
+    showCustomControls?: boolean;
+    /** Platform feature watermark (`GET /v1/feature`). */
+    showWatermark?: boolean;
+    watermarkContentType?: WatermarkContentType;
+    /** Server-resolved watermark until client `usePlatformFeature` succeeds. */
+    initialWatermarkResolution?: WatermarkResolution | null;
+    /** Top-left static student id badge (pointer-events none). */
+    showStaticStudentOverlay?: boolean;
+    /** Second line on static overlay (e.g. lecture / chapter title). */
+    staticOverlaySubtitle?: string;
   };
 
   export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
@@ -267,10 +292,18 @@
         hlsConfig,
         mp4FallbackUrl = '',
         switchingPlaybackLabel,
+        showCustomControls = false,
+        showWatermark = true,
+        watermarkContentType = 'chapters',
+        initialWatermarkResolution = null,
+        showStaticStudentOverlay = true,
+        staticOverlaySubtitle,
       },
       forwardedRef
     ) {
       const localRef = useRef<HTMLVideoElement | null>(null);
+      const playerShellRef = useRef<HTMLDivElement | null>(null);
+      const watermarkPortalMountRef = useRef<HTMLDivElement | null>(null);
       const [showPlaybackSwitching, setShowPlaybackSwitching] = useState(false);
       const onFatalPlaybackErrorRef = useRef(onFatalPlaybackError);
       const hlsConfigRef = useRef(hlsConfig);
@@ -291,6 +324,16 @@
         },
         [forwardedRef]
       );
+
+      const nativeVideoControls = !showCustomControls && controls;
+
+      const onVideoSurfaceClick = useCallback(() => {
+        if (!showCustomControls) return;
+        const v = localRef.current;
+        if (!v) return;
+        if (v.paused) void v.play().catch(() => {});
+        else v.pause();
+      }, [showCustomControls]);
 
       useEffect(() => {
         const video = localRef.current;
@@ -730,24 +773,41 @@
         };
       }, [src, mp4FallbackUrl, switchingPlaybackLabel]);
 
-      return (
-        <div className={className ? `relative isolate ${className}` : 'relative isolate'}>
-          <video
-            id={id}
-            ref={setRefs}
-            className="absolute inset-0 h-full w-full object-contain"
-            controls={controls}
-            playsInline={playsInline}
-            preload={preload}
-            autoPlay={autoPlay}
-            muted={muted}
-            poster={poster}
+      const stageShellClass = className ? `relative min-h-0 min-w-0 ${className}` : 'relative min-h-0 min-w-0';
+
+      const videoStageGrid = (
+        <div className="relative grid min-h-0 min-w-0 grid-cols-1 grid-rows-1">
+          <div
+            className="col-start-1 row-start-1 relative z-0 flex min-h-0 min-w-0 max-h-full max-w-full items-center justify-center"
+            onClick={showCustomControls ? onVideoSurfaceClick : undefined}
           >
-            {children}
-          </video>
+            <video
+              id={id}
+              ref={setRefs}
+              className="relative z-0 h-full w-full min-h-0 max-h-full max-w-full object-contain"
+              controls={nativeVideoControls}
+              controlsList={showCustomControls ? 'nofullscreen nodownload noremoteplayback' : undefined}
+              disablePictureInPicture={showCustomControls}
+              playsInline={playsInline}
+              preload={preload}
+              autoPlay={autoPlay}
+              muted={muted}
+              poster={poster}
+            >
+              {children}
+            </video>
+          </div>
+          <div
+            ref={watermarkPortalMountRef}
+            className="pointer-events-none absolute inset-0 z-[12] col-start-1 row-start-1 overflow-visible"
+            aria-hidden
+          />
+          {showStaticStudentOverlay ? (
+            <StudentVideoStaticOverlay subtitle={staticOverlaySubtitle} />
+          ) : null}
           {showPlaybackSwitching ? (
             <div
-              className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-black/65 px-4"
+              className="pointer-events-none col-start-1 row-start-1 z-[55] flex items-center justify-center self-stretch justify-self-stretch bg-black/65 px-4"
               role="status"
               aria-live="polite"
             >
@@ -757,6 +817,29 @@
             </div>
           ) : null}
         </div>
+      );
+
+      return (
+        <>
+          {showCustomControls ? (
+            <div ref={playerShellRef} className="relative flex min-h-0 min-w-0 w-full flex-col">
+              <div className={stageShellClass}>{videoStageGrid}</div>
+              <HlsVideoCustomControls videoRef={localRef} shellRef={playerShellRef} />
+            </div>
+          ) : (
+            <div ref={playerShellRef} className={stageShellClass}>
+              {videoStageGrid}
+            </div>
+          )}
+          <VideoWatermark
+            videoRef={localRef}
+            shellRef={playerShellRef}
+            portalMountRef={watermarkPortalMountRef}
+            contentType={watermarkContentType}
+            showWatermark={showWatermark}
+            initialResolution={initialWatermarkResolution}
+          />
+        </>
       );
     }
   );

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/src/lib/api';
+import { normalizePlatformFeatureList } from '@/src/services/student/platform-feature.service';
 import type { PlatformFeature, UpdatePlatformFeatureRequest } from '@/src/types';
 
 const QUERY_KEY = 'platformFeature';
@@ -9,7 +10,7 @@ export function usePlatformFeature() {
     queryKey: [QUERY_KEY],
     queryFn: async () => {
       const response = await api.platformFeature.get();
-      return response.data;
+      return normalizePlatformFeatureList(response);
     },
   });
 }

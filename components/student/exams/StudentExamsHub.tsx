@@ -41,7 +41,10 @@ import {
   hubQuizTypeLabel,
   type HubQuizListRow,
 } from '@/src/lib/student-exam-hub-quiz';
-import { quizRequiresCourseActivationLock } from '@/src/lib/student-quiz-activation-lock';
+import {
+  quizNeedsReactivationAfterExhaustedAttempts,
+  quizStudentMustActivateOrReactivate,
+} from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
@@ -539,7 +542,18 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
               {locked.map((row) => {
                 const title = hubQuizTitle(row);
                 const attrs = hubQuizAttrs(row);
-                const needsActivation = quizRequiresCourseActivationLock(attrs);
+                const top = row as Record<string, unknown>;
+                const attrsForPolicy: Record<string, unknown> = {
+                  ...attrs,
+                  has_activation: attrs.has_activation ?? top.has_activation,
+                  is_public: attrs.is_public ?? top.is_public,
+                  remaining_attempts: attrs.remaining_attempts ?? top.remaining_attempts,
+                  current_attempts: attrs.current_attempts ?? top.current_attempts,
+                  max_attempts: attrs.max_attempts ?? top.max_attempts,
+                  maxAttempts: attrs.maxAttempts ?? top.maxAttempts,
+                };
+                const needsActivation = quizStudentMustActivateOrReactivate(attrsForPolicy);
+                const reactivateOnly = quizNeedsReactivationAfterExhaustedAttempts(attrsForPolicy);
                 const cid = attrs.course_id;
 
                 return (
@@ -552,11 +566,21 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                     </div>
                     {needsActivation ? (
                       <div className="mt-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2.5">
-                        <p className="text-sm font-semibold text-amber-950">{tDetails('examsActivationRequired')}</p>
-                        <p className="mt-1 text-xs font-medium text-amber-900/85">{tDetails('examsPrivateExamHint')}</p>
-                        <p className="mt-1 text-xs font-medium text-amber-900/85">
-                          {tDetails('examsActivationRequiredSub')}
+                        <p className="text-sm font-semibold text-amber-950">
+                          {reactivateOnly
+                            ? tDetails('examsReactivateAttemptsTitle')
+                            : tDetails('examsActivationRequired')}
                         </p>
+                        <p className="mt-1 text-xs font-medium text-amber-900/85">
+                          {reactivateOnly
+                            ? tDetails('examsReactivateAttemptsBody')
+                            : tDetails('examsPrivateExamHint')}
+                        </p>
+                        {!reactivateOnly ? (
+                          <p className="mt-1 text-xs font-medium text-amber-900/85">
+                            {tDetails('examsActivationRequiredSub')}
+                          </p>
+                        ) : null}
                         {cid != null && String(cid).trim() !== '' ? (
                           <p className="mt-2 text-xs font-semibold text-amber-950">
                             {tDetails('examsCourseIdLabel', { id: String(cid) })}
