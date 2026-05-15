@@ -2,6 +2,7 @@ import Navbar from "@/components/student/Navbar";
 import Sidebar from "@/components/student/Sidebar";
 import { StudentAuthStoreInit } from "@/components/student/StudentAuthStoreInit";
 import { StudentToaster } from "@/components/student/StudentToaster";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { getCurrentUser } from "@/src/services/auth/me.service";
 import { getStudentNotifications } from "@/src/services/student/user.service";
 import type { Metadata } from "next";
@@ -28,22 +29,24 @@ export default async function StudentLayout({
     userResponse.success && userResponse.data ? userResponse.data : null;
 
   return (
-     <div className="flex min-h-screen bg-gray-50">
-    <StudentAuthStoreInit />
-    <Sidebar currentUser={currentUser} />
+    <ProtectedRoute requireProfileComplete={false}>
+      <div className="flex min-h-screen bg-gray-50">
+        <StudentAuthStoreInit />
+        <Sidebar currentUser={currentUser} />
 
-    <div className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
-      <Navbar
-        initialNotifications={notifications}
-        currentUser={currentUser}
-      />
+        <div className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
+          <Navbar
+            initialNotifications={notifications}
+            currentUser={currentUser}
+          />
 
-      <main className="min-w-0 flex-1 px-4 py-4 pb-6 sm:px-5 sm:py-5 lg:px-16 lg:py-5">
-        {children}
-      </main>
+          <main className="min-w-0 flex-1 px-4 py-4 pb-6 sm:px-5 sm:py-5 lg:px-16 lg:py-5">
+            {children}
+          </main>
 
-      <StudentToaster />
-    </div>
-  </div>
+          <StudentToaster />
+        </div>
+      </div>
+    </ProtectedRoute>
   );
 }

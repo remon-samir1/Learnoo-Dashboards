@@ -10,6 +10,9 @@ export function proxy(request: NextRequest) {
  
   const { pathname } = request.nextUrl;
 
+  // Profile completion after register/login (token required; role may still be "Unknown")
+  const onboardingRoutes = ['/select-university', '/select-center', '/select-faculty'];
+
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/forgot-password', '/create-account', '/'];
   if (publicRoutes.includes(pathname)) {
@@ -19,7 +22,16 @@ export function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       } else if (userRole === 'Doctor') {
         return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
+      } else if (userRole === 'Student' || userRole === 'Unknown') {
+        return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
       }
+    }
+    return NextResponse.next();
+  }
+
+  if (onboardingRoutes.includes(pathname)) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url));
     }
     return NextResponse.next();
   }
@@ -35,12 +47,39 @@ export function proxy(request: NextRequest) {
     '/notes-summaries', '/notifications', '/settings', '/students'];
   
   const doctorRoutes = ['/doctor'];
-  const studentRoutes = ['/student'];
 
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route));
   const isDoctorRoute = doctorRoutes.some(route => pathname.startsWith(route));
-  const isStudentRoute = studentRoutes.some(route => pathname.startsWith(`/${locale}/${route}`));
- 
+  const isStudentRoute =
+    pathname === '/student' || /^\/(ar|en)\/student(\/|$)/.test(pathname);
+
+  // "Unknown" is common right after register; allow student app without forcing onboarding on login
+  if (userRole === 'Unknown') {
+    if (isStudentRoute || onboardingRoutes.includes(pathname)) {
+      return NextResponse.next();
+    }
+    if (isAdminRoute || isDoctorRoute) {
+      return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (pathname === '/student') {
+    return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
+  }
+
+  if (isStudentRoute) {
+    if (userRole === 'Student') {
+      return NextResponse.next();
+    }
+    if (userRole === 'Admin') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    if (userRole === 'Doctor') {
+      return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
+    }
+  }
+
   // Admin trying to access doctor routes
   if (isDoctorRoute && userRole !== 'Doctor') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
@@ -50,14 +89,8 @@ export function proxy(request: NextRequest) {
   if (isAdminRoute && userRole !== 'Admin') {
     return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
   }
- 
-  // student trying to access admin routes || doctor roles || student main page
-  if (isStudentRoute && userRole === 'Student' || pathname === "/student") {
-    return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
-  }
 
-
-  // Unknown role - redirect to login
+  // Unsupported role — clear session and send to login
   if (!userRole || (userRole !== 'Admin' && userRole !== 'Doctor' && userRole !== 'Student')) {
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('token');

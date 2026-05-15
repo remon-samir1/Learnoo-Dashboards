@@ -93,19 +93,23 @@
       "firstNamePlaceholder": "فاطمة",
       "lastNamePlaceholder": "أحمد",
       "emailPlaceholder": "example@learnoo.com",
-      "phonePlaceholder": "201200000000",
+      "phonePlaceholder": "1200000000",
       "passwordPlaceholder": "أنشئ كلمة مرور قوية",
       "confirmPasswordPlaceholder": "أكد كلمة المرور",
       "submit": "إنشاء حساب",
       "creatingAccount": "جاري إنشاء الحساب…",
       "haveAccount": "لديك حساب بالفعل؟",
       "login": "تسجيل الدخول",
+      "agreeToTerms": "أوافق على",
+      "termsAndConditions": "الشروط والأحكام",
       "errors": {
         "missingFields": "يرجى تعبئة جميع الحقول",
         "passwordMismatch": "كلمتا المرور غير متطابقتين",
         "noToken": "لم يتم استلام رمز من الخادم",
         "noPermission": "ليس لديك صلاحية للوصول إلى هذه المنصة",
-        "registerFailed": "فشل التسجيل. حاول مرة أخرى."
+        "registerFailed": "فشل التسجيل. حاول مرة أخرى.",
+        "agreeToTerms": "يجب الموافقة على الشروط والأحكام",
+        "egyptPhoneFormat": "رقم الهاتف المصري لا يجب أن يبدأ بـ 0"
       }
     },
     "verification": {
@@ -121,6 +125,36 @@
       "newPassword": "كلمة المرور الجديدة",
       "confirmPassword": "تأكيد كلمة المرور",
       "submit": "إعادة تعيين كلمة المرور"
+    },
+    "selectUniversity": {
+      "title": "اختر جامعتك",
+      "subtitle": "أكمل ملفك الشخصي باختيار جامعتك",
+      "step": "الخطوة",
+      "of": "من",
+      "searchPlaceholder": "ابحث عن جامعة...",
+      "noResults": "لم يتم العثور على جامعات",
+      "next": "التالي"
+    },
+    "selectCenter": {
+      "title": "اختر مركزك",
+      "subtitle": "أكمل ملفك الشخصي باختيار مركزك",
+      "step": "الخطوة",
+      "of": "من",
+      "searchPlaceholder": "ابحث عن مركز...",
+      "noResults": "لم يتم العثور على مراكز",
+      "back": "العودة",
+      "next": "التالي"
+    },
+    "selectFaculty": {
+      "title": "اختر كليتك",
+      "subtitle": "أكمل ملفك الشخصي باختيار كليتك",
+      "step": "الخطوة",
+      "of": "من",
+      "searchPlaceholder": "ابحث عن كلية...",
+      "noResults": "لم يتم العثور على كليات",
+      "back": "العودة",
+      "finish": "إنهاء",
+      "submitting": "جاري الحفظ..."
     }
   },
   "studentDownloads": {

@@ -416,15 +416,15 @@ export interface UpdateUserRequest {
 
 
 
-  university_id: number;
+  university_id: number | string;
 
 
 
-  centers: number[];
+  centers: (number | string)[];
 
 
 
-  faculty_id: number;
+  faculty_id: number | string;
 
 
 

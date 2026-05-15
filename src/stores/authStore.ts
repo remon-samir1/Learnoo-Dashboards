@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import Cookies from 'js-cookie';
 import type { User, AuthMeta, LoginRequest, RegisterRequest } from '@/src/types';
 import { authApi, ApiError } from '@/src/lib/api';
+import { isProfileComplete } from '@/src/lib/profile-completeness';
 
 // ============================================
 // Types
@@ -21,6 +22,7 @@ interface AuthState {
   getUserRole: () => 'Admin' | 'Doctor' | 'Student' | 'Unknown' | 'Instructor' | null;
   isAdmin: () => boolean;
   isDoctor: () => boolean;
+  isProfileComplete: () => boolean;
 
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
@@ -122,6 +124,11 @@ export const useAuthStore = create<AuthState>()(
       isDoctor: () => {
         const role = get().getUserRole();
         return role === 'Doctor';
+      },
+
+      isProfileComplete: () => {
+        const { user } = get();
+        return isProfileComplete(user);
       },
 
       // Actions
@@ -268,7 +275,10 @@ export const useAuthStore = create<AuthState>()(
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict',
         });
-        set({ user });
+        set({
+          user,
+          isAuthenticated: true,
+        });
       },
 
       clearError: () => set({ error: null }),
@@ -337,6 +347,7 @@ export function useAuth() {
       error: state.error,
       isAdmin: state.isAdmin(),
       isDoctor: state.isDoctor(),
+      isProfileComplete: state.isProfileComplete(),
       userRole: state.getUserRole(),
     }))
   );

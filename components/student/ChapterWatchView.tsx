@@ -433,8 +433,8 @@ export default function ChapterWatchView({
       <div className="relative left-1/2 w-screen max-w-[100dvw] -translate-x-1/2 [overscroll-behavior-x:contain] sm:static sm:left-auto sm:w-full sm:max-w-none sm:translate-x-0">
         <div className="mx-auto w-full max-w-6xl sm:px-6 lg:px-8">
           <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
-            <div className={`grid gap-0 ${showPdf && pdfUrl && pdfPanelVisible ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
-              <div className="border-slate-700 bg-black/50 lg:border-e lg:border-slate-700">
+            <div className="flex flex-col">
+              <div className="bg-black/50">
                 {videoSrc ? (
                   accessDenied ? (
                     <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
@@ -481,21 +481,21 @@ export default function ChapterWatchView({
               </div>
 
               {showPdf && pdfUrl && pdfPanelVisible ? (
-                <div className="flex min-h-[280px] flex-col border-t border-slate-700 bg-white lg:min-h-0 lg:border-t-0">
+                <div className="flex flex-col border-t border-slate-700 bg-white">
                   <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
                     <span className="text-sm font-semibold text-slate-800">{t('lectureMaterial')}</span>
                   </div>
-                  <div className="relative min-h-[240px] flex-1 bg-slate-100 lg:min-h-[320px]">
-                    {/* <iframe
+                  <div className="max-h-[min(70vh,720px)] min-h-[280px] overflow-hidden bg-slate-100">
+                    <PdfPreviewModal
+                      variant="inline"
                       title={t('lectureMaterial')}
-                      src={pdfUrl}
-                      className="absolute inset-0 h-full w-full border-0"
-                    /> */}
-                    <PdfPreviewModal title={t('lectureMaterial')} open={pdfPanelVisible} onClose={() => setShowPdf(false)} pdfUrl={pdfUrl} />
-                    <p className="pointer-events-none absolute bottom-3 left-3 right-3 text-center text-[11px] text-slate-500">
-                      {t('pdfSyncHint')}
-                    </p>
+                      open={showPdf}
+                      pdfUrl={pdfUrl}
+                    />
                   </div>
+                  <p className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-center text-[11px] text-slate-500">
+                    {t('pdfSyncHint')}
+                  </p>
                 </div>
               ) : null}
             </div>

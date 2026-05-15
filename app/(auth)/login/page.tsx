@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import Cookies, { CookieAttributes } from '@/lib/cookies';
 import { getPostAuthHref } from '@/src/lib/auth-post-login-redirect';
+import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const router = useRouter();
+  const { login, fetchCurrentUser } = useAuthActions();
   const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -117,43 +119,20 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch('https://api.learnoo.app/v1/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          phone_or_email: email,
-          password: password,
-          device_name: 'learnoo-web',
-        }),
+      // Use auth store login action
+      await login({
+        phone_or_email: email,
+        password: password,
+        device_name: 'learnoo-web',
       });
 
-      const data = await response.json();
+      await fetchCurrentUser();
 
-      if (!response.ok) {
-        throw new Error(data.message || t('errors.loginFailed'));
-      }
+      const userData = Cookies.get('user_data');
+      const user = userData ? JSON.parse(userData) : null;
+      const userRole = user?.attributes?.role;
 
-      const userRole = data.data?.attributes?.role;
-      const token = data.meta?.token;
-
-      if (!token) {
-        throw new Error(t('errors.noToken'));
-      }
-
-      // Save token in cookies
-      const cookieOptions: CookieAttributes = {
-        expires: rememberMe ? 30 : undefined, // 30 days if remember me, session otherwise
-        secure: true,
-        sameSite: 'strict',
-      };
-
-      Cookies.set('token', token, cookieOptions);
-      Cookies.set('user_role', userRole ?? '', cookieOptions);
-      Cookies.set('user_data', JSON.stringify(data.data), cookieOptions);
-
+      sessionStorage.removeItem('registration_onboarding');
       router.push(getPostAuthHref(locale, userRole));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during login');

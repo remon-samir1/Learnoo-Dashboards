@@ -93,19 +93,23 @@
       "firstNamePlaceholder": "Jane",
       "lastNamePlaceholder": "Doe",
       "emailPlaceholder": "you@example.com",
-      "phonePlaceholder": "201200000000",
+      "phonePlaceholder": "1200000000",
       "passwordPlaceholder": "Create a strong password",
       "confirmPasswordPlaceholder": "Confirm your password",
       "submit": "Create Account",
       "creatingAccount": "Creating account…",
       "haveAccount": "Already have an account?",
       "login": "Login",
+      "agreeToTerms": "I agree to the",
+      "termsAndConditions": "Terms and Conditions",
       "errors": {
         "missingFields": "Please fill in all fields",
         "passwordMismatch": "Passwords do not match",
         "noToken": "No token received from server",
         "noPermission": "You do not have permission to access this platform",
-        "registerFailed": "Registration failed. Please try again."
+        "registerFailed": "Registration failed. Please try again.",
+        "agreeToTerms": "You must agree to the Terms and Conditions",
+        "egyptPhoneFormat": "Egyptian phone number should not start with 0"
       }
     },
     "verification": {
@@ -121,6 +125,36 @@
       "newPassword": "New Password",
       "confirmPassword": "Confirm Password",
       "submit": "Reset Password"
+    },
+    "selectUniversity": {
+      "title": "Select Your University",
+      "subtitle": "Complete your profile by selecting your university",
+      "step": "Step",
+      "of": "of",
+      "searchPlaceholder": "Search for a university...",
+      "noResults": "No universities found",
+      "next": "Next"
+    },
+    "selectCenter": {
+      "title": "Select Your Center",
+      "subtitle": "Complete your profile by selecting your center",
+      "step": "Step",
+      "of": "of",
+      "searchPlaceholder": "Search for a center...",
+      "noResults": "No centers found",
+      "back": "Back",
+      "next": "Next"
+    },
+    "selectFaculty": {
+      "title": "Select Your Faculty",
+      "subtitle": "Complete your profile by selecting your faculty",
+      "step": "Step",
+      "of": "of",
+      "searchPlaceholder": "Search for a faculty...",
+      "noResults": "No faculties found",
+      "back": "Back",
+      "finish": "Finish",
+      "submitting": "Saving..."
     }
   },
   "navbar": {

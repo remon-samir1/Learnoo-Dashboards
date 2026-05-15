@@ -2,7 +2,6 @@
 
 import { FileText, X } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
-
 import { useCurrentUser } from '@/src/hooks';
 import { resolveEnabledWatermarkBucket, WatermarkResolution } from '@/src/lib/watermark-from-features';
 import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
@@ -17,78 +16,157 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 
 type Props = {
   open: boolean;
-  onClose: () => void;
+  onClose?: () => void;
   pdfUrl: string | null;
   title: string;
+  /** `modal` = fullscreen overlay; `inline` = fills parent (e.g. under video). */
+  variant?: 'modal' | 'inline';
 };
+
+function PdfPreviewContent({
+  proxiedPdfUrl,
+  watermarkText,
+  watermarkStyle,
+}: {
+  proxiedPdfUrl: string;
+  watermarkText: string;
+  watermarkStyle: { color: string; opacity: number };
+}) {
+  const [numPages, setNumPages] = useState(0);
+
+  return (
+    <Document
+      file={proxiedPdfUrl}
+      loading={<p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>}
+      error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
+      onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
+    >
+      <div className="flex flex-col items-center gap-6 py-2">
+        {Array.from({ length: numPages }, (_, index) => {
+          const pageNumber = index + 1;
+
+          return (
+            <div
+              key={pageNumber}
+              className="relative overflow-hidden rounded-xl bg-white shadow-sm"
+            >
+              <Page
+                pageNumber={pageNumber}
+                width={720}
+                renderAnnotationLayer={false}
+                renderTextLayer={false}
+              />
+
+              {watermarkText ? (
+                <div
+                  className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
+                  aria-hidden
+                >
+                  <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-center">
+                        <span
+                          className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
+                          style={watermarkStyle}
+                        >
+                          {watermarkText}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </Document>
+  );
+}
 
 export default function PdfPreviewModal({
   open,
   onClose,
   pdfUrl,
   title,
+  variant = 'modal',
 }: Props) {
+  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
+  const { user } = useCurrentUser();
+  const attrs = user?.attributes;
 
-    const [watermarkConfig, setWatermarkConfig] =
-    useState<WatermarkResolution | null>(null);
-    const [numPages, setNumPages] = useState<number>(0);
+  const safePdfUrl = pdfUrl ? encodeURI(pdfUrl) : '';
+  const proxiedPdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(safePdfUrl)}`;
 
-const safePdfUrl = pdfUrl ? encodeURI(pdfUrl) : '';
-const proxiedPdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(safePdfUrl)}`;
-const {user}= useCurrentUser();
-const attrs = user?.attributes
+  const watermarkText = useMemo(() => {
+    const config = watermarkConfig?.config;
+    if (!config?.enabled) return '';
 
-const watermarkText = useMemo(() => {
-  const config = watermarkConfig?.config;
-  if (!config?.enabled) return '';
+    const parts: string[] = [];
 
-  const parts: string[] = [];
-
-  if (config.useStudentCode && attrs?.student_code) {
-    parts.push(String(attrs.student_code).trim());
-  }
-
-  if (config.usePhoneNumber && attrs?.phone) {
-    parts.push(String(attrs.phone).trim());
-  }
-
-  return parts.join(' · ');
-}, [watermarkConfig, attrs]);
-useEffect(() => {
-  let mounted = true;
-
-  const loadWatermark = async () => {
-    try {
-      const platformFeatures = await getStudentPlatformFeatures();
-       
-      const resolution = resolveEnabledWatermarkBucket(
-        platformFeatures,
-        'chapters'
-      );
-
-      if (mounted) {
-        setWatermarkConfig(resolution);
-      }
-    } catch (error) {
-      console.error('Failed to load watermark config:', error);
+    if (config.useStudentCode && attrs?.student_code) {
+      parts.push(String(attrs.student_code).trim());
     }
-  };
 
-  loadWatermark();
+    if (config.usePhoneNumber && attrs?.phone) {
+      parts.push(String(attrs.phone).trim());
+    }
 
-  return () => {
-    mounted = false;
-  };
-}, []);
-const watermarkStyle = useMemo(() => {
-  const config = watermarkConfig?.config;
+    return parts.join(' · ');
+  }, [watermarkConfig, attrs]);
 
-  return {
-    color: config?.color ?? '#666666',
-    opacity: (config?.opacity ?? 50) / 100,
-  };
-}, [watermarkConfig]);
-  if (!open) return null;
+  useEffect(() => {
+    let mounted = true;
+
+    const loadWatermark = async () => {
+      try {
+        const platformFeatures = await getStudentPlatformFeatures();
+        const resolution = resolveEnabledWatermarkBucket(platformFeatures, 'chapters');
+
+        if (mounted) {
+          setWatermarkConfig(resolution);
+        }
+      } catch (error) {
+        console.error('Failed to load watermark config:', error);
+      }
+    };
+
+    loadWatermark();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const watermarkStyle = useMemo(() => {
+    const config = watermarkConfig?.config;
+
+    return {
+      color: config?.color ?? '#666666',
+      opacity: (config?.opacity ?? 50) / 100,
+    };
+  }, [watermarkConfig]);
+
+  if (!open || !pdfUrl) return null;
+
+  const content = (
+    <div className="mx-auto flex w-full max-w-[800px] justify-center">
+      <PdfPreviewContent
+        proxiedPdfUrl={proxiedPdfUrl}
+        watermarkText={watermarkText}
+        watermarkStyle={watermarkStyle}
+      />
+    </div>
+  );
+
+  if (variant === 'inline') {
+    return (
+      <div className="flex h-full min-h-0 w-full flex-col bg-[#F8FAFC]">
+        <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-5">{content}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
       <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
@@ -96,76 +174,23 @@ const watermarkStyle = useMemo(() => {
           <div className="flex items-center gap-2">
             <FileText className="size-5 text-[#2D43D1]" />
             <div>
-              <p className="text-sm font-bold text-[#0F172A]">
-                {title}
-              </p>
-              <p className="text-xs text-[#64748B]">
-                PDF Preview
-              </p>
+              <p className="text-sm font-bold text-[#0F172A]">{title}</p>
+              <p className="text-xs text-[#64748B]">PDF Preview</p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="flex size-9 items-center justify-center rounded-full bg-white text-[#64748B] transition hover:bg-[#EEF2FF]"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
-
-        <div className="overflow-auto bg-[#F8FAFC] p-5">
-          <div className="mx-auto flex w-full max-w-[800px] justify-center overflow-auto rounded-xl bg-white p-3 shadow-sm">
-   <Document
-  file={proxiedPdfUrl}
-  loading={<p className="py-20 text-sm text-[#64748B]">Loading PDF...</p>}
-  error={<p className="py-20 text-sm text-red-600">Failed to load PDF file.</p>}
-  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
->
-  <div className="flex flex-col items-center gap-6">
-    {Array.from({ length: numPages }, (_, index) => {
-      const pageNumber = index + 1;
-
-      return (
-        <div
-          key={pageNumber}
-          className="relative overflow-hidden rounded-xl bg-white shadow-sm"
-        >
-          <Page
-            pageNumber={pageNumber}
-            width={720}
-            renderAnnotationLayer={false}
-            renderTextLayer={false}
-          />
-
-          {watermarkText ? (
-           <div
-  className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
-  aria-hidden
->
-  <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
-    {Array.from({ length: 12 }).map((_, i) => (
-      <div
-        key={i}
-        className="flex items-center justify-center"
-      >
-        <span
-          className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
-          style={watermarkStyle}
-        >
-          {watermarkText}
-        </span>
-      </div>
-    ))}
-  </div>
-</div>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex size-9 items-center justify-center rounded-full bg-white text-[#64748B] transition hover:bg-[#EEF2FF]"
+            >
+              <X className="size-5" />
+            </button>
           ) : null}
         </div>
-      );
-    })}
-  </div>
-</Document>
-          </div>
-        </div>
+
+        <div className="overflow-auto bg-[#F8FAFC] p-5">{content}</div>
       </div>
     </div>
   );
