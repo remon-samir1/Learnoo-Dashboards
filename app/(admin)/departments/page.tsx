@@ -1238,7 +1238,7 @@ export default function DepartmentsPage() {
     refetch: refetchCourses,
   } = useCourses({});
 
-  const { data: notes, isLoading: notesLoading } = useNotes();
+  const { data: notes, isLoading: notesLoading, refetch: refetchNotes } = useNotes();
 
   const {
     data: codes,
@@ -1663,6 +1663,8 @@ export default function DepartmentsPage() {
     refetchDepts();
 
     refetchCourses();
+
+    refetchNotes();
   };
 
   const handleDelete = (node: TreeNode) => {
@@ -1844,9 +1846,11 @@ export default function DepartmentsPage() {
       if (isEditMode && editingNoteId) {
         await updateNote(parseInt(editingNoteId), noteData);
         toast.success("Note updated successfully");
+        refetchAll();
       } else {
         await createNote(noteData);
         toast.success("Note created successfully");
+        refetchAll();
       }
 
       setNoteModalOpen(false);
