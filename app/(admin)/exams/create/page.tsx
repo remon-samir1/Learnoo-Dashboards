@@ -572,39 +572,92 @@ export default function CreateExamPage() {
         return;
       }
 
-      // Step 1: Create the quiz/exam with questions
-      const quizData = {
-        course_id: parseInt(examDetails.course),
-        chapter_id: examDetails.chapter ? parseInt(examDetails.chapter) : undefined,
-        title: examDetails.title,
-        type: examDetails.type,
-        duration: parseInt(examDetails.duration) || 60,
-        total_marks: parseInt(examDetails.totalMarks) || 100,
-        passing_marks: parseInt(examDetails.passingMarks) || 60,
-        max_attempts: parseInt(examDetails.maxAttempts) || 1,
-        is_public: examDetails.is_public,
-        status: examDetails.status.toLowerCase() as 'draft' | 'active',
-        start_time: examDetails.startTime || null,
-        end_time: examDetails.endTime || null,
-                questions: questions.map((q, i) => ({
-          text: q.text,
-          type: q.type,
-          score: q.score,
-          auto_correct: q.autoCorrect,
-          image: q.image || undefined,
-          answers: q.type === 'short_answer' ? undefined : q.answers.map(a => ({
-            text: a.text,
-            is_correct: a.isCorrect,
-            reason: a.reason || undefined,
-            image: a.image || undefined,
-          })),
-          order: i + 1,
-        })),
-      };
+      // Create FormData for the API route - ALL as form fields
+      const formData = new FormData();
+      
+      // Add quiz fields
+      formData.append('course_id', examDetails.course);
+      if (examDetails.chapter) formData.append('chapter_id', examDetails.chapter);
+      formData.append('title', examDetails.title);
+      formData.append('type', examDetails.type);
+      formData.append('duration', examDetails.duration);
+      formData.append('total_marks', examDetails.totalMarks);
+      formData.append('passing_marks', examDetails.passingMarks);
+      formData.append('max_attempts', examDetails.maxAttempts);
+      formData.append('is_public', examDetails.is_public ? '1' : '0');
+      formData.append('status', examDetails.status.toLowerCase());
+      if (examDetails.startTime) formData.append('start_time', examDetails.startTime);
+      if (examDetails.endTime) formData.append('end_time', examDetails.endTime);
 
-      const createdQuiz = await createQuiz(quizData as any);
+      // Add questions with answers and images
+      questions.forEach((q, qIndex) => {
+        formData.append(`questions[${qIndex}][text]`, q.text);
+        formData.append(`questions[${qIndex}][type]`, q.type);
+        formData.append(`questions[${qIndex}][score]`, String(q.score));
+        formData.append(`questions[${qIndex}][auto_correct]`, q.autoCorrect ? '1' : '0');
+        formData.append(`questions[${qIndex}][order]`, String(qIndex + 1));
 
-      if (!createdQuiz) {
+        // Add question image if exists
+        if (q.image && q.image instanceof File) {
+          console.log(`✓ Adding question ${qIndex} image: ${q.image.name} (${q.image.size} bytes)`);
+          formData.append(`questions[${qIndex}][image]`, q.image);
+        }
+
+        // Add answers
+        if (q.type !== 'short_answer' && q.answers) {
+          q.answers.forEach((a, aIndex) => {
+            formData.append(`questions[${qIndex}][answers][${aIndex}][text]`, a.text);
+            formData.append(`questions[${qIndex}][answers][${aIndex}][is_correct]`, a.isCorrect ? '1' : '0');
+            if (a.reason) {
+              formData.append(`questions[${qIndex}][answers][${aIndex}][reason]`, a.reason);
+            }
+
+            // Add answer image if exists
+            if (a.image && a.image instanceof File) {
+              console.log(`✓ Adding question ${qIndex} answer ${aIndex} image: ${a.image.name} (${a.image.size} bytes)`);
+              formData.append(`questions[${qIndex}][answers][${aIndex}][image]`, a.image);
+            }
+          });
+        }
+      });
+
+      // Debug log
+      console.log('=== FormData Contents ===');
+      let fileCount = 0;
+      for (const [key, value] of Array.from(formData.entries())) {
+        if (value instanceof File) {
+          console.log(`📁 ${key}: ${value.name} (${value.size} bytes)`);
+          fileCount++;
+        } else {
+          console.log(`📝 ${key}: ${String(value).substring(0, 50)}`);
+        }
+      }
+      console.log(`Total files: ${fileCount}`);
+
+      // Get token
+      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || localStorage.getItem('token') || '' : '';
+      
+      console.log('🚀 Sending FormData POST to /api/quiz-upload...');
+      const quizResponse = await fetch('/api/quiz-upload', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+
+      console.log('Response status:', quizResponse.status);
+      const responseData = await quizResponse.json().catch(() => ({ message: 'Failed to parse response' }));
+
+      if (!quizResponse.ok) {
+        console.error('❌ Quiz creation error:', responseData);
+        alert(responseData.message || responseData.details || t('create.error'));
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('✅ Quiz created successfully:', responseData);
+      if (!responseData.data && !responseData.id) {
         throw new Error(t('create.error'));
       }
 
@@ -612,7 +665,7 @@ export default function CreateExamPage() {
       router.push('/exams');
     } catch (error) {
       console.error('Error creating exam:', error);
-      alert(t('create.error'));
+      alert(error instanceof Error ? error.message : t('create.error'));
     } finally {
       setIsSubmitting(false);
     }

@@ -63,7 +63,6 @@ interface ExamDetails {
   startTime: string;
   endTime: string;
   is_public: boolean;
-  reason?: string;
 }
 
 type NodeType = 'university' | 'faculty' | 'center' | 'department' | 'course';
@@ -77,6 +76,73 @@ interface TreeNode {
   level: number;
   parentId?: string | null;
 }
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+/** Get auth token from cookies (same logic as the API route) */
+function getTokenFromCookies(): string {
+  if (typeof document === 'undefined') return '';
+  const cookies = document.cookie.split('; ');
+  for (const cookie of cookies) {
+    const [key, value] = cookie.split('=');
+    if (key === 'token' || key === 'auth_token') return decodeURIComponent(value || '');
+  }
+  return '';
+}
+
+/** Rebuild FormData so every File entry has the correct MIME type */
+async function rebuildFormData(source: FormData): Promise<FormData> {
+  const rebuilt = new FormData();
+  for (const [key, value] of source.entries()) {
+    if (value instanceof File) {
+      const buffer = await value.arrayBuffer();
+      const blob = new Blob([buffer], { type: value.type || 'image/jpeg' });
+      rebuilt.append(key, blob, value.name);
+    } else {
+      rebuilt.append(key, value);
+    }
+  }
+  return rebuilt;
+}
+
+/** Submit the quiz update directly to the backend */
+async function submitQuizUpdate(examId: string, formData: FormData): Promise<Response> {
+  const token = getTokenFromCookies();
+
+  if (!token) {
+    throw new Error('Unauthorized - No token found. Please login again.');
+  }
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
+
+  console.log('=== FormData Contents ===');
+  let fileCount = 0;
+  for (const [key, value] of formData.entries()) {
+    if (value instanceof File) {
+      console.log(`📁 ${key}: ${value.name} (${value.size} bytes)`);
+      fileCount++;
+    } else {
+      console.log(`📝 ${key}: ${String(value).substring(0, 50)}`);
+    }
+  }
+  console.log(`Total files: ${fileCount}`);
+
+  const newFormData = await rebuildFormData(formData);
+
+  console.log(`🚀 PUT ${apiUrl}/v1/quiz/${examId}`);
+
+  return fetch(`${apiUrl}/v1/quiz/${examId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      accept: 'application/json',
+      // DO NOT set Content-Type – let FormData set the boundary
+    },
+    body: newFormData,
+  });
+}
+
+// ─── tree helpers ────────────────────────────────────────────────────────────
 
 function buildCourseTree(
   universities: University[],
@@ -92,122 +158,88 @@ function buildCourseTree(
   const courseMap = new Map<string, TreeNode>();
 
   universities.forEach((univ) => {
-    const univNode: TreeNode = {
-      id: `univ-${univ.id}`,
-      type: 'university',
-      name: univ.attributes.name,
-      data: univ,
-      children: [],
-      level: 0,
-    };
-    universityMap.set(univ.id, univNode);
+    universityMap.set(univ.id, {
+      id: `univ-${univ.id}`, type: 'university',
+      name: univ.attributes.name, data: univ, children: [], level: 0,
+    });
   });
 
   faculties.forEach((faculty) => {
-    const facultyNode: TreeNode = {
-      id: `faculty-${faculty.id}`,
-      type: 'faculty',
-      name: faculty.attributes.name,
-      data: faculty,
-      children: [],
-      level: 0,
-    };
-    facultyMap.set(faculty.id, facultyNode);
+    facultyMap.set(faculty.id, {
+      id: `faculty-${faculty.id}`, type: 'faculty',
+      name: faculty.attributes.name, data: faculty, children: [], level: 0,
+    });
   });
 
   centers.forEach((center) => {
     const centerNode: TreeNode = {
-      id: `center-${center.id}`,
-      type: 'center',
-      name: center.name,
-      data: center,
-      children: [],
-      level: 0,
+      id: `center-${center.id}`, type: 'center',
+      name: center.name, data: center, children: [], level: 0,
     };
     centerMap.set(center.id, centerNode);
 
     if (center.childrens && Array.isArray(center.childrens)) {
       center.childrens.forEach((child) => {
-        const childType = child.type || "department";
-        if (childType === "faculty") {
-          const facultyNode: TreeNode = {
-            id: `faculty-${child.id}`,
-            type: "faculty",
+        if ((child.type || 'department') === 'faculty') {
+          const fn: TreeNode = {
+            id: `faculty-${child.id}`, type: 'faculty',
             name: child.attributes.name,
-            data: { id: child.id, type: "faculty", attributes: child.attributes } as Faculty,
-            children: [],
-            level: centerNode.level + 1,
-            parentId: centerNode.id,
+            data: { id: child.id, type: 'faculty', attributes: child.attributes } as Faculty,
+            children: [], level: centerNode.level + 1, parentId: centerNode.id,
           };
-          facultyMap.set(child.id, facultyNode);
-          centerNode.children.push(facultyNode);
+          facultyMap.set(child.id, fn);
+          centerNode.children.push(fn);
         }
       });
 
       center.childrens.forEach((child) => {
-        const childType = child.type || "department";
-        if (childType !== "faculty") {
-          const deptNode: TreeNode = {
-            id: `dept-${child.id}`,
-            type: "department",
+        if ((child.type || 'department') !== 'faculty') {
+          const dn: TreeNode = {
+            id: `dept-${child.id}`, type: 'department',
             name: child.attributes.name,
-            data: { id: child.id, type: "department", attributes: child.attributes } as Department,
-            children: [],
-            level: centerNode.level + 1,
-            parentId: centerNode.id,
+            data: { id: child.id, type: 'department', attributes: child.attributes } as Department,
+            children: [], level: centerNode.level + 1, parentId: centerNode.id,
           };
-          const parentFacultyId = (child.attributes as any).parent?.data?.id;
-          if (parentFacultyId && facultyMap.has(String(parentFacultyId))) {
-            const parentFaculty = facultyMap.get(String(parentFacultyId))!;
-            deptNode.level = parentFaculty.level + 1;
-            deptNode.parentId = parentFaculty.id;
-            parentFaculty.children.push(deptNode);
+          const pfId = (child.attributes as any).parent?.data?.id;
+          if (pfId && facultyMap.has(String(pfId))) {
+            const pf = facultyMap.get(String(pfId))!;
+            dn.level = pf.level + 1;
+            dn.parentId = pf.id;
+            pf.children.push(dn);
           } else {
-            centerNode.children.push(deptNode);
+            centerNode.children.push(dn);
           }
-          departmentMap.set(child.id, deptNode);
+          departmentMap.set(child.id, dn);
         }
       });
     }
   });
 
   departments.forEach((dept) => {
-    if (departmentMap.has(dept.id)) return;
-    const deptNode: TreeNode = {
-      id: `dept-${dept.id}`,
-      type: 'department',
-      name: dept.attributes.name,
-      data: dept,
-      children: [],
-      level: 0,
-    };
-    departmentMap.set(dept.id, deptNode);
+    if (!departmentMap.has(dept.id)) {
+      departmentMap.set(dept.id, {
+        id: `dept-${dept.id}`, type: 'department',
+        name: dept.attributes.name, data: dept, children: [], level: 0,
+      });
+    }
   });
 
   courses.forEach((course) => {
-    const courseNode: TreeNode = {
-      id: `course-${course.id}`,
-      type: 'course',
-      name: course.attributes.title,
-      data: course,
-      children: [],
-      level: 0,
-    };
-    courseMap.set(course.id, courseNode);
+    courseMap.set(course.id, {
+      id: `course-${course.id}`, type: 'course',
+      name: course.attributes.title, data: course, children: [], level: 0,
+    });
   });
 
   const rootNodes: TreeNode[] = [];
-
-  universityMap.forEach((univ) => {
-    rootNodes.push(univ);
-  });
+  universityMap.forEach((u) => rootNodes.push(u));
 
   centers.forEach((center) => {
     const node = centerMap.get(center.id);
     if (!node) return;
-    const parentId = center.parent?.data?.id || center.parent_id;
-    if (parentId && universityMap.has(String(parentId))) {
-      universityMap.get(String(parentId))!.children.push(node);
+    const pid = center.parent?.data?.id || center.parent_id;
+    if (pid && universityMap.has(String(pid))) {
+      universityMap.get(String(pid))!.children.push(node);
       node.level = 1;
     } else {
       node.level = 0;
@@ -217,51 +249,36 @@ function buildCourseTree(
 
   facultyMap.forEach((faculty) => {
     if (faculty.parentId) return;
-    const parentId = (faculty.data as Faculty).attributes.parent?.data?.id;
-    if (parentId && universityMap.has(parentId)) {
-      universityMap.get(parentId)!.children.push(faculty);
+    const pid = (faculty.data as Faculty).attributes.parent?.data?.id;
+    if (pid && universityMap.has(pid)) {
+      universityMap.get(pid)!.children.push(faculty);
       faculty.level = 1;
     }
   });
 
-  const processedDeptIds = new Set<string>();
+  const processedDepts = new Set<string>();
   departmentMap.forEach((dept) => {
-    if (processedDeptIds.has(dept.id)) return;
-    processedDeptIds.add(dept.id);
+    if (processedDepts.has(dept.id)) return;
+    processedDepts.add(dept.id);
     if (dept.parentId) return;
-    const parentId = (dept.data as Department).attributes.parent?.data?.id;
-    const centerId = (dept.data as Department).attributes.center_id;
-    if (parentId && facultyMap.has(parentId)) {
-      facultyMap.get(parentId)!.children.push(dept);
-      dept.level = 2;
-      dept.parentId = facultyMap.get(parentId)!.id;
-    } else if (centerId) {
-      let centerNode = centerMap.get(String(centerId));
-      if (!centerNode) centerNode = centerMap.get(`center-${centerId}`);
-      if (centerNode) {
-        centerNode.children.push(dept);
-        dept.level = 2;
-        dept.parentId = centerNode.id;
-      }
-    } else if (parentId) {
-      let parentDept = departmentMap.get(parentId);
-      if (!parentDept) parentDept = departmentMap.get(`dept-${parentId}`);
-      if (!parentDept) {
-        for (const [key, d] of departmentMap) {
-          if (key === parentId || key === `dept-${parentId}` || d.id === parentId || d.id === `dept-${parentId}`) {
-            parentDept = d;
-            break;
-          }
+    const pid = (dept.data as Department).attributes.parent?.data?.id;
+    const cid = (dept.data as Department).attributes.center_id;
+    if (pid && facultyMap.has(pid)) {
+      facultyMap.get(pid)!.children.push(dept);
+      dept.level = 2; dept.parentId = facultyMap.get(pid)!.id;
+    } else if (cid) {
+      const cn = centerMap.get(String(cid)) || centerMap.get(`center-${cid}`);
+      if (cn) { cn.children.push(dept); dept.level = 2; dept.parentId = cn.id; }
+    } else if (pid) {
+      let pd = departmentMap.get(pid) || departmentMap.get(`dept-${pid}`);
+      if (!pd) {
+        for (const [, d] of departmentMap) {
+          if (d.id === pid || d.id === `dept-${pid}`) { pd = d; break; }
         }
       }
-      if (parentDept) {
-        parentDept.children.push(dept);
-        dept.level = parentDept.level + 1;
-        dept.parentId = parentDept.id;
-      }
+      if (pd) { pd.children.push(dept); dept.level = pd.level + 1; dept.parentId = pd.id; }
     } else {
-      dept.level = 1;
-      rootNodes.push(dept);
+      dept.level = 1; rootNodes.push(dept);
     }
   });
 
@@ -280,6 +297,8 @@ function buildCourseTree(
   return rootNodes;
 }
 
+// ─── CourseTreeItem ──────────────────────────────────────────────────────────
+
 interface CourseTreeItemProps {
   node: TreeNode;
   expanded: Set<string>;
@@ -296,11 +315,11 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
   const getNodeIcon = (type: NodeType) => {
     switch (type) {
       case 'university': return <FolderOpen className="w-4 h-4 text-blue-500" />;
-      case 'faculty': return <FolderOpen className="w-4 h-4 text-purple-500" />;
-      case 'center': return <FolderOpen className="w-4 h-4 text-green-500" />;
+      case 'faculty':    return <FolderOpen className="w-4 h-4 text-purple-500" />;
+      case 'center':     return <FolderOpen className="w-4 h-4 text-green-500" />;
       case 'department': return <FolderOpen className="w-4 h-4 text-orange-500" />;
-      case 'course': return <BookOpen className="w-4 h-4 text-indigo-500" />;
-      default: return <FolderOpen className="w-4 h-4 text-gray-500" />;
+      case 'course':     return <BookOpen   className="w-4 h-4 text-indigo-500" />;
+      default:           return <FolderOpen className="w-4 h-4 text-gray-500" />;
     }
   };
 
@@ -312,30 +331,19 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
         }`}
         style={{ paddingLeft: `${node.level * 24 + 12}px` }}
         onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (node.type === 'course') {
-            onSelect(node);
-          } else {
-            onToggle(node.id);
-          }
+          e.preventDefault(); e.stopPropagation();
+          node.type === 'course' ? onSelect(node) : onToggle(node.id);
         }}
       >
         {hasChildren ? (
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggle(node.id);
-            }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggle(node.id); }}
             className="flex-shrink-0 w-5 h-5 flex items-center justify-center"
           >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            )}
+            {isExpanded
+              ? <ChevronDown  className="w-4 h-4 text-gray-400" />
+              : <ChevronRight className="w-4 h-4 text-gray-400" />}
           </button>
         ) : (
           <div className="w-5" />
@@ -347,12 +355,9 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
         <div>
           {node.children.map((child) => (
             <CourseTreeItem
-              key={child.id}
-              node={child}
-              expanded={expanded}
-              onToggle={onToggle}
-              onSelect={onSelect}
-              selectedCourseId={selectedCourseId}
+              key={child.id} node={child}
+              expanded={expanded} onToggle={onToggle}
+              onSelect={onSelect} selectedCourseId={selectedCourseId}
             />
           ))}
         </div>
@@ -361,302 +366,243 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
   );
 }
 
+// ─── Page ────────────────────────────────────────────────────────────────────
+
 export default function EditExamPage() {
   const t = useTranslations('exams');
   const router = useRouter();
   const params = useParams();
   const examId = params.id as string;
 
-  const { data: courses, isLoading: coursesLoading } = useCourses();
-  const { data: chapters, isLoading: chaptersLoading } = useChapters();
-  const { data: quiz, isLoading: quizLoading } = useQuiz(parseInt(examId));
-  const { mutate: updateQuiz, isLoading: isUpdating } = useUpdateQuiz();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: courses,     isLoading: coursesLoading  } = useCourses();
+  const { data: chapters,    isLoading: chaptersLoading } = useChapters();
+  const { data: quiz,        isLoading: quizLoading     } = useQuiz(parseInt(examId));
+  const { isLoading: isUpdating } = useUpdateQuiz();
   const { data: universities } = useUniversities();
-  const { data: faculties } = useFaculties();
-  const { data: centers } = useCenters();
-  const { data: departments } = useDepartments();
+  const { data: faculties    } = useFaculties();
+  const { data: centers      } = useCenters();
+  const { data: departments  } = useDepartments();
 
-  // Tree selection state
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
-    title: '',
-    course: '',
-    chapter: '',
-    type: 'exam',
-    duration: '60',
-    totalMarks: '100',
-    passingMarks: '60',
-    maxAttempts: '1',
-    status: 'Draft',
-    startTime: '',
-    endTime: '',
-    is_public: false
+    title: '', course: '', chapter: '', type: 'exam',
+    duration: '60', totalMarks: '100', passingMarks: '60', maxAttempts: '1',
+    status: 'Draft', startTime: '', endTime: '', is_public: false,
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
 
-  // Helper to format ISO datetime to datetime-local format (YYYY-MM-DDTHH:MM)
+  // ── format helper ──
   const formatDateTimeForInput = (isoString: string | null): string => {
     if (!isoString) return '';
     const date = new Date(isoString);
     if (isNaN(date.getTime())) return '';
-    // Format to YYYY-MM-DDTHH:MM
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
-  // Build course tree
+  // ── course tree ──
   const courseTree = useMemo(() => {
-    if (!universities || !faculties || !centers || !departments || !courses) {
-      return [];
-    }
+    if (!universities || !faculties || !centers || !departments || !courses) return [];
     return buildCourseTree(universities, faculties, centers, departments, courses);
   }, [universities, faculties, centers, departments, courses]);
 
-  // Handle tree node toggle
   const handleCourseTreeToggle = (nodeId: string) => {
     setCourseTreeExpanded((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
+      const s = new Set(prev);
+      s.has(nodeId) ? s.delete(nodeId) : s.add(nodeId);
+      return s;
     });
   };
 
-  // Handle tree node selection
   const handleCourseTreeSelect = (node: TreeNode) => {
     if (node.type === 'course') {
-      const courseId = node.id.replace('course-', '');
-      setExamDetails((prev) => ({ ...prev, course: courseId, chapter: '' }));
+      setExamDetails((prev) => ({ ...prev, course: node.id.replace('course-', ''), chapter: '' }));
     }
   };
 
-  // Filter chapters based on selected course
   const filteredChapters = examDetails.course
     ? chapters?.filter(ch => ch.attributes.course_id === parseInt(examDetails.course))
     : chapters;
 
-  // Load quiz data when available
+  // ── load quiz ──
   useEffect(() => {
-    if (quiz) {
-      setExamDetails({
-        title: quiz.attributes.title || '',
-        course: quiz.attributes.course_id ? String(quiz.attributes.course_id) : '',
-        chapter: quiz.attributes.chapter_id ? String(quiz.attributes.chapter_id) : '',
-        type: quiz.attributes.type === 'exam' ? 'exam' : 'homework',
-        duration: String(quiz.attributes.duration || 60),
-        totalMarks: String(quiz.attributes.total_marks || 100),
-        passingMarks: String(quiz.attributes.passing_marks || 60),
-        maxAttempts: String(quiz.attributes.max_attempts || 1),
-        startTime: formatDateTimeForInput(quiz.attributes.start_time),
-        endTime: formatDateTimeForInput(quiz.attributes.end_time),
-        is_public: quiz.attributes.is_public || false,
-        status: (quiz.attributes.is_public || quiz.attributes.status === 'active') ? 'Active' : 'Draft',
-              });
+    if (!quiz) return;
 
-      // Load questions if available
-      if (quiz.attributes.questions && quiz.attributes.questions.length > 0) {
-        setQuestions(quiz.attributes.questions.map((q) => ({
-          id: String(q.id),
-          text: q.attributes.text,
-          type: q.attributes.type,
-          score: q.attributes.score,
+    setExamDetails({
+      title:       quiz.attributes.title || '',
+      course:      quiz.attributes.course_id  ? String(quiz.attributes.course_id)  : '',
+      chapter:     quiz.attributes.chapter_id ? String(quiz.attributes.chapter_id) : '',
+      type:        quiz.attributes.type === 'exam' ? 'exam' : 'homework',
+      duration:    String(quiz.attributes.duration     || 60),
+      totalMarks:  String(quiz.attributes.total_marks  || 100),
+      passingMarks:String(quiz.attributes.passing_marks || 60),
+      maxAttempts: String(quiz.attributes.max_attempts  || 1),
+      startTime:   formatDateTimeForInput(quiz.attributes.start_time),
+      endTime:     formatDateTimeForInput(quiz.attributes.end_time),
+      is_public:   quiz.attributes.is_public || false,
+      status:      quiz.attributes.status === 'active' ? 'Active' : 'Draft',
+    });
+
+    if (quiz.attributes.questions?.length) {
+      setQuestions(
+        quiz.attributes.questions.map((q) => ({
+          id:          String(q.id),
+          text:        q.attributes.text,
+          type:        q.attributes.type,
+          score:       q.attributes.score,
           autoCorrect: q.attributes.auto_correct ?? true,
-          image: null,
-          imagePreview: '',
-          answers: q.attributes.answers?.map((ans, idx) => ({
-            id: String(idx + 1),
-            text: ans.attributes.text,
-            isCorrect: ans.attributes.is_correct,
-            reason: ans.attributes.reason || '',
-            image: null,
-            imagePreview: ''
-          })) || []
-        })));
-      }
+          image:       null,
+          imagePreview: q.attributes.image || '',          // ✅ existing image URL
+          answers: q.attributes.answers?.map((ans) => ({
+            id:          String(ans.attributes.id),        // ✅ real API id
+            text:        ans.attributes.text,
+            isCorrect:   ans.attributes.is_correct,
+            reason:      ans.attributes.reason || '',
+            image:       null,
+            imagePreview: ans.attributes.image || '',      // ✅ existing image URL
+          })) || [],
+        }))
+      );
     }
   }, [quiz]);
 
+  // ── question helpers ──
   const addQuestion = () => {
-    const newId = (questions.length + 1).toString();
-    setQuestions([...questions, {
-      id: newId,
-      text: '',
-      type: 'single_choice',
-      score: 1,
-      autoCorrect: true,
-      image: null,
-      imagePreview: '',
+    setQuestions((prev) => [...prev, {
+      id: `new-${Date.now()}`, text: '', type: 'single_choice',
+      score: 1, autoCorrect: true, image: null, imagePreview: '',
       answers: [
-        { id: '1', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
-        { id: '2', text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }
-      ]
+        { id: `a-${Date.now()}-1`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
+        { id: `a-${Date.now()}-2`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
+      ],
     }]);
   };
 
   const removeQuestion = (id: string) => {
-    if (questions.length > 1) {
-      setQuestions(questions.filter(q => q.id !== id));
-    }
+    if (questions.length > 1) setQuestions((prev) => prev.filter(q => q.id !== id));
   };
 
-  const updateQuestion = (id: string, updates: Partial<Question>) => {
-    setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q));
-  };
+  const updateQuestion = (id: string, updates: Partial<Question>) =>
+    setQuestions((prev) => prev.map(q => q.id === id ? { ...q, ...updates } : q));
 
-  const addAnswer = (qId: string) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId) {
-        const newAnswerId = (q.answers.length + 1).toString();
-        return {
-          ...q,
-          answers: [...q.answers, { id: newAnswerId, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }]
-        };
+  const addAnswer = (qId: string) =>
+    setQuestions((prev) => prev.map(q =>
+      q.id === qId
+        ? { ...q, answers: [...q.answers, { id: `a-${Date.now()}`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }] }
+        : q
+    ));
+
+  const removeAnswer = (qId: string, answerId: string) =>
+    setQuestions((prev) => prev.map(q =>
+      q.id === qId && q.answers.length > 2
+        ? { ...q, answers: q.answers.filter(a => a.id !== answerId) }
+        : q
+    ));
+
+  const updateAnswer = (qId: string, answerId: string, updates: Partial<Answer>) =>
+    setQuestions((prev) => prev.map(q =>
+      q.id === qId
+        ? { ...q, answers: q.answers.map(a => a.id === answerId ? { ...a, ...updates } : a) }
+        : q
+    ));
+
+  const toggleCorrectAnswer = (qId: string, answerId: string) =>
+    setQuestions((prev) => prev.map(q => {
+      if (q.id !== qId) return q;
+      if (q.type === 'single_choice' || q.type === 'true_false') {
+        return { ...q, answers: q.answers.map(a => ({ ...a, isCorrect: a.id === answerId ? !a.isCorrect : false })) };
       }
-      return q;
+      return { ...q, answers: q.answers.map(a => a.id === answerId ? { ...a, isCorrect: !a.isCorrect } : a) };
     }));
-  };
 
-  const removeAnswer = (qId: string, answerId: string) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId && q.answers.length > 2) {
-        return {
-          ...q,
-          answers: q.answers.filter(a => a.id !== answerId)
-        };
-      }
-      return q;
-    }));
-  };
+  const handleQuestionImageChange = (qId: string, file: File | null) =>
+    setQuestions((prev) => prev.map(q =>
+      q.id === qId ? { ...q, image: file, imagePreview: file ? URL.createObjectURL(file) : '' } : q
+    ));
 
-  const updateAnswer = (qId: string, answerId: string, updates: Partial<Answer>) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId) {
-        return {
-          ...q,
-          answers: q.answers.map(a => a.id === answerId ? { ...a, ...updates } : a)
-        };
-      }
-      return q;
-    }));
-  };
+  const handleAnswerImageChange = (qId: string, answerId: string, file: File | null) =>
+    setQuestions((prev) => prev.map(q =>
+      q.id === qId
+        ? { ...q, answers: q.answers.map(a =>
+            a.id === answerId ? { ...a, image: file, imagePreview: file ? URL.createObjectURL(file) : '' } : a
+          )}
+        : q
+    ));
 
-  const toggleCorrectAnswer = (qId: string, answerId: string) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId) {
-        if (q.type === 'single_choice' || q.type === 'true_false') {
-          // Single choice - only one correct answer
-          return {
-            ...q,
-            answers: q.answers.map(a => ({
-              ...a,
-              isCorrect: a.id === answerId ? !a.isCorrect : false
-            }))
-          };
-        } else {
-          // Multiple choice - toggle without affecting others
-          return {
-            ...q,
-            answers: q.answers.map(a =>
-              a.id === answerId ? { ...a, isCorrect: !a.isCorrect } : a
-            )
-          };
-        }
-      }
-      return q;
-    }));
-  };
-
-  const handleQuestionImageChange = (qId: string, file: File | null) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId) {
-        return {
-          ...q,
-          image: file,
-          imagePreview: file ? URL.createObjectURL(file) : ''
-        };
-      }
-      return q;
-    }));
-  };
-
-  const handleAnswerImageChange = (qId: string, answerId: string, file: File | null) => {
-    setQuestions(questions.map(q => {
-      if (q.id === qId) {
-        return {
-          ...q,
-          answers: q.answers.map(a =>
-            a.id === answerId
-              ? { ...a, image: file, imagePreview: file ? URL.createObjectURL(file) : '' }
-              : a
-          )
-        };
-      }
-      return q;
-    }));
-  };
-
+  // ── submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Validate course is selected
       if (!examDetails.course) {
         alert('Please select a course');
-        setIsSubmitting(false);
         return;
       }
 
-      const quizData = {
-        course_id: parseInt(examDetails.course),
-        chapter_id: examDetails.chapter ? parseInt(examDetails.chapter) : undefined,
-        title: examDetails.title,
-        type: examDetails.type,
-        duration: parseInt(examDetails.duration) || 60,
-        total_marks: parseInt(examDetails.totalMarks) || 100,
-        passing_marks: parseInt(examDetails.passingMarks) || 60,
-        max_attempts: parseInt(examDetails.maxAttempts) || 1,
-        is_public: examDetails.is_public,
-        status: examDetails.status.toLowerCase() as 'draft' | 'active',
-        start_time: examDetails.startTime || null,
-        end_time: examDetails.endTime || null,
-        questions: questions.map((q, i) => ({
-          text: q.text,
-          type: q.type,
-          score: q.score,
-          auto_correct: q.autoCorrect,
-          image: q.image || undefined,
-          answers: q.type === 'short_answer' ? undefined : q.answers.map(a => ({
-            text: a.text,
-            is_correct: a.isCorrect,
-            reason: a.reason || undefined,
-            image: a.image || undefined,
-          })),
-          order: i + 1,
-        })),
-      };
+      // Build FormData
+      const formData = new FormData();
 
-      await updateQuiz(parseInt(examId), quizData as any);
+      formData.append('course_id',     examDetails.course);
+      if (examDetails.chapter) formData.append('chapter_id', examDetails.chapter);
+      formData.append('title',         examDetails.title);
+      formData.append('type',          examDetails.type);
+      formData.append('duration',      examDetails.duration);
+      formData.append('total_marks',   examDetails.totalMarks);
+      formData.append('passing_marks', examDetails.passingMarks);
+      formData.append('max_attempts',  examDetails.maxAttempts);
+      formData.append('is_public',     examDetails.is_public ? '1' : '0');   // ✅ boolean as 0/1
+      formData.append('status',        examDetails.status.toLowerCase());
+      if (examDetails.startTime) formData.append('start_time', examDetails.startTime);
+      if (examDetails.endTime)   formData.append('end_time',   examDetails.endTime);
 
+      questions.forEach((q, qIndex) => {
+        formData.append(`questions[${qIndex}][text]`,         q.text);
+        formData.append(`questions[${qIndex}][type]`,         q.type);
+        formData.append(`questions[${qIndex}][score]`,        String(q.score));
+        formData.append(`questions[${qIndex}][auto_correct]`, q.autoCorrect ? '1' : '0'); // ✅
+        formData.append(`questions[${qIndex}][order]`,        String(qIndex + 1));
+
+        if (q.image instanceof File) {
+          formData.append(`questions[${qIndex}][image]`, q.image);
+        }
+
+        if (q.type !== 'short_answer') {
+          q.answers.forEach((a, aIndex) => {
+            formData.append(`questions[${qIndex}][answers][${aIndex}][text]`,       a.text);
+            formData.append(`questions[${qIndex}][answers][${aIndex}][is_correct]`, a.isCorrect ? '1' : '0'); // ✅
+            if (a.reason) formData.append(`questions[${qIndex}][answers][${aIndex}][reason]`, a.reason);
+            if (a.image instanceof File) formData.append(`questions[${qIndex}][answers][${aIndex}][image]`, a.image);
+          });
+        }
+      });
+
+      // Submit directly using the helper (handles token + FormData rebuild)
+      const response = await submitQuizUpdate(examId, formData);
+
+      const responseData = await response.json().catch(() => ({ message: 'Failed to parse response' }));
+
+      if (!response.ok) {
+        console.error('❌ Update error:', responseData);
+        alert(responseData.message || responseData.details || 'Failed to update exam');
+        return;
+      }
+
+      console.log('✅ Quiz updated successfully:', responseData);
       alert('Exam updated successfully!');
+      router.push('/exams');
     } catch (error) {
       console.error('Error updating exam:', error);
-      alert('Failed to update exam. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to update exam');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // ── loading / not found ──
   if (quizLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -669,13 +615,12 @@ export default function EditExamPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-[#64748B]">Exam not found</p>
-        <Link href="/exams" className="text-[#2137D6] hover:underline">
-          Back to Exams
-        </Link>
+        <Link href="/exams" className="text-[#2137D6] hover:underline">Back to Exams</Link>
       </div>
     );
   }
 
+  // ── render ──
   return (
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
@@ -693,13 +638,15 @@ export default function EditExamPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        {/* Exam Details Section */}
+
+        {/* ── Exam Details ── */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
             <FileText className="w-4 h-4 text-[#2137D6]" />
             <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('create.examTitle')}</h2>
           </div>
           <div className="p-6 flex flex-col gap-6">
+
             {/* Title */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('create.examTitle')} <span className="text-[#EF4444]">*</span></label>
@@ -708,51 +655,9 @@ export default function EditExamPage() {
                 placeholder={t('create.titlePlaceholder')}
                 className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={examDetails.title}
-                onChange={(e) => setExamDetails({...examDetails, title: e.target.value})}
+                onChange={(e) => setExamDetails({ ...examDetails, title: e.target.value })}
                 required
               />
-            </div>
-
-            {/* Type, Chapter */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col gap-2 relative">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.examType')} <span className="text-[#EF4444]">*</span></label>
-                <select
-                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
-                  value={examDetails.type}
-                  onChange={(e) => setExamDetails({...examDetails, type: e.target.value as 'exam' | 'homework'})}
-                  required
-                >
-                  <option value="exam">{t('create.exam')}</option>
-                  <option value="homework">{t('create.homework')}</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
-              </div>
-
-              <div className="flex flex-col gap-2 relative">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.chapter')}</label>
-                <select
-                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
-                  value={examDetails.chapter}
-                  onChange={(e) => setExamDetails({...examDetails, chapter: e.target.value})}
-                  disabled={!examDetails.course || chaptersLoading}
-                >
-                  <option value="">
-                    {!examDetails.course
-                      ? t('create.selectCourseFirst')
-                      : chaptersLoading
-                        ? t('create.loading')
-                        : t('create.selectChapter')}
-                  </option>
-                  {filteredChapters?.map((chapter) => (
-                    <option key={chapter.id} value={chapter.id}>
-                      {chapter.attributes.title}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
-                {chaptersLoading && examDetails.course && <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />}
-              </div>
             </div>
 
             {/* Course Tree */}
@@ -760,13 +665,14 @@ export default function EditExamPage() {
               <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
               <div className="border border-[#E2E8F0] rounded-xl max-h-64 overflow-y-auto">
                 {courseTree.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-500">{coursesLoading ? t('create.loading') : t('create.selectCourse')}</div>
+                  <div className="p-4 text-center text-sm text-gray-500">
+                    {coursesLoading ? t('create.loading') : t('create.selectCourse')}
+                  </div>
                 ) : (
                   <div className="py-2">
                     {courseTree.map((node) => (
                       <CourseTreeItem
-                        key={node.id}
-                        node={node}
+                        key={node.id} node={node}
                         expanded={courseTreeExpanded}
                         onToggle={handleCourseTreeToggle}
                         onSelect={handleCourseTreeSelect}
@@ -785,105 +691,97 @@ export default function EditExamPage() {
               )}
             </div>
 
+            {/* Type & Chapter */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-2 relative">
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.examType')} <span className="text-[#EF4444]">*</span></label>
+                <select
+                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+                  value={examDetails.type}
+                  onChange={(e) => setExamDetails({ ...examDetails, type: e.target.value as 'exam' | 'homework' })}
+                  required
+                >
+                  <option value="exam">{t('create.exam')}</option>
+                  <option value="homework">{t('create.homework')}</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+              </div>
+
+              <div className="flex flex-col gap-2 relative">
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.chapter')}</label>
+                <select
+                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                  value={examDetails.chapter}
+                  onChange={(e) => setExamDetails({ ...examDetails, chapter: e.target.value })}
+                  disabled={!examDetails.course || chaptersLoading}
+                >
+                  <option value="">
+                    {!examDetails.course ? t('create.selectCourseFirst') : chaptersLoading ? t('create.loading') : t('create.selectChapter')}
+                  </option>
+                  {filteredChapters?.map((ch) => (
+                    <option key={ch.id} value={ch.id}>{ch.attributes.title}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                {chaptersLoading && examDetails.course && (
+                  <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />
+                )}
+              </div>
+            </div>
+
             {/* Duration, Marks, Attempts */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.duration')} <span className="text-[#EF4444]">*</span></label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                  <input
-                    type="number"
-                    min="1"
-                    className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                    value={examDetails.duration}
-                    onChange={(e) => setExamDetails({...examDetails, duration: e.target.value})}
-                    required
-                  />
+              {[
+                { label: t('create.duration'),     icon: Clock,     key: 'duration',     min: 1  },
+                { label: t('create.totalMarks'),   icon: Award,     key: 'totalMarks',   min: 1  },
+                { label: t('create.passingMarks'), icon: Award,     key: 'passingMarks', min: 0  },
+                { label: t('create.maxAttempts'),  icon: RotateCcw, key: 'maxAttempts',  min: 1  },
+              ].map(({ label, icon: Icon, key, min }) => (
+                <div key={key} className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-[#475569]">{label} {(key === 'duration' || key === 'totalMarks') && <span className="text-[#EF4444]">*</span>}</label>
+                  <div className="relative">
+                    <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <input
+                      type="number" min={min}
+                      className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                      value={(examDetails as any)[key]}
+                      onChange={(e) => setExamDetails({ ...examDetails, [key]: e.target.value })}
+                      required={key === 'duration' || key === 'totalMarks'}
+                    />
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.totalMarks')} <span className="text-[#EF4444]">*</span></label>
-                <div className="relative">
-                  <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                  <input
-                    type="number"
-                    min="1"
-                    className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                    value={examDetails.totalMarks}
-                    onChange={(e) => setExamDetails({...examDetails, totalMarks: e.target.value})}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.passingMarks')}</label>
-                <div className="relative">
-                  <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                    value={examDetails.passingMarks}
-                    onChange={(e) => setExamDetails({...examDetails, passingMarks: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.maxAttempts')}</label>
-                <div className="relative">
-                  <RotateCcw className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                  <input
-                    type="number"
-                    min="1"
-                    className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                    value={examDetails.maxAttempts}
-                    onChange={(e) => setExamDetails({...examDetails, maxAttempts: e.target.value})}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Start/End Time */}
+            {/* Start / End Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.startTime')}</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                  <input
-                    type="datetime-local"
-                    className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                    value={examDetails.startTime}
-                    onChange={(e) => setExamDetails({...examDetails, startTime: e.target.value})}
-                  />
+              {[
+                { label: t('create.startTime'), key: 'startTime' },
+                { label: t('create.endTime'),   key: 'endTime'   },
+              ].map(({ label, key }) => (
+                <div key={key} className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-[#475569]">{label}</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <input
+                      type="datetime-local"
+                      className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                      value={(examDetails as any)[key]}
+                      onChange={(e) => setExamDetails({ ...examDetails, [key]: e.target.value })}
+                    />
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.endTime')}</label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-                  <input
-                    type="datetime-local"
-                    className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                    value={examDetails.endTime}
-                    onChange={(e) => setExamDetails({...examDetails, endTime: e.target.value})}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Status & Published */}
+            {/* Status & Visibility */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2 relative">
                 <label className="text-[13px] font-bold text-[#475569]">{t('status.label')} <span className="text-[#EF4444]">*</span></label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                   value={examDetails.status}
-                  onChange={(e) => setExamDetails({...examDetails, status: e.target.value as 'Draft' | 'Active'})}
+                  onChange={(e) => setExamDetails({ ...examDetails, status: e.target.value as 'Draft' | 'Active' })}
                   required
                 >
                   <option value="Draft">{t('status.draft')}</option>
@@ -896,11 +794,10 @@ export default function EditExamPage() {
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.visibility')}</label>
                 <div className="flex items-center gap-3 px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
                   <input
-                    type="checkbox"
-                    id="is_public"
+                    type="checkbox" id="is_public"
                     className="w-4 h-4 text-[#2137D6] rounded border-[#E2E8F0] focus:ring-[#2137D6]"
                     checked={examDetails.is_public}
-                    onChange={(e) => setExamDetails({...examDetails, is_public: e.target.checked})}
+                    onChange={(e) => setExamDetails({ ...examDetails, is_public: e.target.checked })}
                   />
                   <label htmlFor="is_public" className="text-sm text-[#475569] cursor-pointer">
                     {t('create.public')}
@@ -911,7 +808,7 @@ export default function EditExamPage() {
           </div>
         </section>
 
-        {/* Questions Section */}
+        {/* ── Questions ── */}
         <div className="flex flex-col gap-6">
           {questions.map((q, index) => (
             <section key={q.id} className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
@@ -919,24 +816,22 @@ export default function EditExamPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-[#1E293B]">{t('create.question')} {index + 1}</h3>
                   <span className="text-xs px-2 py-1 bg-[#E0E7FF] text-[#2137D6] rounded-full">
-                    {q.type === 'single_choice' ? t('create.singleChoice') :
+                    {q.type === 'single_choice'   ? t('create.singleChoice')   :
                      q.type === 'multiple_choice' ? t('create.multipleChoice') :
-                     q.type === 'true_false' ? t('create.trueFalse') :
+                     q.type === 'true_false'      ? t('create.trueFalse')      :
                      t('create.shortAnswer')}
                   </span>
                 </div>
                 {questions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeQuestion(q.id)}
-                    className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                  >
+                  <button type="button" onClick={() => removeQuestion(q.id)}
+                    className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>
+
               <div className="p-6 flex flex-col gap-6">
-                {/* Question Type & Score & Auto-correct */}
+                {/* Type / Score / Auto-correct */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-2 relative">
                     <label className="text-[13px] font-bold text-[#475569]">{t('create.questionType')}</label>
@@ -956,8 +851,7 @@ export default function EditExamPage() {
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-bold text-[#475569]">{t('create.score')}</label>
                     <input
-                      type="number"
-                      min="0"
+                      type="number" min="0"
                       className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                       value={q.score}
                       onChange={(e) => updateQuestion(q.id, { score: parseInt(e.target.value) || 0 })}
@@ -968,8 +862,7 @@ export default function EditExamPage() {
                     <label className="text-[13px] font-bold text-[#475569]">Auto-correct</label>
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl h-[42px]">
                       <input
-                        type="checkbox"
-                        id={`autoCorrect-${q.id}`}
+                        type="checkbox" id={`autoCorrect-${q.id}`}
                         className="w-4 h-4 text-[#2137D6] rounded border-[#E2E8F0] focus:ring-[#2137D6]"
                         checked={q.autoCorrect}
                         onChange={(e) => updateQuestion(q.id, { autoCorrect: e.target.checked })}
@@ -998,35 +891,19 @@ export default function EditExamPage() {
                   <label className="text-[13px] font-bold text-[#475569]">Question Image</label>
                   {q.imagePreview ? (
                     <div className="relative w-fit">
-                      <img
-                        src={q.imagePreview}
-                        alt="Question preview"
-                        className="h-32 w-auto rounded-xl border border-[#E2E8F0] object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleQuestionImageChange(q.id, null)}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-[#EF4444] rounded-full shadow-sm transition-all"
-                      >
+                      <img src={q.imagePreview} alt="Question preview"
+                        className="h-32 w-auto rounded-xl border border-[#E2E8F0] object-cover" />
+                      <button type="button" onClick={() => handleQuestionImageChange(q.id, null)}
+                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-[#EF4444] rounded-full shadow-sm transition-all">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
                     <div className="relative w-fit">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        id={`q-img-${q.id}`}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          handleQuestionImageChange(q.id, file);
-                        }}
-                      />
-                      <label
-                        htmlFor={`q-img-${q.id}`}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
-                      >
+                      <input type="file" accept="image/*" className="hidden" id={`q-img-${q.id}`}
+                        onChange={(e) => handleQuestionImageChange(q.id, e.target.files?.[0] || null)} />
+                      <label htmlFor={`q-img-${q.id}`}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer">
                         <ImagePlus className="w-4 h-4" />
                         Upload Image
                       </label>
@@ -1034,17 +911,14 @@ export default function EditExamPage() {
                   )}
                 </div>
 
-                {/* Answers Section */}
+                {/* Answers */}
                 {q.type !== 'short_answer' && (
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                       <label className="text-[13px] font-bold text-[#475569]">{t('create.answers')}</label>
                       {q.type !== 'true_false' && (
-                        <button
-                          type="button"
-                          onClick={() => addAnswer(q.id)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2137D6] bg-[#E0E7FF] rounded-lg hover:bg-[#C7D2FF] transition-all"
-                        >
+                        <button type="button" onClick={() => addAnswer(q.id)}
+                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2137D6] bg-[#E0E7FF] rounded-lg hover:bg-[#C7D2FF] transition-all">
                           <Plus className="w-3 h-3" />
                           {t('create.addAnswer')}
                         </button>
@@ -1059,9 +933,7 @@ export default function EditExamPage() {
                               type="button"
                               onClick={() => toggleCorrectAnswer(q.id, answer.id)}
                               className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
-                                answer.isCorrect
-                                  ? 'bg-[#10B981] border-[#10B981] text-white'
-                                  : 'border-[#E2E8F0] hover:border-[#10B981]'
+                                answer.isCorrect ? 'bg-[#10B981] border-[#10B981] text-white' : 'border-[#E2E8F0] hover:border-[#10B981]'
                               }`}
                             >
                               {answer.isCorrect && (
@@ -1070,6 +942,7 @@ export default function EditExamPage() {
                                 </svg>
                               )}
                             </button>
+
                             <input
                               type="text"
                               placeholder={`${t('create.answer')} ${ansIndex + 1}`}
@@ -1078,59 +951,42 @@ export default function EditExamPage() {
                               onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
                               required
                             />
-                            {/* Answer reason */}
+
                             <input
                               type="text"
                               placeholder={`Reason for answer ${ansIndex + 1}`}
-                              className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] mt-2"
+                              className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                               value={answer.reason}
                               onChange={(e) => updateAnswer(q.id, answer.id, { reason: e.target.value })}
                             />
-                            {/* Answer image toggle */}
+
                             <div className="relative">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
+                              <input type="file" accept="image/*" className="hidden"
                                 id={`a-img-${q.id}-${answer.id}`}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] || null;
-                                  handleAnswerImageChange(q.id, answer.id, file);
-                                }}
-                              />
-                              <label
-                                htmlFor={`a-img-${q.id}-${answer.id}`}
+                                onChange={(e) => handleAnswerImageChange(q.id, answer.id, e.target.files?.[0] || null)} />
+                              <label htmlFor={`a-img-${q.id}-${answer.id}`}
                                 className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${
                                   answer.imagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
                                 }`}
-                                title={answer.imagePreview ? 'Change image' : 'Add image'}
-                              >
+                                title={answer.imagePreview ? 'Change image' : 'Add image'}>
                                 <ImagePlus className="w-4 h-4" />
                               </label>
                             </div>
+
                             {q.answers.length > 2 && q.type !== 'true_false' && (
-                              <button
-                                type="button"
-                                onClick={() => removeAnswer(q.id, answer.id)}
-                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                              >
+                              <button type="button" onClick={() => removeAnswer(q.id, answer.id)}
+                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             )}
                           </div>
-                          {/* Answer image preview */}
+
                           {answer.imagePreview && (
                             <div className="flex items-center gap-2 ml-9">
-                              <img
-                                src={answer.imagePreview}
-                                alt={`Answer ${ansIndex + 1} preview`}
-                                className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
-                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                              >
+                              <img src={answer.imagePreview} alt={`Answer ${ansIndex + 1} preview`}
+                                className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                              <button type="button" onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
+                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
                                 <X className="w-4 h-4" />
                               </button>
                             </div>
@@ -1146,7 +1002,7 @@ export default function EditExamPage() {
                   </div>
                 )}
 
-                {/* Short Answer Expected Response */}
+                {/* Short Answer */}
                 {q.type === 'short_answer' && (
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-bold text-[#475569]">{t('create.expectedAnswer')}</label>
@@ -1155,13 +1011,7 @@ export default function EditExamPage() {
                       rows={3}
                       className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
                       value={q.answers[0]?.text || ''}
-                      onChange={(e) => {
-                        if (q.answers.length === 0) {
-                          updateAnswer(q.id, '1', { text: e.target.value });
-                        } else {
-                          updateAnswer(q.id, q.answers[0].id, { text: e.target.value });
-                        }
-                      }}
+                      onChange={(e) => updateAnswer(q.id, q.answers[0]?.id || '1', { text: e.target.value })}
                     />
                   </div>
                 )}
@@ -1170,34 +1020,22 @@ export default function EditExamPage() {
           ))}
         </div>
 
-        {/* Add Question Button */}
-        <button
-          type="button"
-          onClick={addQuestion}
-          className="flex items-center gap-2 px-6 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#1E293B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all w-fit"
-        >
+        {/* Add Question */}
+        <button type="button" onClick={addQuestion}
+          className="flex items-center gap-2 px-6 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#1E293B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all w-fit">
           <Plus className="w-4 h-4" />
           {t('create.addQuestion')}
         </button>
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-[#E2E8F0]">
-          <button
-            type="button"
-            onClick={() => router.push('/exams')}
-            disabled={isSubmitting}
-            className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <button type="button" onClick={() => router.push('/exams')} disabled={isSubmitting}
+            className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             {t('edit.cancel')}
           </button>
-          <button
-            type="submit"
-            disabled={isSubmitting || isUpdating}
-            className="px-10 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {(isSubmitting || isUpdating) && (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            )}
+          <button type="submit" disabled={isSubmitting || isUpdating}
+            className="px-10 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            {(isSubmitting || isUpdating) && <Loader2 className="w-4 h-4 animate-spin" />}
             {isSubmitting || isUpdating ? t('edit.saving') : t('edit.saveChanges')}
           </button>
         </div>

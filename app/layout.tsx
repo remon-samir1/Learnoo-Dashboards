@@ -18,6 +18,25 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Learnoo-Dashboard",
   description: "Learnoo-Dashboard",
+  icons: {
+    icon: [
+      { url: "/Logo.jpeg", sizes: "512x512", type: "image/jpeg" },
+    ],
+    apple: "/Logo.jpeg",
+  },
+  openGraph: {
+    images: [
+      {
+        url: "/Logo.jpeg",
+        width: 512,
+        height: 512,
+        alt: "Learnoo Logo",
+      },
+    ],
+  },
+  twitter: {
+    images: ["/Logo.jpeg"],
+  },
 };
 
 export default async function RootLayout({
