@@ -1714,6 +1714,11 @@ export default function DepartmentsPage() {
           await api.chapters.delete(rawId);
 
           break;
+
+        case "note":
+          await api.notes.delete(rawId);
+
+          break;
       }
 
       toast.success(t("common.deleteSuccess"));
