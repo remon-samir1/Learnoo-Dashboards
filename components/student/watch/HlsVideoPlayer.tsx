@@ -139,6 +139,48 @@
     );
   }
 
+  function parseHlsQualityOptionsFromManifest(manifestText: string): QualityOption[] {
+    const options: QualityOption[] = [];
+    const lines = manifestText.split(/\r?\n/);
+
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i].trim();
+      if (!line.startsWith('#EXT-X-STREAM-INF:')) continue;
+      const attrs = line.substring('#EXT-X-STREAM-INF:'.length).split(',');
+      let height: number | undefined;
+      let bitrate: number | undefined;
+      let label = 'Unknown';
+
+      for (const attr of attrs) {
+        const [key, value] = attr.split('=').map((part) => part.trim());
+        if (!key || value == null) continue;
+        if (key === 'RESOLUTION') {
+          const parts = value.split('x');
+          const candidate = Number(parts[1]);
+          if (Number.isFinite(candidate) && candidate > 0) {
+            height = candidate;
+          }
+        }
+        if (key === 'BANDWIDTH') {
+          const candidate = Number(value);
+          if (Number.isFinite(candidate) && candidate > 0) {
+            bitrate = candidate;
+          }
+        }
+      }
+
+      if (height) {
+        label = `${height}p`;
+      } else if (bitrate) {
+        label = `${Math.round(bitrate / 1000)} kbps`;
+      }
+
+      options.push({ index: options.length, height, bitrate, label });
+    }
+
+    return options;
+  }
+
   function logHlsError(data: ErrorData, masterUrl: string): void {
     const response = data.response as { code?: number; text?: string; url?: string } | undefined;
     const hintParts: string[] = [];
@@ -246,6 +288,13 @@
 
   export type OnFatalPlaybackError = (info: { reason: string; hlsDetails?: ErrorDetails }) => void;
 
+  type QualityOption = {
+    index: number;
+    height?: number;
+    bitrate?: number;
+    label: string;
+  };
+
   export type HlsVideoPlayerProps = {
     src: string;
     id?: string;
@@ -304,6 +353,10 @@
       const localRef = useRef<HTMLVideoElement | null>(null);
       const playerShellRef = useRef<HTMLDivElement | null>(null);
       const watermarkPortalMountRef = useRef<HTMLDivElement | null>(null);
+      const hlsInstanceRef = useRef<Hls | null>(null);
+      const [qualityOptions, setQualityOptions] = useState<QualityOption[]>([]);
+      const [selectedQuality, setSelectedQuality] = useState<number | 'auto'>('auto');
+      const [autoQualityEnabled, setAutoQualityEnabled] = useState(true);
       const [showPlaybackSwitching, setShowPlaybackSwitching] = useState(false);
       const onFatalPlaybackErrorRef = useRef(onFatalPlaybackError);
       const hlsConfigRef = useRef(hlsConfig);
@@ -327,6 +380,26 @@
 
       const nativeVideoControls = !showCustomControls && controls;
 
+      const setQualityLevel = useCallback((value: number | 'auto') => {
+        const hls = hlsInstanceRef.current;
+        if (!hls) return;
+
+        if (value === 'auto') {
+          hls.autoLevelEnabled = true;
+          hls.currentLevel = -1;
+          hls.nextLevel = -1;
+          setAutoQualityEnabled(true);
+          setSelectedQuality('auto');
+          return;
+        }
+
+        hls.autoLevelEnabled = false;
+        hls.currentLevel = value;
+        hls.nextLevel = value;
+        setAutoQualityEnabled(false);
+        setSelectedQuality(value);
+      }, []);
+
       const onVideoSurfaceClick = useCallback(() => {
         if (!showCustomControls) return;
         const v = localRef.current;
@@ -345,6 +418,9 @@
         }
 
         setShowPlaybackSwitching(false);
+        setQualityOptions([]);
+        setSelectedQuality('auto');
+        setAutoQualityEnabled(true);
 
         const notifyFatal = (reason: string, hlsDetails?: ErrorDetails) => {
           const hlsPart = hlsDetails != null ? ` hlsDetails=${String(hlsDetails)}` : '';
@@ -512,7 +588,10 @@
         };
 
         const hls = new Hls(defaultConfig);
-        const hlsInstanceRef: { current: Hls | null } = { current: hls };
+        hlsInstanceRef.current = hls;
+        setQualityOptions([]);
+        setSelectedQuality('auto');
+        setAutoQualityEnabled(true);
         let networkFatalRetries = 0;
         const maxNetworkFatalRetries = 3;
         let mediaRecoverAttempts = 0;
@@ -554,7 +633,9 @@
           logVideoState(video, 'on MANIFEST_LOADING');
         });
 
-        hls.on(Events.MANIFEST_LOADED, (_, data) => {
+        let manifestLoadedQualityParsed = false;
+
+        hls.on(Events.MANIFEST_LOADED, async (_, data) => {
           const text = data.networkDetails?.response?.text;
           const preview =
             typeof text === 'string' ? `${text.slice(0, 120)}${text.length > 120 ? '…' : ''}` : '(no text)';
@@ -563,6 +644,17 @@
             stats: data.stats,
             textPreview: preview,
           });
+
+          if (!manifestLoadedQualityParsed && typeof text === 'string') {
+            const fallbackOptions = parseHlsQualityOptionsFromManifest(text);
+            if (fallbackOptions.length > 0) {
+              console.info(`${LOG_PREFIX} MANIFEST_LOADED quality fallback parsed`, { fallbackOptions });
+              setQualityOptions(fallbackOptions);
+              setAutoQualityEnabled(hls.autoLevelEnabled);
+              setSelectedQuality(hls.autoLevelEnabled ? 'auto' : hls.currentLevel);
+              manifestLoadedQualityParsed = true;
+            }
+          }
         });
 
         hls.on(Events.MANIFEST_PARSED, (_, data) => {
@@ -572,6 +664,33 @@
             audioTracks: data.audioTracks?.length,
             subtitleTracks: data.subtitleTracks?.length,
           });
+
+          const levels = data.levels ?? hls.levels ?? [];
+          let options = levels.map((level, index) => ({
+            index,
+            height: level.height,
+            bitrate: level.bitrate,
+            label:
+              typeof level.height === 'number' && level.height > 0
+                ? `${level.height}p`
+                : level.bitrate != null
+                ? `${Math.round(level.bitrate / 1000)} kbps`
+                : `Level ${index + 1}`,
+          }));
+
+          if (options.length === 0 && typeof data.networkDetails?.response?.text === 'string') {
+            const fallbackOptions = parseHlsQualityOptionsFromManifest(data.networkDetails.response.text);
+            if (fallbackOptions.length > 0) {
+              console.info(`${LOG_PREFIX} MANIFEST_PARSED quality fallback parsed`, { fallbackOptions });
+              options = fallbackOptions;
+              manifestLoadedQualityParsed = true;
+            }
+          }
+
+          setQualityOptions(options);
+          setAutoQualityEnabled(hls.autoLevelEnabled);
+          setSelectedQuality(hls.autoLevelEnabled ? 'auto' : hls.currentLevel);
+
           logVideoState(video, 'on MANIFEST_PARSED');
         });
 
@@ -584,6 +703,9 @@
 
         hls.on(Events.LEVEL_SWITCHED, (_, data) => {
           const level = hls.levels[data.level];
+          const isAuto = hls.autoLevelEnabled;
+          setAutoQualityEnabled(isAuto);
+          setSelectedQuality(isAuto ? 'auto' : data.level);
           console.info(`${LOG_PREFIX} LEVEL_SWITCHED (current ABR)`, {
             levelIndex: data.level,
             height: level?.height,
@@ -799,7 +921,7 @@
           </div>
           <div
             ref={watermarkPortalMountRef}
-            className="pointer-events-none absolute inset-0 z-[12] col-start-1 row-start-1 overflow-visible"
+            className="pointer-events-none absolute inset-0 z-[12] col-start-1 row-start-1 overflow-hidden"
             aria-hidden
           />
           {showStaticStudentOverlay ? (
@@ -824,7 +946,13 @@
           {showCustomControls ? (
             <div ref={playerShellRef} className="relative flex min-h-0 min-w-0 w-full flex-col">
               <div className={stageShellClass}>{videoStageGrid}</div>
-              <HlsVideoCustomControls videoRef={localRef} shellRef={playerShellRef} />
+              <HlsVideoCustomControls
+                videoRef={localRef}
+                shellRef={playerShellRef}
+                qualityOptions={qualityOptions}
+                qualityValue={selectedQuality}
+                onQualityChange={setQualityLevel}
+              />
             </div>
           ) : (
             <div ref={playerShellRef} className={stageShellClass}>

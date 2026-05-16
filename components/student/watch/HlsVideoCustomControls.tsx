@@ -12,10 +12,20 @@ function formatClock(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+type QualityOption = {
+  index: number;
+  height?: number;
+  bitrate?: number;
+  label: string;
+};
+
 export type HlsVideoCustomControlsProps = {
   videoRef: RefObject<HTMLVideoElement | null>;
   /** Player shell — fullscreen targets this node so overlays / watermarks stay in the fullscreen subtree. */
   shellRef: RefObject<HTMLDivElement | null>;
+  qualityOptions?: QualityOption[];
+  qualityValue?: number | 'auto';
+  onQualityChange?: (value: number | 'auto') => void;
 };
 
 function isShellFullscreen(shell: HTMLDivElement | null): boolean {
@@ -25,8 +35,22 @@ function isShellFullscreen(shell: HTMLDivElement | null): boolean {
   return fs === shell || shell.contains(fs);
 }
 
-export function HlsVideoCustomControls({ videoRef, shellRef }: HlsVideoCustomControlsProps) {
+export function HlsVideoCustomControls({
+  videoRef,
+  shellRef,
+  qualityOptions = [],
+  qualityValue = 'auto',
+  onQualityChange,
+}: HlsVideoCustomControlsProps) {
   const t = useTranslations('courses.studentWatch');
+  const qualityLabel = (() => {
+    const translated = t('videoControlsQuality');
+    return translated === 'courses.studentWatch.videoControlsQuality' ? 'Quality' : translated;
+  })();
+  const qualityLoadingLabel = (() => {
+    const translated = t('videoControlsQualityLoading');
+    return translated === 'courses.studentWatch.videoControlsQualityLoading' ? 'Loading...' : translated;
+  })();
   const [paused, setPaused] = useState(true);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -165,6 +189,37 @@ export function HlsVideoCustomControls({ videoRef, shellRef }: HlsVideoCustomCon
           >
             {muted ? <VolumeX className="size-3.5 sm:size-5" /> : <Volume2 className="size-3.5 sm:size-5" />}
           </button>
+
+          {onQualityChange ? (
+            <label className="inline-flex min-w-max items-center gap-2 rounded bg-white/10 px-2 py-1 text-white/90 transition hover:bg-white/15 sm:px-2.5 sm:py-1.5">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-white/70 sm:text-xs">
+                {qualityLabel}
+              </span>
+              <select
+                value={qualityValue === 'auto' ? 'auto' : String(qualityValue)}
+                onChange={(e) => {
+                  const value = e.target.value === 'auto' ? 'auto' : Number(e.target.value);
+                  onQualityChange(value);
+                }}
+                disabled={qualityOptions.length === 0}
+                className="rounded bg-slate-950/80 px-2 py-1 text-xs text-white outline-none transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+                aria-label={t('videoControlsQuality')}
+              >
+                <option value="auto">Auto</option>
+                {qualityOptions.length > 0
+                  ? qualityOptions.map((option) => (
+                      <option key={option.index} value={option.index}>
+                        {option.label}
+                      </option>
+                    ))
+                  : null}
+              </select>
+              {qualityOptions.length === 0 ? (
+                <span className="text-[10px] text-white/60 sm:text-xs">{qualityLoadingLabel}</span>
+              ) : null}
+            </label>
+          ) : null}
+
           <button
             type="button"
             onClick={toggleShellFullscreen}

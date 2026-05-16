@@ -492,115 +492,6 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
     );
   }
 
-  if (lockedCourse && course) {
-    const lockedHeroThumb =
-      course.attributes?.thumbnail?.trim() || '/logo.svg';
-    const lockedTitle = course.attributes.title;
-    const lockedInstructor =
-      course.attributes?.instructor?.data?.attributes?.full_name?.trim() ?? '';
-    const lockedCenter =
-      course.attributes?.center?.data?.attributes?.name?.trim() ?? '';
-    const lockedSubTitle = course.attributes.sub_title?.trim() ?? '';
-    const lockedLectureStat = course.attributes.stats?.lectures ?? 0;
-    const lockedHeroSubtitleParts: string[] = [];
-    if (lockedInstructor) lockedHeroSubtitleParts.push(lockedInstructor);
-    if (lockedCenter) lockedHeroSubtitleParts.push(lockedCenter);
-    if (lockedSubTitle) lockedHeroSubtitleParts.push(lockedSubTitle);
-    lockedHeroSubtitleParts.push(t('heroLectureCount', { count: lockedLectureStat }));
-
-    return (
-      <div
-        className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8"
-        dir={dir}
-      >
-        <Link
-          href={`/${locale}/student/courses`}
-          className="mb-6 inline-flex text-sm font-medium text-[#64748B] transition hover:text-[#0F172A] sm:mb-8"
-        >
-          {t('back')}
-        </Link>
-
-        <div className="flex flex-col gap-8 sm:gap-10">
-          <section
-            className="relative isolate mx-auto h-[200px] w-full max-w-[1264px] overflow-hidden rounded-[20px] bg-slate-900 shadow-[0_10px_40px_-12px_rgba(15,23,42,0.35)] sm:h-[228px] md:h-[256px]"
-          >
-            <Image
-              src={lockedHeroThumb}
-              alt=""
-              fill
-              priority
-              className="object-cover object-center"
-              sizes="(max-width: 768px) 100vw, 1264px"
-            />
-            <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"
-              aria-hidden
-            />
-            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-black/50 px-6 text-center">
-              <Lock className="h-10 w-10 text-white" strokeWidth={1.75} aria-hidden />
-              <p className="mt-3 text-base font-bold text-white">{t('locked')}</p>
-            </div>
-            <div className="absolute inset-x-0 bottom-0 flex max-h-full flex-col items-start justify-end px-4 pb-4 pt-8 text-start sm:px-6 sm:pb-5 sm:pt-10 md:px-8 md:pb-5 md:pt-12">
-              <h1 className="max-w-4xl text-xl font-bold leading-tight tracking-tight text-white sm:text-2xl md:text-[1.75rem] lg:text-[2rem]">
-                {lockedTitle}
-              </h1>
-              <div className="mt-2 flex max-w-4xl flex-wrap items-center text-xs font-normal leading-snug text-white/95 sm:mt-2.5 sm:text-sm md:text-base">
-                {lockedHeroSubtitleParts.map((part, i) => (
-                  <Fragment key={i}>
-                    {i > 0 ? (
-                      <span
-                        className="mx-2 shrink-0 select-none text-sm text-white/45 sm:mx-3 sm:text-base"
-                        aria-hidden
-                      >
-                        •
-                      </span>
-                    ) : null}
-                    <span className="break-words">{part}</span>
-                  </Fragment>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-[#F1F5F9] bg-white p-6 shadow-sm sm:p-8">
-            <div className="mx-auto flex max-w-md flex-col items-center text-center">
-              <p className="text-sm font-medium text-[#475569]">{tCard('activateToAccess')}</p>
-              <button
-                type="button"
-                onClick={() =>
-                  setActivationTarget({
-                    mode: 'course',
-                    itemId: courseId,
-                    title: lockedTitle,
-                  })
-                }
-                className="mt-6 inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-[#2137D6] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] active:bg-[#162699]"
-              >
-                {tCard('activateCourse')}
-              </button>
-            </div>
-          </section>
-        </div>
-
-        <StudentCourseActivationModal
-          open={activationTarget !== null}
-          onClose={() => setActivationTarget(null)}
-          courseId={activationTarget?.itemId ?? courseId}
-          courseTitle={activationTarget?.title ?? lockedTitle}
-          activationItemType={
-            activationTarget?.mode === 'chapter'
-              ? 'chapter'
-              : activationTarget?.mode === 'quiz'
-                ? 'quiz'
-                : 'course'
-          }
-          onActivated={async () => {
-            await refetch();
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div
@@ -651,6 +542,12 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
               className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"
               aria-hidden
             />
+            {lockedCourse && (
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-black/50 px-6 text-center">
+                <Lock className="h-10 w-10 text-white" strokeWidth={1.75} aria-hidden />
+                <p className="mt-3 text-base font-bold text-white">{t('locked')}</p>
+              </div>
+            )}
             <div className="absolute inset-x-0 bottom-0 flex max-h-full flex-col items-start justify-end px-4 pb-4 pt-8 text-start sm:px-6 sm:pb-5 sm:pt-10 md:px-8 md:pb-5 md:pt-12">
               <h1 className="max-w-4xl text-xl font-bold leading-tight tracking-tight text-white sm:text-2xl md:text-[1.75rem] lg:text-[2rem]">
                 {course.attributes.title}
@@ -672,6 +569,27 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
               </div>
             </div>
           </section>
+
+          {lockedCourse && (
+            <section className="rounded-2xl border border-[#F1F5F9] bg-white p-6 shadow-sm sm:p-8">
+              <div className="mx-auto flex max-w-md flex-col items-center text-center">
+                <p className="text-sm font-medium text-[#475569]">{tCard('activateToAccess')}</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setActivationTarget({
+                      mode: 'course',
+                      itemId: courseId,
+                      title: course.attributes.title ?? '',
+                    })
+                  }
+                  className="mt-6 inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-[#2137D6] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] active:bg-[#162699]"
+                >
+                  {tCard('activateCourse')}
+                </button>
+              </div>
+            </section>
+          )}
 
           <div className="overflow-x-auto pb-1 md:[scrollbar-width:thin] md:[scrollbar-color:rgb(148_163_184)_rgb(241_245_249)] md:[&::-webkit-scrollbar]:h-2 md:[&::-webkit-scrollbar-track]:rounded-full md:[&::-webkit-scrollbar-track]:bg-slate-100 md:[&::-webkit-scrollbar-thumb]:rounded-full md:[&::-webkit-scrollbar-thumb]:bg-slate-300 md:hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
             <div className="flex min-w-max flex-nowrap items-center gap-1 border-b border-[#E5E7EB] sm:gap-2">
@@ -1010,10 +928,11 @@ const pdfBadge = hasPdf ? (
         ) : chapterLocked ? (
           <button
             type="button"
-            disabled
-            className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-xl bg-[#E5E7EB] px-4 py-3 text-sm font-semibold text-[#64748B] sm:min-h-10 sm:py-2.5"
+            onClick={openChapterActivation}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
           >
-            {t('locked')}
+            <Power className="size-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+            {t('activateChapter')}
           </button>
         ) : needsPlaybackActivation ? (
           <button

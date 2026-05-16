@@ -721,6 +721,8 @@
       "videoControlsSeek": "Seek",
       "videoControlsMute": "Mute",
       "videoControlsUnmute": "Unmute",
+      "videoControlsQuality": "Quality",
+      "videoControlsQualityLoading": "Loading quality options…",
       "videoControlsFullscreen": "Enter fullscreen",
       "videoControlsExitFullscreen": "Exit fullscreen"
     },

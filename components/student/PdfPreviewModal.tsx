@@ -5,7 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { useCurrentUser } from '@/src/hooks';
 import { resolveEnabledWatermarkBucket, WatermarkResolution } from '@/src/lib/watermark-from-features';
 import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -33,54 +33,72 @@ function PdfPreviewContent({
   watermarkStyle: { color: string; opacity: number };
 }) {
   const [numPages, setNumPages] = useState(0);
+  const [pageWidth, setPageWidth] = useState(720);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const width = contentRef.current?.clientWidth ?? 720;
+      setPageWidth(Math.min(720, Math.max(320, width - 32)));
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(updateWidth);
+    if (contentRef.current) observer.observe(contentRef.current);
+
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <Document
-      file={proxiedPdfUrl}
-      loading={<p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>}
-      error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
-      onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
-    >
-      <div className="flex flex-col items-center gap-6 py-2">
-        {Array.from({ length: numPages }, (_, index) => {
-          const pageNumber = index + 1;
+    <div ref={contentRef} className="min-h-0 w-full">
+      <Document
+        file={proxiedPdfUrl}
+        loading={<p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>}
+        error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
+        onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
+      >
+        <div className="flex min-h-0 flex-col items-center gap-6 py-2">
+          {Array.from({ length: numPages }, (_, index) => {
+            const pageNumber = index + 1;
 
-          return (
-            <div
-              key={pageNumber}
-              className="relative overflow-hidden rounded-xl bg-white shadow-sm"
-            >
-              <Page
-                pageNumber={pageNumber}
-                width={720}
-                renderAnnotationLayer={false}
-                renderTextLayer={false}
-              />
+            return (
+              <div
+                key={pageNumber}
+                className="relative min-h-0 w-full overflow-auto rounded-xl bg-white shadow-sm"
+              >
+                <Page
+                  pageNumber={pageNumber}
+                  width={pageWidth}
+                  renderAnnotationLayer={false}
+                  renderTextLayer={false}
+                />
 
-              {watermarkText ? (
-                <div
-                  className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
-                  aria-hidden
-                >
-                  <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <div key={i} className="flex items-center justify-center">
-                        <span
-                          className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
-                          style={watermarkStyle}
-                        >
-                          {watermarkText}
-                        </span>
-                      </div>
-                    ))}
+                {watermarkText ? (
+                  <div
+                    className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
+                    aria-hidden
+                  >
+                    <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <div key={i} className="flex items-center justify-center">
+                          <span
+                            className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
+                            style={watermarkStyle}
+                          >
+                            {watermarkText}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </Document>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      </Document>
+    </div>
   );
 }
 
@@ -161,7 +179,7 @@ export default function PdfPreviewModal({
 
   if (variant === 'inline') {
     return (
-      <div className="flex h-full min-h-0 w-full flex-col bg-[#F8FAFC]">
+      <div className="flex h-full min-h-0 w-full flex-col overflow-auto bg-[#F8FAFC]">
         <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-5">{content}</div>
       </div>
     );

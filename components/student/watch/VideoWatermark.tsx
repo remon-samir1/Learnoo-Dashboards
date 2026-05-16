@@ -350,7 +350,7 @@ export function VideoWatermark({
 
   const layer = (
     <div
-      className="pointer-events-none  relative h-full w-full select-none overflow-visible max-sm:[&_span]:!text-[11px] max-sm:[&_span]:!leading-snug max-sm:[&_span]:!font-semibold"
+      className="pointer-events-none relative h-full w-full select-none overflow-hidden max-sm:[&_span]:!text-[11px] max-sm:[&_span]:!leading-snug max-sm:[&_span]:!font-semibold"
       aria-hidden
     >
       {config.position === 'full' && !config.dynamicPosition ? (
@@ -361,7 +361,7 @@ export function VideoWatermark({
           {Array.from({ length: WATERMARK_FULL_POSITION_COPY_COUNT }).map((_, i) => (
             <span
               key={i}
-              className={`select-none whitespace-nowrap ${sizeClassFullGrid(config.size)}`}
+              className={`inline-block max-w-full overflow-hidden truncate select-none whitespace-nowrap ${sizeClassFullGrid(config.size)}`}
               style={{ color: config.color, ...spanOpacityStyle }}
             >
               {displayText}
@@ -378,7 +378,7 @@ export function VideoWatermark({
           {Array.from({ length: WATERMARK_FULL_POSITION_COPY_COUNT }).map((_, i) => (
             <span
               key={i}
-              className={`select-none whitespace-nowrap ${sizeClassFullGrid(config.size)}`}
+              className={`inline-block max-w-full overflow-hidden truncate select-none whitespace-nowrap ${sizeClassFullGrid(config.size)}`}
               style={{ color: config.color, ...spanOpacityStyle }}
             >
               {displayText}
@@ -396,7 +396,7 @@ export function VideoWatermark({
           }}
         >
           <span
-            className={`inline-block select-none whitespace-nowrap ${sizeClassSingle(config.size)} ${
+            className={`inline-block max-w-full overflow-hidden truncate select-none whitespace-nowrap ${sizeClassSingle(config.size)} ${
               config.animationStyle === 'fade' && config.dynamicPosition ? 'animate-pulse' : ''
             }`}
             style={{ color: config.color, ...spanOpacityStyle }}

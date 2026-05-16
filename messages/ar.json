@@ -719,6 +719,8 @@
       "videoControlsSeek": "الانتقال في المدة",
       "videoControlsMute": "كتم الصوت",
       "videoControlsUnmute": "إلغاء الكتم",
+      "videoControlsQuality": "الجودة",
+      "videoControlsQualityLoading": "جاري تحميل خيارات الجودة…",
       "videoControlsFullscreen": "ملء الشاشة",
       "videoControlsExitFullscreen": "الخروج من ملء الشاشة"
     },
