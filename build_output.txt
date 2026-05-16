@@ -1,0 +1,22 @@
+
+> learnoo-dashboards@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 11.4s
+  Running TypeScript ...
+Failed to type check.
+
+./components/student/watch/HlsVideoPlayer.tsx:388:15
+Type error: Cannot assign to 'autoLevelEnabled' because it is a read-only property.
+
+  [90m386 |[0m
+  [90m387 |[0m         [36mif[0m (value === [32m'auto'[0m) {
+[31m[1m>[0m [90m388 |[0m           hls.autoLevelEnabled = [36mtrue[0m;
+  [90m    |[0m               [31m[1m^[0m
+  [90m389 |[0m           hls.currentLevel = -[35m1[0m;
+  [90m390 |[0m           hls.nextLevel = -[35m1[0m;
+  [90m391 |[0m           setAutoQualityEnabled([36mtrue[0m);
+Next.js build worker exited with code: 1 and signal: null

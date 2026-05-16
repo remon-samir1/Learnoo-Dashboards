@@ -1,0 +1,22 @@
+
+> learnoo-dashboards@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 11.9s
+  Running TypeScript ...
+Failed to type check.
+
+./components/student/watch/HlsVideoPlayer.tsx:679:51
+Type error: Property 'networkDetails' does not exist on type 'ManifestParsedData'.
+
+  [90m677 |[0m ...   }));
+  [90m678 |[0m ...
+[31m[1m>[0m [90m679 |[0m ...   [36mif[0m (options.length === [35m0[0m && [36mtypeof[0m data.networkDetails?.response?.text === [32m'string'[0m) {
+  [90m    |[0m                                               [31m[1m^[0m
+  [90m680 |[0m ...     [36mconst[0m fallbackOptions = parseHlsQualityOptionsFromManifest(data.networkDetails.re...
+  [90m681 |[0m ...     [36mif[0m (fallbackOptions.length > [35m0[0m) {
+  [90m682 |[0m ...       console.info([32m`[0m${[33mLOG_PREFIX[0m[32m} MANIFEST_PARSED quality fallback parsed`[0m, { fallbac...
+Next.js build worker exited with code: 1 and signal: null

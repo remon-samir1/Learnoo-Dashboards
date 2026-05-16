@@ -385,7 +385,6 @@
         if (!hls) return;
 
         if (value === 'auto') {
-          hls.autoLevelEnabled = true;
           hls.currentLevel = -1;
           hls.nextLevel = -1;
           setAutoQualityEnabled(true);
@@ -393,7 +392,6 @@
           return;
         }
 
-        hls.autoLevelEnabled = false;
         hls.currentLevel = value;
         hls.nextLevel = value;
         setAutoQualityEnabled(false);
@@ -666,7 +664,7 @@
           });
 
           const levels = data.levels ?? hls.levels ?? [];
-          let options = levels.map((level, index) => ({
+          let options: QualityOption[] = levels.map((level, index) => ({
             index,
             height: level.height,
             bitrate: level.bitrate,
@@ -678,12 +676,15 @@
                 : `Level ${index + 1}`,
           }));
 
-          if (options.length === 0 && typeof data.networkDetails?.response?.text === 'string') {
-            const fallbackOptions = parseHlsQualityOptionsFromManifest(data.networkDetails.response.text);
-            if (fallbackOptions.length > 0) {
-              console.info(`${LOG_PREFIX} MANIFEST_PARSED quality fallback parsed`, { fallbackOptions });
-              options = fallbackOptions;
-              manifestLoadedQualityParsed = true;
+          if (options.length === 0) {
+            const networkDetails = (data as any).networkDetails;
+            if (typeof networkDetails?.response?.text === 'string') {
+              const fallbackOptions = parseHlsQualityOptionsFromManifest(networkDetails.response.text);
+              if (fallbackOptions.length > 0) {
+                console.info(`${LOG_PREFIX} MANIFEST_PARSED quality fallback parsed`, { fallbackOptions });
+                options = fallbackOptions;
+                manifestLoadedQualityParsed = true;
+              }
             }
           }
 

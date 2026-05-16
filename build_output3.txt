@@ -1,0 +1,26 @@
+
+> learnoo-dashboards@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 12.1s
+  Running TypeScript ...
+Failed to type check.
+
+./components/student/watch/HlsVideoPlayer.tsx:685:17
+Type error: Type 'QualityOption[]' is not assignable to type '{ index: number; height: number; bitrate: number; label: string; }[]'.
+  Type 'QualityOption' is not assignable to type '{ index: number; height: number; bitrate: number; label: string; }'.
+    Types of property 'height' are incompatible.
+      Type 'number | undefined' is not assignable to type 'number'.
+        Type 'undefined' is not assignable to type 'number'.
+
+  [90m683 |[0m               [36mif[0m (fallbackOptions.length > [35m0[0m) {
+  [90m684 |[0m                 console.info([32m`[0m${[33mLOG_PREFIX[0m[32m} MANIFEST_PARSED quality fallback parsed`[0m, { f...
+[31m[1m>[0m [90m685 |[0m                 options = fallbackOptions;
+  [90m    |[0m                 [31m[1m^[0m
+  [90m686 |[0m                 manifestLoadedQualityParsed = [36mtrue[0m;
+  [90m687 |[0m               }
+  [90m688 |[0m             }
+Next.js build worker exited with code: 1 and signal: null

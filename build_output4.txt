@@ -1,0 +1,144 @@
+
+> learnoo-dashboards@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 13.5s
+  Running TypeScript ...
+  Finished TypeScript in 17.9s ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/65) ...
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3000". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+  Generating static pages using 11 workers (16/65) 
+  Generating static pages using 11 workers (32/65) 
+  Generating static pages using 11 workers (48/65) 
+✓ Generating static pages using 11 workers (65/65) in 598ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /[locale]
+├ ƒ /[locale]/student
+├ ƒ /[locale]/student/community
+├ ƒ /[locale]/student/courses
+├ ƒ /[locale]/student/courses/course-details/[id]
+├ ƒ /[locale]/student/courses/watch/[chapterId]
+├ ƒ /[locale]/student/downloads
+├ ƒ /[locale]/student/exams
+├ ƒ /[locale]/student/exams/result/[id]
+├ ƒ /[locale]/student/exams/start-exam/[id]
+├ ƒ /[locale]/student/exams/take/[id]
+├ ƒ /[locale]/student/help
+├ ƒ /[locale]/student/library
+├ ƒ /[locale]/student/library/[id]
+├ ƒ /[locale]/student/live-sessions
+├ ƒ /[locale]/student/live-sessions/[id]
+├ ƒ /[locale]/student/notes
+├ ƒ /[locale]/student/notes/[id]
+├ ƒ /[locale]/student/notifications
+├ ƒ /[locale]/student/profile
+├ ƒ /[locale]/student/profile/editPage
+├ ƒ /[locale]/student/settings
+├ ƒ /[locale]/student/terms
+├ ƒ /activation
+├ ƒ /activation/[id]/edit
+├ ƒ /activation/assign
+├ ƒ /activation/generate
+├ ƒ /api/learnoo-origin/[...path]
+├ ƒ /api/pdf-proxy
+├ ƒ /api/quiz-upload
+├ ƒ /centers
+├ ƒ /centers/[id]
+├ ƒ /centers/[id]/edit
+├ ƒ /centers/add
+├ ƒ /chapters
+├ ƒ /chapters/[id]/edit
+├ ƒ /chapters/add
+├ ƒ /community
+├ ƒ /community/[id]
+├ ƒ /community/edit-link
+├ ƒ /content-manager
+├ ƒ /courses
+├ ƒ /courses/[id]
+├ ƒ /courses/[id]/edit
+├ ƒ /courses/add
+├ ƒ /create-account
+├ ƒ /dashboard
+├ ƒ /departments
+├ ƒ /departments/[id]/edit
+├ ƒ /departments/add
+├ ƒ /doctor/courses
+├ ƒ /doctor/courses/[id]
+├ ƒ /doctor/courses/[id]/exams/create
+├ ƒ /doctor/courses/[id]/lectures/create
+├ ƒ /doctor/courses/[id]/notes/create
+├ ƒ /doctor/dashboard
+├ ƒ /doctor/notifications
+├ ƒ /doctor/qa
+├ ƒ /downloads
+├ ƒ /electronic-library
+├ ƒ /electronic-library/[id]
+├ ƒ /electronic-library/[id]/edit
+├ ƒ /electronic-library/add
+├ ƒ /exams
+├ ƒ /exams/[id]/results
+├ ƒ /exams/create
+├ ƒ /exams/edit/[id]
+├ ƒ /faculties
+├ ƒ /faculties/[id]/edit
+├ ƒ /faculties/add
+├ ƒ /feature-control
+├ ƒ /forgot-password
+├ ƒ /instructors
+├ ƒ /instructors/[id]/edit
+├ ƒ /instructors/add
+├ ƒ /lectures
+├ ƒ /lectures/[id]/edit
+├ ƒ /lectures/add
+├ ƒ /levels
+├ ƒ /levels/[id]/edit
+├ ƒ /levels/add
+├ ƒ /live-sessions
+├ ƒ /live-sessions/[id]
+├ ƒ /live-sessions/[id]/room
+├ ƒ /live-sessions/[id]/settings
+├ ƒ /live-sessions/schedule
+├ ƒ /login
+├ ƒ /notes-summaries
+├ ƒ /notes-summaries/[id]
+├ ƒ /notes-summaries/[id]/edit
+├ ƒ /notes-summaries/add
+├ ƒ /notifications
+├ ƒ /notifications/add
+├ ƒ /ota-upload
+├ ƒ /reset-password
+├ ƒ /select-center
+├ ƒ /select-faculty
+├ ƒ /select-university
+├ ƒ /settings
+├ ƒ /settings/branding
+├ ƒ /settings/general
+├ ƒ /settings/language
+├ ƒ /settings/notifications
+├ ƒ /settings/profile
+├ ƒ /settings/terms
+├ ƒ /settings/watermark
+├ ƒ /students
+├ ƒ /students/[id]
+├ ƒ /students/[id]/edit
+├ ƒ /students/add
+├ ƒ /universities
+├ ƒ /universities/[id]/edit
+├ ƒ /universities/add
+└ ƒ /verification-code
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
