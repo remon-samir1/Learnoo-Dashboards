@@ -3,65 +3,26 @@
 /**
  * Static UI only via `t()` / messages. Course titles, names, category, status, etc. come from the API as-is.
  */
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { StudentCourseCard } from '@/components/student/StudentCourseCard';
 import { CourseCardSkeleton } from '@/src/components/ui/Skeleton';
-import { STUDENT_COURSES_LIST_PARAMS, useCourses } from '@/src/hooks/useCourses';
+import { useCourses } from '@/src/hooks/useCourses';
 import { useStudentCourseListActivation } from '@/src/hooks/useStudentCourseListActivation';
 import { courseIsLocked } from '@/src/lib/student-course-lock';
 import type { Course } from '@/src/types';
-
-const FINAL_REVISION_KEYWORDS = ['مراجعة', 'مراجعات', 'revision', 'final revision'];
-
-function normalizeTitle(title?: string) {
-  return title?.trim().replace(/\s+/g, ' ') ?? '';
-}
-
-function isFinalRevisionTitle(title?: string): boolean {
-  const normalized = normalizeTitle(title).toLowerCase();
-  return FINAL_REVISION_KEYWORDS.some((keyword) => normalized.includes(keyword));
-}
-
-type StudentCourseTab = string;
 
 export default function StudentCoursesPage() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('courses');
-  const { data: courses, isLoading, error, refetch } = useCourses(STUDENT_COURSES_LIST_PARAMS);
-  const [selectedTab, setSelectedTab] = useState<StudentCourseTab>('all');
+  const { data: courses, isLoading, error, refetch } = useCourses();
   const activation = useStudentCourseListActivation();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
-  /** Activated enrollments only (`?activated=1`); lock vs unlock follows `attributes.is_locked` (or equivalent). */
   const displayCourses = useMemo(() => courses ?? [], [courses]);
-
-  const titleTabs = useMemo(() => {
-    if (!displayCourses.length) return [];
-    const titles = displayCourses
-      .map((c) => c.attributes.title)
-      .filter((title): title is string => Boolean(title) && !isFinalRevisionTitle(title));
-    return [...new Set(titles)];
-  }, [displayCourses]);
-
-  const hasFinalRevision = useMemo(() => {
-    if (!displayCourses.length) return false;
-    return displayCourses.some((course) => isFinalRevisionTitle(course.attributes.title));
-  }, [displayCourses]);
-
-  const tabs = useMemo(() => {
-    const dynamicTabs = titleTabs.map((title) => ({ key: title, label: title }));
-
-    return [
-      { key: 'all', label: t('studentTabs.all') },
-      { key: 'courses', label: t('studentTabs.courses') },
-      ...dynamicTabs,
-      ...(hasFinalRevision ? [{ key: 'finalRevision', label: t('studentTabs.finalRevision') }] : []),
-    ];
-  }, [titleTabs, hasFinalRevision, t]);
 
   function getCourseProgress(course: Course) {
     const lectures = course.attributes.stats?.lectures ?? 0;
@@ -70,24 +31,7 @@ export default function StudentCoursesPage() {
     return Math.min(98, Math.max(12, base || 35));
   }
 
-  const filteredCourses = useMemo(() => {
-    if (!displayCourses.length) return [];
-    if (selectedTab === 'all') return displayCourses;
-    if (selectedTab === 'courses') {
-      return displayCourses.filter((course) => !isFinalRevisionTitle(course.attributes.title));
-    }
-    if (selectedTab === 'finalRevision') {
-      return displayCourses.filter((course) => isFinalRevisionTitle(course.attributes.title));
-    }
-    return displayCourses.filter((course) => course.attributes.title === selectedTab);
-  }, [displayCourses, selectedTab]);
-
-  const selectedTabLabel = useMemo(
-    () => tabs.find((tab) => tab.key === selectedTab)?.label ?? '',
-    [selectedTab, tabs]
-  );
-
-  const resultsSummary = t('studentResultsCount', { count: filteredCourses.length });
+  const resultsSummary = t('studentResultsCount', { count: displayCourses.length });
 
   const goToCourse = (courseId: string) => {
     router.push(`/${locale}/student/courses/course-details/${courseId}`);
@@ -104,30 +48,8 @@ export default function StudentCoursesPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto pb-3 md:pb-2 md:[scrollbar-width:thin] md:[scrollbar-color:rgb(148_163_184)_rgb(241_245_249)] md:[&::-webkit-scrollbar]:h-2 md:[&::-webkit-scrollbar-track]:rounded-full md:[&::-webkit-scrollbar-track]:bg-slate-100 md:[&::-webkit-scrollbar-track]:mx-0.5 md:[&::-webkit-scrollbar-thumb]:rounded-full md:[&::-webkit-scrollbar-thumb]:border-2 md:[&::-webkit-scrollbar-thumb]:border-transparent md:[&::-webkit-scrollbar-thumb]:bg-slate-300 md:[&::-webkit-scrollbar-thumb]:bg-clip-padding md:[&::-webkit-scrollbar-thumb]:shadow-sm md:hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
-        <div className="flex min-w-max flex-nowrap items-center gap-2 border-b border-[#E5E7EB]">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setSelectedTab(tab.key)}
-              className={`whitespace-nowrap border-b-2 py-3 px-3 text-sm font-medium transition sm:px-4 ${
-                selectedTab === tab.key
-                  ? 'border-[#2563EB] text-[#2563EB]'
-                  : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-slate-600">
-          {resultsSummary}
-          {selectedTab !== 'all' ? ` • ${selectedTabLabel}` : ''}
-        </p>
+        <p className="text-sm text-slate-600">{resultsSummary}</p>
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3 xl:gap-5">
@@ -140,7 +62,7 @@ export default function StudentCoursesPage() {
           </div>
         )}
 
-        {!isLoading && !error && filteredCourses.length === 0 && (
+        {!isLoading && !error && displayCourses.length === 0 && (
           <div className="col-span-full rounded-3xl border border-slate-200 bg-white px-8 py-10 text-center text-sm text-slate-600">
             {t('noCourses')}
           </div>
@@ -148,7 +70,7 @@ export default function StudentCoursesPage() {
 
         {!isLoading &&
           !error &&
-          filteredCourses.map((course) => {
+          displayCourses.map((course) => {
             const categoryName = course.attributes.category?.data?.attributes?.name ?? '';
             const instructorName = course.attributes.instructor?.data?.attributes?.full_name ?? '';
             const locationName = course.attributes.center?.data?.attributes?.name ?? '';

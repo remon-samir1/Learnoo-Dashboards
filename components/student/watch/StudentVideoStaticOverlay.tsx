@@ -29,12 +29,12 @@ export function StudentVideoStaticOverlay({ subtitle }: StudentVideoStaticOverla
 
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-[25] col-start-1 row-start-1 flex items-start justify-end p-1 sm:justify-start sm:p-2.5 opacity-50"
+      className="pointer-events-none absolute inset-0 z-[25] col-start-1 row-start-1 flex items-start justify-start p-1.5 pe-2 opacity-50 sm:p-2 sm:pe-2.5"
       role="note"
       aria-label={`${name}. ID ${id}. ${subtitle?.trim() ?? ''}`}
     >
       <div
-        className="max-w-[min(calc(100vw-5.5rem),10.5rem)] rounded-md px-2 py-1.5 text-white shadow-sm sm:max-w-[min(100%,22rem)] sm:px-3 sm:py-2.5"
+        className="max-w-[min(calc(100%-1rem),9.5rem)] rounded-md px-1.5 py-1 text-white shadow-sm sm:max-w-[min(100%,22rem)] sm:px-3 sm:py-2.5"
         style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
         dir="auto"
         title={`${name} · ${id}`}

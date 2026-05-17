@@ -706,7 +706,8 @@ export const levelsApi = {
 // ============================================
 
 export const librariesApi = {
-  list: () => get<ApiListResponse<Library>>('/v1/library'),
+  list: (params?: { course_id?: number | string }) =>
+    get<ApiListResponse<Library>>('/v1/library', params),
 
   get: (id: number) => get<ApiResponse<Library>>(`/v1/library/${id}`),
 

@@ -1,4 +1,5 @@
 import { api } from '@/src/lib/api';
+import { filterListByCourseId } from '@/src/lib/filter-by-course-id';
 import type { SocialLink, CreateSocialLinkRequest } from '@/src/types';
 import { createQueryHook, createMutationHook } from './index';
 
@@ -8,13 +9,9 @@ import { createQueryHook, createMutationHook } from './index';
 
 export const useSocialLinks = createQueryHook<SocialLink[], [number | null]>(
   (courseId) =>
-    api.socialLinks
-      .list(
-        courseId !== null && Number.isFinite(courseId) && courseId > 0
-          ? { course_id: courseId }
-          : undefined,
-      )
-      .then((res) => res.data),
+    api.socialLinks.list().then((res) =>
+      filterListByCourseId(res.data, courseId, (link) => link.attributes.course_id),
+    ),
 );
 
 export const useSocialLink = createQueryHook(

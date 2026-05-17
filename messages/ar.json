@@ -580,11 +580,33 @@
       "invalidId": "معرّف الدورة غير صالح.",
       "attributesHeading": "الخصائص (من واجهة البرمجة)",
       "tabs": {
-        "lectures": "المحاضرات",
-        "liveSession": "جلسة مباشرة",
-        "exams": "الاختبارات",
+        "lectures": "المحاضرات والملفات",
+        "exams": "الامتحانات",
         "notes": "الملاحظات والملخصات",
-        "community": "المجتمع"
+        "liveSession": "الجلسات المباشرة",
+        "community": "المجتمع",
+        "library": "المكتبة"
+      },
+      "library": {
+        "empty": "لا توجد مواد في المكتبة لهذا الكورس",
+        "loadError": "تعذّر تحميل مواد المكتبة. حاول مرة أخرى.",
+        "retry": "إعادة المحاولة",
+        "statusLocked": "مقفل",
+        "statusUnlocked": "مفتوح",
+        "priceLabel": "السعر",
+        "downloadable": "قابل للتنزيل",
+        "notDownloadable": "غير قابل للتنزيل",
+        "download": "تنزيل",
+        "open": "فتح",
+        "unavailable": "غير متاح",
+        "noAttachments": "لا توجد مرفقات",
+        "unlock": "فتح",
+        "openMaterial": "فتح المادة",
+        "materialType": {
+          "booklet": "كتيب",
+          "reference": "مرجع",
+          "guide": "دليل"
+        }
       },
       "liveSessionUnderDevelopment": "هذا القسم لا يزال قيد التطوير.",
       "lectureNumber": "محاضرة {number}",
@@ -859,8 +881,6 @@
       "activateMaterial": "تفعيل المادة",
       "searchPlaceholder": "ابحث في المواد…",
       "tabAll": "الكل",
-      "tabUnlocked": "المفتوحة",
-      "tabLocked": "المقفولة",
       "loadError": "تعذّر تحميل مواد المكتبة. حاول مرة أخرى.",
       "retryLoad": "إعادة المحاولة",
       "empty": "لا توجد مواد مطابقة لهذا التصفية بعد.",
@@ -2446,6 +2466,42 @@
     "pageDescription": "إدارة بياناتك الشخصية وتفاصيل حسابك",
     "download": "تحميل",
     "backToProfile": "العودة إلى الملف الشخصي",
+    "academic": {
+      "university": "الجامعة",
+      "center": "السنتر",
+      "faculty": "الكلية",
+      "selectUniversity": "اختر الجامعة",
+      "selectCenter": "اختر السنتر",
+      "selectFaculty": "اختر الكلية",
+      "selectUniversityFirst": "اختر الجامعة أولاً",
+      "selectCenterFirst": "اختر السنتر أولاً",
+      "selectFacultyFirst": "اختر الكلية أولاً",
+      "department": "الترم أو القسم",
+      "selectDepartment": "اختر الترم أو القسم",
+      "loading": "جاري التحميل...",
+      "loadError": "فشل تحميل البيانات الأكاديمية",
+      "emptyUniversities": "لا توجد جامعات متاحة",
+      "emptyCenters": "لا توجد سناتر متاحة",
+      "emptyFaculties": "لا توجد كليات متاحة",
+      "emptyDepartments": "لا توجد أقسام أو ترمات متاحة"
+    },
+    "completeProfile": {
+      "title": "أكمل ملفك الشخصي",
+      "description": "يرجى اختيار الجامعة والسنتر والكلية للمتابعة.",
+      "buttons": {
+        "save": "حفظ ومتابعة",
+        "saving": "جاري الحفظ..."
+      },
+      "validation": {
+        "universityRequired": "الجامعة مطلوبة",
+        "centerRequired": "السنتر مطلوب",
+        "facultyRequired": "الكلية مطلوبة"
+      },
+      "toasts": {
+        "success": "تم حفظ بيانات الجامعة والكلية بنجاح",
+        "error": "فشل حفظ الملف الشخصي"
+      }
+    },
     "editProfileStudent": {
       "title": "تعديل الملف الشخصي",
       "imageAlt": "صورة الملف الشخصي",
@@ -2462,6 +2518,11 @@
         "saving": "جاري الحفظ...",
         "saveChanges": "حفظ التغييرات"
       },
+      "validation": {
+        "universityRequired": "الجامعة مطلوبة",
+        "centerRequired": "السنتر مطلوب",
+        "facultyRequired": "الكلية مطلوبة"
+      },
       "toasts": {
         "success": "تم تحديث الملف الشخصي بنجاح",
         "error": "فشل تحديث الملف الشخصي"
@@ -2475,7 +2536,9 @@
       "email": "البريد الإلكتروني",
       "phone": "رقم الهاتف",
       "university": "الجامعة",
+      "center": "السنتر",
       "faculty": "الكلية",
+      "department": "الترم أو القسم",
       "status": "الحالة",
       "device": "الجهاز"
     },

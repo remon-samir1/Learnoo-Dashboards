@@ -117,15 +117,7 @@ export default function StudentCommunityFeed({
   const [replyTarget, setReplyTarget] = useState<Post | null>(null);
   const [reactingId, setReactingId] = useState<string | null>(null);
 
-  const socialLinks = useMemo(() => {
-    const list = socialRaw ?? [];
-    if (scopedCourseId == null) return list;
-    return list.filter(
-      (l) =>
-        l.attributes.course_id == null ||
-        Number(l.attributes.course_id) === scopedCourseId,
-    );
-  }, [socialRaw, scopedCourseId]);
+  const socialLinks = socialRaw ?? [];
 
   const topPosts = useMemo(() => {
     const list = postsRaw ?? [];
@@ -255,7 +247,7 @@ export default function StudentCommunityFeed({
         </header>
       ) : null}
 
-      <section className="mb-10">
+      {/* <section className="mb-10">
         <h2 className="mb-4 text-lg font-bold text-[#1E293B]">{tPage('socialSectionTitle')}</h2>
         {socialLoading ? (
           <div className="flex justify-center py-10">
@@ -274,7 +266,7 @@ export default function StudentCommunityFeed({
             ))}
           </div>
         )}
-      </section>
+      </section> */}
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 flex-1 overflow-x-auto">
@@ -284,11 +276,10 @@ export default function StudentCommunityFeed({
                 key={item.key}
                 type="button"
                 onClick={() => setTab(item.key)}
-                className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition sm:px-4 ${
-                  tab === item.key
+                className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition sm:px-4 ${tab === item.key
                     ? 'border-[#2563EB] text-[#2563EB]'
                     : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
-                }`}
+                  }`}
               >
                 {item.label}
               </button>
@@ -408,9 +399,8 @@ export default function StudentCommunityFeed({
                         type="button"
                         onClick={() => void handleReact(post)}
                         disabled={reactingId !== null}
-                        className={`inline-flex items-center gap-2 rounded-lg px-2 py-1 text-[13px] font-semibold transition ${
-                          liked ? 'text-[#2137D6]' : 'text-[#64748B] hover:text-[#1E293B]'
-                        } disabled:opacity-50`}
+                        className={`inline-flex items-center gap-2 rounded-lg px-2 py-1 text-[13px] font-semibold transition ${liked ? 'text-[#2137D6]' : 'text-[#64748B] hover:text-[#1E293B]'
+                          } disabled:opacity-50`}
                         aria-pressed={liked}
                         aria-label={tPage('like')}
                       >

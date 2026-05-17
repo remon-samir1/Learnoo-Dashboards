@@ -428,6 +428,14 @@ export interface UpdateUserRequest {
 
 
 
+  center_id?: number | string;
+
+
+
+  department_id?: number | string;
+
+
+
   phone?: number;
 
 

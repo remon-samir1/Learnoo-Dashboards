@@ -1,25 +1,29 @@
-import Navbar from "@/components/student/Navbar";
-import Sidebar from "@/components/student/Sidebar";
 import { StudentAuthStoreInit } from "@/components/student/StudentAuthStoreInit";
-import { StudentToaster } from "@/components/student/StudentToaster";
+import StudentLayoutShell from "@/components/student/StudentLayoutShell";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { getCurrentUser } from "@/src/services/auth/me.service";
-import { getStudentNotifications } from "@/src/services/student/user.service";
+import { getStudentNotifications, getUserProfileData } from "@/src/services/student/user.service";
+import { isStudentAcademicProfileComplete } from "@/src/lib/student-profile-completeness";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Learnoo-Dashboard",
 };
 
-export default async function StudentLayout({
-  children,
-}: {
+type LayoutProps = {
   children: React.ReactNode;
-}) {
-  const [notificationsResponse, userResponse] = await Promise.all([
-    getStudentNotifications(),
-    getCurrentUser(),
-  ]);
+  params: Promise<{ locale: string }>;
+};
+
+export default async function StudentLayout({ children, params }: LayoutProps) {
+  const { locale } = await params;
+
+  const [notificationsResponse, userResponse, profileResponse] =
+    await Promise.all([
+      getStudentNotifications(),
+      getCurrentUser(),
+      getUserProfileData(),
+    ]);
 
   const notifications = Array.isArray(notificationsResponse?.data)
     ? notificationsResponse.data
@@ -28,25 +32,25 @@ export default async function StudentLayout({
   const currentUser =
     userResponse.success && userResponse.data ? userResponse.data : null;
 
+  const profileAttributes =
+    profileResponse?.success && profileResponse?.data?.data?.attributes
+      ? profileResponse.data.data.attributes
+      : null;
+
+  const isAcademicProfileComplete =
+    isStudentAcademicProfileComplete(profileAttributes);
+
   return (
     <ProtectedRoute requireProfileComplete={false}>
-      <div className="flex min-h-screen bg-gray-50">
-        <StudentAuthStoreInit />
-        <Sidebar currentUser={currentUser} />
-
-        <div className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
-          <Navbar
-            initialNotifications={notifications}
-            currentUser={currentUser}
-          />
-
-          <main className="min-w-0 flex-1 px-4 py-4 pb-6 sm:px-5 sm:py-5 lg:px-16 lg:py-5">
-            {children}
-          </main>
-
-          <StudentToaster />
-        </div>
-      </div>
+      <StudentAuthStoreInit />
+      <StudentLayoutShell
+        locale={locale}
+        isAcademicProfileComplete={isAcademicProfileComplete}
+        currentUser={currentUser}
+        initialNotifications={notifications}
+      >
+        {children}
+      </StudentLayoutShell>
     </ProtectedRoute>
   );
 }

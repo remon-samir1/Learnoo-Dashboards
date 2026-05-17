@@ -8,7 +8,6 @@ import {
   BookOpen,
   ChevronLeft,
   Download,
-  FileText,
   HelpCircle,
   Home,
   Library,
@@ -41,7 +40,6 @@ const sections: SidebarItem[][] = [
     { key: "community", href: "/student/community", icon: Users },
     { key: "liveSessions", href: "/student/live-sessions", icon: Video },
     { key: "examsAndQA", href: "/student/exams", icon: NotebookText },
-    { key: "notesSummaries", href: "/student/notes", icon: FileText },
     { key: "electronicLibrary", href: "/student/library", icon: Library },
     // {
     //   key: "downloads",
@@ -52,7 +50,7 @@ const sections: SidebarItem[][] = [
   ],
   [
     { key: "profile", href: "/student/profile", icon: User },
-    { key: "settings", href: "/student/settings", icon: Settings },
+    // { key: "settings", href: "/student/settings", icon: Settings },
     { key: "helpFaq", href: "/student/help", icon: HelpCircle },
   ],
 ];

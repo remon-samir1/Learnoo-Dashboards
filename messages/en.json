@@ -582,11 +582,33 @@
       "invalidId": "Invalid course id.",
       "attributesHeading": "Attributes (from API)",
       "tabs": {
-        "lectures": "Lectures",
-        "liveSession": "Live session",
+        "lectures": "Lectures & PDF",
         "exams": "Exams",
         "notes": "Notes & Summaries",
-        "community": "Community"
+        "liveSession": "Live Sessions",
+        "community": "Community",
+        "library": "Library"
+      },
+      "library": {
+        "empty": "No library materials for this course",
+        "loadError": "Could not load library materials. Please try again.",
+        "retry": "Try again",
+        "statusLocked": "Locked",
+        "statusUnlocked": "Unlocked",
+        "priceLabel": "Price",
+        "downloadable": "Downloadable",
+        "notDownloadable": "Not downloadable",
+        "download": "Download",
+        "open": "Open",
+        "unavailable": "Unavailable",
+        "noAttachments": "No attachments",
+        "unlock": "Unlock",
+        "openMaterial": "Open material",
+        "materialType": {
+          "booklet": "Booklet",
+          "reference": "Reference",
+          "guide": "Guide"
+        }
       },
       "liveSessionUnderDevelopment": "This section is still under development.",
       "lectureNumber": "Lecture {number}",
@@ -861,8 +883,6 @@
       "activateMaterial": "Activate material",
       "searchPlaceholder": "Search materials…",
       "tabAll": "All",
-      "tabUnlocked": "Unlocked",
-      "tabLocked": "Locked",
       "loadError": "Could not load library materials. Please try again.",
       "retryLoad": "Try again",
       "empty": "No materials match this filter yet.",
@@ -2448,6 +2468,42 @@
     "pageDescription": "Manage your personal information and account details",
     "download": "Download",
     "backToProfile": "Back to Profile",
+    "academic": {
+      "university": "University",
+      "center": "Center",
+      "faculty": "Faculty",
+      "selectUniversity": "Select university",
+      "selectCenter": "Select center",
+      "selectFaculty": "Select faculty",
+      "selectUniversityFirst": "Select a university first",
+      "selectCenterFirst": "Select a center first",
+      "selectFacultyFirst": "Select a faculty first",
+      "department": "Department or Term",
+      "selectDepartment": "Select department or term",
+      "loading": "Loading...",
+      "loadError": "Failed to load academic data",
+      "emptyUniversities": "No universities available",
+      "emptyCenters": "No centers available",
+      "emptyFaculties": "No faculties available",
+      "emptyDepartments": "No departments or terms available"
+    },
+    "completeProfile": {
+      "title": "Complete your profile",
+      "description": "Please select your university, center, and faculty to continue.",
+      "buttons": {
+        "save": "Save and continue",
+        "saving": "Saving..."
+      },
+      "validation": {
+        "universityRequired": "University is required",
+        "centerRequired": "Center is required",
+        "facultyRequired": "Faculty is required"
+      },
+      "toasts": {
+        "success": "University and faculty information saved successfully",
+        "error": "Failed to save profile"
+      }
+    },
     "editProfileStudent": {
       "title": "Edit Profile",
       "imageAlt": "Profile image",
@@ -2464,6 +2520,11 @@
         "saving": "Saving...",
         "saveChanges": "Save Changes"
       },
+      "validation": {
+        "universityRequired": "University is required",
+        "centerRequired": "Center is required",
+        "facultyRequired": "Faculty is required"
+      },
       "toasts": {
         "success": "Profile updated successfully",
         "error": "Failed to update profile"
@@ -2476,7 +2537,9 @@
       "email": "Email",
       "phone": "Phone",
       "university": "University",
+      "center": "Center",
       "faculty": "Faculty",
+      "department": "Department or Term",
       "status": "Status",
       "device": "Device"
     },

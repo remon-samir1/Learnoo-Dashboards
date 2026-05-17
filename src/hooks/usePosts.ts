@@ -1,4 +1,5 @@
 import { api } from '@/src/lib/api';
+import { filterListByCourseId } from '@/src/lib/filter-by-course-id';
 import type { Post, CreatePostRequest } from '@/src/types';
 import { createQueryHook, createMutationHook } from './index';
 
@@ -9,12 +10,10 @@ import { createQueryHook, createMutationHook } from './index';
 export const usePosts = createQueryHook<Post[], [number | null]>(
   (courseId) =>
     api.posts
-      .list(
-        courseId !== null && Number.isFinite(courseId) && courseId > 0
-          ? { course_id: courseId }
-          : undefined,
-      )
-      .then((res) => res.data),
+      .list()
+      .then((res) =>
+        filterListByCourseId(res.data, courseId, (post) => post.attributes.course_id),
+      ),
   { enabled: true },
 );
 

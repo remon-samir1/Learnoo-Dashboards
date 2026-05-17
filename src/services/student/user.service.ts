@@ -1,5 +1,6 @@
 //src/services/student/user.service.ts
 import getUserDataFromJWT from "@/lib/server.utils";
+import { appendStudentAcademicFormFields } from "@/src/lib/student-academic-update";
 import { UpdateProfileFormValues } from "@/src/schemas/profile.schema";
 
 export const getStudentData = async () => {
@@ -183,6 +184,14 @@ export const updateUserProfile = async (data: UpdateProfileFormValues) => {
   if (data.phone) formData.append("phone", String(data.phone));
   if (data.email) formData.append("email", data.email);
   if (data.image instanceof File) formData.append("image", data.image);
+  if (data.university_id && data.center_id && data.faculty_id) {
+    appendStudentAcademicFormFields(formData, {
+      universityId: data.university_id,
+      centerId: data.center_id,
+      facultyId: data.faculty_id,
+      departmentId: data.department_id || undefined,
+    });
+  }
 
   try {
     const res = await fetch("https://api.learnoo.app/v1/auth/update", {
@@ -208,10 +217,10 @@ export const updateUserProfile = async (data: UpdateProfileFormValues) => {
       data: payload,
       message: payload?.message || "Profile updated successfully",
     };
-  } catch (error) {
+  } catch (error: unknown) {
     return {
       success: false,
-      message: (error as Error).message,
+      message: error instanceof Error ? error.message : "Request failed",
     };
   }
 };

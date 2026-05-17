@@ -21,16 +21,20 @@ type Props = {
   title: string;
   /** `modal` = fullscreen overlay; `inline` = fills parent (e.g. under video). */
   variant?: 'modal' | 'inline';
+  /** Use full panel width (e.g. watch player fullscreen PDF column). */
+  expandToContainer?: boolean;
 };
 
 function PdfPreviewContent({
   proxiedPdfUrl,
   watermarkText,
   watermarkStyle,
+  expandToContainer = false,
 }: {
   proxiedPdfUrl: string;
   watermarkText: string;
   watermarkStyle: { color: string; opacity: number };
+  expandToContainer?: boolean;
 }) {
   const [numPages, setNumPages] = useState(0);
   const [pageWidth, setPageWidth] = useState(720);
@@ -39,7 +43,9 @@ function PdfPreviewContent({
   useEffect(() => {
     const updateWidth = () => {
       const width = contentRef.current?.clientWidth ?? 720;
-      setPageWidth(Math.min(720, Math.max(320, width - 32)));
+      const padding = 24;
+      const maxWidth = expandToContainer ? 1600 : 720;
+      setPageWidth(Math.min(maxWidth, Math.max(320, width - padding)));
     };
 
     updateWidth();
@@ -48,7 +54,7 @@ function PdfPreviewContent({
     if (contentRef.current) observer.observe(contentRef.current);
 
     return () => observer.disconnect();
-  }, []);
+  }, [expandToContainer]);
 
   return (
     <div ref={contentRef} className="min-h-0 w-full">
@@ -108,6 +114,7 @@ export default function PdfPreviewModal({
   pdfUrl,
   title,
   variant = 'modal',
+  expandToContainer = false,
 }: Props) {
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
   const { user } = useCurrentUser();
@@ -168,11 +175,14 @@ export default function PdfPreviewModal({
   if (!open || !pdfUrl) return null;
 
   const content = (
-    <div className="mx-auto flex w-full max-w-[800px] justify-center">
+    <div
+      className={`mx-auto flex w-full justify-center ${expandToContainer ? 'max-w-none' : 'max-w-[800px]'}`}
+    >
       <PdfPreviewContent
         proxiedPdfUrl={proxiedPdfUrl}
         watermarkText={watermarkText}
         watermarkStyle={watermarkStyle}
+        expandToContainer={expandToContainer}
       />
     </div>
   );
@@ -180,7 +190,7 @@ export default function PdfPreviewModal({
   if (variant === 'inline') {
     return (
       <div className="flex h-full min-h-0 w-full flex-col overflow-auto bg-[#F8FAFC]">
-        <div className="min-h-0 flex-1 overflow-auto p-4 sm:p-5">{content}</div>
+        <div className={`min-h-0 flex-1 overflow-auto ${expandToContainer ? 'p-2 sm:p-3' : 'p-4 sm:p-5'}`}>{content}</div>
       </div>
     );
   }

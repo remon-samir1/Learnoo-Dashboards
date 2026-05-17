@@ -26,6 +26,8 @@ export type HlsVideoCustomControlsProps = {
   qualityOptions?: QualityOption[];
   qualityValue?: number | 'auto';
   onQualityChange?: (value: number | 'auto') => void;
+  /** Trailing actions (e.g. PDF toggle) — shown in the control row on small screens. */
+  endAction?: React.ReactNode;
 };
 
 function isShellFullscreen(shell: HTMLDivElement | null): boolean {
@@ -41,6 +43,7 @@ export function HlsVideoCustomControls({
   qualityOptions = [],
   qualityValue = 'auto',
   onQualityChange,
+  endAction,
 }: HlsVideoCustomControlsProps) {
   const t = useTranslations('courses.studentWatch');
   const qualityLabel = (() => {
@@ -149,7 +152,7 @@ export function HlsVideoCustomControls({
 
   return (
     <div
-      className="relative z-10 w-full shrink-0 border-t border-slate-800/80 bg-[#0a0f18] px-2 py-2 sm:px-3 sm:py-2.5"
+      className="relative z-30 w-full shrink-0 border-t border-slate-800/80 bg-[#0a0f18] px-2 py-2 sm:px-3 sm:py-2.5"
       role="group"
       aria-label={t('videoControlsGroup')}
     >
@@ -165,7 +168,7 @@ export function HlsVideoCustomControls({
           className="h-1 w-full max-sm:my-0 cursor-pointer touch-pan-x accent-white disabled:cursor-not-allowed disabled:opacity-40 sm:h-1.5 sm:my-0"
           aria-label={t('videoControlsSeek')}
         />
-        <div className="flex items-center gap-0.5 text-white max-sm:h-7 sm:gap-2 sm:h-auto">
+        <div className="flex items-center gap-0.5 text-white max-sm:min-h-8 sm:gap-2 sm:h-auto">
           <button
             type="button"
             onClick={togglePlay}
@@ -191,8 +194,8 @@ export function HlsVideoCustomControls({
           </button>
 
           {onQualityChange ? (
-            <label className="inline-flex min-w-max items-center gap-2 rounded bg-white/10 px-2 py-1 text-white/90 transition hover:bg-white/15 sm:px-2.5 sm:py-1.5">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-white/70 sm:text-xs">
+            <label className="inline-flex min-w-0 max-w-[38%] shrink items-center gap-1 rounded bg-white/10 px-1.5 py-1 text-white/90 transition hover:bg-white/15 sm:max-w-none sm:gap-2 sm:px-2.5 sm:py-1.5">
+              <span className="hidden text-[10px] uppercase tracking-[0.18em] text-white/70 sm:inline sm:text-xs">
                 {qualityLabel}
               </span>
               <select
@@ -202,7 +205,7 @@ export function HlsVideoCustomControls({
                   onQualityChange(value);
                 }}
                 disabled={qualityOptions.length === 0}
-                className="rounded bg-slate-950/80 px-2 py-1 text-xs text-white outline-none transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm"
+                className="max-w-full truncate rounded bg-slate-950/80 px-1.5 py-0.5 text-[10px] text-white outline-none transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:px-2 sm:py-1 sm:text-sm"
                 aria-label={t('videoControlsQuality')}
               >
                 <option value="auto">Auto</option>
@@ -215,10 +218,12 @@ export function HlsVideoCustomControls({
                   : null}
               </select>
               {qualityOptions.length === 0 ? (
-                <span className="text-[10px] text-white/60 sm:text-xs">{qualityLoadingLabel}</span>
+                <span className="hidden text-[10px] text-white/60 sm:inline sm:text-xs">{qualityLoadingLabel}</span>
               ) : null}
             </label>
           ) : null}
+
+          {endAction ? <div className="ms-auto shrink-0 sm:hidden">{endAction}</div> : null}
 
           <button
             type="button"

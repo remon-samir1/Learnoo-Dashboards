@@ -168,10 +168,12 @@ const watermarkText = useMemo(() => {
 
       <div className="mx-auto   flex w-full max-w-[832px] flex-col gap-4 sm:gap-5">
         
-        <article className="flex-col gap-4  flex w-full relative overflow-hidden   rounded-xl border border-[#E8ECF2] bg-white px-4 py-4 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:gap-5 sm:rounded-2xl sm:px-5 sm:py-5">
-          {watermarkConfig?.config.enabled && (
-            <ExamWatermark text={watermarkText} watermarkConfig={watermarkConfig}/>
-          )}
+        <article className="relative flex w-full flex-col overflow-hidden rounded-xl border border-[#E8ECF2] bg-white px-4 py-4 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:rounded-2xl sm:px-5 sm:py-5">
+          {watermarkConfig?.config.enabled ? (
+            <ExamWatermark text={watermarkText} watermarkConfig={watermarkConfig} />
+          ) : null}
+
+          <div className="relative z-10 flex flex-col gap-4 sm:gap-5">
           {studentName ? (
             <p className="text-[11px] font-medium text-[#94A3B8] sm:text-[12px]">{studentName}</p>
           ) : null}
@@ -320,6 +322,7 @@ const watermarkText = useMemo(() => {
 
           <div className="mt-auto flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
             {articleFooter}
+          </div>
           </div>
         </article>
 

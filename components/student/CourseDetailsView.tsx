@@ -37,6 +37,7 @@ import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import type { Chapter, Course, Lecture, Note } from '@/src/types';
 import StudentCourseNotesTab from '@/components/student/StudentCourseNotesTab';
 import StudentCommunityFeed from '@/components/student/community/StudentCommunityFeed';
+import StudentCourseLibraryTab from '@/components/student/StudentCourseLibraryTab';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
 import PdfPreviewModal from './PdfPreviewModal';
@@ -45,7 +46,7 @@ import PdfPreviewModal from './PdfPreviewModal';
 const C_PRIMARY = '#2D43D1';
 const C_SECTION_BG = '#F8F9FB';
 
-type DetailTab = 'lectures' | 'liveSession' | 'exams' | 'notes' | 'community';
+type DetailTab = 'lectures' | 'exams' | 'notes' | 'liveSession' | 'community' | 'library';
 
 type StudentDetailsT = ReturnType<typeof useTranslations<'courses.studentDetails'>>;
 
@@ -88,11 +89,12 @@ function sortedLectures(lectures: Lecture[] | undefined): Lecture[] {
 function detailTabFromSearchParams(searchParams: URLSearchParams): DetailTab {
   const q = searchParams.get('tab');
   if (
+    q === 'lectures' ||
     q === 'exams' ||
     q === 'notes' ||
-    q === 'lectures' ||
+    q === 'liveSession' ||
     q === 'community' ||
-    q === 'liveSession'
+    q === 'library'
   ) {
     return q;
   }
@@ -469,10 +471,11 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
 
   const tabs: { key: DetailTab; label: string }[] = [
     { key: 'lectures', label: t('tabs.lectures') },
-    { key: 'liveSession', label: t('tabs.liveSession') },
     { key: 'exams', label: t('tabs.exams') },
     { key: 'notes', label: t('tabs.notes') },
+    { key: 'liveSession', label: t('tabs.liveSession') },
     { key: 'community', label: t('tabs.community') },
+    { key: 'library', label: t('tabs.library') },
   ];
 
   if (!idValid) {
@@ -671,6 +674,13 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
             )}
             {tab === 'community' && (
               <StudentCommunityFeed courseId={numericId} embedded />
+            )}
+            {tab === 'library' && (
+              <StudentCourseLibraryTab
+                courseId={numericId}
+                courseTitle={course.attributes.title ?? ''}
+                locale={locale}
+              />
             )}
           </div>
         </div>

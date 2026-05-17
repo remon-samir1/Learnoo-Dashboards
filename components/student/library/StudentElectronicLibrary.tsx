@@ -7,9 +7,16 @@ import { Key, Loader2, Lock, Search, Unlock } from 'lucide-react';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { formatLibraryAttachmentSize, isStudentLibraryPublished, librarySearchHaystack } from '@/src/lib/student-library-utils';
 import { useLibraries } from '@/src/hooks/useLibraries';
-import type { Attachment, Library } from '@/src/types';
+import type { Attachment, Library, MaterialType } from '@/src/types';
 
-type LibraryTab = 'all' | 'unlocked' | 'locked';
+type LibraryMaterialFilter = 'all' | MaterialType;
+
+const MATERIAL_FILTER_TABS: readonly LibraryMaterialFilter[] = [
+  'all',
+  'booklet',
+  'reference',
+  'guide',
+];
 
 function firstAttachmentMeta(attrs: Library['attributes']): { count: number; sizeLine: string } | null {
   const list = attrs.attachments ?? [];
@@ -25,7 +32,7 @@ export default function StudentElectronicLibrary() {
   const t = useTranslations('courses.studentLibrary');
   const { data: rawList, isLoading, error, refetch } = useLibraries();
 
-  const [tab, setTab] = useState<LibraryTab>('all');
+  const [tab, setTab] = useState<LibraryMaterialFilter>('all');
   const [q, setQ] = useState('');
   const [activationItemId, setActivationItemId] = useState<string | null>(null);
   const [activationContextTitle, setActivationContextTitle] = useState('');
@@ -41,8 +48,9 @@ export default function StudentElectronicLibrary() {
 
   const tabFiltered = useMemo(() => {
     let list = publishedMaterials;
-    if (tab === 'unlocked') list = list.filter((l) => !l.attributes.is_locked);
-    if (tab === 'locked') list = list.filter((l) => l.attributes.is_locked);
+    if (tab !== 'all') {
+      list = list.filter((item) => item.attributes.material_type === tab);
+    }
     if (!searchNeedle) return list;
     return list.filter((lib) => librarySearchHaystack(lib).includes(searchNeedle));
   }, [publishedMaterials, tab, searchNeedle]);
@@ -68,12 +76,21 @@ export default function StudentElectronicLibrary() {
   }, [firstLockedForBanner, openActivation]);
 
   const materialTypeLabel = useCallback(
-    (type: string) => {
-      const k = type as 'booklet' | 'reference' | 'guide';
-      if (k === 'booklet' || k === 'reference' || k === 'guide') {
-        return t(`materialType.${k}`);
+    (type: MaterialType | string) => {
+      if (type === 'booklet' || type === 'reference' || type === 'guide') {
+        return t(`materialType.${type}`);
       }
       return type;
+    },
+    [t],
+  );
+
+  const filterTabLabel = useCallback(
+    (filter: LibraryMaterialFilter) => {
+      if (filter === 'all') {
+        return t('tabAll');
+      }
+      return t(`materialType.${filter}`);
     },
     [t],
   );
@@ -126,18 +143,17 @@ export default function StudentElectronicLibrary() {
           />
         </div>
         <div className="-mx-1 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
-          {(['all', 'unlocked', 'locked'] as const).map((k) => (
+          {MATERIAL_FILTER_TABS.map((filterKey) => (
             <button
-              key={k}
+              key={filterKey}
               type="button"
-              onClick={() => setTab(k)}
-              className={`shrink-0 snap-start rounded-full px-4 py-2.5 text-sm font-semibold transition sm:py-2 ${
-                tab === k
+              onClick={() => setTab(filterKey)}
+              className={`shrink-0 snap-start rounded-full px-4 py-2.5 text-sm font-semibold transition sm:py-2 ${tab === filterKey
                   ? 'bg-[#2563EB] text-white shadow-sm'
                   : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
-              }`}
+                }`}
             >
-              {k === 'all' ? t('tabAll') : k === 'unlocked' ? t('tabUnlocked') : t('tabLocked')}
+              {filterTabLabel(filterKey)}
             </button>
           ))}
         </div>

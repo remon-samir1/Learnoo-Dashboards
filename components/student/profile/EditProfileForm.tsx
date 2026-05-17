@@ -13,6 +13,7 @@ import {
   type UpdateProfileFormValues,
 } from "@/src/schemas/profile.schema";
 import { updateUserProfile } from "@/src/services/student/user.service";
+import UniversityFacultyFields from "@/components/student/profile/UniversityFacultyFields";
 
 type EditProfileFormProps = {
   defaultValues: {
@@ -21,6 +22,10 @@ type EditProfileFormProps = {
     phone?: string | null;
     email?: string | null;
     image?: string | null;
+    university_id?: string | null;
+    center_id?: string | null;
+    faculty_id?: string | null;
+    department_id?: string | null;
   };
 };
 
@@ -32,6 +37,17 @@ export default function EditProfileForm({
   const t = useTranslations("studentProfile.editProfileStudent");
 
   const [preview, setPreview] = useState(defaultValues.image || "");
+  const [universityId, setUniversityId] = useState(
+    defaultValues.university_id || "",
+  );
+  const [centerId, setCenterId] = useState(defaultValues.center_id || "");
+  const [facultyId, setFacultyId] = useState(defaultValues.faculty_id || "");
+  const [departmentId, setDepartmentId] = useState(
+    defaultValues.department_id || "",
+  );
+  const [universityError, setUniversityError] = useState("");
+  const [centerError, setCenterError] = useState("");
+  const [facultyError, setFacultyError] = useState("");
 
   const {
     register,
@@ -46,6 +62,10 @@ export default function EditProfileForm({
       phone: defaultValues.phone || "",
       email: defaultValues.email || "",
       image: undefined,
+      university_id: defaultValues.university_id || "",
+      center_id: defaultValues.center_id || "",
+      faculty_id: defaultValues.faculty_id || "",
+      department_id: defaultValues.department_id || "",
     },
   });
 
@@ -56,15 +76,46 @@ export default function EditProfileForm({
   }, [defaultValues.first_name, defaultValues.last_name]);
 
   const onSubmit = async (values: UpdateProfileFormValues) => {
-    
-    const res = await updateUserProfile(values);
-   
+    let valid = true;
+
+    if (!universityId) {
+      setUniversityError(t("validation.universityRequired"));
+      valid = false;
+    } else {
+      setUniversityError("");
+    }
+
+    if (!centerId) {
+      setCenterError(t("validation.centerRequired"));
+      valid = false;
+    } else {
+      setCenterError("");
+    }
+
+    if (!facultyId) {
+      setFacultyError(t("validation.facultyRequired"));
+      valid = false;
+    } else {
+      setFacultyError("");
+    }
+
+    if (!valid) return;
+
+    const res = await updateUserProfile({
+      ...values,
+      university_id: universityId,
+      center_id: centerId,
+      faculty_id: facultyId,
+      department_id: departmentId || undefined,
+    });
+
     if (res?.success) {
-      toast.success("Profile updated successfully");
+      toast.success(t("toasts.success"));
       router.push(`/${locale}/student/profile`);
+      router.refresh();
     }
     if (!res.success) {
-      toast.error(res.message);
+      toast.error(res.message || t("toasts.error"));
     }
   };
 
@@ -146,6 +197,21 @@ export default function EditProfileForm({
             className="h-11 w-full rounded-xl border border-[var(--border-color)] px-4 text-sm outline-none focus:border-[var(--primary)]"
           />
         </div>
+
+        <UniversityFacultyFields
+          universityId={universityId}
+          centerId={centerId}
+          facultyId={facultyId}
+          departmentId={departmentId}
+          onUniversityChange={setUniversityId}
+          onCenterChange={setCenterId}
+          onFacultyChange={setFacultyId}
+          onDepartmentChange={setDepartmentId}
+          universityError={universityError}
+          centerError={centerError}
+          facultyError={facultyError}
+          disabled={isSubmitting}
+        />
 
         <div className="sm:col-span-2">
           <label className="mb-2 block text-xs font-medium text-[var(--text-muted)]">

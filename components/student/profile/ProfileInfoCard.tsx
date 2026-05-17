@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import InfoRow from "./ProfileInfoRow";
-import { use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -21,9 +20,11 @@ type Props = {
   initials: string;
   fullName: string;
   university: string;
+  center: string;
   email: string;
   phone: string;
   faculty: string;
+  department?: string;
   status: string;
   device: string;
   image?: string;
@@ -33,9 +34,11 @@ export default function ProfileInfoCard({
   initials,
   fullName,
   university,
+  center,
   email,
   phone,
   faculty,
+  department,
   status,
   device,
   image,
@@ -100,16 +103,30 @@ const locale = useLocale();
         />
 
         <InfoRow
-          icon={<BookOpen size={20} />}
-          label={t("fields.faculty")}
-          value={faculty}
+          icon={<Building2 size={20} />}
+          label={t("academic.university")}
+          value={university}
         />
 
         <InfoRow
           icon={<Building2 size={20} />}
-          label={t("fields.university")}
-          value={university}
+          label={t("academic.faculty")}
+          value={faculty}
         />
+
+        <InfoRow
+          icon={<BookOpen size={20} />}
+          label={t("academic.center")}
+          value={center }
+        />
+
+        {department ? (
+          <InfoRow
+            icon={<BookOpen size={20} />}
+            label={t("academic.department")}
+            value={department}
+          />
+        ) : null}
 
         <InfoRow
           icon={<UserRound size={20} />}

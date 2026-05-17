@@ -28,6 +28,20 @@ type ProfileAttributes = {
     data?: {
       attributes?: {
         name?: string | null;
+        parent?: {
+          data?: {
+            attributes?: {
+              name?: string | null;
+            };
+          };
+        };
+      };
+    };
+  };
+  department?: {
+    data?: {
+      attributes?: {
+        name?: string | null;
       };
     };
   };
@@ -72,7 +86,12 @@ export default async function StudentProfilePage() {
 
   const university =
     student?.university?.data?.attributes?.name || "Not available";
+  const center =
+    student?.faculty?.data?.attributes?.parent?.data?.attributes?.name ||
+    "Not available";
   const faculty = student?.faculty?.data?.attributes?.name || "Not available";
+  const department =
+    student?.department?.data?.attributes?.name?.trim() || "";
   const initials = getInitials(fullName);
   const stats = student?.activity_stats;
 
@@ -95,10 +114,12 @@ export default async function StudentProfilePage() {
           initials={initials}
           fullName={fullName}
           university={university}
+          center={center}
           image={image}
           email={email}
           phone={phone}
           faculty={faculty}
+          department={department || undefined}
           status={student?.status || "Unknown"}
           device={`${student?.device_access?.device || "Unknown"} - ${
             student?.device_access?.last_ip || "Unknown IP"

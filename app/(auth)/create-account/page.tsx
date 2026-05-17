@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import Cookies from '@/lib/cookies';
 import { ApiError } from '@/src/lib/api';
-import { startRegistrationOnboarding } from '@/src/lib/onboarding-selection';
+import { getPostAuthHref } from '@/src/lib/auth-post-login-redirect';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
 
@@ -36,7 +37,8 @@ function formatRegisterFieldErrors(errors: Record<string, string[]> | undefined)
 export default function CreateAccountPage() {
   const t = useTranslations('auth.createAccount');
   const router = useRouter();
-  const { register } = useAuthActions();
+  const locale = useLocale() || 'ar';
+  const { register, fetchCurrentUser } = useAuthActions();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -90,8 +92,13 @@ export default function CreateAccountPage() {
         device_name: DEVICE_NAME,
       });
 
-      startRegistrationOnboarding();
-      router.push('/select-university');
+      await fetchCurrentUser();
+
+      const userData = Cookies.get('user_data');
+      const user = userData ? JSON.parse(userData) : null;
+      const userRole = user?.attributes?.role;
+
+      router.push(getPostAuthHref(locale, userRole, user));
     } catch (err) {
       if (err instanceof ApiError) {
         const fieldMsg = formatRegisterFieldErrors(err.errors);

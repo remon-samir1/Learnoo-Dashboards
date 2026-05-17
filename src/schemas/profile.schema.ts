@@ -14,10 +14,16 @@ export const updateProfileSchema = z.object({
       message: "Invalid email address",
     }),
 
+  university_id: z.string().trim().optional(),
+  center_id: z.string().trim().optional(),
+  faculty_id: z.string().trim().optional(),
+  department_id: z.string().trim().optional(),
+
   image: z
-    .any()
+    .custom<File>((value) => value === undefined || value instanceof File, {
+      message: "Invalid image file",
+    })
     .optional()
-    .refine((file) => !file || file instanceof File, "Invalid image file")
     .refine(
       (file) => !file || file.size <= 5 * 1024 * 1024,
       "Image must be less than 5MB",

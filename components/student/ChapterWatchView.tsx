@@ -382,12 +382,60 @@ export default function ChapterWatchView({
       ? buildStudentStartExamHref(locale, String(examQuiz.id), attrs.course_id ?? null)
       : null;
 
+  const pdfToggleButton =
+    pdfUrl && pdfPanelVisible ? (
+      <button
+        type="button"
+        onClick={() => setShowPdf((v) => !v)}
+        className={
+          showPdf
+            ? 'inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-md border border-slate-500/90 bg-slate-800 px-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-slate-700 active:bg-slate-600 sm:h-10 sm:gap-2 sm:rounded-lg sm:border-white/35 sm:bg-black/65 sm:px-4 sm:py-1.5 sm:text-sm sm:backdrop-blur-sm sm:hover:bg-black/75'
+            : 'inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-md border border-[#4f63e8]/80 bg-[#2D43D1] px-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#2436b0] active:bg-[#1e2d96] sm:h-10 sm:gap-2 sm:rounded-lg sm:border-white/35 sm:bg-black/65 sm:px-4 sm:py-1.5 sm:text-sm sm:backdrop-blur-sm sm:hover:bg-black/75'
+        }
+        aria-label={showPdf ? t('hidePdf') : t('showPdf')}
+        aria-pressed={showPdf}
+      >
+        <FileText className="size-3.5 shrink-0 sm:size-4" aria-hidden />
+        <span className="max-w-[4.5rem] truncate sm:max-w-none">
+          {showPdf ? t('hidePdf') : t('showPdf')}
+        </span>
+      </button>
+    ) : null;
+
+  const pdfWatchPanel =
+    showPdf && pdfUrl && pdfPanelVisible ? (
+      <div className="flex h-full min-h-0 flex-col bg-white">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2">
+          <span className="text-sm font-semibold text-slate-800">{t('lectureMaterial')}</span>
+          <button
+            type="button"
+            onClick={() => setShowPdf(false)}
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            {t('hidePdf')}
+          </button>
+        </div>
+        <div className="watch-pdf-scroll min-h-[200px] flex-1 overflow-auto bg-slate-100 max-h-[min(55vh,520px)] sm:max-h-[min(70vh,720px)]">
+          <PdfPreviewModal
+            variant="inline"
+            expandToContainer
+            title={t('lectureMaterial')}
+            open={showPdf}
+            pdfUrl={pdfUrl}
+          />
+        </div>
+        <p className="hidden border-t border-slate-200 bg-slate-50 px-4 py-2 text-center text-[11px] text-slate-500 sm:block">
+          {t('pdfSyncHint')}
+        </p>
+      </div>
+    ) : null;
+
   return (
     <div
       className="min-h-screen overflow-x-clip bg-[#0b1426] pb-28 text-slate-100 [-webkit-tap-highlight-color:transparent] sm:pb-[max(2.5rem,env(safe-area-inset-bottom,0px))]"
       dir={dir}
     >
-      <div className="mx-auto w-full max-w-6xl px-6 pt-2 pb-1 sm:px-6 sm:pb-2 sm:pt-6 lg:px-8">
+      <div className="mx-auto w-full max-w-6xl px-4 pt-2 pb-1 sm:px-6 sm:pb-2 sm:pt-6 lg:px-8">
         <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <Link
@@ -416,22 +464,13 @@ export default function ChapterWatchView({
                 {viewsBadge}
               </span>
             ) : null}
-            {pdfUrl && pdfPanelVisible ? (
-              <button
-                type="button"
-                onClick={() => setShowPdf((v) => !v)}
-                className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/5 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10 active:bg-white/15 sm:min-h-0 sm:w-auto sm:bg-transparent sm:px-4 sm:py-2 sm:text-sm"
-              >
-                <FileText className="size-4 shrink-0" aria-hidden />
-                <span className="truncate">{showPdf ? t('hidePdf') : t('showPdf')}</span>
-              </button>
-            ) : null}
+            {/* PDF toggle lives on the video player overlay only (not page header). */}
           </div>
         </div>
       </div>
 
-      <div className="relative left-1/2 w-screen max-w-[100dvw] -translate-x-1/2 [overscroll-behavior-x:contain] sm:static sm:left-auto sm:w-full sm:max-w-none sm:translate-x-0">
-        <div className="mx-auto w-full max-w-6xl sm:px-6 lg:px-8">
+      <div className="w-full max-w-full overflow-x-clip [-webkit-overflow-scrolling:touch]">
+        <div className="mx-auto w-full max-w-6xl px-0 sm:px-6 lg:px-8">
           <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
             <div className="flex flex-col">
               <div className="bg-black/50">
@@ -459,11 +498,13 @@ export default function ChapterWatchView({
                       switchingPlaybackLabel={t('switchingPlaybackMethod')}
                       showCustomControls
                       playsInline
-                      className="aspect-video w-full object-contain"
+                      className="aspect-video w-full max-w-full"
                       preload="metadata"
                       onFatalPlaybackError={onFatalPlaybackError}
                       initialWatermarkResolution={initialWatermarkResolution ?? null}
                       staticOverlaySubtitle={lectureTitle.trim() || attrs.title?.trim() || undefined}
+                      watchOverlay={pdfToggleButton}
+                      watchPanel={pdfWatchPanel}
                     >
                       
                       {tDetails('watchNoVideo')}
@@ -480,30 +521,12 @@ export default function ChapterWatchView({
                 )}
               </div>
 
-              {showPdf && pdfUrl && pdfPanelVisible ? (
-                <div className="flex flex-col border-t border-slate-700 bg-white">
-                  <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-2">
-                    <span className="text-sm font-semibold text-slate-800">{t('lectureMaterial')}</span>
-                  </div>
-                  <div className="max-h-[min(70vh,720px)] min-h-[280px] overflow-auto bg-slate-100">
-                    <PdfPreviewModal
-                      variant="inline"
-                      title={t('lectureMaterial')}
-                      open={showPdf}
-                      pdfUrl={pdfUrl}
-                    />
-                  </div>
-                  <p className="border-t border-slate-200 bg-slate-50 px-4 py-2 text-center text-[11px] text-slate-500">
-                    {t('pdfSyncHint')}
-                  </p>
-                </div>
-              ) : null}
             </div>
 
             {/* Under video: stacked on small screens; desktop = one row like design (Ask | Lecture parts inline | Discussions). */}
             <div className="border-t border-slate-800/80 bg-[#050915] px-0 py-0 sm:px-6 sm:py-3.5">
-              <div className="flex flex-col gap-3 px-7 pb-7 pt-7 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
-                <div className="flex justify-stretch max-md:-mx-7 max-md:border-b max-md:border-slate-800/90 md:min-w-0 md:justify-start">
+              <div className="flex flex-col gap-3 px-4 pb-6 pt-5 sm:px-5 sm:pb-7 sm:pt-7 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
+                <div className="flex justify-stretch max-md:border-b max-md:border-slate-800/90 md:min-w-0 md:justify-start">
                   {Number.isFinite(chapterIdForApi) ? (
                     <button
                       type="button"
@@ -583,7 +606,7 @@ export default function ChapterWatchView({
             </div>
 
             {Number.isFinite(chapterIdForApi) && composerOpen ? (
-              <div className="border-t border-slate-800/80 bg-[#050915] px-7 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-2 sm:px-6 sm:pb-5 sm:pt-1">
+              <div className="border-t border-slate-800/80 bg-[#050915] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-2 sm:px-6 sm:pb-5 sm:pt-1">
                 <div className="flex gap-3">
                   <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
                     <Image src={chapterThumb} alt="" fill className="object-cover" sizes="56px" />

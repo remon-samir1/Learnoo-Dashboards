@@ -1,7 +1,11 @@
-// app/[locale]/student/profile/editPage/page.tsx
-
-import EditProfileForm from "@//components/student/profile/EditProfileForm";
+import EditProfileForm from "@/components/student/profile/EditProfileForm";
 import { getUserProfileData } from "@/src/services/student/user.service";
+import {
+  getStudentCenterId,
+  getStudentDepartmentId,
+  getStudentFacultyId,
+  getStudentUniversityId,
+} from "@/src/lib/student-profile-completeness";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -12,6 +16,18 @@ type ProfileAttributes = {
   phone?: string | null;
   email?: string | null;
   image?: string | null;
+  university_id?: unknown;
+  faculty_id?: unknown;
+  university?: {
+    data?: {
+      id?: string | number | null;
+    } | null;
+  } | null;
+  faculty?: {
+    data?: {
+      id?: string | number | null;
+    } | null;
+  } | null;
 };
 
 type PageProps = {
@@ -43,8 +59,9 @@ export default async function Page({ params }: PageProps) {
       </main>
     );
   }
+
   return (
-    <main className=" bg-[#FAFAF8] p-6">
+    <main className="bg-[#FAFAF8] p-6">
       <div className="mx-auto max-w-6xl">
         <Link
           href={`/${locale}/student/profile`}
@@ -62,6 +79,10 @@ export default async function Page({ params }: PageProps) {
             phone: student?.phone || "",
             email: student?.email || "",
             image: student?.image || "",
+            university_id: getStudentUniversityId(student) ?? "",
+            center_id: getStudentCenterId(student) ?? "",
+            faculty_id: getStudentFacultyId(student) ?? "",
+            department_id: getStudentDepartmentId(student) ?? "",
           }}
         />
       </div>

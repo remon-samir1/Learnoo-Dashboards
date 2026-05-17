@@ -133,7 +133,7 @@ export default function LoginPage() {
       const userRole = user?.attributes?.role;
 
       sessionStorage.removeItem('registration_onboarding');
-      router.push(getPostAuthHref(locale, userRole));
+      router.push(getPostAuthHref(locale, userRole, user));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during login');
     } finally {

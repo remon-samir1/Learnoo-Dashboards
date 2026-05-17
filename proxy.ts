@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import getUserDataFromJWT from './lib/server.utils';
+import {
+  getStudentDashboardHref,
+  parseUserFromCookie,
+} from '@/src/lib/auth-post-login-redirect';
 
 export function proxy(request: NextRequest) {
   
@@ -23,7 +26,9 @@ export function proxy(request: NextRequest) {
       } else if (userRole === 'Doctor') {
         return NextResponse.redirect(new URL('/doctor/dashboard', request.url));
       } else if (userRole === 'Student' || userRole === 'Unknown') {
-        return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
+        const user = parseUserFromCookie(request.cookies.get('user_data')?.value);
+        const href = getStudentDashboardHref(locale, user);
+        return NextResponse.redirect(new URL(href, request.url));
       }
     }
     return NextResponse.next();
@@ -53,23 +58,46 @@ export function proxy(request: NextRequest) {
   const isStudentRoute =
     pathname === '/student' || /^\/(ar|en)\/student(\/|$)/.test(pathname);
 
-  // "Unknown" is common right after register; allow student app without forcing onboarding on login
+  // "Unknown" is common right after register; treat as student for app routes
   if (userRole === 'Unknown') {
-    if (isStudentRoute || onboardingRoutes.includes(pathname)) {
+    if (isStudentRoute) {
+      const user = parseUserFromCookie(request.cookies.get('user_data')?.value);
+      const targetHref = getStudentDashboardHref(locale, user);
+      const isCompleteProfilePage = pathname.includes('/student/complete-profile');
+
+      if (!isCompleteProfilePage && targetHref.endsWith('/complete-profile')) {
+        return NextResponse.redirect(new URL(targetHref, request.url));
+      }
+
+      return NextResponse.next();
+    }
+    if (onboardingRoutes.includes(pathname)) {
       return NextResponse.next();
     }
     if (isAdminRoute || isDoctorRoute) {
-      return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
+      const user = parseUserFromCookie(request.cookies.get('user_data')?.value);
+      const href = getStudentDashboardHref(locale, user);
+      return NextResponse.redirect(new URL(href, request.url));
     }
     return NextResponse.next();
   }
 
   if (pathname === '/student') {
-    return NextResponse.redirect(new URL(`/${locale}/student`, request.url));
+    const user = parseUserFromCookie(request.cookies.get('user_data')?.value);
+    const href = getStudentDashboardHref(locale, user);
+    return NextResponse.redirect(new URL(href, request.url));
   }
 
   if (isStudentRoute) {
-    if (userRole === 'Student') {
+    if (userRole === 'Student' || userRole === 'Unknown') {
+      const user = parseUserFromCookie(request.cookies.get('user_data')?.value);
+      const targetHref = getStudentDashboardHref(locale, user);
+      const isCompleteProfilePage = pathname.includes('/student/complete-profile');
+
+      if (!isCompleteProfilePage && targetHref.endsWith('/complete-profile')) {
+        return NextResponse.redirect(new URL(targetHref, request.url));
+      }
+
       return NextResponse.next();
     }
     if (userRole === 'Admin') {
