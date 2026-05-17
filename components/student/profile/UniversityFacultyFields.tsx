@@ -546,7 +546,7 @@ export default function UniversityFacultyFields({
 
         <label className="mb-2 block text-xs font-medium text-[var(--text-muted)]">
 
-          {t("center")}
+          {t("faculty")}
 
         </label>
 
@@ -582,7 +582,7 @@ export default function UniversityFacultyFields({
 
           >
 
-            <option value="">{t("selectCenter")}</option>
+            <option value="">{t("selectFaculty")}</option>
 
             {centerOptions.map((center) => (
 
@@ -614,7 +614,7 @@ export default function UniversityFacultyFields({
 
         <label className="mb-2 block text-xs font-medium text-[var(--text-muted)]">
 
-          {t("faculty")}
+          {t("center")}
 
         </label>
 
@@ -628,7 +628,7 @@ export default function UniversityFacultyFields({
 
           <p className="text-sm text-[var(--text-muted)]">
 
-            {t("selectCenterFirst")}
+            {t("selectFacultyFirst")}
 
           </p>
 
@@ -650,7 +650,7 @@ export default function UniversityFacultyFields({
 
           >
 
-            <option value="">{t("selectFaculty")}</option>
+            <option value="">{t("selectCenter")}</option>
 
             {facultyOptions.map((faculty) => (
 
@@ -678,7 +678,7 @@ export default function UniversityFacultyFields({
 
 
 
-      {showDepartmentField && onDepartmentChange ? (
+      {/* {showDepartmentField && onDepartmentChange ? (
 
         <div className="sm:col-span-2">
 
@@ -744,7 +744,7 @@ export default function UniversityFacultyFields({
 
         </div>
 
-      ) : null}
+      ) : null} */}
 
     </>
 

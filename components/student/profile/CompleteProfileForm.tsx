@@ -104,7 +104,7 @@ export default function CompleteProfileForm({
 
     if (!centerId) {
 
-      setCenterError(t("validation.centerRequired"));
+      setCenterError(t("validation.facultyRequired"));
 
       valid = false;
 
@@ -118,7 +118,7 @@ export default function CompleteProfileForm({
 
     if (!facultyId) {
 
-      setFacultyError(t("validation.facultyRequired"));
+      setFacultyError(t("validation.centerRequired"));
 
       valid = false;
 
