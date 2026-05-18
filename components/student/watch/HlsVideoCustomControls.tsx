@@ -25,6 +25,7 @@ export type HlsVideoCustomControlsProps = {
   shellRef: RefObject<HTMLDivElement | null>;
   qualityOptions?: QualityOption[];
   qualityValue?: number | 'auto';
+  visible?: boolean;
   onQualityChange?: (value: number | 'auto') => void;
   /** Trailing actions (e.g. PDF toggle) — shown in the control row on small screens. */
   endAction?: React.ReactNode;
@@ -44,6 +45,7 @@ export function HlsVideoCustomControls({
   qualityValue = 'auto',
   onQualityChange,
   endAction,
+  visible = true,
 }: HlsVideoCustomControlsProps) {
   const t = useTranslations('courses.studentWatch');
   const qualityLabel = (() => {
@@ -151,8 +153,23 @@ export function HlsVideoCustomControls({
   const rangeValue = max > 0 ? Math.min(current, max) : 0;
 
   return (
-    <div
-      className="relative z-30 w-full shrink-0 border-t border-slate-800/80 bg-[#0a0f18] px-2 py-2 sm:px-3 sm:py-2.5"
+   <div
+  className={`
+    absolute left-0 right-0 bottom-0
+    z-[9999]
+    w-full shrink-0
+    border-t border-slate-800/80
+    bg-[#0a0f18]/95
+    px-2 py-2
+    transition-all duration-300
+    sm:px-3 sm:py-2.5
+
+    ${
+      visible
+        ? "translate-y-0 opacity-100"
+        : "pointer-events-none translate-y-full opacity-0"
+    }
+  `}
       role="group"
       aria-label={t('videoControlsGroup')}
     >

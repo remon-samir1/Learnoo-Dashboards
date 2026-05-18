@@ -360,13 +360,25 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
     /** Fullscreen target: video + watermark + custom controls stay in one subtree. */
     const videoWrapperRef = useRef<HTMLDivElement | null>(null);
     const hlsInstanceRef = useRef<Hls | null>(null);
+    const [showControls, setShowControls] = useState(true);
+    const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const [qualityOptions, setQualityOptions] = useState<QualityOption[]>([]);
     const [selectedQuality, setSelectedQuality] = useState<number | 'auto'>('auto');
     const [autoQualityEnabled, setAutoQualityEnabled] = useState(true);
     const [showPlaybackSwitching, setShowPlaybackSwitching] = useState(false);
     const onFatalPlaybackErrorRef = useRef(onFatalPlaybackError);
     const hlsConfigRef = useRef(hlsConfig);
+const revealControls = useCallback(() => {
+  setShowControls(true);
 
+  if (controlsTimeoutRef.current) {
+    clearTimeout(controlsTimeoutRef.current);
+  }
+
+  controlsTimeoutRef.current = setTimeout(() => {
+    setShowControls(false);
+  }, 2000);
+}, []);
     useEffect(() => {
       onFatalPlaybackErrorRef.current = onFatalPlaybackError;
       hlsConfigRef.current = hlsConfig;
@@ -1028,11 +1040,12 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           '[&:fullscreen]:min-w-0 [&:fullscreen]:w-1/2 [&:fullscreen]:flex-[1_1_50%] [&:fullscreen]:basis-1/2',
         ].join(' ')}
       >
-        <div className={`relative w-full shrink-0 overflow-hidden bg-black ${viewportClass}`}>
+        <div  className={`group  relative w-full shrink-0 overflow-visible bg-black ${viewportClass}`}  onMouseMove={revealControls}
+  onMouseEnter={revealControls}>
           {videoStageGrid}
-        </div>
-        {showCustomControls ? (
+           {showCustomControls ? (
           <HlsVideoCustomControls
+           visible={showControls}
             videoRef={localRef}
             shellRef={videoWrapperRef}
             qualityOptions={qualityOptions}
@@ -1041,6 +1054,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             endAction={watchOverlay}
           />
         ) : null}
+        </div>
+       
       </div>
     );
 

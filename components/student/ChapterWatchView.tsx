@@ -490,7 +490,8 @@ export default function ChapterWatchView({
                       </Link>
                     </div>
                   ) : (
-                    <HlsVideoPlayer
+                   <div>
+                     <HlsVideoPlayer
                       id="watch-chapter-video"
                       key={`${videoSrc}|${mp4FallbackUrl}`}
                       ref={videoRef}
@@ -509,7 +510,10 @@ export default function ChapterWatchView({
                     >
                       
                       {tDetails('watchNoVideo')}
+                      
                     </HlsVideoPlayer>
+                    
+                   </div>
                   )
                 ) : (
                   <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
