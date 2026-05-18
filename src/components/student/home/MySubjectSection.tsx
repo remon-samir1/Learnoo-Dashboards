@@ -284,7 +284,7 @@ export default function MySubjectSection({
 
               const content = (
                 <>
-                  <div className="relative h-36 w-full overflow-hidden bg-gray-100">
+                  <div className="relative h-36 w-full overflow-hidden ">
                     {course.attributes.thumbnail ? (
                       <Image
                         src={
@@ -293,9 +293,9 @@ export default function MySubjectSection({
                         alt={
                           course.attributes.title
                         }
-                        width={400}
-                        height={220}
-                        className="h-full w-full object-cover transition group-hover:scale-105"
+                        width={75}
+                        height={75}
+                        className="h-75 w-75 object-cover transition group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-blue-50">
