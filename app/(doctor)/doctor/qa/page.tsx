@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Filter
 } from 'lucide-react';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 
 interface Question {
   id: number;
@@ -120,7 +121,7 @@ const questions: Question[] = [
 ];
 
 const contributors: Contributor[] = [
-  { id: 1, name: 'Dr. Nada S.', avatar: 'NS', avatarBg: 'bg-[#4F46E5]', points: 2840, rank: 1 },
+  { id: 1, name: 'Doctor', avatar: 'NS', avatarBg: 'bg-[#4F46E5]', points: 2840, rank: 1 },
   { id: 2, name: 'Ahmed K.', avatar: 'AK', avatarBg: 'bg-[#10B981]', points: 2156, rank: 2 },
   { id: 3, name: 'Sara M.', avatar: 'SM', avatarBg: 'bg-[#F59E0B]', points: 1890, rank: 3 },
   { id: 4, name: 'Nour A.', avatar: 'NA', avatarBg: 'bg-[#EC4899]', points: 1543, rank: 4 },
@@ -138,6 +139,22 @@ const tabs = [
 export default function QAPage() {
   const [activeTab, setActiveTab] = useState('latest');
   const [searchQuery, setSearchQuery] = useState('');
+  const { user, fullName } = useCurrentUser();
+
+  // Get user initials
+  const getInitials = () => {
+    if (!user) return '??';
+    const first = user.attributes.first_name?.charAt(0) || '';
+    const last = user.attributes.last_name?.charAt(0) || '';
+    return `${first}${last}`.toUpperCase() || '??';
+  };
+
+  const displayName = fullName || (user ? `${user.attributes.first_name} ${user.attributes.last_name}` : 'Doctor');
+  const initials = getInitials();
+
+  const dynamicContributors = contributors.map(c => 
+    c.id === 1 ? { ...c, name: displayName, avatar: initials } : c
+  );
 
   return (
     <div className="flex flex-col gap-6 pb-8">
@@ -310,7 +327,7 @@ export default function QAPage() {
               <h3 className="text-sm font-semibold text-[#1E293B]">Top Contributors</h3>
             </div>
             <div className="space-y-3">
-              {contributors.map((contributor) => (
+              {dynamicContributors.map((contributor) => (
                 <div key={contributor.id} className="flex items-center gap-3">
                   <span className="text-sm font-bold text-[#94A3B8] w-4">#{contributor.rank}</span>
                   <div className={`w-8 h-8 ${contributor.avatarBg} rounded-full flex items-center justify-center text-white text-xs font-bold`}>
