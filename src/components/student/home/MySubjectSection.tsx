@@ -388,7 +388,7 @@ export default function MySubjectSection({
       </section>
 
       {activationCourse && (
-        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
             <div className="mb-5 flex items-start justify-between gap-4">
               <div>
