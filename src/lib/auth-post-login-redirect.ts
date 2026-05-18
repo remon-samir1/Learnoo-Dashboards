@@ -34,8 +34,8 @@ export function getPostAuthHref(
   user?: User | null,
 ): string {
   const r = role?.trim();
-  if (r === 'Admin' || r === 'Instructor') return '/dashboard';
-  if (r === 'Doctor') return '/doctor/dashboard';
+  if (r === 'Admin') return '/dashboard';
+  if (r === 'Instructor' || r === 'Doctor') return '/doctor/dashboard';
   if (isAppRole(r) && isStudentLikeRole(r)) {
     return getStudentDashboardHref(locale, user ?? null);
   }
