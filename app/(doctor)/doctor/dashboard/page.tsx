@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { 
   Users, 
@@ -10,6 +12,7 @@ import {
   Star,
   TrendingUp
 } from 'lucide-react';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 
 export default function DoctorDashboardPage() {
   return (
@@ -80,6 +83,9 @@ export default function DoctorDashboardPage() {
 }
 
 function WelcomeBanner() {
+  const { user } = useCurrentUser();
+  const firstName = user?.attributes.first_name || 'Doctor';
+
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] p-6 text-white">
       {/* Background Pattern */}
@@ -93,7 +99,7 @@ function WelcomeBanner() {
       <div className="relative flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-white/80 mb-1">Monday, March 9, 2026</p>
-          <h1 className="text-2xl font-bold mb-2">Good morning, Dr. Nada! 👋</h1>
+          <h1 className="text-2xl font-bold mb-2">Good morning, {firstName}! 👋</h1>
           <p className="text-sm text-white/90 mb-4">
             You have <span className="font-bold">3 live classes</span> this week and <span className="font-bold">47 new submissions</span> to review.
           </p>

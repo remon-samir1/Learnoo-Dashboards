@@ -6,9 +6,32 @@ import { Search, Bell, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { logout } from '@/lib/auth';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useCurrentUser } from '@/src/hooks/useAuth';
+import { usePlatformFeature } from '@/src/hooks';
 
 export default function DoctorHeader() {
   const t = useTranslations();
+  const { user, fullName } = useCurrentUser();
+  const { data: features } = usePlatformFeature();
+
+  const getFeatureValue = (key: string, defaultValue: string = ''): string => {
+    if (!features) return defaultValue;
+    const feature = features.find((f) => f.attributes.key === key);
+    return feature?.attributes.value || defaultValue;
+  };
+
+  const primaryColor = getFeatureValue('primary_color', '#4F46E5');
+
+  // Get user initials
+  const getInitials = () => {
+    if (!user) return '??';
+    const first = user.attributes.first_name?.charAt(0) || '';
+    const last = user.attributes.last_name?.charAt(0) || '';
+    return `${first}${last}`.toUpperCase() || '??';
+  };
+
+  const displayName = fullName || (user ? `${user.attributes.first_name} ${user.attributes.last_name}` : 'Doctor');
+
   return (
     <header className="h-16 bg-white flex items-center justify-between px-6 sticky top-0 z-30">
       {/* Search */}
@@ -36,14 +59,20 @@ export default function DoctorHeader() {
 
         {/* User Profile */}
         <div className="flex items-center gap-3 pl-4 border-l border-[#E5E7EB]">
-          <div className="w-8 h-8 rounded-full overflow-hidden">
-            <img 
-              src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop&crop=face" 
-              alt="Dr. Nada"
-              className="w-full h-full object-cover"
-            />
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+            style={{
+              backgroundColor: `${primaryColor}15`,
+            }}
+          >
+            <span
+              className="text-[12px] font-bold"
+              style={{ color: primaryColor }}
+            >
+              {getInitials()}
+            </span>
           </div>
-          <span className="text-sm font-medium text-[#1E293B]">Dr. Nada</span>
+          <span className="text-sm font-medium text-[#1E293B]">{displayName}</span>
         </div>
 
         {/* Logout */}
