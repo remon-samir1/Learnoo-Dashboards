@@ -140,7 +140,7 @@ function buildUrl(path: string): string {
 async function handleResponse<T>(response: Response, skipAuthRedirect: boolean = false): Promise<T> {
   if (!response.ok) {
     // Handle unauthorized errors - redirect to login (unless skipped)
-    if ((response.status === 401 || response.status === 403) && !skipAuthRedirect) {
+    if ((response.status === 401 ) && !skipAuthRedirect) {
       // Clear auth cookies
       Cookies.remove('token');
       Cookies.remove('user_role');
