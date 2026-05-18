@@ -1,10 +1,6 @@
 import { isStudentAcademicProfileComplete } from '@/src/lib/student-profile-completeness';
 import type { User } from '@/src/types';
-
-function isStudentRole(role: string | null | undefined): boolean {
-  const r = role?.trim();
-  return r === 'Student' || r === 'Unknown';
-}
+import { isAppRole, isStudentLikeRole } from '@/src/types/user-role';
 
 /**
  * Student app entry: dashboard or complete-profile when university/faculty are missing.
@@ -38,10 +34,10 @@ export function getPostAuthHref(
   user?: User | null,
 ): string {
   const r = role?.trim();
-  if (r === 'Admin') return '/dashboard';
+  if (r === 'Admin' || r === 'Instructor') return '/dashboard';
   if (r === 'Doctor') return '/doctor/dashboard';
-  if (isStudentRole(r)) {
+  if (isAppRole(r) && isStudentLikeRole(r)) {
     return getStudentDashboardHref(locale, user ?? null);
   }
-  return '/dashboard';
+  return '/login';
 }

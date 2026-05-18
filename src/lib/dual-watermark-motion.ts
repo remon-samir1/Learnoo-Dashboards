@@ -15,20 +15,33 @@ export const DUAL_WATERMARK_MOTION_PATTERNS: ReadonlyArray<{
   },
 ] as const;
 
-/** Matches exam watermark: smooth continuous loop across the full frame. */
-export const DUAL_WATERMARK_MOVEMENT_DURATION_S = 8;
+/**
+ * Default duration for one full dual-motion loop (exam + video) when admin interval is unset.
+ * Higher = slower movement.
+ */
+export const DUAL_WATERMARK_MOVEMENT_DURATION_S = 28;
 
+const MIN_LOOP_DURATION_S = 16;
+const MAX_LOOP_DURATION_S = 120;
+
+/**
+ * Maps admin watermark settings to dual-motion loop duration.
+ *
+ * - Admin **Dynamic position** + **Change interval** (`dynamic_interval`, 1–5s in settings)
+ *   control speed for the smooth moving watermark on exams and video.
+ * - Interval is scaled to a full path cycle (not 1:1 with the admin preview “jump” tiles).
+ * - When dynamic position is off, `dynamic_interval` still slows or speeds the loop if set.
+ */
 export function resolveDualWatermarkDurationSeconds(
   config: Pick<WatermarkConfig, 'dynamicPosition' | 'dynamicInterval'> | null | undefined,
 ): number {
-  if (!config?.dynamicPosition) {
-    return DUAL_WATERMARK_MOVEMENT_DURATION_S;
+  const interval = Number(config?.dynamicInterval);
+  if (Number.isFinite(interval) && interval > 0) {
+    const scale = config?.dynamicPosition ? 10 : 8;
+    const loopSec = interval * scale;
+    return Math.min(MAX_LOOP_DURATION_S, Math.max(MIN_LOOP_DURATION_S, loopSec));
   }
-  const sec = Number(config.dynamicInterval);
-  if (!Number.isFinite(sec) || sec <= 0) {
-    return DUAL_WATERMARK_MOVEMENT_DURATION_S;
-  }
-  return Math.max(DUAL_WATERMARK_MOVEMENT_DURATION_S, sec);
+  return DUAL_WATERMARK_MOVEMENT_DURATION_S;
 }
 
 export function dualWatermarkTextSizeClass(size: WatermarkConfig['size'] | undefined): string {

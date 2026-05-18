@@ -950,14 +950,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
     }, [src, mp4FallbackUrl, switchingPlaybackLabel]);
 
     const hasWatchPanel = Boolean(watchPanel);
-    const viewportClass = [
-      className?.replace(/\bflex-1\b/g, '').trim() || 'aspect-video w-full',
-      hasWatchPanel
-        ? 'max-sm:max-h-[min(calc(100vw*9/16),38vh)]'
-        : 'max-sm:max-h-[min(calc(100vw*9/16),52vh)]',
-    ]
-      .filter(Boolean)
-      .join(' ');
+    const viewportClass =
+      className?.replace(/\bflex-1\b/g, '').trim() || 'aspect-video w-full max-w-full';
 
     const videoStageGrid = (
       <div className="relative grid h-full min-h-0 min-w-0 grid-cols-1 grid-rows-1">
@@ -1015,11 +1009,10 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
 
     const wrapperClass = showCustomControls
       ? [
-        'relative flex min-h-0 min-w-0 w-full flex-col overflow-hidden bg-black',
+        'relative flex min-h-0 min-w-0 w-full overflow-hidden bg-black',
+        hasWatchPanel ? 'flex-row items-stretch gap-0' : 'flex-col',
         '[&:fullscreen]:flex [&:fullscreen]:h-full [&:fullscreen]:max-h-none [&:fullscreen]:w-full',
-        hasWatchPanel
-          ? '[&:fullscreen]:flex-row [&:fullscreen]:items-stretch [&:fullscreen]:gap-0'
-          : '',
+        hasWatchPanel ? '[&:fullscreen]:flex-row [&:fullscreen]:items-stretch' : '',
       ]
         .filter(Boolean)
         .join(' ')
@@ -1028,9 +1021,11 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
     const videoColumn = (
       <div
         className={[
-          'relative flex w-full min-w-0 flex-col',
-          hasWatchPanel ? 'shrink-0' : 'min-h-0 flex-1',
-          '[&:fullscreen]:min-w-0 [&:fullscreen]:flex-1 [&:fullscreen]:basis-[46%]',
+          'relative flex min-w-0 flex-col',
+          hasWatchPanel
+            ? 'w-1/2 min-w-0 flex-[1_1_50%] basis-1/2'
+            : 'w-full min-h-0 flex-1',
+          '[&:fullscreen]:min-w-0 [&:fullscreen]:w-1/2 [&:fullscreen]:flex-[1_1_50%] [&:fullscreen]:basis-1/2',
         ].join(' ')}
       >
         <div className={`relative w-full shrink-0 overflow-hidden bg-black ${viewportClass}`}>
@@ -1053,7 +1048,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       <div ref={videoWrapperRef} className={wrapperClass}>
         {videoColumn}
         {watchPanel ? (
-          <div className="watch-pdf-shell relative z-40 flex min-h-0 shrink-0 flex-col overflow-hidden border-t border-slate-700/80 [&:fullscreen]:h-full [&:fullscreen]:max-h-none [&:fullscreen]:min-h-0 [&:fullscreen]:min-w-0 [&:fullscreen]:flex-1 [&:fullscreen]:basis-[54%] [&:fullscreen]:border-t-0 [&:fullscreen]:border-s border-slate-700/80 [&_.watch-pdf-scroll]:max-h-none [&_.watch-pdf-scroll]:min-h-0 [&_.watch-pdf-scroll]:flex-1">
+          <div className="watch-pdf-shell relative z-40 flex h-full min-h-0 w-1/2 min-w-0 flex-[1_1_50%] basis-1/2 flex-col overflow-hidden border-s border-slate-600/90 bg-[#f1f5f9] [&:fullscreen]:h-full [&:fullscreen]:max-h-none [&:fullscreen]:min-h-0 [&:fullscreen]:min-w-0 [&:fullscreen]:w-1/2 [&:fullscreen]:flex-[1_1_50%] [&:fullscreen]:basis-1/2 [&:fullscreen]:border-t-0 [&:fullscreen]:border-s [&_.watch-pdf-scroll]:min-h-0 [&_.watch-pdf-scroll]:flex-1 [&_.watch-pdf-scroll]:overflow-y-auto">
             {watchPanel}
           </div>
         ) : null}

@@ -1296,6 +1296,16 @@ export interface CourseAttributes {
 
 
 
+  /** Social / community links from GET /v1/course/:id (`social-links` on the payload). */
+  'social-links'?: unknown[];
+  /** @deprecated Use `social-links` — kept for older API shapes. */
+  social_links?: unknown[];
+
+  /** Community posts from GET /v1/course/:id (`posts` on the payload). */
+  posts?: unknown[];
+
+
+
   category_id?: number;
 
 

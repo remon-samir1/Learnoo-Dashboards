@@ -37,6 +37,8 @@ import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import type { Chapter, Course, Lecture, Note } from '@/src/types';
 import StudentCourseNotesTab from '@/components/student/StudentCourseNotesTab';
 import StudentCommunityFeed from '@/components/student/community/StudentCommunityFeed';
+import { normalizeCoursePosts } from '@/src/lib/normalize-course-posts';
+import { normalizeCourseSocialLinks } from '@/src/lib/normalize-social-links';
 import StudentCourseLibraryTab from '@/components/student/StudentCourseLibraryTab';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
@@ -450,6 +452,9 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
     [course?.attributes?.lectures]
   );
 
+  const courseSocialLinks = useMemo(() => normalizeCourseSocialLinks(course), [course]);
+  const coursePosts = useMemo(() => normalizeCoursePosts(course), [course]);
+
   const heroThumb =
     course?.attributes?.thumbnail?.trim() || '/logo.svg';
   const instructorName =
@@ -673,7 +678,15 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
               />
             )}
             {tab === 'community' && (
-              <StudentCommunityFeed courseId={numericId} embedded />
+              <StudentCommunityFeed
+                courseId={numericId}
+                embedded
+                socialLinksFromCourse={courseSocialLinks}
+                postsFromCourse={coursePosts}
+                onPostsRefresh={() => {
+                  void refetch();
+                }}
+              />
             )}
             {tab === 'library' && (
               <StudentCourseLibraryTab

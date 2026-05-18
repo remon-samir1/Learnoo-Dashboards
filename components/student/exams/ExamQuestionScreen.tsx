@@ -10,6 +10,7 @@ import {
   resolveEnabledWatermarkBucket,
   type WatermarkResolution,
 } from '@/src/lib/watermark-from-features';
+import { examCopyGuardContentProps } from '@/src/hooks/useExamCopyGuard';
 import ExamWatermark from './WaterMarkDyna';
 export type ExamQuestionScreenMode = 'take' | 'review';
 
@@ -94,6 +95,8 @@ export function ExamQuestionScreen({
   belowArticle,
 }: ExamQuestionScreenProps) {
   const qNum = currentQuestionNumber;
+  const copyGuardActive = mode === 'take' || mode === 'review';
+  const copyGuardProps = examCopyGuardContentProps(copyGuardActive);
   const questionImageSrc = resolveStudentExamMediaUrl(question.attributes.image);
 const { user } = useCurrentUser();
 
@@ -157,7 +160,11 @@ const watermarkText = useMemo(() => {
   );
 
   return (
-    <div className="flex w-full min-w-0 flex-col pb-6 sm:pb-8" dir={dir}>
+    <div
+      className={`flex w-full min-w-0 flex-col pb-6 sm:pb-8${copyGuardActive ? ' select-none' : ''}`}
+      dir={dir}
+      {...copyGuardProps}
+    >
       {headerBleed ? (
         <div className="-mx-5 -mt-5 mb-4 w-[calc(100%+2.5rem)] max-w-none shrink-0 lg:-mx-16 lg:w-[calc(100%+8rem)]">
           {headerInner}
@@ -168,16 +175,20 @@ const watermarkText = useMemo(() => {
 
       <div className="mx-auto   flex w-full max-w-[832px] flex-col gap-4 sm:gap-5">
         
-        <article className="relative flex w-full flex-col overflow-hidden rounded-xl border border-[#E8ECF2] bg-white px-4 py-4 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:rounded-2xl sm:px-5 sm:py-5">
-          {watermarkConfig?.config.enabled ? (
-            <ExamWatermark text={watermarkText} watermarkConfig={watermarkConfig} />
-          ) : null}
-
-          <div className="relative z-10 flex flex-col gap-4 sm:gap-5">
+        <article
+          className={`relative isolate flex w-full flex-col overflow-hidden rounded-xl border border-[#E8ECF2] bg-white px-4 py-4 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:rounded-2xl sm:px-5 sm:py-5${copyGuardActive ? ' select-none' : ''}`}
+          {...copyGuardProps}
+        >
+          <div className="relative z-0 flex flex-col gap-4 sm:gap-5">
           {studentName ? (
             <p className="text-[11px] font-medium text-[#94A3B8] sm:text-[12px]">{studentName}</p>
           ) : null}
 
+          <div
+            className="relative min-h-[min(38vh,300px)] flex-1 overflow-hidden sm:min-h-[min(42vh,340px)]"
+            aria-label={examTitle}
+          >
+          <div className="relative z-0 flex flex-col gap-4 sm:gap-5">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <span
               className="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold sm:px-3 sm:py-1 sm:text-[12px]"
@@ -320,7 +331,14 @@ const watermarkText = useMemo(() => {
             </div>
           )}
 
-          <div className="mt-auto flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
+          </div>
+
+          {watermarkConfig?.config.enabled && watermarkText ? (
+            <ExamWatermark text={watermarkText} watermarkConfig={watermarkConfig} />
+          ) : null}
+          </div>
+
+          <div className="relative z-10 mt-auto flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
             {articleFooter}
           </div>
           </div>
