@@ -20,7 +20,7 @@ export default function ExamWatermark({
       size={config?.size}
       rotation={config?.rotation}
       config={config ?? null}
-      className="z-0"
+      className="z-20"
     />
   );
 }

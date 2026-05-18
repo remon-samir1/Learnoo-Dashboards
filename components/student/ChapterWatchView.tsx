@@ -405,17 +405,20 @@ export default function ChapterWatchView({
   const pdfWatchPanel =
     showPdf && pdfUrl && pdfPanelVisible ? (
       <div className="flex h-full min-h-0 flex-col bg-white">
-        <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-slate-50 px-4 py-2">
-          <span className="text-sm font-semibold text-slate-800">{t('lectureMaterial')}</span>
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-[#f8fafc] px-3 py-2.5 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <FileText className="size-4 shrink-0 text-[#2D43D1]" aria-hidden />
+            <span className="truncate text-sm font-semibold text-slate-900">{t('lectureMaterial')}</span>
+          </div>
           <button
             type="button"
             onClick={() => setShowPdf(false)}
-            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-xs"
           >
             {t('hidePdf')}
           </button>
         </div>
-        <div className="watch-pdf-scroll min-h-[200px] flex-1 overflow-auto bg-slate-100 max-h-[min(55vh,520px)] sm:max-h-[min(70vh,720px)]">
+        <div className="watch-pdf-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch]">
           <PdfPreviewModal
             variant="inline"
             expandToContainer
@@ -424,7 +427,7 @@ export default function ChapterWatchView({
             pdfUrl={pdfUrl}
           />
         </div>
-        <p className="hidden border-t border-slate-200 bg-slate-50 px-4 py-2 text-center text-[11px] text-slate-500 sm:block">
+        <p className="hidden shrink-0 border-t border-slate-200 bg-[#f8fafc] px-4 py-2 text-center text-[11px] text-slate-500 sm:block">
           {t('pdfSyncHint')}
         </p>
       </div>
@@ -464,7 +467,6 @@ export default function ChapterWatchView({
                 {viewsBadge}
               </span>
             ) : null}
-            {/* PDF toggle lives on the video player overlay only (not page header). */}
           </div>
         </div>
       </div>

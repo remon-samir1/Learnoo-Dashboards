@@ -9,7 +9,6 @@ import { communityPostRelativeTime, communityPostTypeBadgeClasses } from '@/src/
 import { pickPostImageUrl } from '@/src/lib/community-post-media';
 import { useCreateComment } from '@/src/hooks/useComments';
 import { useCreatePost, usePosts, useReactToPost } from '@/src/hooks/usePosts';
-import { useSocialLinks } from '@/src/hooks/useSocialLinks';
 import type { CreatePostRequest, Post, SocialLink } from '@/src/types';
 
 const POST_TIME_AGO_PREFIX = 'community.posts.timeAgo';
@@ -19,6 +18,14 @@ export type StudentCommunityFeedProps = {
   courseId?: number;
   /** Hide page-level heading (e.g. embedded in course details tab). */
   embedded?: boolean;
+  /** Main community page: list posts/social via GET only (no create, reply, or react). */
+  readOnly?: boolean;
+  /** From GET /v1/course/:id `social-links` only (no separate social-link list API). */
+  socialLinksFromCourse?: SocialLink[];
+  /** From GET /v1/course/:id `posts` only (no separate posts list API). */
+  postsFromCourse?: Post[];
+  /** Refetch course details after create / reply / react when using `postsFromCourse`. */
+  onPostsRefresh?: () => void | Promise<void>;
 };
 
 type FeedTab = 'all' | 'post' | 'summary' | 'question';
@@ -62,11 +69,14 @@ function SocialLinkCard({ link, joinLabel }: { link: SocialLink; joinLabel: stri
         </div>
         <ExternalLink className="size-4 shrink-0 text-white/90" aria-hidden />
       </div>
-      <h3 className="mb-1 text-[15px] font-bold text-white">{link.attributes.title}</h3>
+      <h3 className="text-[15px] font-bold leading-snug text-white sm:text-base">{link.attributes.title}</h3>
       {link.attributes.subtitle?.trim() ? (
-        <p className="mb-1 text-[13px] text-white/90">{link.attributes.subtitle}</p>
+        <p className="mt-1 text-[13px] leading-snug text-white/85">{link.attributes.subtitle}</p>
       ) : null}
-      <p className="mb-0 text-[13px] text-white/80">{joinLabel}</p>
+      <p className="mt-auto flex items-center gap-1.5 pt-4 text-[13px] font-medium text-white/90">
+        <span>{joinLabel}</span>
+        <ExternalLink className="size-3.5 shrink-0 opacity-90" aria-hidden />
+      </p>
     </>
   );
 
@@ -76,7 +86,7 @@ function SocialLinkCard({ link, joinLabel }: { link: SocialLink; joinLabel: stri
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={`flex min-h-[140px] flex-col rounded-2xl p-6 text-start shadow-md transition hover:opacity-95 ${inactive ? 'pointer-events-none opacity-60' : ''}`}
+        className={`flex min-h-[148px] flex-col rounded-2xl p-5 text-start shadow-md transition sm:min-h-[156px] sm:p-6 ${inactive ? 'pointer-events-none opacity-60' : 'hover:opacity-95 hover:shadow-lg'}`}
         style={{ backgroundColor: bg }}
       >
         {inner}
@@ -86,7 +96,7 @@ function SocialLinkCard({ link, joinLabel }: { link: SocialLink; joinLabel: stri
 
   return (
     <div
-      className={`flex min-h-[140px] flex-col rounded-2xl p-6 ${inactive ? 'opacity-60' : 'opacity-80'}`}
+      className={`flex min-h-[148px] flex-col rounded-2xl p-5 sm:min-h-[156px] sm:p-6 ${inactive ? 'opacity-60' : 'opacity-80'}`}
       style={{ backgroundColor: bg }}
     >
       {inner}
@@ -97,6 +107,10 @@ function SocialLinkCard({ link, joinLabel }: { link: SocialLink; joinLabel: stri
 export default function StudentCommunityFeed({
   courseId,
   embedded = false,
+  readOnly = false,
+  socialLinksFromCourse,
+  postsFromCourse,
+  onPostsRefresh,
 }: StudentCommunityFeedProps = {}) {
   const locale = useLocale();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
@@ -104,10 +118,23 @@ export default function StudentCommunityFeed({
   const tPage = useTranslations('courses.studentCommunity');
   const scopedCourseId =
     courseId !== undefined && Number.isFinite(courseId) && courseId > 0 ? courseId : undefined;
-  const { data: postsRaw, isLoading: postsLoading, error: postsError, refetch: refetchPosts } =
-    usePosts(scopedCourseId != null ? scopedCourseId : null);
-  const { data: socialRaw, isLoading: socialLoading, error: socialError } =
-    useSocialLinks(scopedCourseId != null ? scopedCourseId : null);
+  const useCoursePosts = postsFromCourse !== undefined;
+  const {
+    data: postsFetched,
+    isLoading: postsLoadingFetched,
+    error: postsErrorFetched,
+    refetch: refetchPostsFetched,
+  } = usePosts(scopedCourseId != null ? scopedCourseId : null, { enabled: !useCoursePosts });
+  const postsRaw = useCoursePosts ? postsFromCourse : postsFetched;
+  const postsLoading = useCoursePosts ? false : postsLoadingFetched;
+  const postsError = useCoursePosts ? null : postsErrorFetched;
+  const refetchPosts = useCallback(async () => {
+    if (useCoursePosts && onPostsRefresh) {
+      await onPostsRefresh();
+      return;
+    }
+    await refetchPostsFetched();
+  }, [useCoursePosts, onPostsRefresh, refetchPostsFetched]);
   const { mutate: createPost, isLoading: isCreating } = useCreatePost();
   const { mutate: createComment, isLoading: isReplying } = useCreateComment();
   const { mutate: reactToPost } = useReactToPost();
@@ -117,7 +144,7 @@ export default function StudentCommunityFeed({
   const [replyTarget, setReplyTarget] = useState<Post | null>(null);
   const [reactingId, setReactingId] = useState<string | null>(null);
 
-  const socialLinks = socialRaw ?? [];
+  const socialLinks = socialLinksFromCourse ?? [];
 
   const topPosts = useMemo(() => {
     const list = postsRaw ?? [];
@@ -245,28 +272,31 @@ export default function StudentCommunityFeed({
           <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] sm:text-3xl">{tPage('pageTitle')}</h1>
           <p className="mt-2 text-sm text-[#64748B] sm:text-base">{tPage('pageSubtitle')}</p>
         </header>
-      ) : null}
+      ) : (
+        <header className="mb-6 max-w-4xl">
+          <h2 className="text-xl font-bold tracking-tight text-[#0F172A] sm:text-2xl">{tPage('pageTitle')}</h2>
+          <p className="mt-1.5 text-sm text-[#64748B]">{tPage('pageSubtitle')}</p>
+        </header>
+      )}
 
-      {/* <section className="mb-10">
-        <h2 className="mb-4 text-lg font-bold text-[#1E293B]">{tPage('socialSectionTitle')}</h2>
-        {socialLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="size-8 animate-spin text-[#2137D6]" />
-          </div>
-        ) : socialError ? (
-          <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-800">{tPage('socialError')}</p>
-        ) : socialLinks.length === 0 ? (
-          <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-8 text-center text-sm text-[#64748B]">
-            {tPage('socialEmpty')}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-            {socialLinks.map((link) => (
-              <SocialLinkCard key={link.id} link={link} joinLabel={tPage('socialJoinCta')} />
-            ))}
-          </div>
-        )}
-      </section> */}
+      {embedded ? (
+        <section className="mb-8" aria-labelledby="course-social-links-heading">
+          <h3 id="course-social-links-heading" className="sr-only">
+            {tPage('socialSectionTitle')}
+          </h3>
+          {socialLinks.length === 0 ? (
+            <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-8 text-center text-sm text-[#64748B]">
+              {tPage('socialEmpty')}
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+              {socialLinks.map((link) => (
+                <SocialLinkCard key={link.id} link={link} joinLabel={tPage('socialJoinCta')} />
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
 
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 flex-1 overflow-x-auto">
@@ -286,14 +316,16 @@ export default function StudentCommunityFeed({
             ))}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2137D6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3]"
-        >
-          <Plus className="size-4" aria-hidden />
-          {tPage('createPost')}
-        </button>
+        {!readOnly ? (
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2137D6] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3]"
+          >
+            <Plus className="size-4" aria-hidden />
+            {tPage('createPost')}
+          </button>
+        ) : null}
       </div>
 
       {postsError ? (
@@ -386,32 +418,41 @@ export default function StudentCommunityFeed({
                         <MessageSquare className="size-[18px] shrink-0" aria-hidden />
                         {tPage('commentsCount', { count: comments })}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => openReplyModal(post)}
-                        disabled={isCreating || isReplying}
-                        className="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-[13px] font-semibold text-[#2137D6] transition hover:bg-[#EEF2FF] hover:text-[#1a2bb3] disabled:opacity-50"
-                      >
-                        <Reply className="size-[18px] shrink-0 rtl:scale-x-[-1]" aria-hidden />
-                        {tPage('addComment')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleReact(post)}
-                        disabled={reactingId !== null}
-                        className={`inline-flex items-center gap-2 rounded-lg px-2 py-1 text-[13px] font-semibold transition ${liked ? 'text-[#2137D6]' : 'text-[#64748B] hover:text-[#1E293B]'
-                          } disabled:opacity-50`}
-                        aria-pressed={liked}
-                        aria-label={tPage('like')}
-                      >
-                        <ThumbsUp
-                          className="size-[18px] shrink-0"
-                          strokeWidth={2}
-                          fill={liked ? 'currentColor' : 'none'}
-                          aria-hidden
-                        />
-                        <span>{reactions}</span>
-                      </button>
+                      {readOnly ? (
+                        <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-[#64748B]">
+                          <ThumbsUp className="size-[18px] shrink-0" strokeWidth={2} aria-hidden />
+                          {tPage('like')}: {reactions}
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => openReplyModal(post)}
+                            disabled={isCreating || isReplying}
+                            className="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-[13px] font-semibold text-[#2137D6] transition hover:bg-[#EEF2FF] hover:text-[#1a2bb3] disabled:opacity-50"
+                          >
+                            <Reply className="size-[18px] shrink-0 rtl:scale-x-[-1]" aria-hidden />
+                            {tPage('addComment')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleReact(post)}
+                            disabled={reactingId !== null}
+                            className={`inline-flex items-center gap-2 rounded-lg px-2 py-1 text-[13px] font-semibold transition ${liked ? 'text-[#2137D6]' : 'text-[#64748B] hover:text-[#1E293B]'
+                              } disabled:opacity-50`}
+                            aria-pressed={liked}
+                            aria-label={tPage('like')}
+                          >
+                            <ThumbsUp
+                              className="size-[18px] shrink-0"
+                              strokeWidth={2}
+                              fill={liked ? 'currentColor' : 'none'}
+                              aria-hidden
+                            />
+                            <span>{reactions}</span>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -421,14 +462,16 @@ export default function StudentCommunityFeed({
         </ul>
       )}
 
-      <StudentCommunityCreatePostModal
-        open={modalOpen}
-        onClose={closeModal}
-        isSubmitting={isCreating || isReplying}
-        replyTarget={modalReplyTarget}
-        onSubmitPost={handleCreate}
-        onSubmitReply={handleSubmitReply}
-      />
+      {!readOnly ? (
+        <StudentCommunityCreatePostModal
+          open={modalOpen}
+          onClose={closeModal}
+          isSubmitting={isCreating || isReplying}
+          replyTarget={modalReplyTarget}
+          onSubmitPost={handleCreate}
+          onSubmitReply={handleSubmitReply}
+        />
+      ) : null}
     </div>
   );
 }

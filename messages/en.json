@@ -2037,7 +2037,7 @@
     "dynamicPosition": "Dynamic Position",
     "dynamicPositionDesc": "Watermark moves to random positions every few seconds",
     "dynamicInterval": "Change Interval",
-    "dynamicIntervalDesc": "Seconds between position changes (1-5 seconds, random)",
+    "dynamicIntervalDesc": "Controls motion speed for exams and video (1–5: higher = slower loop). Also used for random jump previews when dynamic position is on.",
     "randomCoordinates": "Random Coordinates",
     "randomCoordinatesDesc": "Move freely anywhere on screen instead of fixed positions",
     "movementPattern": "Movement Pattern",

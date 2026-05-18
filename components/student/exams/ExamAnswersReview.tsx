@@ -11,6 +11,7 @@ import {
   normalizeQuestions,
   questionAnswers,
 } from '@/src/lib/student-exam-question-utils';
+import { useExamCopyGuard } from '@/src/hooks/useExamCopyGuard';
 
 export function ExamAnswersReview({
   quiz,
@@ -28,6 +29,7 @@ export function ExamAnswersReview({
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const questions = useMemo(() => normalizeQuestions(quiz), [quiz]);
   const total = questions.length;
+  useExamCopyGuard(total > 0);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const current = questions[currentIndex] ?? null;

@@ -24,6 +24,7 @@ import {
   normalizeQuestions,
   questionAnswers,
 } from '@/src/lib/student-exam-question-utils';
+import { useExamCopyGuard } from '@/src/hooks/useExamCopyGuard';
 
 function formatHms(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
@@ -85,6 +86,7 @@ export default function TakeExamRun({
 
   const questions = useMemo(() => (quiz ? normalizeQuestions(quiz) : []), [quiz]);
   const total = questions.length;
+  useExamCopyGuard(session !== null && session !== undefined && total > 0);
   const current = questions[currentIndex] ?? null;
   const isLast = total > 0 && currentIndex === total - 1;
 

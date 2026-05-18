@@ -26,6 +26,7 @@ export type DualMotionWatermarkProps = {
 /**
  * Two smoothly moving watermark instances (exam-style).
  * Uses `dir="ltr"` on the clip layer so RTL locales keep the same motion paths.
+ * Positions use `left` / `top` % of the clip frame (not transform on a full-size layer).
  */
 export function DualMotionWatermark({
   text,
@@ -49,44 +50,38 @@ export function DualMotionWatermark({
   const textClass = dualWatermarkTextSizeClass(size);
 
   return (
-    <div
+    <motion.div
       dir="ltr"
       className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`.trim()}
       aria-hidden
     >
       {DUAL_WATERMARK_MOTION_PATTERNS.map((pattern, index) => (
-        <motion.div
+        <motion.span
           key={index}
+          className={`pointer-events-none absolute z-20 inline-block max-w-[min(88%,calc(100%-1.25rem))] select-none whitespace-nowrap will-change-[left,top] ${textClass}`}
           initial={{
-            x: pattern.x[0],
-            y: pattern.y[0],
+            left: pattern.x[0],
+            top: pattern.y[0],
           }}
           animate={{
-            x: [...pattern.x],
-            y: [...pattern.y],
+            left: [...pattern.x],
+            top: [...pattern.y],
           }}
           transition={{
             duration,
             repeat: Infinity,
             ease: 'linear',
           }}
-          className="pointer-events-none absolute inset-0 will-change-transform"
+          style={{
+            color,
+            opacity,
+            transform: `rotate(${dualWatermarkTiltDegrees(index, rotation)}deg)`,
+          }}
         >
-          <div className="absolute left-0 top-0 max-w-[min(90%,calc(100%-1rem))]">
-            <span
-              className={`inline-block select-none whitespace-nowrap ${textClass}`}
-              style={{
-                color,
-                opacity,
-                transform: `rotate(${dualWatermarkTiltDegrees(index, rotation)}deg)`,
-              }}
-            >
-              {trimmed}
-            </span>
-          </div>
-        </motion.div>
+          {trimmed}
+        </motion.span>
       ))}
-    </div>
+    </motion.div>
   );
 }
 

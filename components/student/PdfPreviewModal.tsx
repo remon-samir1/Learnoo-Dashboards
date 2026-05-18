@@ -64,14 +64,14 @@ function PdfPreviewContent({
         error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
         onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
       >
-        <div className="flex min-h-0 flex-col items-center gap-6 py-2">
+        <div className="flex flex-col items-center gap-4 py-1 sm:gap-5 sm:py-2">
           {Array.from({ length: numPages }, (_, index) => {
             const pageNumber = index + 1;
 
             return (
               <div
                 key={pageNumber}
-                className="relative min-h-0 w-full overflow-auto rounded-xl bg-white shadow-sm"
+                className="relative w-full overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
               >
                 <Page
                   pageNumber={pageNumber}
@@ -188,11 +188,7 @@ export default function PdfPreviewModal({
   );
 
   if (variant === 'inline') {
-    return (
-      <div className="flex h-full min-h-0 w-full flex-col overflow-auto bg-[#F8FAFC]">
-        <div className={`min-h-0 flex-1 overflow-auto ${expandToContainer ? 'p-2 sm:p-3' : 'p-4 sm:p-5'}`}>{content}</div>
-      </div>
-    );
+    return <div className="w-full min-w-0">{content}</div>;
   }
 
   return (
