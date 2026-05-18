@@ -43,9 +43,9 @@ function PdfPreviewContent({
   useEffect(() => {
     const updateWidth = () => {
       const width = contentRef.current?.clientWidth ?? 720;
-      const padding = 24;
-      const maxWidth = expandToContainer ? 1600 : 720;
-      setPageWidth(Math.min(maxWidth, Math.max(320, width - padding)));
+      const padding = expandToContainer ? 8 : 24;
+const maxWidth = expandToContainer ? 1200 : 720;
+setPageWidth(Math.min(maxWidth, Math.max(520, width - padding)));
     };
 
     updateWidth();
@@ -71,7 +71,7 @@ function PdfPreviewContent({
             return (
               <div
                 key={pageNumber}
-                className="relative w-full overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
+                className="relative w-fit max-w-none overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
               >
                 <Page
                   pageNumber={pageNumber}
@@ -115,6 +115,7 @@ export default function PdfPreviewModal({
   title,
   variant = 'modal',
   expandToContainer = false,
+  
 }: Props) {
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
   const { user } = useCurrentUser();

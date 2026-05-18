@@ -418,8 +418,7 @@ export default function ChapterWatchView({
             {t('hidePdf')}
           </button>
         </div>
-        <div className="watch-pdf-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch]">
-          <PdfPreviewModal
+        <div className="watch-pdf-scroll h-[75vh] min-h-[520px] max-h-[75vh] flex-1 overflow-y-auto overflow-x-auto overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none]"> <PdfPreviewModal
             variant="inline"
             expandToContainer
             title={t('lectureMaterial')}
