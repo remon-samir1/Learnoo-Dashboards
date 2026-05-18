@@ -4,9 +4,17 @@ import {
   getStudentDashboardHref,
   parseUserFromCookie,
 } from '@/src/lib/auth-post-login-redirect';
-import { getJwtUserDataFromToken } from '@/src/lib/jwt-decode';
+import { getRoleFromRequest } from '@/src/lib/proxy-auth';
 import type { User } from '@/src/types';
 import { APP_LOCALES, type AppLocale } from '@/src/lib/app-locales';
+import {
+  ADMIN_ROUTE_PREFIXES,
+  AUTH_ROUTE_PREFIXES,
+  DOCTOR_ROUTE_PREFIX,
+  ONBOARDING_ROUTE_PREFIXES,
+  ROLE_TO_DASHBOARD,
+  ROUTE_ZONE_TO_ROLES,
+} from '@/src/lib/role-route-config';
 import { APP_ROLES, type AppRole, isAppRole } from '@/src/types/user-role';
 
 export type RouteZone =
@@ -18,77 +26,20 @@ export type RouteZone =
   | 'locale-root'
   | 'unknown';
 
-/**
- * Role → default dashboard (student paths are locale-aware; use `getDashboardForRole`).
- */
-export const ROLE_DASHBOARD_PATH: Record<AppRole, string | 'student'> = {
-  Admin: '/dashboard',
-  Instructor: '/dashboard',
-  Doctor: '/doctor/dashboard',
-  Student: 'student',
-  Unknown: 'student',
+/** @deprecated Use `ROLE_TO_DASHBOARD` from `role-route-config`. */
+export const ROLE_DASHBOARD_PATH = ROLE_TO_DASHBOARD;
+
+/** @deprecated Use `ROUTE_ZONE_TO_ROLES` from `role-route-config`. */
+export const ROUTE_ZONE_ROLES = ROUTE_ZONE_TO_ROLES;
+
+export {
+  ADMIN_ROUTE_PREFIXES,
+  AUTH_ROUTE_PREFIXES,
+  DOCTOR_ROUTE_PREFIX,
+  ONBOARDING_ROUTE_PREFIXES,
+  ROLE_TO_DASHBOARD,
+  ROUTE_ZONE_TO_ROLES,
 };
-
-/**
- * Route zone → roles allowed to access it.
- */
-export const ROUTE_ZONE_ROLES: Record<
-  Exclude<RouteZone, 'auth' | 'unknown'>,
-  readonly AppRole[]
-> = {
-  onboarding: ['Student', 'Unknown'],
-  admin: ['Admin', 'Instructor'],
-  doctor: ['Doctor'],
-  student: ['Student', 'Unknown'],
-  'locale-root': ['Student', 'Unknown'],
-};
-
-/** Auth pages (unauthenticated or redirect if already signed in). */
-export const AUTH_ROUTE_PREFIXES = [
-  '/login',
-  '/create-account',
-  '/forgot-password',
-  '/reset-password',
-  '/verification-code',
-] as const;
-
-/** Post-register / profile onboarding (token required). */
-export const ONBOARDING_ROUTE_PREFIXES = [
-  '/select-university',
-  '/select-center',
-  '/select-faculty',
-] as const;
-
-/**
- * Admin app routes — derived from `app/(admin)/*` (URL has no `/admin` prefix).
- */
-export const ADMIN_ROUTE_PREFIXES = [
-  '/activation',
-  '/centers',
-  '/chapters',
-  '/community',
-  '/content-manager',
-  '/courses',
-  '/dashboard',
-  '/departments',
-  '/downloads',
-  '/electronic-library',
-  '/exams',
-  '/faculties',
-  '/feature-control',
-  '/instructors',
-  '/lectures',
-  '/levels',
-  '/live-sessions',
-  '/notes-summaries',
-  '/notifications',
-  '/ota-upload',
-  '/settings',
-  '/students',
-  '/universities',
-] as const;
-
-export const DOCTOR_ROUTE_PREFIX = '/doctor';
 
 export type ProxyAuthContext = {
   token: string | null;
@@ -182,7 +133,7 @@ export function getDashboardForRole(
 ): string {
   if (!role || !isAppRole(role)) return '/login';
 
-  const mapped = ROLE_DASHBOARD_PATH[role];
+  const mapped = ROLE_TO_DASHBOARD[role];
   if (mapped === 'student') {
     return getStudentDashboardHref(locale, user ?? null);
   }
@@ -197,7 +148,7 @@ export function roleCanAccessZone(
 
   if (zone === 'auth' || zone === 'unknown') return false;
 
-  const allowed = ROUTE_ZONE_ROLES[zone];
+  const allowed = ROUTE_ZONE_TO_ROLES[zone];
   return (allowed as readonly string[]).includes(role);
 }
 
@@ -215,6 +166,10 @@ export function getStudentProfileGateRedirect(
   return null;
 }
 
+/**
+ * Proxy-safe auth resolution (reads `NextRequest.cookies`).
+ * Mirrors `getUserDataFromJWT()` which uses `cookies()` from `next/headers`.
+ */
 export function resolveProxyAuth(request: NextRequest): ProxyAuthContext {
   const rawToken = request.cookies.get('token')?.value ?? null;
   const token = rawToken?.replace(/^Bearer\s+/i, '').trim() || null;
@@ -226,19 +181,7 @@ export function resolveProxyAuth(request: NextRequest): ProxyAuthContext {
     : 'en';
 
   const user = parseUserFromCookie(request.cookies.get('user_data')?.value);
-
-  let role: AppRole | null = null;
-  const cookieRole = request.cookies.get('user_role')?.value;
-  if (isAppRole(cookieRole)) {
-    role = cookieRole;
-  } else if (isAppRole(user?.attributes?.role)) {
-    role = user!.attributes.role;
-  } else if (token) {
-    const jwtRole = getJwtUserDataFromToken(token)?.data?.role;
-    if (typeof jwtRole === 'string' && isAppRole(jwtRole)) {
-      role = jwtRole;
-    }
-  }
+  const role = getRoleFromRequest(request);
 
   return { token, role, locale, user };
 }

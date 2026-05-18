@@ -32,13 +32,16 @@ export function proxy(request: NextRequest) {
 
   // --- Auth / marketing entry (login, register, home) ---
   if (zone === 'auth') {
-    if (auth.token && auth.role) {
-      return redirectTo(
-        request,
-        getPostAuthHref(auth.locale, auth.role, auth.user),
-      );
+    if (!auth.token) {
+      return NextResponse.next();
     }
-    return NextResponse.next();
+    if (!auth.role || !isSupportedRole(auth.role)) {
+      return clearSessionAndRedirectToLogin(request);
+    }
+    return redirectTo(
+      request,
+      getPostAuthHref(auth.locale, auth.role, auth.user),
+    );
   }
 
   // --- Onboarding (token required; any authenticated role may pass) ---
