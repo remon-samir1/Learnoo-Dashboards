@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
-  FileEdit,
+  School,
   Video,
   ClipboardList,
   MessageSquare,
@@ -34,17 +34,17 @@ interface DoctorSidebarProps {
 
 const menuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/doctor/dashboard' },
-  { name: 'My Courses', icon: BookOpen, path: '/doctor/courses' },
-  { name: 'Content Manager', icon: FileEdit, path: '/doctor/content-manager' },
+  // { name: 'My Courses', icon: BookOpen, path: '/doctor/courses' },
+  { name: 'Academic Structure', icon: School, path: '/doctor/departments' },
   { name: 'Live Sessions', icon: Video, path: '/doctor/live-sessions' },
   { name: 'Exams', icon: ClipboardList, path: '/doctor/exams' },
-  { name: 'Q&A', icon: MessageSquare, path: '/doctor/qa', badge: 3 },
+  // { name: 'Q&A', icon: MessageSquare, path: '/doctor/qa', badge: 3 },
   { name: 'Community', icon: Users, path: '/doctor/community' },
   { name: 'Notes & Summaries', icon: StickyNote, path: '/doctor/notes-summaries' },
   { name: 'Electronic Library', icon: Library, path: '/doctor/electronic-library' },
   { name: 'Students', icon: GraduationCap, path: '/doctor/students' },
-  { name: 'Notifications', icon: Bell, path: '/doctor/notifications' },
-  { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
+  // { name: 'Notifications', icon: Bell, path: '/doctor/notifications' },
+  // { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
 ];
 
 export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarProps) {
@@ -90,9 +90,9 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
     >
       {/* Brand Logo and Title */}
       <div className={`h-20 flex items-center px-5 gap-3 border-b border-[#F0F2F5] ${isCollapsed ? 'justify-center px-0' : ''}`}>
-        <div 
+        <div
           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg"
-          style={{ 
+          style={{
             background: logoUrl ? 'transparent' : `linear-gradient(135deg, ${primaryColor}, ${primaryColor}dd)`,
           }}
         >
@@ -103,7 +103,7 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
           )}
         </div>
         {!isCollapsed && (
-          <span 
+          <span
             className="font-bold text-xl tracking-tight"
             style={{ color: primaryColor }}
           >
@@ -145,11 +145,11 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
                     {item.name}
                   </span>
                 )}
-                {item.badge && !isCollapsed && (
+                {/* {item.badge && !isCollapsed && (
                   <span className="ml-auto bg-[#EF4444] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                     {item.badge}
                   </span>
-                )}
+                )} */}
                 {isActive && isCollapsed && (
                   <div className="absolute left-[-15px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-[#4F46E5] rounded-r-full shadow-[2px_0px_12px_rgba(79,70,229,0.5)] animate-in fade-in slide-in-from-left-2 duration-300" />
                 )}
@@ -163,13 +163,13 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
       <div className={`p-4 border-t border-[#F0F2F5] mt-auto ${isCollapsed ? 'items-center' : ''}`}>
         {!isCollapsed && (
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{ 
+              style={{
                 backgroundColor: `${primaryColor}15`,
               }}
             >
-              <span 
+              <span
                 className="text-[15px] font-bold"
                 style={{ color: primaryColor }}
               >
@@ -179,7 +179,7 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
             <div className="flex flex-col min-w-0">
               <p className="text-[13px] font-bold text-[#1E293B] truncate">{getDisplayName()}</p>
             </div>
-            <button 
+            <button
               onClick={logout}
               className="ml-auto text-[#64748B] hover:text-[#EF4444] transition-colors p-1.5 rounded-lg hover:bg-[#FEF2F2]"
             >
@@ -189,20 +189,20 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
         )}
         {isCollapsed && (
           <div className="flex flex-col gap-4 items-center">
-            <div 
+            <div
               className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{ 
+              style={{
                 backgroundColor: `${primaryColor}15`,
               }}
             >
-              <span 
+              <span
                 className="text-[14px] font-bold"
                 style={{ color: primaryColor }}
               >
                 {getInitials()}
               </span>
             </div>
-            <button 
+            <button
               onClick={logout}
               className="text-[#64748B] hover:text-[#EF4444] transition-colors p-2.5 rounded-xl hover:bg-[#FEF2F2]"
             >

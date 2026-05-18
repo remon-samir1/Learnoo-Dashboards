@@ -1020,7 +1020,7 @@ function TreeItem({
         >
           {/* Add child buttons */}
 
-          {node.type === "university" && !isInstructor && (
+          {node.type === "university" && (
             <button
               onClick={() => onAdd("center", node.id)}
               className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
@@ -1030,7 +1030,7 @@ function TreeItem({
             </button>
           )}
 
-          {node.type === "center" && !isInstructor && (
+          {node.type === "center" && (
             <button
               onClick={() => onAdd("faculty", node.id)}
               className="p-1.5 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-all"
@@ -1040,7 +1040,7 @@ function TreeItem({
             </button>
           )}
 
-          {node.type === "faculty" && !isInstructor && (
+          {node.type === "faculty" && (
             <button
               onClick={() => onAdd("department", node.id)}
               className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
@@ -1050,17 +1050,15 @@ function TreeItem({
             </button>
           )}
 
-          {node.type === "department" && !isInstructor && (
+          {node.type === "department" && (
             <>
-              {!isInstructor && (
-                <button
-                  onClick={() => onAdd("department", node.id)}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  title="Add sub-department"
-                >
-                  <GraduationCap className="w-4 h-4" />
-                </button>
-              )}
+              <button
+                onClick={() => onAdd("department", node.id)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                title="Add sub-department"
+              >
+                <GraduationCap className="w-4 h-4" />
+              </button>
 
               <button
                 onClick={() => onAdd("course", node.id)}
@@ -1072,7 +1070,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "course" && !isInstructor && (
+          {node.type === "course" && (
             <>
               <button
                 onClick={() => onAdd("note", node.id)}
@@ -1124,7 +1122,7 @@ function TreeItem({
 
           {/* Edit and Delete buttons - all actions for admin, only courses/lectures/chapters for instructors */}
 
-          {(!isInstructor || (node.type === 'chapter')) && (
+          {(
             <>
               <button
                 onClick={() => onEdit(node)}
