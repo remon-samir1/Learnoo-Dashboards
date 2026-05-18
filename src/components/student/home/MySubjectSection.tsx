@@ -81,7 +81,6 @@ export default function MySubjectSection({
   }, [categories, categoryMap, rootCategories, selectedCategory]);
 
   const currentCourses = selectedCategory?.attributes.courses || [];
-
   const handleOpenCategory = (category: Category) => {
     setHistory((prev) => [...prev, selectedId || "root"]);
     setSelectedId(String(category.id));
@@ -181,45 +180,48 @@ export default function MySubjectSection({
         </div>
       ) : currentCourses.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {currentCourses.map((course) => (
-            <Link
-              key={course.id}
-              href={`/${locale}/student/courses/course-details/${course.id}`}
-              className="group overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white transition hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
-            >
-              <div className="relative h-36 w-full bg-gray-100">
-                {course.attributes.thumbnail ? (
-                  <Image
-                    src={course.attributes.thumbnail}
-                    alt={course.attributes.title}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-blue-50">
-                    <BookOpen size={32} className="text-[var(--primary)]" />
-                  </div>
-                )}
-              </div>
+     {currentCourses.map((course) => {
+  return (
+    <Link
+      key={course.id}
+      href={`/${locale}/student/courses/course-details/${course.id}`}
+      className="group overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white transition hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
+    >
+      <div className="h-36 w-full overflow-hidden">
+        {course.attributes.thumbnail ? (
+          <Image
+            src={course.attributes.thumbnail}
+            alt={course.attributes.title}
+            width={220}
+            height={220}
+            className="h-14 w-14 object-cover transition group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-blue-50">
+            <BookOpen size={32} className="text-[var(--primary)]" />
+          </div>
+        )}
+      </div>
 
-              <div className="p-4">
-                <h3 className="line-clamp-1 font-bold text-[var(--text-dark)]">
-                  {course.attributes.title}
-                </h3>
+      <div className="p-4">
+        <h3 className="line-clamp-1 font-bold text-[var(--text-dark)]">
+          {course.attributes.title}
+        </h3>
 
-                {course.attributes.sub_title && (
-                  <p className="mt-1 line-clamp-1 text-sm text-[var(--text-muted)]">
-                    {course.attributes.sub_title}
-                  </p>
-                )}
+        {course.attributes.sub_title && (
+          <p className="mt-1 line-clamp-1 text-sm text-[var(--text-muted)]">
+            {course.attributes.sub_title}
+          </p>
+        )}
 
-                <div className="mt-3 flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                  <span>{course.attributes.stats?.notes ?? 0} Notes</span>
-                  <span>{course.attributes.stats?.lectures ?? 0} Lectures</span>
-                </div>
-              </div>
-            </Link>
-          ))}
+        <div className="mt-3 flex items-center gap-3 text-xs text-[var(--text-muted)]">
+          <span>{course.attributes.stats?.notes ?? 0} Notes</span>
+          <span>{course.attributes.stats?.lectures ?? 0} Lectures</span>
+        </div>
+      </div>
+    </Link>
+  );
+})}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-[var(--border-color)] py-10 text-center text-sm text-[var(--text-muted)]">

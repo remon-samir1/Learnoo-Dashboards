@@ -38,5 +38,12 @@ export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
 
 /** Whether PDF/attachment UI may be shown — **`is_free_preview_attachment` only** (API boolean / 0–1). */
 export function isStudentChapterPdfVisible(chapter: Chapter): boolean {
-  return coercePreviewFlag(chapter.attributes.is_free_preview_attachment);
+  const attrs = chapter.attributes;
+
+  if (attrs.is_locked === true) return false;
+
+  return (
+    coercePreviewFlag(attrs.is_free_preview_attachment) ||
+    coerceCanWatchExplicitTrue(attrs.can_watch)
+  );
 }
