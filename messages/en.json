@@ -322,13 +322,30 @@
         "fallbackCourse": "Advanced Sorting Algorithms",
         "fallbackLecture": "Lecture"
       },
-      "subjects": {
-        "title": "My Subjects",
-        "courses": "Courses",
-        "lectures": "Lectures",
-        "exams": "Exams",
-        "students": "Students"
-      },
+     "subjects": {
+  "title": "My Subjects",
+  "fallbackTitle": "Category",
+  "chooseLevel": "Choose the next level",
+  "back": "Back",
+  "courses": "Courses",
+  "lectures": "Lectures",
+  "notes": "Notes",
+  "exams": "Exams",
+  "students": "Students",
+  "empty": "No content available here",
+  "activation": {
+    "button": "Activate course",
+    "title": "Activate course",
+    "description": "Enter the activation code for this course",
+    "placeholder": "Enter activation code",
+    "submit": "Activate now",
+    "loading": "Activating...",
+    "codeRequired": "Please enter the activation code",
+    "failed": "Failed to activate course",
+    "success": "Course activated successfully",
+    "error": "An error occurred while activating the course"
+  }
+},
       "courses": {
         "seeAll": "See All Courses"
       },
