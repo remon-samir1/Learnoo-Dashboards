@@ -405,7 +405,7 @@ export default function ChapterWatchView({
   const pdfWatchPanel =
     showPdf && pdfUrl && pdfPanelVisible ? (
       <div className="flex h-full min-h-0 flex-col bg-white">
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-[#f8fafc] px-3 py-2.5 sm:px-4">
+        <div className="flex shrink-0 items-center  justify-between gap-2 border-b border-slate-200 bg-[#f8fafc] px-3 py-2.5 sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
             <FileText className="size-4 shrink-0 text-[#2D43D1]" aria-hidden />
             <span className="truncate text-sm font-semibold text-slate-900">{t('lectureMaterial')}</span>
@@ -418,7 +418,7 @@ export default function ChapterWatchView({
             {t('hidePdf')}
           </button>
         </div>
-        <div className="watch-pdf-scroll h-[75vh] min-h-[520px] max-h-[75vh] flex-1 overflow-y-auto overflow-x-auto overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none]"> <PdfPreviewModal
+        <div className="watch-pdf-scroll h-[75vh] min-h-[520px] max-h-[75vh] flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none]"> <PdfPreviewModal
             variant="inline"
             expandToContainer
             title={t('lectureMaterial')}

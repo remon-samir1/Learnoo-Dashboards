@@ -41,12 +41,13 @@ function PdfPreviewContent({
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const updateWidth = () => {
-      const width = contentRef.current?.clientWidth ?? 720;
-      const padding = expandToContainer ? 8 : 24;
-const maxWidth = expandToContainer ? 1200 : 720;
-setPageWidth(Math.min(maxWidth, Math.max(520, width - padding)));
-    };
+   const updateWidth = () => {
+  const width = contentRef.current?.clientWidth ?? 720;
+  const padding = expandToContainer ? 16 : 24;
+  const availableWidth = Math.max(280, width - padding);
+
+  setPageWidth(availableWidth);
+};
 
     updateWidth();
 
@@ -71,14 +72,15 @@ setPageWidth(Math.min(maxWidth, Math.max(520, width - padding)));
             return (
               <div
                 key={pageNumber}
-                className="relative w-fit max-w-none overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
+               className="relative mx-auto w-full max-w-full overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
               >
                 <Page
-                  pageNumber={pageNumber}
-                  width={pageWidth}
-                  renderAnnotationLayer={false}
-                  renderTextLayer={false}
-                />
+  pageNumber={pageNumber}
+  width={pageWidth}
+  renderAnnotationLayer={false}
+  renderTextLayer={false}
+  className="!w-full [&_canvas]:!h-auto [&_canvas]:!w-full"
+/>
 
                 {watermarkText ? (
                   <div
