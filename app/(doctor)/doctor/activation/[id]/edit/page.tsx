@@ -9,6 +9,7 @@ import { useCode, useUpdateCode } from '@/src/hooks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 import toast from 'react-hot-toast';
 
 function useCodeTypes(t: any) {
@@ -178,27 +179,36 @@ export default function EditCodePage() {
             </div>
 
             {/* Item */}
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-[13px] font-bold text-[#475569]">{t('activation.generate.assignedItem')} <span className="text-red-500">*</span></label>
-              {itemId && (
-                <div className="px-3 py-2 bg-[#EEF2FF] border border-[#2137D6]/20 rounded-lg">
-                  <span className="text-sm font-medium text-[#2137D6]">{t('activation.edit.current')}: {getCurrentItemName()}</span>
-                </div>
-              )}
-              <select
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+            {codeType === 'App\\Models\\Course' ? (
+              <CourseTreeSelect
                 value={itemId}
-                onChange={(e) => setItemId(e.target.value)}
+                onChange={(val) => setItemId(val)}
+                label={t('activation.generate.assignedItem')}
                 required
-              >
-                <option value="">{t('activation.generate.selectType')} {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
-                {items.map((item: any) => (
-                  <option key={item.id} value={String(item.id)}>
-                    {item.attributes.title || item.attributes.name || `Item ${item.id}`}
-                  </option>
-                ))}
-              </select>
-            </div>
+              />
+            ) : (
+              <div className="flex flex-col gap-2 md:col-span-2">
+                <label className="text-[13px] font-bold text-[#475569]">{t('activation.generate.assignedItem')} <span className="text-red-500">*</span></label>
+                {itemId && (
+                  <div className="px-3 py-2 bg-[#EEF2FF] border border-[#2137D6]/20 rounded-lg">
+                    <span className="text-sm font-medium text-[#2137D6]">{t('activation.edit.current')}: {getCurrentItemName()}</span>
+                  </div>
+                )}
+                <select
+                  className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+                  value={itemId}
+                  onChange={(e) => setItemId(e.target.value)}
+                  required
+                >
+                  <option value="">{t('activation.generate.selectType')} {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
+                  {items.map((item: any) => (
+                    <option key={item.id} value={String(item.id)}>
+                      {item.attributes.title || item.attributes.name || `Item ${item.id}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </section>
 

@@ -298,7 +298,7 @@ function GenerateCodeForm() {
 
         {/* Generated Codes Display */}
         {generatedCodes.length > 0 && (
-          <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
+        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm">
             <div className="px-6 py-4 border-b border-[#F1F5F9] bg-green-50/50">
               <h2 className="text-sm font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle className="w-4 h-4" />

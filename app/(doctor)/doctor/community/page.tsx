@@ -12,6 +12,7 @@ import { useUniversities } from '@/src/hooks/useUniversities';
 import { useCenters } from '@/src/hooks/useCenters';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { useDepartments } from '@/src/hooks/useDepartments';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 import type { Post, SocialLink, CreatePostRequest, University, Faculty, Center, Department, Course } from '@/src/types';
 
 type NodeType = 'university' | 'faculty' | 'center' | 'department' | 'course';
@@ -1230,23 +1231,11 @@ export default function CommunityModerationPage() {
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-semibold text-[#475569] mb-1">
-                  {t('community.createPost.courseLabel')}
-                </label>
-                <select
-                  value={createForm.course_id}
-                  onChange={(e) => setCreateForm({ ...createForm, course_id: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
-                >
-                  <option value="">{t('community.createPost.noCourse')}</option>
-                  {courses?.map((course) => (
-                    <option key={course.id} value={course.id}>
-                      {course.attributes.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CourseTreeSelect
+                value={createForm.course_id}
+                onChange={(val) => setCreateForm({ ...createForm, course_id: val })}
+                label={t('community.createPost.courseLabel')}
+              />
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.typeLabel')}

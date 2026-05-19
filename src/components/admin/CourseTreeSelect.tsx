@@ -146,7 +146,7 @@ export function CourseTreeSelect({
     faculties.forEach((fac: any) => {
       const node = facultyMap.get(String(fac.id));
       if (!node) return;
-      const parentId = fac.attributes?.parent?.data?.id || fac.attributes?.center_id || fac.parent_id || fac.center_id;
+      const parentId = fac.attributes?.parent?.data?.id || fac.relationships?.parent?.data?.id || fac.attributes?.center_id || fac.parent_id || fac.center_id;
       if (parentId && centerMap.has(String(parentId))) {
         const parentNode = centerMap.get(String(parentId))!;
         node.level = parentNode.level + 1;
@@ -158,7 +158,7 @@ export function CourseTreeSelect({
     departments.forEach((dept: any) => {
       const node = departmentMap.get(String(dept.id));
       if (!node) return;
-      const parentId = dept.attributes?.parent?.data?.id || dept.attributes?.faculty_id || dept.parent_id || dept.faculty_id;
+      const parentId = dept.attributes?.parent?.data?.id || dept.relationships?.parent?.data?.id || dept.attributes?.center_id?.toString() || dept.attributes?.faculty_id || dept.parent_id || dept.faculty_id;
       if (parentId) {
         if (facultyMap.has(String(parentId))) {
           const parentNode = facultyMap.get(String(parentId))!;
@@ -182,7 +182,7 @@ export function CourseTreeSelect({
     centers.forEach((center: any) => {
       const node = centerMap.get(String(center.id));
       if (!node) return;
-      const parentId = center.attributes?.parent?.data?.id || center.parent?.data?.id || center.parent_id || center.university_id || center.attributes?.university_id;
+      const parentId = center.attributes?.parent?.data?.id || center.relationships?.parent?.data?.id || center.parent?.data?.id || center.parent_id || center.university_id || center.attributes?.university_id;
       if (parentId && universityMap.has(String(parentId))) {
         const parentNode = universityMap.get(String(parentId))!;
         node.level = parentNode.level + 1;
@@ -194,7 +194,9 @@ export function CourseTreeSelect({
     courses.forEach((course: any) => {
       const deptId =
         course.attributes?.category?.data?.id ||
+        course.relationships?.category?.data?.id ||
         course.attributes?.department?.data?.id ||
+        course.relationships?.department?.data?.id ||
         course.attributes?.category_id?.toString() ||
         course.category_id?.toString();
 
@@ -232,7 +234,7 @@ export function CourseTreeSelect({
 
     centerMap.forEach((node, id) => {
       const center = centers.find((c: any) => String(c.id) === id);
-      const parentId = (center as any)?.attributes?.parent?.data?.id || center?.parent?.data?.id || center?.parent_id || (center as any)?.university_id;
+      const parentId = (center as any)?.attributes?.parent?.data?.id || (center as any)?.relationships?.parent?.data?.id || center?.parent?.data?.id || center?.parent_id || (center as any)?.university_id;
       if (!parentId || !universityMap.has(String(parentId))) {
         rootNodes.push(node);
       }
@@ -240,7 +242,7 @@ export function CourseTreeSelect({
 
     facultyMap.forEach((node, id) => {
       const fac = faculties.find((f: any) => String(f.id) === id);
-      const parentId = fac?.attributes?.parent?.data?.id || (fac?.attributes as any)?.center_id || (fac as any)?.parent_id || (fac as any)?.center_id;
+      const parentId = fac?.attributes?.parent?.data?.id || (fac as any)?.relationships?.parent?.data?.id || (fac?.attributes as any)?.center_id || (fac as any)?.parent_id || (fac as any)?.center_id;
       if (!parentId || !centerMap.has(String(parentId))) {
         rootNodes.push(node);
       }
@@ -248,7 +250,7 @@ export function CourseTreeSelect({
 
     departmentMap.forEach((node, id) => {
       const dept = departments.find((d: any) => String(d.id) === id);
-      const parentId = dept?.attributes?.parent?.data?.id || (dept?.attributes as any)?.faculty_id || (dept as any)?.parent_id || (dept as any)?.faculty_id;
+      const parentId = dept?.attributes?.parent?.data?.id || (dept as any)?.relationships?.parent?.data?.id || (dept?.attributes as any)?.center_id?.toString() || (dept?.attributes as any)?.faculty_id || (dept as any)?.parent_id || (dept as any)?.faculty_id;
       if (!parentId || (!facultyMap.has(String(parentId)) && !departmentMap.has(String(parentId)) && !centerMap.has(String(parentId)))) {
         rootNodes.push(node);
       }
@@ -256,7 +258,7 @@ export function CourseTreeSelect({
 
     courseMap.forEach((node) => {
       const course = courses.find((c: any) => String(c.id) === node.originalId);
-      const deptId = course?.attributes?.category?.data?.id || course?.attributes?.department?.data?.id || course?.attributes?.category_id?.toString() || (course as any)?.category_id?.toString();
+      const deptId = course?.attributes?.category?.data?.id || (course as any)?.relationships?.category?.data?.id || course?.attributes?.department?.data?.id || (course as any)?.relationships?.department?.data?.id || course?.attributes?.category_id?.toString() || (course as any)?.category_id?.toString();
       if (!deptId || (!departmentMap.has(String(deptId)) && !facultyMap.has(String(deptId)))) {
         rootNodes.push(node);
       }
@@ -439,7 +441,7 @@ export function CourseTreeSelect({
               )}
             </span>
           ) : !isCourse ? (
-            <span className="w-5.5 flex-shrink-0" />
+            <span className="w-[22px] flex-shrink-0" />
           ) : null}
 
           {isCourse && multiple ? (
@@ -470,7 +472,7 @@ export function CourseTreeSelect({
   };
 
   const treeContent = (
-    <div className={`flex flex-col gap-1 ${inline ? 'max-h-[400px] overflow-y-auto' : ''}`}>
+    <div className={`flex flex-col gap-1 ${inline ? 'max-h-[500px] overflow-y-auto' : ''}`}>
       {filteredTree.length === 0 ? (
         <div className="py-8 text-center text-sm text-[#64748B]">
           {searchQuery ? 'No matching courses found' : 'No courses available'}
@@ -608,10 +610,10 @@ export function CourseTreeSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E2E8F0] rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col max-h-[380px] animate-in fade-in duration-200">
+        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E2E8F0] rounded-2xl shadow-xl z-50 flex flex-col animate-in fade-in duration-200 max-h-[min(80vh,600px)] overflow-hidden">
           {searchBar}
 
-          <div className="p-2 overflow-y-auto max-h-[300px] custom-scrollbar">
+          <div className="p-2 overflow-y-auto min-h-0 flex-1 custom-scrollbar">
             {isLoading ? (
               <div className="py-8 text-center text-sm text-[#64748B] flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-[#2137D6]" />
