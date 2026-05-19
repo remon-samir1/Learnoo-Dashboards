@@ -78,7 +78,7 @@ export default function AddChapterPage() {
 
         note_type: formData.type === 'note' ? (formData.note_type || null) : null,
 
-        content: formData.type === 'note' ? (formData.content || null) : null,
+        content: formData.type === 'note' ? (formData.content || undefined) : undefined,
 
         attachments: [],
 

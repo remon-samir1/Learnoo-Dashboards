@@ -51,17 +51,27 @@ export function CourseTreeSelect({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Fetch all structural data
-  const { data: universities = [], isLoading: isLoadingUnivs } = useUniversities();
-  const { data: centers = [], isLoading: isLoadingCenters } = useCenters();
-  const { data: faculties = [], isLoading: isLoadingFacs } = useFaculties();
-  const { data: departments = [], isLoading: isLoadingDepts } = useDepartments();
-  const { data: courses = [], isLoading: isLoadingCourses } = useCourses();
+  const { data: universitiesData, isLoading: isLoadingUnivs } = useUniversities();
+  const { data: centersData, isLoading: isLoadingCenters } = useCenters();
+  const { data: facultiesData, isLoading: isLoadingFacs } = useFaculties();
+  const { data: departmentsData, isLoading: isLoadingDepts } = useDepartments();
+  const { data: coursesData, isLoading: isLoadingCourses } = useCourses();
+
+  const universities = useMemo(() => universitiesData ?? [], [universitiesData]);
+  const centers = useMemo(() => centersData ?? [], [centersData]);
+  const faculties = useMemo(() => facultiesData ?? [], [facultiesData]);
+  const departments = useMemo(() => departmentsData ?? [], [departmentsData]);
+  const courses = useMemo(() => coursesData ?? [], [coursesData]);
 
   const isLoading = isLoadingUnivs || isLoadingCenters || isLoadingFacs || isLoadingDepts || isLoadingCourses;
 
   // Build the hierarchical tree
   const { tree, flatCourses } = useMemo(() => {
-    if (isLoading) return { tree: [], flatCourses: new Map<string, TreeNode>() };
+    // Only return empty if everything is still loading. 
+    // If some succeeded and others failed (null), we still try to build what we have.
+    if (isLoading && !universities.length && !centers.length && !faculties.length && !departments.length && !courses.length) {
+      return { tree: [], flatCourses: new Map<string, TreeNode>() };
+    }
 
     const universityMap = new Map<string, TreeNode>();
     const centerMap = new Map<string, TreeNode>();
@@ -71,60 +81,66 @@ export function CourseTreeSelect({
 
     // 1. Universities
     universities.forEach((univ: any) => {
+      const name = univ.attributes?.name || univ.name || 'University';
       universityMap.set(String(univ.id), {
         id: `univ-${univ.id}`,
         type: 'university',
-        name: univ.attributes.name,
+        name,
         children: [],
         level: 0,
         originalId: String(univ.id),
-        path: [univ.attributes.name],
+        path: [name],
       });
     });
 
     // 2. Centers
     centers.forEach((center: any) => {
+      const name = center.attributes?.name || center.name || 'Center';
       centerMap.set(String(center.id), {
         id: `center-${center.id}`,
         type: 'center',
-        name: center.name || center.attributes?.name || 'Center',
+        name,
         children: [],
         level: 0,
         originalId: String(center.id),
-        path: [center.name || center.attributes?.name || 'Center'],
+        path: [name],
       });
     });
 
     // 3. Faculties
     faculties.forEach((fac: any) => {
+      const name = fac.attributes?.name || fac.name || 'Faculty';
       facultyMap.set(String(fac.id), {
         id: `faculty-${fac.id}`,
         type: 'faculty',
-        name: fac.attributes.name,
+        name,
         children: [],
         level: 0,
         originalId: String(fac.id),
-        path: [fac.attributes.name],
+        path: [name],
       });
     });
 
     // 4. Departments
     departments.forEach((dept: any) => {
+      const name = dept.attributes?.name || dept.name || 'Department';
       departmentMap.set(String(dept.id), {
         id: `dept-${dept.id}`,
         type: 'department',
-        name: dept.attributes.name,
+        name,
         children: [],
         level: 0,
         originalId: String(dept.id),
-        path: [dept.attributes.name],
+        path: [name],
       });
     });
 
     // Nest Faculties under Centers
     faculties.forEach((fac: any) => {
-      const node = facultyMap.get(String(fac.id))!;
-      const parentId = fac.attributes.parent?.data?.id || fac.attributes.center_id;
+      const node = facultyMap.get(String(fac.id));
+      if (!node) return;
+
+      const parentId = fac.attributes?.parent?.data?.id || fac.attributes?.center_id || fac.parent_id || fac.center_id;
       if (parentId && centerMap.has(String(parentId))) {
         const parentNode = centerMap.get(String(parentId))!;
         node.level = parentNode.level + 1;
@@ -135,8 +151,10 @@ export function CourseTreeSelect({
 
     // Nest Departments under Faculties or Centers or other Departments
     departments.forEach((dept: any) => {
-      const node = departmentMap.get(String(dept.id))!;
-      const parentId = dept.attributes.parent?.data?.id || dept.attributes.faculty_id;
+      const node = departmentMap.get(String(dept.id));
+      if (!node) return;
+
+      const parentId = dept.attributes?.parent?.data?.id || dept.attributes?.faculty_id || dept.parent_id || dept.faculty_id;
       
       if (parentId) {
         if (facultyMap.has(String(parentId))) {
@@ -160,8 +178,10 @@ export function CourseTreeSelect({
 
     // Nest Centers under Universities
     centers.forEach((center: any) => {
-      const node = centerMap.get(String(center.id))!;
-      const parentId = center.parent?.data?.id || center.parent_id || center.university_id;
+      const node = centerMap.get(String(center.id));
+      if (!node) return;
+
+      const parentId = center.attributes?.parent?.data?.id || center.parent?.data?.id || center.parent_id || center.university_id || center.attributes?.university_id;
       if (parentId && universityMap.has(String(parentId))) {
         const parentNode = universityMap.get(String(parentId))!;
         node.level = parentNode.level + 1;
@@ -173,18 +193,20 @@ export function CourseTreeSelect({
     // Build Courses
     courses.forEach((course: any) => {
       const deptId = 
-        course.attributes.category?.data?.id ||
-        course.attributes.department?.data?.id ||
-        course.attributes.category_id?.toString();
+        course.attributes?.category?.data?.id ||
+        course.attributes?.department?.data?.id ||
+        course.attributes?.category_id?.toString() ||
+        course.category_id?.toString();
 
+      const name = course.attributes?.title || course.title || 'Course';
       const courseNode: TreeNode = {
         id: `course-${course.id}`,
         type: 'course',
-        name: course.attributes.title,
+        name,
         children: [],
         level: 0,
         originalId: String(course.id),
-        path: [course.attributes.title],
+        path: [name],
       };
 
       courseMap.set(String(course.id), courseNode);
@@ -211,7 +233,7 @@ export function CourseTreeSelect({
 
     centerMap.forEach((node, id) => {
       const center = centers.find((c: any) => String(c.id) === id);
-      const parentId = center?.parent?.data?.id || center?.parent_id;
+      const parentId = (center as any)?.attributes?.parent?.data?.id || center?.parent?.data?.id || center?.parent_id || (center as any)?.university_id;
       if (!parentId || !universityMap.has(String(parentId))) {
         rootNodes.push(node);
       }
@@ -219,7 +241,7 @@ export function CourseTreeSelect({
 
     facultyMap.forEach((node, id) => {
       const fac = faculties.find((f: any) => String(f.id) === id);
-      const parentId = fac?.attributes.parent?.data?.id || fac?.attributes.center_id;
+      const parentId = fac?.attributes?.parent?.data?.id || (fac?.attributes as any)?.center_id || (fac as any)?.parent_id || (fac as any)?.center_id;
       if (!parentId || !centerMap.has(String(parentId))) {
         rootNodes.push(node);
       }
@@ -227,7 +249,7 @@ export function CourseTreeSelect({
 
     departmentMap.forEach((node, id) => {
       const dept = departments.find((d: any) => String(d.id) === id);
-      const parentId = dept?.attributes.parent?.data?.id || dept?.attributes.faculty_id;
+      const parentId = dept?.attributes?.parent?.data?.id || (dept?.attributes as any)?.faculty_id || (dept as any)?.parent_id || (dept as any)?.faculty_id;
       if (!parentId || (!facultyMap.has(String(parentId)) && !departmentMap.has(String(parentId)) && !centerMap.has(String(parentId)))) {
         rootNodes.push(node);
       }
@@ -236,7 +258,7 @@ export function CourseTreeSelect({
     // Fallback: If any course was not placed, add it as a root-level course
     courseMap.forEach((node) => {
       const course = courses.find((c: any) => String(c.id) === node.originalId);
-      const deptId = course?.attributes.category?.data?.id || course?.attributes.department?.data?.id || course?.attributes.category_id?.toString();
+      const deptId = course?.attributes?.category?.data?.id || course?.attributes?.department?.data?.id || course?.attributes?.category_id?.toString() || (course as any)?.category_id?.toString();
       if (!deptId || (!departmentMap.has(String(deptId)) && !facultyMap.has(String(deptId)))) {
         rootNodes.push(node);
       }
@@ -265,6 +287,34 @@ export function CourseTreeSelect({
     };
   }, [isLoading, universities, centers, faculties, departments, courses]);
 
+  // Handle auto-expansion when searching
+  useEffect(() => {
+    if (!searchQuery) return;
+
+    const query = searchQuery.toLowerCase();
+    const newExpandedNodes: Record<string, boolean> = {};
+
+    const findMatches = (nodes: TreeNode[]): boolean => {
+      let matchInBranch = false;
+      nodes.forEach(node => {
+        const nameMatches = node.name.toLowerCase().includes(query);
+        const childrenMatch = findMatches(node.children);
+        
+        if (childrenMatch) {
+          newExpandedNodes[node.id] = true;
+          matchInBranch = true;
+        }
+        if (nameMatches) matchInBranch = true;
+      });
+      return matchInBranch;
+    };
+
+    findMatches(tree);
+    if (Object.keys(newExpandedNodes).length > 0) {
+      setExpandedNodes(prev => ({ ...prev, ...newExpandedNodes }));
+    }
+  }, [searchQuery, tree]);
+
   // Expand parent paths for matching searched nodes
   const filteredTree = useMemo(() => {
     if (!searchQuery) return tree;
@@ -285,11 +335,6 @@ export function CourseTreeSelect({
             children: childFiltered,
           });
           treeHasMatch = true;
-
-          // Auto expand parent nodes
-          if (childHasMatch && node.type !== 'course') {
-            setExpandedNodes(prev => ({ ...prev, [node.id]: true }));
-          }
         }
       });
 
