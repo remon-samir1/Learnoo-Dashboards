@@ -869,6 +869,14 @@ export interface ChapterAttributes {
 
   view_by_minute?: number | null;
 
+  show_in?: 'both' | 'app' | 'web';
+
+  type?: 'chapter' | 'note';
+
+  note_type?: 'summary' | 'highlight' | 'key_point' | 'important_notice' | null;
+
+  content?: string;
+
 
 
   attachments?: Array<{
@@ -994,7 +1002,13 @@ export interface CreateChapterRequest {
 
   max_views?: number;
 
+  show_in?: 'both' | 'app' | 'web';
 
+  type?: 'chapter' | 'note';
+
+  note_type?: 'summary' | 'highlight' | 'key_point' | 'important_notice' | null;
+
+  content?: string;
 
 }
 
@@ -1050,7 +1064,13 @@ export interface UpdateChapterRequest {
 
   view_at?: number | null;
 
+  show_in?: 'both' | 'app' | 'web';
 
+  type?: 'chapter' | 'note';
+
+  note_type?: 'summary' | 'highlight' | 'key_point' | 'important_notice' | null;
+
+  content?: string;
 
 }
 

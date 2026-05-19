@@ -5,7 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { Video, Loader2 } from 'lucide-react';
 import { useLecture, useUpdateLecture } from '@/src/hooks/useLectures';
 import { useCourses } from '@/src/hooks/useCourses';
-import { EntityForm, FormSection, FormInput, FormTextarea, FormSelect } from '@/src/components/admin/EntityForm';
+import { EntityForm, FormSection, FormInput, FormTextarea } from '@/src/components/admin/EntityForm';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 
 export default function EditLecturePage() {
   const router = useRouter();
@@ -64,11 +65,6 @@ export default function EditLecturePage() {
     );
   }
 
-  const courseOptions = courses?.map(c => ({
-    value: c.id,
-    label: c.attributes.title,
-  })) || [];
-
   return (
     <EntityForm
       title="Edit Lecture"
@@ -79,13 +75,11 @@ export default function EditLecturePage() {
       error={error}
     >
       <FormSection title="Lecture Information" icon={<Video className="w-4 h-4" />}>
-        <FormSelect
+        <CourseTreeSelect
           label="Course"
           required
           value={formData.course_id}
-          onChange={(e) => setFormData({ ...formData, course_id: e.target.value })}
-          options={[{ value: '', label: 'Select Course' }, ...courseOptions]}
-          className="md:col-span-2"
+          onChange={(val) => setFormData({ ...formData, course_id: val })}
         />
         <FormInput
           label="Lecture Title"

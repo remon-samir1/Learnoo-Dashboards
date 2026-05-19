@@ -11,6 +11,9 @@ import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
 import { useLiveRooms } from '@/src/hooks/useLiveRooms';
 import { useQuizzes } from '@/src/hooks/useQuizzes';
+
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
+
 import toast from 'react-hot-toast';
 
 function useCodeTypes(t: any) {
@@ -195,32 +198,41 @@ function GenerateCodeForm() {
             </div>
 
             {/* Item */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">{t('activation.generate.assignedItem')} <span className="text-red-500">*</span></label>
-              <select
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+            {codeType === 'App\\Models\\Course' ? (
+              <CourseTreeSelect
                 value={itemId}
-                onChange={(e) => setItemId(e.target.value)}
+                onChange={(val) => setItemId(val)}
+                label={t('activation.generate.assignedItem')}
                 required
-              >
-                <option value="">{t('activation.generate.selectType')} {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
-                {items.map((item: any) => {
-                  // For chapters, show course name alongside chapter title
-                  let label = item.attributes.title || item.attributes.name || `Item ${item.id}`;
-                  if (codeType === 'App\\Models\\Chapter' && item.attributes.course_id && courses) {
-                    const course = courses.find((c: any) => parseInt(c.id) === item.attributes.course_id);
-                    if (course) {
-                      label = `${label} (${course.attributes.title})`;
+              />
+            ) : (
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#475569]">{t('activation.generate.assignedItem')} <span className="text-red-500">*</span></label>
+                <select
+                  className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+                  value={itemId}
+                  onChange={(e) => setItemId(e.target.value)}
+                  required
+                >
+                  <option value="">{t('activation.generate.selectType')} {CODE_TYPES.find(t => t.value === codeType)?.label}</option>
+                  {items.map((item: any) => {
+                    // For chapters, show course name alongside chapter title
+                    let label = item.attributes.title || item.attributes.name || `Item ${item.id}`;
+                    if (codeType === 'App\\Models\\Chapter' && item.attributes.course_id && courses) {
+                      const course = courses.find((c: any) => parseInt(c.id) === item.attributes.course_id);
+                      if (course) {
+                        label = `${label} (${course.attributes.title})`;
+                      }
                     }
-                  }
-                  return (
-                    <option key={item.id} value={item.id}>
-                      {label}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+                    return (
+                      <option key={item.id} value={item.id}>
+                        {label}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
 
             {/* Quantity */}
             <div className="flex flex-col gap-2">

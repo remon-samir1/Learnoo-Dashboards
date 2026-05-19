@@ -8,6 +8,7 @@ import { api } from '@/src/lib/api';
 import { Course, CreateLiveRoomRequest } from '@/src/types';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 
 export default function ScheduleSessionPage() {
   const t = useTranslations();
@@ -119,26 +120,12 @@ export default function ScheduleSessionPage() {
               </div>
 
               {/* Course */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.course')} *</label>
-                <div className="relative">
-                  <select 
-                    name="course_id"
-                    value={formData.course_id}
-                    onChange={handleChange}
-                    disabled={isFetchingCourses}
-                    className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none appearance-none transition-all text-[14px] bg-white disabled:bg-gray-50"
-                  >
-                    <option value="">{isFetchingCourses ? t('liveSessions.schedule.loadingCourses') : t('liveSessions.schedule.selectCourse')}</option>
-                    {courses.map(course => (
-                      <option key={course.id} value={course.id}>
-                        {course.attributes.title}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronLeft className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 text-[#64748B] pointer-events-none" />
-                </div>
-              </div>
+              <CourseTreeSelect
+                value={formData.course_id}
+                onChange={(val) => setFormData(prev => ({ ...prev, course_id: val }))}
+                label={`${t('liveSessions.schedule.course')}`}
+                required
+              />
 
               {/* Start Time */}
               <div className="flex flex-col gap-2">

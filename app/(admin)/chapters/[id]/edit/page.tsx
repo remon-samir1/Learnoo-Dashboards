@@ -12,7 +12,9 @@ import { useChapter, useUpdateChapter } from '@/src/hooks/useChapters';
 
 import { useLectures } from '@/src/hooks/useLectures';
 
-import { EntityForm, FormSection, FormInput, FormSelect } from '@/src/components/admin/EntityForm';
+import { EntityForm, FormSection, FormInput, FormSelect, FormTextarea } from '@/src/components/admin/EntityForm';
+
+import toast from 'react-hot-toast';
 
 
 
@@ -44,6 +46,14 @@ export default function EditChapterPage() {
 
     is_free_preview: 0 as 0 | 1,
 
+    show_in: 'both' as 'both' | 'app' | 'web',
+
+    type: 'chapter' as 'chapter' | 'note',
+
+    note_type: '' as 'summary' | 'highlight' | 'key_point' | 'important_notice' | '',
+
+    content: '',
+
   });
 
 
@@ -62,6 +72,14 @@ export default function EditChapterPage() {
 
         is_free_preview: chapter.attributes.is_free_preview,
 
+        show_in: (chapter.attributes.show_in as any) || 'both',
+
+        type: (chapter.attributes.type as any) || 'chapter',
+
+        note_type: (chapter.attributes.note_type as any) || '',
+
+        content: chapter.attributes.content || '',
+
       });
 
     }
@@ -76,6 +94,14 @@ export default function EditChapterPage() {
 
     
 
+    if (formData.type === 'note' && !formData.note_type) {
+
+      toast.error('Note type is required when type is set to note');
+
+      return;
+
+    }
+
     try {
 
       await updateChapter(chapterId, {
@@ -87,6 +113,14 @@ export default function EditChapterPage() {
         duration: formData.duration,
 
         is_free_preview: formData.is_free_preview,
+
+        show_in: formData.show_in,
+
+        type: formData.type,
+
+        note_type: formData.type === 'note' ? (formData.note_type || null) : null,
+
+        content: formData.type === 'note' ? (formData.content || null) : null,
 
         attachments: [],
 
@@ -211,6 +245,110 @@ export default function EditChapterPage() {
           placeholder="e.g., 15:30"
 
         />
+
+        <FormSelect
+
+          label="Show In"
+
+          required
+
+          value={formData.show_in}
+
+          onChange={(e) => setFormData({ ...formData, show_in: e.target.value as any })}
+
+          options={[
+
+            { value: 'both', label: 'Both' },
+
+            { value: 'app', label: 'App' },
+
+            { value: 'web', label: 'Web' },
+
+          ]}
+
+        />
+
+        <FormSelect
+
+          label="Type"
+
+          required
+
+          value={formData.type}
+
+          onChange={(e) => {
+
+            const nextType = e.target.value as any;
+
+            setFormData({
+
+              ...formData,
+
+              type: nextType,
+
+              note_type: nextType === 'note' ? formData.note_type : '',
+
+            });
+
+          }}
+
+          options={[
+
+            { value: 'chapter', label: 'Chapter (Lesson)' },
+
+            { value: 'note', label: 'Note' },
+
+          ]}
+
+        />
+
+        {formData.type === 'note' && (
+
+          <FormSelect
+
+            label="Note Type"
+
+            required
+
+            value={formData.note_type}
+
+            onChange={(e) => setFormData({ ...formData, note_type: e.target.value as any })}
+
+            options={[
+
+              { value: '', label: 'Select Note Type' },
+
+              { value: 'summary', label: 'Summary' },
+
+              { value: 'highlight', label: 'Highlight' },
+
+              { value: 'key_point', label: 'Key Point' },
+
+              { value: 'important_notice', label: 'Important Notice' },
+
+            ]}
+
+          />
+
+        )}
+
+        {formData.type === 'note' && (
+
+          <FormTextarea
+
+            label="Content / Text"
+
+            placeholder="Enter note content..."
+
+            value={formData.content}
+
+            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+
+            className="md:col-span-2"
+
+          />
+
+        )}
 
         <div className="flex items-center gap-2 md:col-span-2">
 
