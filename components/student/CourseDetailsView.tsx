@@ -628,18 +628,6 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
               className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"
               aria-hidden
             />
-            {lockedCourse && (
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-black/50 px-6 text-center">
-                <Lock
-                  className="h-10 w-10 text-white"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-                <p className="mt-3 text-base font-bold text-white">
-                  {t("locked")}
-                </p>
-              </div>
-            )}
             <div className="absolute inset-x-0 bottom-0 flex max-h-full flex-col items-start justify-end px-4 pb-4 pt-8 text-start sm:px-6 sm:pb-5 sm:pt-10 md:px-8 md:pb-5 md:pt-12">
               <h1 className="max-w-4xl text-xl font-bold leading-tight tracking-tight text-white sm:text-2xl md:text-[1.75rem] lg:text-[2rem]">
                 {course.attributes.title}

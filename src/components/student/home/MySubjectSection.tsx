@@ -354,21 +354,6 @@ export default function MySubjectSection({
                 </>
               );
 
-              if (locked) {
-                return (
-                  <button
-                    key={course.id}
-                    type="button"
-                    onClick={() =>
-                      setActivationCourse(course)
-                    }
-                    className="group overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white text-start transition hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
-                  >
-                    {content}
-                  </button>
-                );
-              }
-
               return (
                 <Link
                   key={course.id}
