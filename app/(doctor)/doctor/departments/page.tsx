@@ -1101,7 +1101,7 @@ function TreeItem({
             </button>
           )}
 
-          {!isInstructor && node.type === "chapter" && onCopyMove && (
+          {isInstructor && node.type === "chapter" && onCopyMove && (
             <>
               <button
                 onClick={() => onCopyMove(node, "copy")}
@@ -1123,7 +1123,7 @@ function TreeItem({
 
           {/* Edit and Delete buttons - only for non-instructors */}
 
-          {!isInstructor && (
+          {isInstructor && node.type === "chapter" && (
             <>
               <button
                 onClick={() => onEdit(node)}

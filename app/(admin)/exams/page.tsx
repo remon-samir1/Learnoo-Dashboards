@@ -6,6 +6,7 @@ import { BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { useQuizzes, useDeleteQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
 import { useChapters } from '@/src/hooks/useChapters';
+import { useCourses } from '@/src/hooks/useCourses';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { DataTable, Column } from '@/src/components/ui/DataTable';
 import { DeleteModal } from '@/src/components/ui/DeleteModal';
@@ -28,6 +29,7 @@ export default function ExamsPage() {
     }
   }, [quizzesData]);
   const { data: chapters } = useChapters();
+  const { data: courses } = useCourses();
   const { mutate: deleteQuiz, isLoading: isDeleting } = useDeleteQuiz();
   const { mutate: updateQuiz } = useUpdateQuiz();
 
@@ -61,6 +63,22 @@ export default function ExamsPage() {
     return chapter?.attributes.title || '-';
   };
 
+  const getCourseName = (courseId: number | null | undefined) => {
+    if (!courseId) return null;
+    const course = courses?.find(c => parseInt(c.id) === courseId);
+    return course?.attributes.title || null;
+  };
+
+  const getCourseNames = (item: Quiz) => {
+    const names: string[] = [];
+    const ids = item.attributes.course_ids?.length ? item.attributes.course_ids : (item.attributes.course_id ? [item.attributes.course_id] : []);
+    ids.forEach(id => {
+      const name = getCourseName(id);
+      if (name) names.push(name);
+    });
+    return names.length ? names : '-';
+  };
+
   const columns: Column<Quiz>[] = [
     {
       key: 'title',
@@ -78,6 +96,14 @@ export default function ExamsPage() {
       key: 'chapter',
       header: t('exams.columns.chapter'),
       render: (item) => getChapterName(item.attributes.chapter_id),
+    },
+    {
+      key: 'course',
+      header: t('exams.columns.course'),
+      render: (item) => {
+        const names = getCourseNames(item);
+        return Array.isArray(names) ? names.join(', ') : names;
+      },
     },
     {
       key: 'duration',

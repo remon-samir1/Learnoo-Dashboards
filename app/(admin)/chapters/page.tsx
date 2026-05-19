@@ -1,10 +1,8 @@
 'use client';
 
-
-
 import React, { useState } from 'react';
 
-import { useChapters, useDeleteChapter } from '@/src/hooks/useChapters';
+import { useChapters } from '@/src/hooks/useChapters';
 
 import { useLectures } from '@/src/hooks/useLectures';
 
@@ -14,11 +12,7 @@ import { SearchFilter } from '@/src/components/admin/SearchFilter';
 
 import { DataTable, Column } from '@/src/components/ui/DataTable';
 
-import { DeleteModal } from '@/src/components/ui/DeleteModal';
-
 import type { Chapter } from '@/src/types';
-
-
 
 export default function ChaptersPage() {
 
@@ -26,55 +20,9 @@ export default function ChaptersPage() {
 
   const [selectedLecture, setSelectedLecture] = useState('');
 
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-
-  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
-
-  
-
   const { data: chapters, isLoading, error, refetch } = useChapters();
 
   const { data: lectures } = useLectures();
-
-  const { mutate: deleteChapter, isLoading: isDeleting } = useDeleteChapter();
-
-
-
-  const handleDelete = (chapter: Chapter) => {
-
-    setSelectedChapter(chapter);
-
-    setDeleteModalOpen(true);
-
-  };
-
-
-
-  const handleConfirmDelete = async () => {
-
-    if (!selectedChapter) return;
-
-    
-
-    try {
-
-      await deleteChapter(parseInt(selectedChapter.id));
-
-      setDeleteModalOpen(false);
-
-      setSelectedChapter(null);
-
-      refetch();
-
-    } catch {
-
-      // Error handled by hook
-
-    }
-
-  };
-
-
 
   const getLectureName = (lectureId: number) => {
 
@@ -83,8 +31,6 @@ export default function ChaptersPage() {
     return lecture?.attributes.title || '-';
 
   };
-
-
 
   const filteredChapters = chapters?.filter((c) => {
 
@@ -96,8 +42,6 @@ export default function ChaptersPage() {
 
   }) || [];
 
-
-
   const lectureOptions = lectures?.map(l => ({
 
     value: l.id,
@@ -105,8 +49,6 @@ export default function ChaptersPage() {
     label: l.attributes.title,
 
   })) || [];
-
-
 
   const columns: Column<Chapter>[] = [
 
@@ -182,8 +124,6 @@ export default function ChaptersPage() {
 
   ];
 
-
-
   if (error) {
 
     return (
@@ -195,10 +135,6 @@ export default function ChaptersPage() {
           title="Chapters Management"
 
           description="Manage lecture chapters and videos"
-
-          actionLabel="Add Chapter"
-
-          actionHref="/chapters/add"
 
         />
 
@@ -226,8 +162,6 @@ export default function ChaptersPage() {
 
   }
 
-
-
   return (
 
     <div className="flex flex-col gap-8 pb-12">
@@ -238,13 +172,7 @@ export default function ChaptersPage() {
 
         description="Manage lecture chapters and videos"
 
-        actionLabel="Add Chapter"
-
-        actionHref="/chapters/add"
-
       />
-
-
 
       <SearchFilter
 
@@ -274,8 +202,6 @@ export default function ChaptersPage() {
 
       />
 
-
-
       <DataTable
 
         data={filteredChapters}
@@ -286,35 +212,9 @@ export default function ChaptersPage() {
 
         keyExtractor={(item) => item.id}
 
-        onDelete={handleDelete}
+        showActions={false}
 
-        editHref={(item) => `/chapters/${item.id}/edit`}
-
-        emptyMessage="No chapters found. Create your first chapter!"
-
-      />
-
-
-
-      <DeleteModal
-
-        isOpen={deleteModalOpen}
-
-        onClose={() => {
-
-          setDeleteModalOpen(false);
-
-          setSelectedChapter(null);
-
-        }}
-
-        onConfirm={handleConfirmDelete}
-
-        title="Delete Chapter"
-
-        itemName={selectedChapter?.attributes.title || ''}
-
-        isLoading={isDeleting}
+        emptyMessage="No chapters found."
 
       />
 

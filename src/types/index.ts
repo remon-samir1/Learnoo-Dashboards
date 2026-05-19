@@ -3580,6 +3580,8 @@ export interface QuizAttributes {
 
   course_id?: number;
 
+  course_ids?: number[];
+
 
 
   title: string;

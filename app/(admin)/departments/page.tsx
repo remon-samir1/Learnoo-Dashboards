@@ -1075,14 +1075,6 @@ function TreeItem({
           {node.type === "course" && !isInstructor && (
             <>
               <button
-                onClick={() => onAdd("note", node.id)}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                title="Add note/summary"
-              >
-                <FileText className="w-4 h-4" />
-              </button>
-
-              <button
                 onClick={() => onAdd("lecture", node.id)}
                 className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
                 title="Add lecture"
@@ -1092,7 +1084,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "lecture" && (
+          {node.type === "lecture" && isInstructor && (
             <button
               onClick={() => onAdd("chapter", node.id)}
               className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
@@ -1102,7 +1094,7 @@ function TreeItem({
             </button>
           )}
 
-          {node.type === "chapter" && onCopyMove && (
+          {node.type === "chapter" && !isInstructor && onCopyMove && (
             <>
               <button
                 onClick={() => onCopyMove(node, "copy")}
@@ -1122,9 +1114,28 @@ function TreeItem({
             </>
           )}
 
-          {/* Edit and Delete buttons - all actions for admin, only courses/lectures/chapters for instructors */}
+          {/* Edit and Delete buttons - skip chapters unless isInstructor */}
+          {node.type !== 'chapter' && !isInstructor && (
+            <>
+              <button
+                onClick={() => onEdit(node)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                title={t("common.edit")}
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
 
-          {(!isInstructor || (node.type === 'chapter')) && (
+              <button
+                onClick={() => onDelete(node)}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                title={t("common.delete")}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+
+          {node.type === 'chapter' && !isInstructor && (
             <>
               <button
                 onClick={() => onEdit(node)}
@@ -1177,7 +1188,7 @@ export default function DepartmentsPage() {
   const t = useTranslations();
   const { role, canUseActivations } = useCurrentUser();
   const isInstructor = role === 'Instructor';
-
+  
   const [searchQuery, setSearchQuery] = useState("");
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());

@@ -112,7 +112,7 @@ export default function EditCodePage() {
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-red-600">{t('activation.edit.notFound')}</p>
         <Link
-          href="/activation"
+          href="/doctor/activation"
           className="px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
         >
           {t('activation.edit.back')}
@@ -128,7 +128,7 @@ export default function EditCodePage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/activation"
+          href="/doctor/activation"
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -205,7 +205,7 @@ export default function EditCodePage() {
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4">
           <Link
-            href="/activation"
+            href="/doctor/activation"
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all"
           >
             {t('activation.edit.cancel')}

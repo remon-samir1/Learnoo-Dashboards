@@ -123,7 +123,7 @@ function GenerateCodeForm() {
       }
 
       if (Array.isArray(result)) {
-        const returnedCodes = result.map((c) => c.attributes?.code || c).filter(Boolean);
+        const returnedCodes = result.map((c: any) => c.attributes?.code || c).filter(Boolean) as string[];
         setGeneratedCodes(returnedCodes);
         toast.success(`${quantity} ${t('activation.messages.codesGenerated')}`);
 
@@ -131,7 +131,7 @@ function GenerateCodeForm() {
           handleDownload(returnedCodes);
         }
       } else if ((result as any).data && Array.isArray((result as any).data)) {
-        const returnedCodes = (result as any).data.map((c: any) => c.attributes?.code || c).filter(Boolean);
+        const returnedCodes = (result as any).data.map((c: any) => c.attributes?.code || c).filter(Boolean) as string[];
         setGeneratedCodes(returnedCodes);
         toast.success(`${quantity} ${t('activation.messages.codesGenerated')}`);
 
@@ -178,7 +178,7 @@ function GenerateCodeForm() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/activation"
+          href="/doctor/activation"
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -262,7 +262,7 @@ function GenerateCodeForm() {
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4">
           <Link
-            href="/activation"
+            href="/doctor/activation"
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all"
           >
             {t('activation.generate.cancel')}

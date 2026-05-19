@@ -510,7 +510,8 @@ export default function CommunityModerationPage() {
     content: '',
     type: 'post' as 'post' | 'question' | 'summary',
     status: 'published' as 'draft' | 'published',
-    image: null as File | null
+    image: null as File | null,
+    course_id: '' as string
   });
 
   useEffect(() => {
@@ -581,7 +582,8 @@ export default function CommunityModerationPage() {
         content: createForm.content,
         type: createForm.type,
         status: createForm.status,
-        image: createForm.image || undefined
+        image: createForm.image || undefined,
+        course_id: createForm.course_id ? parseInt(createForm.course_id) : undefined
       });
       setIsCreateModalOpen(false);
       setCreateForm({
@@ -589,7 +591,8 @@ export default function CommunityModerationPage() {
         content: '',
         type: 'post',
         status: 'published',
-        image: null
+        image: null,
+        course_id: ''
       });
       await refetch();
       alert(t('community.notifications.postCreated'));
@@ -1227,6 +1230,23 @@ export default function CommunityModerationPage() {
                 />
               </div>
               
+              <div>
+                <label className="block text-sm font-semibold text-[#475569] mb-1">
+                  {t('community.createPost.courseLabel')}
+                </label>
+                <select
+                  value={createForm.course_id}
+                  onChange={(e) => setCreateForm({ ...createForm, course_id: e.target.value })}
+                  className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
+                >
+                  <option value="">{t('community.createPost.noCourse')}</option>
+                  {courses?.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.attributes.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.typeLabel')}

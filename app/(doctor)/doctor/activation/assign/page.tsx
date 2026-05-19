@@ -83,7 +83,7 @@ export default function AssignCodePage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href="/activation"
+          href="/doctor/activation"
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -219,7 +219,7 @@ export default function AssignCodePage() {
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4">
           <Link
-            href="/activation"
+            href="/doctor/activation"
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all"
           >
             {t('activation.generate.cancel')}
