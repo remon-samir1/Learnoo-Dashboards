@@ -34,7 +34,7 @@ interface DoctorSidebarProps {
 
 const allMenuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/doctor/dashboard' },
-  // { name: 'My Courses', icon: BookOpen, path: '/doctor/courses' },
+  { name: 'My Courses', icon: BookOpen, path: '/doctor/courses' },
   { name: 'Academic Structure', icon: School, path: '/doctor/departments' },
   { name: 'Live Sessions', icon: Video, path: '/doctor/live-sessions' },
   { name: 'Exams', icon: ClipboardList, path: '/doctor/exams' },

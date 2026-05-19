@@ -1071,23 +1071,13 @@ function TreeItem({
           )}
 
           {!isInstructor && node.type === "course" && (
-            <>
-              <button
-                onClick={() => onAdd("note", node.id)}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                title="Add note/summary"
-              >
-                <FileText className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={() => onAdd("lecture", node.id)}
-                className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
-                title="Add lecture"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </>
+            <button
+              onClick={() => onAdd("lecture", node.id)}
+              className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
+              title="Add lecture"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
           )}
 
           {node.type === "lecture" && (
@@ -2284,6 +2274,12 @@ export default function DepartmentsPage() {
 
             max_views: formData.max_views,
 
+            type: formData.type ?? "chapter",
+
+            note_type: formData.type === "note" ? formData.note_type : undefined,
+
+            content: formData.type === "note" ? formData.content : undefined,
+
             thumbnail: formData.thumbnail,
 
             video: formData.video,
@@ -2448,6 +2444,12 @@ export default function DepartmentsPage() {
               view_by_minute: formData.view_by_minute,
 
               max_views: formData.max_views,
+
+              type: formData.type ?? "chapter",
+
+              note_type: formData.type === "note" ? formData.note_type : undefined,
+
+              content: formData.type === "note" ? formData.content : undefined,
             },
             (progress) => setUploadProgress(progress),
           );
@@ -5009,6 +5011,12 @@ function EditModal({
 
           view_by_minute: chapter.attributes.view_by_minute,
 
+          type: chapter.attributes.type || "chapter",
+
+          note_type: chapter.attributes.note_type || "",
+
+          content: chapter.attributes.content || "",
+
           thumbnail: null,
         };
 
@@ -5954,6 +5962,79 @@ function EditModal({
                   </div>
                 )}
               </div>
+
+              {/* Type Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#475569]">
+                  Type
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
+                    value={formData.type ?? "chapter"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        type: e.target.value,
+                        // Reset note_type if type is not note
+                        note_type: e.target.value === "note" ? (formData.note_type || "summary") : "",
+                      })
+                    }
+                  >
+                    <option value="chapter">Chapter (Lesson)</option>
+                    <option value="note">Note</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Note Type Field - only shown and required when type is note */}
+              {(formData.type === "note") && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-[#475569]">
+                    Note Type <span className="text-[#EF4444]">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
+                      value={formData.note_type || "summary"}
+                      required
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          note_type: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="summary">Summary</option>
+                      <option value="highlight">Highlight</option>
+                      <option value="key_point">Key Point</option>
+                      <option value="important_notice">Important Notice</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                  </div>
+                </div>
+              )}
+
+              {/* Note Content Field - only shown when type is note */}
+              {(formData.type === "note") && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-[#475569]">
+                    Content / Text
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all min-h-[120px]"
+                    placeholder="Enter the note content or summary text here..."
+                    value={formData.content || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        content: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              )}
 
               <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
                 <label
@@ -7012,6 +7093,79 @@ function AddModal({
                   </div>
                 )}
               </div>
+
+              {/* Type Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#475569]">
+                  Type
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
+                    value={formData.type ?? "chapter"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        type: e.target.value,
+                        // Reset note_type if type is not note
+                        note_type: e.target.value === "note" ? (formData.note_type || "summary") : "",
+                      })
+                    }
+                  >
+                    <option value="chapter">Chapter (Lesson)</option>
+                    <option value="note">Note</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Note Type Field - only shown and required when type is note */}
+              {(formData.type === "note") && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-[#475569]">
+                    Note Type <span className="text-[#EF4444]">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
+                      value={formData.note_type || "summary"}
+                      required
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          note_type: e.target.value,
+                        })
+                      }
+                    >
+                      <option value="summary">Summary</option>
+                      <option value="highlight">Highlight</option>
+                      <option value="key_point">Key Point</option>
+                      <option value="important_notice">Important Notice</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                  </div>
+                </div>
+              )}
+
+              {/* Note Content Field - only shown when type is note */}
+              {(formData.type === "note") && (
+                <div className="flex flex-col gap-2">
+                  <label className="text-[13px] font-bold text-[#475569]">
+                    Content / Text
+                  </label>
+                  <textarea
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all min-h-[120px]"
+                    placeholder="Enter the note content or summary text here..."
+                    value={formData.content || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        content: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              )}
 
               <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
                 <label
