@@ -713,8 +713,8 @@
     "studentWatch": {
       "viewsLeftBadge": "المشاهدات المتبقية: {remaining}/{max}",
       "subtitleChapter": "الفصل {number}",
-      "showPdf": "عرض PDF",
-      "hidePdf": "إخفاء PDF",
+      "showPdf": "اضغط هنا لعرض ملف الـ PDF",
+      "hidePdf": "اضغط هنا لاخفاء ملف الـ PDF",
       "lectureMaterial": "مادة المحاضرة",
       "pdfSyncHint": "عارض PDF — افتح الملف بجانب الفيديو.",
       "askMoment": "اسأل عن هذه اللحظة",
