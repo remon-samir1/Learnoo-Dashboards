@@ -678,6 +678,17 @@ function buildUnifiedTree(
   return rootNodes;
 }
 
+function pruneEmptyBranches(nodes: TreeNode[]): TreeNode[] {
+  function hasCourseInSubtree(node: TreeNode): boolean {
+    if (node.type === "course") return true;
+    return node.children.some(hasCourseInSubtree);
+  }
+  return nodes.filter(hasCourseInSubtree).map(node => ({
+    ...node,
+    children: pruneEmptyBranches(node.children)
+  }));
+}
+
 // Filter tree based on search query
 
 function filterTree(nodes: TreeNode[], query: string): TreeNode[] {
@@ -1163,7 +1174,7 @@ function TreeItem({
 
 export default function DepartmentsPage() {
   const t = useTranslations();
-  const { role, canUseActivations } = useCurrentUser();
+  const { role, canUseActivations, user } = useCurrentUser();
   const isInstructor = role === 'Instructor';
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -1226,6 +1237,14 @@ export default function DepartmentsPage() {
     isLoading: coursesLoading,
     refetch: refetchCourses,
   } = useCourses({});
+
+  const myCourses = useMemo(() => {
+    if (!isInstructor || !user || !courses) return courses;
+    return courses.filter((c) =>
+      String(c.attributes.doctor_id) === String(user.id) ||
+      c.attributes.instructor?.data?.id === String(user.id)
+    );
+  }, [courses, isInstructor, user]);
 
   const { data: notes, isLoading: notesLoading, refetch: refetchNotes } = useNotes();
 
@@ -1573,7 +1592,8 @@ export default function DepartmentsPage() {
   // Build unified tree
 
   const treeData = useMemo(() => {
-    if (!departments || !courses || !universities || !faculties || !centers)
+    const effectiveCourses = myCourses || courses;
+    if (!departments || !effectiveCourses || !universities || !faculties || !centers)
       return [];
 
     const tree = buildUnifiedTree(
@@ -1581,23 +1601,26 @@ export default function DepartmentsPage() {
       faculties,
       centers,
       departments,
-      courses,
+      effectiveCourses,
       lecturesByCourse,
       chaptersByLecture,
       notes || [],
     );
 
-    return filterTree(tree, searchQuery);
+    const filtered = filterTree(tree, searchQuery);
+    return isInstructor ? pruneEmptyBranches(filtered) : filtered;
   }, [
     universities,
     faculties,
     centers,
     departments,
     courses,
+    myCourses,
     lecturesByCourse,
     chaptersByLecture,
     notes,
     searchQuery,
+    isInstructor,
   ]);
 
   // Auto-expand when searching

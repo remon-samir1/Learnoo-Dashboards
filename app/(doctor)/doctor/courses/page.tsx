@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Search, Grid3X3, List, Filter, ChevronDown, MoreVertical, Pencil, Eye, Trash2, FileEdit } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, Grid3X3, List, ChevronDown, MoreVertical, Pencil, Eye, Trash2, FileEdit, Plus, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useCourses, useDeleteCourse } from '@/src/hooks/useCourses';
+import { useCurrentUser } from '@/src/hooks/useAuth';
+import type { Course as ApiCourse } from '@/src/types';
 
-// Types
-interface Course {
+interface CourseDisplay {
   id: string;
   name: string;
   subject: string;
@@ -20,156 +22,8 @@ interface Course {
   color: string;
 }
 
-// Mock data matching the images
-const mockCourses: Course[] = [
-  {
-    id: '1',
-    name: 'Advanced Biochemistry',
-    subject: 'Biochemistry',
-    center: 'Cairo Center',
-    students: 342,
-    exams: 8,
-    lectures: 47,
-    notes: 12,
-    progress: 78,
-    status: 'active',
-    category: 'active',
-    color: 'blue'
-  },
-  {
-    id: '2',
-    name: 'Advanced Biochemistry',
-    subject: 'Biochemistry',
-    center: 'Cairo Center',
-    students: 342,
-    exams: 8,
-    lectures: 47,
-    notes: 12,
-    progress: 78,
-    status: 'active',
-    category: 'active',
-    color: 'blue'
-  },
-  {
-    id: '3',
-    name: 'Advanced Biochemistry',
-    subject: 'Biochemistry',
-    center: 'Cairo Center',
-    students: 342,
-    exams: 8,
-    lectures: 47,
-    notes: 12,
-    progress: 78,
-    status: 'active',
-    category: 'active',
-    color: 'blue'
-  },
-  {
-    id: '4',
-    name: 'Advanced Biochemistry',
-    subject: 'Biochemistry',
-    center: 'Cairo Center',
-    students: 342,
-    exams: 8,
-    lectures: 47,
-    notes: 12,
-    progress: 78,
-    status: 'active',
-    category: 'active',
-    color: 'blue'
-  },
-  {
-    id: '5',
-    name: 'Advanced Biochemistry',
-    subject: 'Biochemistry',
-    center: 'Cairo Center',
-    students: 342,
-    exams: 8,
-    lectures: 47,
-    notes: 12,
-    progress: 78,
-    status: 'active',
-    category: 'active',
-    color: 'blue'
-  }
-];
-
-// Extended data for list view
-const listCourses: Course[] = [
-  {
-    id: '1',
-    name: 'Advanced Mathematics - Grade 12',
-    subject: 'Mathematics',
-    center: 'Cairo Center',
-    students: 342,
-    exams: 8,
-    lectures: 47,
-    notes: 6,
-    progress: 78,
-    status: 'active',
-    category: 'active',
-    color: 'blue'
-  },
-  {
-    id: '2',
-    name: 'Physics Fundamentals - Grade 11',
-    subject: 'Physics',
-    center: 'Alexandria Center',
-    students: 289,
-    exams: 8,
-    lectures: 47,
-    notes: 6,
-    progress: 55,
-    status: 'active',
-    category: 'active',
-    color: 'purple'
-  },
-  {
-    id: '3',
-    name: 'Organic Chemistry - Grade 12',
-    subject: 'Chemistry',
-    center: 'Cairo Center',
-    students: 198,
-    exams: 8,
-    lectures: 47,
-    notes: 6,
-    progress: 90,
-    status: 'active',
-    category: 'active',
-    color: 'green'
-  },
-  {
-    id: '4',
-    name: 'Trigonometry & Geometry - Grade 10',
-    subject: 'Mathematics',
-    center: 'Giza Center',
-    students: 251,
-    exams: 8,
-    lectures: 47,
-    notes: 6,
-    progress: 40,
-    status: 'active',
-    category: 'active',
-    color: 'orange'
-  },
-  {
-    id: '5',
-    name: 'Mechanics & Dynamics - Grade 11',
-    subject: 'Physics',
-    center: 'Cairo Center',
-    students: 167,
-    exams: 8,
-    lectures: 47,
-    notes: 6,
-    progress: 62,
-    status: 'draft',
-    category: 'draft',
-    color: 'red'
-  }
-];
-
 // Course Card Component (Grid View)
-function CourseCard({ course }: { course: Course }) {
+function CourseCard({ course }: { course: CourseDisplay }) {
   const router = useRouter();
 
   return (
@@ -241,7 +95,7 @@ function CourseCard({ course }: { course: Course }) {
 }
 
 // List View Component
-function CourseListView({ courses }: { courses: Course[] }) {
+function CourseListView({ courses, onDelete }: { courses: CourseDisplay[]; onDelete: (id: string) => void }) {
   const router = useRouter();
 
   const getProgressColor = (color: string) => {
@@ -326,12 +180,18 @@ function CourseListView({ courses }: { courses: Course[] }) {
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <button 
+                       onClick={() => router.push(`/doctor/courses/${course.id}/edit`)}
+                       className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                     >
+                       <Pencil className="w-4 h-4" />
+                     </button>
+                     <button 
+                       onClick={() => onDelete(course.id)}
+                       className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                     >
+                       <Trash2 className="w-4 h-4" />
+                     </button>
                   </div>
                 </td>
               </tr>
@@ -350,6 +210,68 @@ export default function MyCoursesPage() {
   const [centerFilter, setCenterFilter] = useState('All Centers');
   const [statusFilter, setStatusFilter] = useState('All Status');
   const router = useRouter();
+  const { user } = useCurrentUser();
+  const { data: allCourses, isLoading } = useCourses();
+  const deleteMutation = useDeleteCourse();
+
+  // Filter courses by current doctor/instructor
+  const courses = useMemo(() => {
+    if (!allCourses || !user) return [];
+
+    return allCourses
+      .filter((c: ApiCourse) =>
+        String(c.attributes.doctor_id) === String(user.id) ||
+        c.attributes.instructor?.data?.id === String(user.id)
+      )
+      .map((c: ApiCourse): CourseDisplay => ({
+        id: c.id,
+        name: c.attributes.title,
+        subject: c.attributes.sub_title || '-',
+        center: c.attributes.category?.data?.attributes?.name || '-',
+        students: c.attributes.stats?.students || 0,
+        exams: c.attributes.stats?.exams || 0,
+        lectures: c.attributes.stats?.lectures || 0,
+        notes: 0,
+        progress: 0,
+        status: c.attributes.status === 1 ? 'active' as const : 'draft' as const,
+        category: c.attributes.status === 1 ? 'active' : 'draft',
+        color: 'blue',
+      }));
+  }, [allCourses, user]);
+
+  // Extract unique centers for filter dropdown
+  const centers = useMemo(() => {
+    const unique = new Set(courses.map(c => c.center).filter(Boolean));
+    return ['All Centers', ...Array.from(unique)];
+  }, [courses]);
+
+  // Filter by search and dropdowns
+  const filteredCourses = useMemo(() => {
+    return courses.filter(c => {
+      const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCenter = centerFilter === 'All Centers' || c.center === centerFilter;
+      const matchesStatus = statusFilter === 'All Status' || c.status === statusFilter.toLowerCase();
+      return matchesSearch && matchesCenter && matchesStatus;
+    });
+  }, [courses, searchQuery, centerFilter, statusFilter]);
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this course?')) {
+      try {
+        await deleteMutation.mutate(Number(id));
+      } catch {
+        // error handled by hook
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -359,15 +281,21 @@ export default function MyCoursesPage() {
           <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
           <p className="text-sm text-gray-500 mt-1">Manage and track all your courses</p>
         </div>
-        {viewMode === 'list' && (
-          <button 
-            onClick={() => router.push('/doctor/content-manager')}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-          >
-            <FileEdit className="w-4 h-4" />
-            Edit Content
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.push('/doctor/courses/add')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+            <Plus className="w-4 h-4" />
+            Create Course
           </button>
-        )}
+          {viewMode === 'list' && (
+            <button 
+              onClick={() => router.push('/doctor/content-manager')}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+            >
+              <FileEdit className="w-4 h-4" />
+              Edit Content
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters and Controls */}
@@ -394,10 +322,9 @@ export default function MyCoursesPage() {
                 onChange={(e) => setCenterFilter(e.target.value)}
                 className="appearance-none px-4 py-2 pr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
-                <option>All Centers</option>
-                <option>Cairo Center</option>
-                <option>Alexandria Center</option>
-                <option>Giza Center</option>
+                {centers.map(center => (
+                  <option key={center}>{center}</option>
+                ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none" />
             </div>
@@ -446,12 +373,12 @@ export default function MyCoursesPage() {
       {/* Content */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-          {mockCourses.map((course) => (
+          {filteredCourses.map((course) => (
             <CourseCard key={course.id} course={course} />
           ))}
         </div>
       ) : (
-        <CourseListView courses={listCourses} />
+        <CourseListView courses={filteredCourses} onDelete={handleDelete} />
       )}
     </div>
   );
