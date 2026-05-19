@@ -869,7 +869,7 @@ export interface ChapterAttributes {
 
   view_by_minute?: number | null;
 
-  show_in?: 'both' | 'app' | 'web';
+
 
   type?: 'chapter' | 'note';
 
@@ -998,11 +998,9 @@ export interface CreateChapterRequest {
 
   view_by_minute?: number | null;
 
-
-
   max_views?: number;
 
-  show_in?: 'both' | 'app' | 'web';
+
 
   type?: 'chapter' | 'note';
 
@@ -1064,7 +1062,7 @@ export interface UpdateChapterRequest {
 
   view_at?: number | null;
 
-  show_in?: 'both' | 'app' | 'web';
+
 
   type?: 'chapter' | 'note';
 
@@ -1289,7 +1287,7 @@ export interface CourseAttributes {
 
   visibility: CourseVisibility;
 
-
+  show_in?: 'both' | 'app' | 'web';
 
   approval: CourseApproval;
 
@@ -1620,11 +1618,9 @@ export interface CreateCourseRequest {
 
   visibility: string;
 
-
+  show_in?: 'both' | 'app' | 'web';
 
   status: CourseStatus;
-
-
 
   attachments?: File[];
 
@@ -1675,6 +1671,10 @@ export interface UpdateCourseRequest {
 
 
   visibility: CourseVisibility;
+
+
+
+  show_in?: 'both' | 'app' | 'web';
 
 
 

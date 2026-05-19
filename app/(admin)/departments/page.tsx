@@ -2147,7 +2147,6 @@ export default function DepartmentsPage() {
             is_free_preview: newChapter.attributes.is_free_preview,
             max_views: newChapter.attributes.max_views,
             view_by_minute: newChapter.attributes.view_by_minute,
-            show_in: newChapter.attributes.show_in,
             type: newChapter.attributes.type,
             note_type: newChapter.attributes.note_type,
             content: newChapter.attributes.content,
@@ -2255,6 +2254,8 @@ export default function DepartmentsPage() {
               doctor_id: formData.instructor_id
                 ? parseInt(formData.instructor_id)
                 : undefined,
+
+              show_in: formData.show_in ?? "both",
             },
             (progress) => setUploadProgress(progress),
           );
@@ -2289,8 +2290,6 @@ export default function DepartmentsPage() {
             view_by_minute: formData.view_by_minute,
 
             max_views: formData.max_views,
-
-            show_in: formData.show_in ?? "both",
 
             type: formData.type ?? "chapter",
 
@@ -2418,6 +2417,8 @@ export default function DepartmentsPage() {
 
               status: formData.status ?? 0,
 
+              show_in: formData.show_in ?? "both",
+
               doctor_id: formData.instructor_id
                 ? parseInt(formData.instructor_id)
                 : undefined,
@@ -2462,8 +2463,6 @@ export default function DepartmentsPage() {
               view_by_minute: formData.view_by_minute,
 
               max_views: formData.max_views,
-
-              show_in: formData.show_in ?? "both",
 
               type: formData.type ?? "chapter",
 
@@ -5003,6 +5002,8 @@ function EditModal({
 
           instructor_id: course.attributes.doctor_id?.toString() || course.attributes.instructor?.data?.id?.toString() || "",
 
+          show_in: course.attributes.show_in || "both",
+
           thumbnail: null,
         };
 
@@ -5030,8 +5031,6 @@ function EditModal({
           max_views: chapter.attributes.max_views,
 
           view_by_minute: chapter.attributes.view_by_minute,
-
-          show_in: chapter.attributes.show_in || "both",
 
           type: chapter.attributes.type || "chapter",
 
@@ -5676,6 +5675,30 @@ function EditModal({
                   />
                 </div>
               </div>
+
+              {/* Show In Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#475569]">
+                  Show In
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
+                    value={formData.show_in ?? "both"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        show_in: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="both">Both (App & Web)</option>
+                    <option value="app">Mobile App Only</option>
+                    <option value="web">Web Portal Only</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                </div>
+              </div>
             </>
           )}
 
@@ -5949,25 +5972,26 @@ function EditModal({
                   <div className="space-y-2">
                     {attachments.map((attachment, index) => {
                       const isExistingAttachment = attachment.attributes;
-                      const fileName = isExistingAttachment
-                        ? attachment.attributes.name
-                        : attachment.name;
-                      const fileSize = isExistingAttachment
-                        ? attachment.attributes.size
-                        : attachment.size;
-
                       return (
                         <div
-                          key={isExistingAttachment ? attachment.id : index}
+                          key={
+                            isExistingAttachment
+                              ? `existing-${attachment.id}`
+                              : `new-${index}`
+                          }
                           className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
                         >
                           <div className="flex items-center gap-2">
                             <FileText className="w-4 h-4 text-blue-500" />
                             <span className="text-sm text-gray-700 truncate max-w-[200px]">
-                              {fileName}
+                              {isExistingAttachment
+                                ? attachment.attributes.name
+                                : attachment.name}
                             </span>
                             <span className="text-xs text-gray-400">
-                              ({(parseInt(fileSize) / 1024).toFixed(1)} KB)
+                              {isExistingAttachment
+                                ? `ID: ${attachment.id}`
+                                : `(${(attachment.size / 1024).toFixed(1)} KB)`}
                             </span>
                           </div>
 
@@ -5983,30 +6007,6 @@ function EditModal({
                     })}
                   </div>
                 )}
-              </div>
-
-              {/* Show In Field */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">
-                  Show In
-                </label>
-                <div className="relative">
-                  <select
-                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
-                    value={formData.show_in ?? "both"}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        show_in: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="both">Both (App & Web)</option>
-                    <option value="app">Mobile App Only</option>
-                    <option value="web">Web Portal Only</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
-                </div>
               </div>
 
               {/* Type Field */}
@@ -6803,6 +6803,30 @@ function AddModal({
                   ))}
                 </select>
               </div>
+
+              {/* Show In Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#475569]">
+                  Show In
+                </label>
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
+                    value={formData.show_in ?? "both"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        show_in: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="both">Both (App & Web)</option>
+                    <option value="app">Mobile App Only</option>
+                    <option value="web">Web Portal Only</option>
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                </div>
+              </div>
             </>
           )}
 
@@ -7138,30 +7162,6 @@ function AddModal({
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Show In Field */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">
-                  Show In
-                </label>
-                <div className="relative">
-                  <select
-                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
-                    value={formData.show_in ?? "both"}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        show_in: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="both">Both (App & Web)</option>
-                    <option value="app">Mobile App Only</option>
-                    <option value="web">Web Portal Only</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
-                </div>
               </div>
 
               {/* Type Field */}
