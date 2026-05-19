@@ -63,13 +63,6 @@ function getPreviewUrl(path: string | null): string {
     }
   }, [library]);
 
-  // Auto-expand tree to show selected course
-  useEffect(() => {
-    if (courseId && courseTree.length > 0) {
-      const parentIds = findParentIdsForCourse(courseTree, courseId);
-      setCourseTreeExpanded(parentIds);
-    }
-  }, [courseId, courseTree]);
 
   const handleCoverImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

@@ -27,11 +27,11 @@ interface TreeNode {
 
 // Build simplified tree structure for courses (same logic as departments page)
 function buildCourseTree(
-  universities: University[],
-  faculties: Faculty[],
-  centers: Center[],
-  departments: Department[],
-  courses: Course[]
+  universities: University[] = [],
+  faculties: Faculty[] = [],
+  centers: Center[] = [],
+  departments: Department[] = [],
+  courses: Course[] = []
 ): TreeNode[] {
   const universityMap = new Map<string, TreeNode>();
   const facultyMap = new Map<string, TreeNode>();
@@ -40,55 +40,58 @@ function buildCourseTree(
   const courseMap = new Map<string, TreeNode>();
 
   // Create university nodes
-  universities.forEach((univ) => {
+  universities.forEach((univ: any) => {
+    if (!univ) return;
     const univNode: TreeNode = {
       id: `univ-${univ.id}`,
       type: 'university',
-      name: univ.attributes.name,
+      name: univ.attributes?.name || univ.name || 'University',
       data: univ,
       children: [],
       level: 0,
     };
-    universityMap.set(univ.id, univNode);
+    universityMap.set(String(univ.id), univNode);
   });
 
   // Create faculty nodes
-  faculties.forEach((faculty) => {
+  faculties.forEach((faculty: any) => {
+    if (!faculty) return;
     const facultyNode: TreeNode = {
       id: `faculty-${faculty.id}`,
       type: 'faculty',
-      name: faculty.attributes.name,
+      name: faculty.attributes?.name || faculty.name || 'Faculty',
       data: faculty,
       children: [],
       level: 0,
     };
-    facultyMap.set(faculty.id, facultyNode);
+    facultyMap.set(String(faculty.id), facultyNode);
   });
 
   // Create center nodes and process their childrens (departments or faculties)
-  centers.forEach((center) => {
+  centers.forEach((center: any) => {
+    if (!center) return;
     const centerNode: TreeNode = {
       id: `center-${center.id}`,
       type: 'center',
-      name: center.name,
+      name: center.attributes?.name || center.name || 'Center',
       data: center,
       children: [],
       level: 0,
     };
 
-    centerMap.set(center.id, centerNode);
+    centerMap.set(String(center.id), centerNode);
 
     // Process center's childrens (departments or faculties) if available
     if (center.childrens && Array.isArray(center.childrens)) {
       // First pass: create all faculty nodes and add to center
-      center.childrens.forEach((child) => {
+      center.childrens.forEach((child: any) => {
         const childType = child.type || "department";
 
         if (childType === "faculty") {
           const facultyNode: TreeNode = {
             id: `faculty-${child.id}`,
             type: "faculty",
-            name: child.attributes.name,
+            name: child.attributes?.name || child.name || "Faculty",
             data: {
               id: child.id,
               type: "faculty",
@@ -99,20 +102,20 @@ function buildCourseTree(
             parentId: centerNode.id,
           };
 
-          facultyMap.set(child.id, facultyNode);
+          facultyMap.set(String(child.id), facultyNode);
           centerNode.children.push(facultyNode);
         }
       });
 
       // Second pass: create department nodes and assign to correct parent
-      center.childrens.forEach((child) => {
+      center.childrens.forEach((child: any) => {
         const childType = child.type || "department";
 
         if (childType !== "faculty") {
           const deptNode: TreeNode = {
             id: `dept-${child.id}`,
             type: "department",
-            name: child.attributes.name,
+            name: child.attributes?.name || child.name || "Department",
             data: {
               id: child.id,
               type: "department",
@@ -124,7 +127,7 @@ function buildCourseTree(
           };
 
           // Check if department has a faculty parent and nest it there
-          const parentFacultyId = (child.attributes as any).parent?.data?.id;
+          const parentFacultyId = (child.attributes as any)?.parent?.data?.id;
 
           if (parentFacultyId && facultyMap.has(String(parentFacultyId))) {
             const parentFaculty = facultyMap.get(String(parentFacultyId))!;
@@ -137,40 +140,42 @@ function buildCourseTree(
           }
 
           // Store with direct ID only
-          departmentMap.set(child.id, deptNode);
+          departmentMap.set(String(child.id), deptNode);
         }
       });
     }
   });
 
   // Create department nodes (for departments not in center.childrens)
-  departments.forEach((dept) => {
+  departments.forEach((dept: any) => {
+    if (!dept) return;
     // Skip if already created from center.childrens
-    if (departmentMap.has(dept.id)) return;
+    if (departmentMap.has(String(dept.id))) return;
 
     const deptNode: TreeNode = {
       id: `dept-${dept.id}`,
       type: 'department',
-      name: dept.attributes.name,
+      name: dept.attributes?.name || dept.name || 'Department',
       data: dept,
       children: [],
       level: 0,
     };
     // Store with direct ID only
-    departmentMap.set(dept.id, deptNode);
+    departmentMap.set(String(dept.id), deptNode);
   });
 
   // Create course nodes
-  courses.forEach((course) => {
+  courses.forEach((course: any) => {
+    if (!course) return;
     const courseNode: TreeNode = {
       id: `course-${course.id}`,
       type: 'course',
-      name: course.attributes.title,
+      name: course.attributes?.title || course.title || 'Course',
       data: course,
       children: [],
       level: 0,
     };
-    courseMap.set(course.id, courseNode);
+    courseMap.set(String(course.id), courseNode);
   });
 
   // Build strict hierarchy: Universities -> Centers -> Faculties -> Departments -> Sub-departments -> Courses
@@ -182,11 +187,12 @@ function buildCourseTree(
   });
 
   // Build center hierarchy under universities (level 1), with fallback to root
-  centers.forEach((center) => {
-    const node = centerMap.get(center.id);
+  centers.forEach((center: any) => {
+    if (!center) return;
+    const node = centerMap.get(String(center.id));
     if (!node) return;
 
-    const parentId = center.parent?.data?.id || center.parent_id;
+    const parentId = center.attributes?.parent?.data?.id || center.parent?.data?.id || center.parent_id;
 
     if (parentId && universityMap.has(String(parentId))) {
       universityMap.get(String(parentId))!.children.push(node);
@@ -202,9 +208,9 @@ function buildCourseTree(
     // Skip if already has a parent (from center.childrens)
     if (faculty.parentId) return;
 
-    const parentId = (faculty.data as Faculty).attributes.parent?.data?.id;
-    if (parentId && universityMap.has(parentId)) {
-      universityMap.get(parentId)!.children.push(faculty);
+    const parentId = (faculty.data as Faculty).attributes?.parent?.data?.id;
+    if (parentId && universityMap.has(String(parentId))) {
+      universityMap.get(String(parentId))!.children.push(faculty);
       faculty.level = 1;
     }
   });
@@ -219,44 +225,28 @@ function buildCourseTree(
     // Skip if already has a parent (from center.childrens)
     if (dept.parentId) return;
 
-    const parentId = (dept.data as Department).attributes.parent?.data?.id;
-    const centerId = (dept.data as Department).attributes.center_id;
+    const parentId = (dept.data as Department).attributes?.parent?.data?.id;
+    const centerId = (dept.data as Department).attributes?.center_id;
 
     // First check if parent is a faculty
-    if (parentId && facultyMap.has(parentId)) {
-      facultyMap.get(parentId)!.children.push(dept);
-      dept.level = 2;
-      dept.parentId = facultyMap.get(parentId)!.id;
+    if (parentId && facultyMap.has(String(parentId))) {
+      const parentNode = facultyMap.get(String(parentId))!;
+      parentNode.children.push(dept);
+      dept.level = parentNode.level + 1;
+      dept.parentId = parentNode.id;
     }
     // Then check if parent is a center
     else if (centerId) {
-      // Try both direct ID and center- prefixed ID
-      let centerNode = centerMap.get(String(centerId));
-      if (!centerNode) {
-        centerNode = centerMap.get(`center-${centerId}`);
-      }
+      const centerNode = centerMap.get(String(centerId));
       if (centerNode) {
         centerNode.children.push(dept);
-        dept.level = 2;
+        dept.level = centerNode.level + 1;
         dept.parentId = centerNode.id;
       }
     }
     // Then check if parent is another department (sub-department)
     else if (parentId) {
-      // Try both direct ID and dept- prefixed ID
-      let parentDept = departmentMap.get(parentId);
-      if (!parentDept) {
-        parentDept = departmentMap.get(`dept-${parentId}`);
-      }
-      // Try iterating through all departments to find a match
-      if (!parentDept) {
-        for (const [key, dept] of departmentMap) {
-          if (key === parentId || key === `dept-${parentId}` || dept.id === parentId || dept.id === `dept-${parentId}`) {
-            parentDept = dept;
-            break;
-          }
-        }
-      }
+      const parentDept = departmentMap.get(String(parentId));
       if (parentDept) {
         parentDept.children.push(dept);
         dept.level = parentDept.level + 1;
@@ -273,8 +263,8 @@ function buildCourseTree(
   // Link courses to departments (same logic as departments page)
   courseMap.forEach((course) => {
     const deptId =
-      (course.data as Course).attributes.department?.data?.id ||
-      (course.data as Course).attributes.category?.data?.id;
+      (course.data as Course).attributes?.department?.data?.id ||
+      (course.data as Course).attributes?.category?.data?.id;
 
     if (deptId && departmentMap.has(String(deptId))) {
       const dept = departmentMap.get(String(deptId))!;
@@ -426,10 +416,15 @@ export default function CommunityModerationPage() {
   const { data: courses, isLoading: coursesLoading } = useCourses();
 
   // Hierarchical selection hooks
-  const { data: universities } = useUniversities();
-  const { data: centers } = useCenters();
-  const { data: faculties } = useFaculties();
-  const { data: departments } = useDepartments();
+  const { data: universitiesData } = useUniversities();
+  const { data: centersData } = useCenters();
+  const { data: facultiesData } = useFaculties();
+  const { data: departmentsData } = useDepartments();
+
+  const universities = useMemo(() => universitiesData ?? [], [universitiesData]);
+  const centers = useMemo(() => centersData ?? [], [centersData]);
+  const faculties = useMemo(() => facultiesData ?? [], [facultiesData]);
+  const departments = useMemo(() => departmentsData ?? [], [departmentsData]);
   
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [editingSocialLink, setEditingSocialLink] = useState<SocialLink | null>(null);
@@ -450,10 +445,7 @@ export default function CommunityModerationPage() {
 
   // Build course tree
   const courseTree = useMemo(() => {
-    if (!universities || !faculties || !centers || !departments || !courses) {
-      return [];
-    }
-    return buildCourseTree(universities, faculties, centers, departments, courses);
+    return buildCourseTree(universities, faculties, centers, departments, courses || []);
   }, [universities, faculties, centers, departments, courses]);
 
   // Handle tree node toggle
