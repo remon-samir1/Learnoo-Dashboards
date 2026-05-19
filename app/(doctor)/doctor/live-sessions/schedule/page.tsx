@@ -1,20 +1,19 @@
 "use client";
 
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, Info } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/src/lib/api';
-import { Course, CreateLiveRoomRequest } from '@/src/types';
+import { CreateLiveRoomRequest } from '@/src/types';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 
 export default function ScheduleSessionPage() {
   const t = useTranslations();
   const router = useRouter();
-  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isFetchingCourses, setIsFetchingCourses] = useState(true);
 
   const [formData, setFormData] = useState({
     course_id: '',
@@ -24,21 +23,6 @@ export default function ScheduleSessionPage() {
     max_students: 50,
     max_join_time: 15
   });
-
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await api.courses.list();
-        setCourses(response.data);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-        toast.error(t('courses.messages.loadError'));
-      } finally {
-        setIsFetchingCourses(false);
-      }
-    };
-    fetchCourses();
-  }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -118,27 +102,12 @@ export default function ScheduleSessionPage() {
                 />
               </div>
 
-              {/* Course */}
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.course')} *</label>
-                <div className="relative">
-                  <select
-                    name="course_id"
-                    value={formData.course_id}
-                    onChange={handleChange}
-                    disabled={isFetchingCourses}
-                    className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none appearance-none transition-all text-[14px] bg-white disabled:bg-gray-50"
-                  >
-                    <option value="">{isFetchingCourses ? t('liveSessions.schedule.loadingCourses') : t('liveSessions.schedule.selectCourse')}</option>
-                    {courses.map(course => (
-                      <option key={course.id} value={course.id}>
-                        {course.attributes.title}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronLeft className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 text-[#64748B] pointer-events-none" />
-                </div>
-              </div>
+              <CourseTreeSelect
+                value={formData.course_id}
+                onChange={(val) => { setFormData(prev => ({ ...prev, course_id: val as string })); }}
+                label={t('liveSessions.schedule.course')}
+                required
+              />
 
               {/* Start Time */}
               <div className="flex flex-col gap-2">

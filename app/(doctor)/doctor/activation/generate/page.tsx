@@ -102,29 +102,49 @@ function GenerateCodeForm() {
     }
 
     try {
-      // Generate the requested number of codes
       const codesToGenerate: string[] = [];
       for (let i = 0; i < quantity; i++) {
         codesToGenerate.push(generateRandomCode());
       }
 
-      const result = await createCode({
+      const payload = {
         codeable_id: parseInt(itemId),
         codeable_type: codeType,
         codes: codesToGenerate,
-      });
+      };
+      console.log('🚀 Generating codes:', payload);
 
-      if (result && Array.isArray(result)) {
-        const returnedCodes = result.map((c) => c.attributes.code);
+      const result = await createCode(payload);
+      console.log('✅ Create code result:', result);
+
+      if (!result) {
+        toast.error(t('activation.messages.generateError') || 'Failed to generate codes - empty response');
+        return;
+      }
+
+      if (Array.isArray(result)) {
+        const returnedCodes = result.map((c) => c.attributes?.code || c).filter(Boolean);
         setGeneratedCodes(returnedCodes);
         toast.success(`${quantity} ${t('activation.messages.codesGenerated')}`);
 
         if (shouldDownload) {
           handleDownload(returnedCodes);
         }
+      } else if ((result as any).data && Array.isArray((result as any).data)) {
+        const returnedCodes = (result as any).data.map((c: any) => c.attributes?.code || c).filter(Boolean);
+        setGeneratedCodes(returnedCodes);
+        toast.success(`${quantity} ${t('activation.messages.codesGenerated')}`);
+
+        if (shouldDownload) {
+          handleDownload(returnedCodes);
+        }
+      } else {
+        console.error('❌ Unexpected result format:', result);
+        toast.error('Unexpected response format from server');
       }
-    } catch {
-      // Error handled by hook
+    } catch (error) {
+      console.error('❌ Error generating codes:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate codes');
     }
   };
 

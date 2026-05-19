@@ -679,11 +679,11 @@ function buildUnifiedTree(
 }
 
 function pruneEmptyBranches(nodes: TreeNode[]): TreeNode[] {
-  function hasCourseInSubtree(node: TreeNode): boolean {
-    if (node.type === "course") return true;
-    return node.children.some(hasCourseInSubtree);
+  function hasContent(node: TreeNode): boolean {
+    if (node.type === "course" || node.type === "lecture" || node.type === "chapter" || node.type === "note") return true;
+    return node.children.some(hasContent);
   }
-  return nodes.filter(hasCourseInSubtree).map(node => ({
+  return nodes.filter(hasContent).map(node => ({
     ...node,
     children: pruneEmptyBranches(node.children)
   }));

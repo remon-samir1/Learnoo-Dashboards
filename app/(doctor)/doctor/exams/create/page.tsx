@@ -1,34 +1,29 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Plus,
   Trash2,
   ChevronDown,
-  ChevronRight,
   Clock,
   Calendar,
   FileText,
   Award,
   RotateCcw,
   Loader2,
-  FolderOpen,
-  BookOpen,
   X,
   ImagePlus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useCreateQuiz } from '@/src/hooks/useQuizzes';
-import { useUniversities } from '@/src/hooks/useUniversities';
-import { useFaculties } from '@/src/hooks/useFaculties';
-import { useCenters } from '@/src/hooks/useCenters';
-import { useDepartments } from '@/src/hooks/useDepartments';
-import type { University, Faculty, Center, Department, Course } from '@/src/types';
+
+
 
 interface Answer {
   id: string;
@@ -66,311 +61,7 @@ interface ExamDetails {
   is_public: boolean;
 }
 
-type NodeType = 'university' | 'faculty' | 'center' | 'department' | 'course';
 
-interface TreeNode {
-  id: string;
-  type: NodeType;
-  name: string;
-  data: University | Faculty | Center | Department | Course;
-  children: TreeNode[];
-  level: number;
-  parentId?: string | null;
-}
-
-function buildCourseTree(
-  universities: University[],
-  faculties: Faculty[],
-  centers: Center[],
-  departments: Department[],
-  courses: Course[]
-): TreeNode[] {
-  const universityMap = new Map<string, TreeNode>();
-  const facultyMap = new Map<string, TreeNode>();
-  const centerMap = new Map<string, TreeNode>();
-  const departmentMap = new Map<string, TreeNode>();
-  const courseMap = new Map<string, TreeNode>();
-
-  universities.forEach((univ) => {
-    const univNode: TreeNode = {
-      id: `univ-${univ.id}`,
-      type: 'university',
-      name: univ.attributes.name,
-      data: univ,
-      children: [],
-      level: 0,
-    };
-    universityMap.set(univ.id, univNode);
-  });
-
-  faculties.forEach((faculty) => {
-    const facultyNode: TreeNode = {
-      id: `faculty-${faculty.id}`,
-      type: 'faculty',
-      name: faculty.attributes.name,
-      data: faculty,
-      children: [],
-      level: 0,
-    };
-    facultyMap.set(faculty.id, facultyNode);
-  });
-
-  centers.forEach((center) => {
-    const centerNode: TreeNode = {
-      id: `center-${center.id}`,
-      type: 'center',
-      name: center.name,
-      data: center,
-      children: [],
-      level: 0,
-    };
-    centerMap.set(center.id, centerNode);
-
-    if (center.childrens && Array.isArray(center.childrens)) {
-      center.childrens.forEach((child) => {
-        const childType = child.type || "department";
-        if (childType === "faculty") {
-          const facultyNode: TreeNode = {
-            id: `faculty-${child.id}`,
-            type: "faculty",
-            name: child.attributes.name,
-            data: { id: child.id, type: "faculty", attributes: child.attributes } as Faculty,
-            children: [],
-            level: centerNode.level + 1,
-            parentId: centerNode.id,
-          };
-          facultyMap.set(child.id, facultyNode);
-          centerNode.children.push(facultyNode);
-        }
-      });
-
-      center.childrens.forEach((child) => {
-        const childType = child.type || "department";
-        if (childType !== "faculty") {
-          const deptNode: TreeNode = {
-            id: `dept-${child.id}`,
-            type: "department",
-            name: child.attributes.name,
-            data: { id: child.id, type: "department", attributes: child.attributes } as Department,
-            children: [],
-            level: centerNode.level + 1,
-            parentId: centerNode.id,
-          };
-          const parentFacultyId = (child.attributes as any).parent?.data?.id;
-          if (parentFacultyId && facultyMap.has(String(parentFacultyId))) {
-            const parentFaculty = facultyMap.get(String(parentFacultyId))!;
-            deptNode.level = parentFaculty.level + 1;
-            deptNode.parentId = parentFaculty.id;
-            parentFaculty.children.push(deptNode);
-          } else {
-            centerNode.children.push(deptNode);
-          }
-          departmentMap.set(child.id, deptNode);
-        }
-      });
-    }
-  });
-
-  departments.forEach((dept) => {
-    if (departmentMap.has(dept.id)) return;
-    const deptNode: TreeNode = {
-      id: `dept-${dept.id}`,
-      type: 'department',
-      name: dept.attributes.name,
-      data: dept,
-      children: [],
-      level: 0,
-    };
-    departmentMap.set(dept.id, deptNode);
-  });
-
-  courses.forEach((course) => {
-    const courseNode: TreeNode = {
-      id: `course-${course.id}`,
-      type: 'course',
-      name: course.attributes.title,
-      data: course,
-      children: [],
-      level: 0,
-    };
-    courseMap.set(course.id, courseNode);
-  });
-
-  const rootNodes: TreeNode[] = [];
-
-  universityMap.forEach((univ) => {
-    rootNodes.push(univ);
-  });
-
-  centers.forEach((center) => {
-    const node = centerMap.get(center.id);
-    if (!node) return;
-    const parentId = center.parent?.data?.id || center.parent_id;
-    if (parentId && universityMap.has(String(parentId))) {
-      universityMap.get(String(parentId))!.children.push(node);
-      node.level = 1;
-    } else {
-      node.level = 0;
-      rootNodes.push(node);
-    }
-  });
-
-  facultyMap.forEach((faculty) => {
-    if (faculty.parentId) return;
-    const parentId = (faculty.data as Faculty).attributes.parent?.data?.id;
-    if (parentId && universityMap.has(parentId)) {
-      universityMap.get(parentId)!.children.push(faculty);
-      faculty.level = 1;
-    }
-  });
-
-  const processedDeptIds = new Set<string>();
-  departmentMap.forEach((dept) => {
-    if (processedDeptIds.has(dept.id)) return;
-    processedDeptIds.add(dept.id);
-    if (dept.parentId) return;
-    const parentId = (dept.data as Department).attributes.parent?.data?.id;
-    const centerId = (dept.data as Department).attributes.center_id;
-    if (parentId && facultyMap.has(parentId)) {
-      facultyMap.get(parentId)!.children.push(dept);
-      dept.level = 2;
-      dept.parentId = facultyMap.get(parentId)!.id;
-    } else if (centerId) {
-      let centerNode = centerMap.get(String(centerId));
-      if (!centerNode) centerNode = centerMap.get(`center-${centerId}`);
-      if (centerNode) {
-        centerNode.children.push(dept);
-        dept.level = 2;
-        dept.parentId = centerNode.id;
-      }
-    } else if (parentId) {
-      let parentDept = departmentMap.get(parentId);
-      if (!parentDept) parentDept = departmentMap.get(`dept-${parentId}`);
-      if (!parentDept) {
-        for (const [key, d] of departmentMap) {
-          if (key === parentId || key === `dept-${parentId}` || d.id === parentId || d.id === `dept-${parentId}`) {
-            parentDept = d;
-            break;
-          }
-        }
-      }
-      if (parentDept) {
-        parentDept.children.push(dept);
-        dept.level = parentDept.level + 1;
-        dept.parentId = parentDept.id;
-      }
-    } else {
-      dept.level = 1;
-      rootNodes.push(dept);
-    }
-  });
-
-  courseMap.forEach((course) => {
-    const deptId =
-      (course.data as Course).attributes.department?.data?.id ||
-      (course.data as Course).attributes.category?.data?.id;
-    if (deptId && departmentMap.has(String(deptId))) {
-      const dept = departmentMap.get(String(deptId))!;
-      course.level = dept.level + 1;
-      course.parentId = dept.id;
-      dept.children.push(course);
-    }
-  });
-
-  return rootNodes;
-}
-
-interface CourseTreeItemProps {
-  node: TreeNode;
-  expanded: Set<string>;
-  onToggle: (id: string) => void;
-  onSelect: (node: TreeNode) => void;
-  selectedCourseIds: string[];
-}
-
-function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseIds }: CourseTreeItemProps) {
-  const isExpanded = expanded.has(node.id);
-  const hasChildren = node.children.length > 0;
-  const courseId = node.type === 'course' ? node.id.replace('course-', '') : '';
-  const isSelected = node.type === 'course' && selectedCourseIds.includes(courseId);
-
-  const getNodeIcon = (type: NodeType) => {
-    switch (type) {
-      case 'university': return <FolderOpen className="w-4 h-4 text-blue-500" />;
-      case 'faculty': return <FolderOpen className="w-4 h-4 text-purple-500" />;
-      case 'center': return <FolderOpen className="w-4 h-4 text-green-500" />;
-      case 'department': return <FolderOpen className="w-4 h-4 text-orange-500" />;
-      case 'course': return <BookOpen className="w-4 h-4 text-indigo-500" />;
-      default: return <FolderOpen className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  return (
-    <div className="select-none">
-      <div
-        className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${isSelected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
-          }`}
-        style={{ paddingLeft: `${node.level * 24 + 12}px` }}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (node.type === 'course') {
-            onSelect(node);
-          } else {
-            onToggle(node.id);
-          }
-        }}
-      >
-        {hasChildren ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggle(node.id);
-            }}
-            className="flex-shrink-0 w-5 h-5 flex items-center justify-center"
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            )}
-          </button>
-        ) : (
-          <div className="w-5" />
-        )}
-        {node.type === 'course' && (
-          <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-            isSelected ? 'bg-[#2137D6] border-[#2137D6]' : 'border-[#CBD5E1]'
-          }`}>
-            {isSelected && (
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </div>
-        )}
-        {getNodeIcon(node.type)}
-        <span className="text-sm">{node.name}</span>
-      </div>
-      {hasChildren && isExpanded && (
-        <div>
-          {node.children.map((child) => (
-            <CourseTreeItem
-              key={child.id}
-              node={child}
-              expanded={expanded}
-              onToggle={onToggle}
-              onSelect={onSelect}
-              selectedCourseIds={selectedCourseIds}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function CreateExamPage() {
   const t = useTranslations('exams');
@@ -378,10 +69,6 @@ export default function CreateExamPage() {
   const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { mutate: createQuiz, isLoading: isCreatingQuiz, isError: isQuizError, error: quizError } = useCreateQuiz();
-  const { data: universities } = useUniversities();
-  const { data: faculties } = useFaculties();
-  const { data: centers } = useCenters();
-  const { data: departments } = useDepartments();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
@@ -398,45 +85,6 @@ export default function CreateExamPage() {
     endTime: '',
     is_public: false
   });
-
-  // Tree selection state
-  const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
-
-  // Build course tree
-  const courseTree = useMemo(() => {
-    if (!universities || !faculties || !centers || !departments || !courses) {
-      return [];
-    }
-    return buildCourseTree(universities, faculties, centers, departments, courses);
-  }, [universities, faculties, centers, departments, courses]);
-
-  // Handle tree node toggle
-  const handleCourseTreeToggle = (nodeId: string) => {
-    setCourseTreeExpanded((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  };
-
-  // Handle tree node selection (toggle multi-select)
-  const handleCourseTreeSelect = (node: TreeNode) => {
-    if (node.type === 'course') {
-      const courseId = node.id.replace('course-', '');
-      setExamDetails((prev) => {
-        const current = prev.courses;
-        if (current.includes(courseId)) {
-          return { ...prev, courses: current.filter(id => id !== courseId), chapter: '' };
-        } else {
-          return { ...prev, courses: [...current, courseId], chapter: '' };
-        }
-      });
-    }
-  };
 
   // Filter chapters based on selected courses
   const filteredChapters = examDetails.courses.length > 0
@@ -727,38 +375,14 @@ export default function CreateExamPage() {
               />
             </div>
 
-            {/* Course Tree */}
-            <div className="flex flex-col gap-2">
-              <label className="text-[13px] font-bold text-[#475569]">{t('create.course')} <span className="text-[#EF4444]">*</span></label>
-              <div className="border border-[#E2E8F0] rounded-xl max-h-64 overflow-y-auto">
-                {courseTree.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-gray-500">{coursesLoading ? t('create.loading') : t('create.selectCourse')}</div>
-                ) : (
-                  <div className="py-2">
-                    <div className="px-3 pb-2 text-xs text-[#94A3B8]">Click courses to select/deselect multiple</div>
-                    {courseTree.map((node) => (
-                      <CourseTreeItem
-                        key={node.id}
-                        node={node}
-                        expanded={courseTreeExpanded}
-                        onToggle={handleCourseTreeToggle}
-                        onSelect={handleCourseTreeSelect}
-                        selectedCourseIds={examDetails.courses}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-              {examDetails.courses.length > 0 && (
-                <div className="mt-1 p-2 bg-[#EEF2FF] rounded-lg border border-[#2137D6]/20">
-                  <p className="text-xs text-[#2137D6]">
-                    Selected ({examDetails.courses.length}): {examDetails.courses.map(id =>
-                      courses?.find(c => c.id === id)?.attributes.title
-                    ).filter(Boolean).join(', ')}
-                  </p>
-                </div>
-              )}
-            </div>
+            <CourseTreeSelect
+              value={examDetails.courses}
+              onMultiChange={(val) => setExamDetails(prev => ({ ...prev, courses: val, chapter: '' }))}
+              label={t('create.course')}
+              multiple
+              inline
+              required
+            />
 
             {/* Type, Chapter */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

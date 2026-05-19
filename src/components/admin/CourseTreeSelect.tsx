@@ -1,16 +1,16 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Search, 
-  BookOpen, 
-  School, 
-  MapPin, 
-  GraduationCap, 
-  Folder, 
-  Check, 
+import {
+  ChevronDown,
+  ChevronRight,
+  Search,
+  BookOpen,
+  School,
+  MapPin,
+  GraduationCap,
+  Folder,
+  Check,
   X,
   Loader2
 } from 'lucide-react';
@@ -21,15 +21,18 @@ import { useDepartments } from '@/src/hooks/useDepartments';
 import { useCourses } from '@/src/hooks/useCourses';
 
 interface CourseTreeSelectProps {
-  value: string | number;
-  onChange: (value: string) => void;
+  value: string | number | string[];
+  onChange?: (value: string) => void;
+  onMultiChange?: (value: string[]) => void;
+  multiple?: boolean;
+  inline?: boolean;
   required?: boolean;
   label?: string;
   error?: string;
 }
 
 interface TreeNode {
-  id: string; // e.g. univ-1, center-2, course-3
+  id: string;
   type: 'university' | 'center' | 'faculty' | 'department' | 'course';
   name: string;
   children: TreeNode[];
@@ -41,6 +44,9 @@ interface TreeNode {
 export function CourseTreeSelect({
   value,
   onChange,
+  onMultiChange,
+  multiple = false,
+  inline = false,
   required = false,
   label = 'Course',
   error,
@@ -50,7 +56,6 @@ export function CourseTreeSelect({
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch all structural data
   const { data: universitiesData, isLoading: isLoadingUnivs } = useUniversities();
   const { data: centersData, isLoading: isLoadingCenters } = useCenters();
   const { data: facultiesData, isLoading: isLoadingFacs } = useFaculties();
@@ -65,10 +70,17 @@ export function CourseTreeSelect({
 
   const isLoading = isLoadingUnivs || isLoadingCenters || isLoadingFacs || isLoadingDepts || isLoadingCourses;
 
-  // Build the hierarchical tree
+  const selectedValues: string[] = useMemo(() => {
+    if (multiple) {
+      if (Array.isArray(value)) return value.map(String);
+      if (value === '' || value === undefined || value === null) return [];
+      return [String(value)];
+    }
+    if (value === '' || value === undefined || value === null) return [];
+    return [String(value)];
+  }, [value, multiple]);
+
   const { tree, flatCourses } = useMemo(() => {
-    // Only return empty if everything is still loading. 
-    // If some succeeded and others failed (null), we still try to build what we have.
     if (isLoading && !universities.length && !centers.length && !faculties.length && !departments.length && !courses.length) {
       return { tree: [], flatCourses: new Map<string, TreeNode>() };
     }
@@ -79,7 +91,6 @@ export function CourseTreeSelect({
     const departmentMap = new Map<string, TreeNode>();
     const courseMap = new Map<string, TreeNode>();
 
-    // 1. Universities
     universities.forEach((univ: any) => {
       const name = univ.attributes?.name || univ.name || 'University';
       universityMap.set(String(univ.id), {
@@ -93,7 +104,6 @@ export function CourseTreeSelect({
       });
     });
 
-    // 2. Centers
     centers.forEach((center: any) => {
       const name = center.attributes?.name || center.name || 'Center';
       centerMap.set(String(center.id), {
@@ -107,7 +117,6 @@ export function CourseTreeSelect({
       });
     });
 
-    // 3. Faculties
     faculties.forEach((fac: any) => {
       const name = fac.attributes?.name || fac.name || 'Faculty';
       facultyMap.set(String(fac.id), {
@@ -121,7 +130,6 @@ export function CourseTreeSelect({
       });
     });
 
-    // 4. Departments
     departments.forEach((dept: any) => {
       const name = dept.attributes?.name || dept.name || 'Department';
       departmentMap.set(String(dept.id), {
@@ -135,11 +143,9 @@ export function CourseTreeSelect({
       });
     });
 
-    // Nest Faculties under Centers
     faculties.forEach((fac: any) => {
       const node = facultyMap.get(String(fac.id));
       if (!node) return;
-
       const parentId = fac.attributes?.parent?.data?.id || fac.attributes?.center_id || fac.parent_id || fac.center_id;
       if (parentId && centerMap.has(String(parentId))) {
         const parentNode = centerMap.get(String(parentId))!;
@@ -149,13 +155,10 @@ export function CourseTreeSelect({
       }
     });
 
-    // Nest Departments under Faculties or Centers or other Departments
     departments.forEach((dept: any) => {
       const node = departmentMap.get(String(dept.id));
       if (!node) return;
-
       const parentId = dept.attributes?.parent?.data?.id || dept.attributes?.faculty_id || dept.parent_id || dept.faculty_id;
-      
       if (parentId) {
         if (facultyMap.has(String(parentId))) {
           const parentNode = facultyMap.get(String(parentId))!;
@@ -176,11 +179,9 @@ export function CourseTreeSelect({
       }
     });
 
-    // Nest Centers under Universities
     centers.forEach((center: any) => {
       const node = centerMap.get(String(center.id));
       if (!node) return;
-
       const parentId = center.attributes?.parent?.data?.id || center.parent?.data?.id || center.parent_id || center.university_id || center.attributes?.university_id;
       if (parentId && universityMap.has(String(parentId))) {
         const parentNode = universityMap.get(String(parentId))!;
@@ -190,9 +191,8 @@ export function CourseTreeSelect({
       }
     });
 
-    // Build Courses
     courses.forEach((course: any) => {
-      const deptId = 
+      const deptId =
         course.attributes?.category?.data?.id ||
         course.attributes?.department?.data?.id ||
         course.attributes?.category_id?.toString() ||
@@ -224,9 +224,8 @@ export function CourseTreeSelect({
       }
     });
 
-    // Collect Root Nodes (Universities and Centers/Faculties/Departments that have no parents)
     const rootNodes: TreeNode[] = [];
-    
+
     universityMap.forEach(node => {
       rootNodes.push(node);
     });
@@ -255,7 +254,6 @@ export function CourseTreeSelect({
       }
     });
 
-    // Fallback: If any course was not placed, add it as a root-level course
     courseMap.forEach((node) => {
       const course = courses.find((c: any) => String(c.id) === node.originalId);
       const deptId = course?.attributes?.category?.data?.id || course?.attributes?.department?.data?.id || course?.attributes?.category_id?.toString() || (course as any)?.category_id?.toString();
@@ -264,18 +262,13 @@ export function CourseTreeSelect({
       }
     });
 
-    // Deep copy and clean up empty structural branches (branches that don't lead to any courses)
     const cleanTree = (nodes: TreeNode[]): TreeNode[] => {
       return nodes
         .map(node => {
           const cleanedChildren = cleanTree(node.children);
-          return {
-            ...node,
-            children: cleanedChildren
-          };
+          return { ...node, children: cleanedChildren };
         })
         .filter(node => {
-          // Keep it if it is a course, or if it has children with courses
           if (node.type === 'course') return true;
           return node.children.length > 0;
         });
@@ -287,7 +280,6 @@ export function CourseTreeSelect({
     };
   }, [isLoading, universities, centers, faculties, departments, courses]);
 
-  // Handle auto-expansion when searching
   useEffect(() => {
     if (!searchQuery) return;
 
@@ -299,7 +291,7 @@ export function CourseTreeSelect({
       nodes.forEach(node => {
         const nameMatches = node.name.toLowerCase().includes(query);
         const childrenMatch = findMatches(node.children);
-        
+
         if (childrenMatch) {
           newExpandedNodes[node.id] = true;
           matchInBranch = true;
@@ -315,12 +307,11 @@ export function CourseTreeSelect({
     }
   }, [searchQuery, tree]);
 
-  // Expand parent paths for matching searched nodes
   const filteredTree = useMemo(() => {
     if (!searchQuery) return tree;
 
     const query = searchQuery.toLowerCase();
-    
+
     const filterNodes = (nodes: TreeNode[]): { filtered: TreeNode[]; hasMatch: boolean } => {
       let treeHasMatch = false;
       const filtered: TreeNode[] = [];
@@ -330,10 +321,7 @@ export function CourseTreeSelect({
         const { filtered: childFiltered, hasMatch: childHasMatch } = filterNodes(node.children);
 
         if (nameMatches || childHasMatch) {
-          filtered.push({
-            ...node,
-            children: childFiltered,
-          });
+          filtered.push({ ...node, children: childFiltered });
           treeHasMatch = true;
         }
       });
@@ -344,12 +332,29 @@ export function CourseTreeSelect({
     return filterNodes(tree).filtered;
   }, [searchQuery, tree]);
 
-  // Selected Course details
   const selectedCourse = useMemo(() => {
-    return flatCourses.get(String(value));
-  }, [value, flatCourses]);
+    if (multiple || selectedValues.length !== 1) return null;
+    return flatCourses.get(selectedValues[0]);
+  }, [selectedValues, flatCourses, multiple]);
 
-  // Toggle node expansion
+  const isAllExpandedDefault = inline && !searchQuery;
+
+  useEffect(() => {
+    if (isAllExpandedDefault && tree.length > 0) {
+      const allExpanded: Record<string, boolean> = {};
+      const collectAll = (nodes: TreeNode[]) => {
+        nodes.forEach(node => {
+          if (node.children.length > 0) {
+            allExpanded[node.id] = true;
+            collectAll(node.children);
+          }
+        });
+      };
+      collectAll(tree);
+      setExpandedNodes(allExpanded);
+    }
+  }, [isAllExpandedDefault, tree]);
+
   const toggleNode = (nodeId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedNodes(prev => ({
@@ -358,8 +363,8 @@ export function CourseTreeSelect({
     }));
   };
 
-  // Close dropdown on click outside
   useEffect(() => {
+    if (inline) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -367,18 +372,27 @@ export function CourseTreeSelect({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [inline]);
 
-  const handleSelectCourse = (courseNode: TreeNode) => {
-    onChange(courseNode.originalId);
-    setIsOpen(false);
+  const handleSelectCourse = (courseId: string) => {
+    if (multiple && onMultiChange) {
+      const current = selectedValues;
+      if (current.includes(courseId)) {
+        onMultiChange(current.filter(id => id !== courseId));
+      } else {
+        onMultiChange([...current, courseId]);
+      }
+    } else if (!multiple && onChange) {
+      onChange(courseId);
+      if (!inline) setIsOpen(false);
+    }
   };
 
-  // Rendering individual tree items recursively
   const renderTreeItem = (node: TreeNode) => {
     const isExpanded = !!expandedNodes[node.id];
     const isCourse = node.type === 'course';
-    const isSelected = isCourse && String(value) === node.originalId;
+    const courseId = node.originalId;
+    const isSelected = isCourse && selectedValues.includes(courseId);
     const hasChildren = node.children && node.children.length > 0;
 
     const getNodeIcon = () => {
@@ -387,34 +401,36 @@ export function CourseTreeSelect({
         case 'center': return <MapPin className="w-4 h-4 text-emerald-500" />;
         case 'faculty': return <GraduationCap className="w-4 h-4 text-indigo-500" />;
         case 'department': return <Folder className="w-4 h-4 text-amber-500" />;
-        case 'course': return <BookOpen className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-blue-500'}`} />;
+        case 'course': return <BookOpen className={`w-4 h-4 ${isSelected && !multiple ? 'text-white' : 'text-blue-500'}`} />;
       }
     };
 
     return (
       <div key={node.id} className="flex flex-col select-none">
-        <div 
+        <div
           onClick={(e) => {
+            e.stopPropagation();
             if (isCourse) {
-              handleSelectCourse(node);
+              handleSelectCourse(courseId);
             } else {
               toggleNode(node.id, e);
             }
           }}
           style={{ paddingLeft: `${Math.max(node.level * 16, 8)}px` }}
           className={`flex items-center gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer ${
-            isSelected 
-              ? 'bg-[#2137D6] text-white font-semibold' 
-              : isCourse 
-                ? 'hover:bg-slate-50 text-[#1E293B] font-medium' 
-                : 'hover:bg-slate-50 text-[#64748B]'
+            isCourse
+              ? multiple
+                ? 'hover:bg-slate-50 text-[#1E293B] font-medium'
+                : isSelected
+                  ? 'bg-[#2137D6] text-white font-semibold hover:bg-[#1a2bb5]'
+                  : 'hover:bg-slate-50 text-[#1E293B] font-medium'
+              : 'hover:bg-slate-50 text-[#64748B]'
           }`}
         >
-          {/* Chevron for nesting */}
           {!isCourse && hasChildren ? (
-            <span 
-              onClick={(e) => toggleNode(node.id, e)} 
-              className="p-1 rounded hover:bg-slate-200/50 transition-colors"
+            <span
+              onClick={(e) => toggleNode(node.id, e)}
+              className="p-1 rounded hover:bg-slate-200/50 transition-colors flex-shrink-0"
             >
               {isExpanded ? (
                 <ChevronDown className="w-3.5 h-3.5" />
@@ -423,14 +439,25 @@ export function CourseTreeSelect({
               )}
             </span>
           ) : !isCourse ? (
-            <span className="w-5.5" />
+            <span className="w-5.5 flex-shrink-0" />
+          ) : null}
+
+          {isCourse && multiple ? (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+                isSelected ? 'bg-[#2137D6] border-[#2137D6]' : 'border-[#CBD5E1]'
+              }`}
+            >
+              {isSelected && <Check className="w-3 h-3 text-white" />}
+            </div>
           ) : null}
 
           {getNodeIcon()}
-          
+
           <span className="truncate flex-1">{node.name}</span>
-          
-          {isSelected && <Check className="w-4 h-4 text-white" />}
+
+          {isSelected && !multiple && <Check className="w-4 h-4 text-white flex-shrink-0" />}
         </div>
 
         {hasChildren && isExpanded && (
@@ -442,14 +469,88 @@ export function CourseTreeSelect({
     );
   };
 
+  const treeContent = (
+    <div className={`flex flex-col gap-1 ${inline ? 'max-h-[400px] overflow-y-auto' : ''}`}>
+      {filteredTree.length === 0 ? (
+        <div className="py-8 text-center text-sm text-[#64748B]">
+          {searchQuery ? 'No matching courses found' : 'No courses available'}
+        </div>
+      ) : (
+        filteredTree.map(node => renderTreeItem(node))
+      )}
+    </div>
+  );
+
+  const searchBar = (
+    <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
+      <Search className="w-4 h-4 text-[#94A3B8] flex-shrink-0" />
+      <input
+        type="text"
+        placeholder="Search courses..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full bg-transparent text-sm text-[#1E293B] border-none focus:outline-none placeholder:text-[#94A3B8]"
+      />
+      {searchQuery && (
+        <button
+          type="button"
+          onClick={() => setSearchQuery('')}
+          className="p-1 rounded-full hover:bg-slate-200 text-[#94A3B8] flex-shrink-0"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
+    </div>
+  );
+
+  if (inline) {
+    return (
+      <div ref={containerRef} className="flex flex-col gap-2 w-full md:col-span-2">
+        <label className="text-[13px] font-bold text-[#475569]">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+
+        <div className="border border-[#E2E8F0] rounded-xl overflow-hidden bg-white">
+          {searchBar}
+          <div className="p-2">
+            {isLoading ? (
+              <div className="py-8 text-center text-sm text-[#64748B] flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-[#2137D6]" />
+                Loading structure...
+              </div>
+            ) : (
+              treeContent
+            )}
+          </div>
+        </div>
+
+        {multiple && selectedValues.length > 0 && (
+          <div className="p-2.5 bg-[#EEF2FF] rounded-lg border border-[#2137D6]/20">
+            <p className="text-xs text-[#2137D6]">
+              Selected ({selectedValues.length}): {selectedValues.map(id =>
+                courses?.find(c => String(c.id) === id)?.attributes?.title
+              ).filter(Boolean).join(', ')}
+            </p>
+          </div>
+        )}
+
+        {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
+      </div>
+    );
+  }
+
+  const selectedNames = multiple && selectedValues.length > 0
+    ? selectedValues.map(id => courses?.find(c => String(c.id) === id)?.attributes?.title).filter(Boolean)
+    : [];
+
   return (
     <div ref={containerRef} className="flex flex-col gap-2 relative w-full md:col-span-2">
       <label className="text-[13px] font-bold text-[#475569]">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      
-      {/* Dropdown Button */}
+
       <button
         type="button"
         disabled={isLoading}
@@ -463,12 +564,25 @@ export function CourseTreeSelect({
             <span className="text-slate-400 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-[#2137D6]" /> Loading structure...
             </span>
+          ) : multiple ? (
+            selectedValues.length > 0 ? (
+              <>
+                <span className="font-semibold text-[#1E293B] truncate">
+                  {selectedValues.length} course{selectedValues.length !== 1 ? 's' : ''} selected
+                </span>
+                <span className="text-[10px] text-[#64748B] truncate">
+                  {selectedNames.join(', ')}
+                </span>
+              </>
+            ) : (
+              <span className="text-[#94A3B8]">Select courses</span>
+            )
           ) : selectedCourse ? (
             <>
               <span className="font-semibold text-[#1E293B] truncate">{selectedCourse.name}</span>
               {selectedCourse.path.length > 1 && (
                 <span className="text-[10px] text-[#64748B] truncate">
-                  {selectedCourse.path.slice(0, -1).join(' › ')}
+                  {selectedCourse.path.slice(0, -1).join(' \u203A ')}
                 </span>
               )}
             </>
@@ -476,12 +590,13 @@ export function CourseTreeSelect({
             <span className="text-[#94A3B8]">Select a Course</span>
           )}
         </div>
-        <div className="flex items-center gap-2 text-[#94A3B8]">
-          {selectedCourse && (
-            <span 
+        <div className="flex items-center gap-2 text-[#94A3B8] flex-shrink-0">
+          {selectedValues.length > 0 && (
+            <span
               onClick={(e) => {
                 e.stopPropagation();
-                onChange('');
+                if (multiple && onMultiChange) onMultiChange([]);
+                else if (!multiple && onChange) onChange('');
               }}
               className="p-1 rounded-full hover:bg-slate-200 transition-colors"
             >
@@ -492,39 +607,18 @@ export function CourseTreeSelect({
         </div>
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E2E8F0] rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col max-h-[380px] animate-in fade-in duration-200">
-          
-          {/* Search box */}
-          <div className="p-3 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
-            <Search className="w-4 h-4 text-[#94A3B8]" />
-            <input
-              type="text"
-              placeholder="Search courses or structural paths..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-transparent text-sm text-[#1E293B] border-none focus:outline-none placeholder:text-[#94A3B8]"
-            />
-            {searchQuery && (
-              <button 
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="p-1 rounded-full hover:bg-slate-200 text-[#94A3B8]"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            )}
-          </div>
+          {searchBar}
 
-          {/* Tree list */}
-          <div className="p-2 overflow-y-auto max-h-[300px] flex flex-col gap-1 custom-scrollbar">
-            {filteredTree.length === 0 ? (
-              <div className="py-8 text-center text-sm text-[#64748B]">
-                {searchQuery ? 'No matching courses found' : 'No courses available'}
+          <div className="p-2 overflow-y-auto max-h-[300px] custom-scrollbar">
+            {isLoading ? (
+              <div className="py-8 text-center text-sm text-[#64748B] flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-[#2137D6]" />
+                Loading structure...
               </div>
             ) : (
-              filteredTree.map(node => renderTreeItem(node))
+              treeContent
             )}
           </div>
         </div>

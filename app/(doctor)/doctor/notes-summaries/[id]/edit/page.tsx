@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, Save, Loader2, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useNote, useUpdateNote } from '@/src/hooks/useNotes';
-import { useCourses } from '@/src/hooks/useCourses';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 
 function getNoteTypes(t: (key: string) => string) {
   return [
@@ -25,7 +25,6 @@ export default function EditNotePage() {
 
   const { data: note, isLoading: isLoadingNote, error } = useNote(noteId);
   const { mutate: updateNote, isLoading: isUpdating } = useUpdateNote();
-  const { data: courses, isLoading: isLoadingCourses } = useCourses();
   const NOTE_TYPES = getNoteTypes(t);
 
   const [title, setTitle] = useState('');
@@ -145,25 +144,11 @@ export default function EditNotePage() {
             <label className="block text-sm font-semibold text-[#475569] mb-2">
               {t('editNote.courseLabel')}
             </label>
-            <div className="relative">
-              <select
-                value={courseId}
-                onChange={(e) => setCourseId(e.target.value)}
-                disabled={isLoadingCourses}
-                className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
-              >
-                <option value="">{t('editNote.coursePlaceholder')}</option>
-                {courses?.map((course) => (
-                  <option key={course.id} value={course.id}>
-                    {course.attributes.title}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
-            </div>
-            {isLoadingCourses && (
-              <p className="mt-1 text-xs text-[#94A3B8]">{t('editNote.loadingCourses')}</p>
-            )}
+            <CourseTreeSelect
+              value={courseId}
+              onChange={(val) => setCourseId(val as string)}
+              label={t('editNote.courseLabel')}
+            />
           </div>
 
           {/* Linked Lecture */}
