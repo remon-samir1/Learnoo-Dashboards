@@ -46,8 +46,6 @@ export default function EditChapterPage() {
 
     is_free_preview: 0 as 0 | 1,
 
-    show_in: 'both' as 'both' | 'app' | 'web',
-
     type: 'chapter' as 'chapter' | 'note',
 
     note_type: '' as 'summary' | 'highlight' | 'key_point' | 'important_notice' | '',
@@ -71,8 +69,6 @@ export default function EditChapterPage() {
         duration: chapter.attributes.duration,
 
         is_free_preview: chapter.attributes.is_free_preview,
-
-        show_in: (chapter.attributes.show_in as any) || 'both',
 
         type: (chapter.attributes.type as any) || 'chapter',
 
@@ -113,8 +109,6 @@ export default function EditChapterPage() {
         duration: formData.duration,
 
         is_free_preview: formData.is_free_preview,
-
-        show_in: formData.show_in,
 
         type: formData.type,
 
@@ -243,28 +237,6 @@ export default function EditChapterPage() {
           onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
 
           placeholder="e.g., 15:30"
-
-        />
-
-        <FormSelect
-
-          label="Show In"
-
-          required
-
-          value={formData.show_in}
-
-          onChange={(e) => setFormData({ ...formData, show_in: e.target.value as any })}
-
-          options={[
-
-            { value: 'both', label: 'Both' },
-
-            { value: 'app', label: 'App' },
-
-            { value: 'web', label: 'Web' },
-
-          ]}
 
         />
 
