@@ -7,6 +7,7 @@ import { ChevronDown, MessageCircle, Send, Globe, Edit2, Trash2, MessageSquare, 
 import { usePosts, useDeletePost, useUpdatePost, useCreatePost } from '@/src/hooks/usePosts';
 import { useSocialLinks, useCreateSocialLink, useUpdateSocialLink, useDeleteSocialLink } from '@/src/hooks/useSocialLinks';
 import { useCourses } from '@/src/hooks/useCourses';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { useCenters } from '@/src/hooks/useCenters';
 import { useFaculties } from '@/src/hooks/useFaculties';
@@ -413,6 +414,8 @@ function getTypeColor(type: string): string {
 
 export default function CommunityModerationPage() {
   const t = useTranslations();
+  const { user } = useCurrentUser();
+  const doctorId = user?.id ? parseInt(user.id) : null;
   const { data: postsData, isLoading, error, refetch } = usePosts(null);
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
   const { mutate: updatePost } = useUpdatePost();
@@ -424,6 +427,15 @@ export default function CommunityModerationPage() {
   const { mutate: updateSocialLink } = useUpdateSocialLink();
   const { mutate: deleteSocialLink } = useDeleteSocialLink();
   const { data: courses, isLoading: coursesLoading } = useCourses();
+
+  const doctorCourseIds = useMemo(() => {
+    if (!courses || !doctorId) return new Set<number>();
+    return new Set<number>(
+      courses
+        .filter((c: Course) => c.attributes.doctor_id === doctorId)
+        .map((c: Course) => parseInt(c.id)),
+    );
+  }, [courses, doctorId]);
 
   // Hierarchical selection hooks
   const { data: universities } = useUniversities();
@@ -503,9 +515,14 @@ export default function CommunityModerationPage() {
 
   useEffect(() => {
     if (postsData) {
-      setPosts(postsData);
+      const filtered = postsData.filter(
+        (p) =>
+          p.attributes.course_id == null ||
+          doctorCourseIds.has(Number(p.attributes.course_id)),
+      );
+      setPosts(filtered);
     }
-  }, [postsData]);
+  }, [postsData, doctorCourseIds]);
 
   const filteredPosts = filter === 'all'
     ? posts

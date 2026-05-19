@@ -52,7 +52,7 @@ interface Question {
 
 interface ExamDetails {
   title: string;
-  course: string;
+  courses: string[];
   chapter: string;
   type: 'exam' | 'homework';
   duration: string;
@@ -304,13 +304,14 @@ interface CourseTreeItemProps {
   expanded: Set<string>;
   onToggle: (id: string) => void;
   onSelect: (node: TreeNode) => void;
-  selectedCourseId: string;
+  selectedCourseIds: string[];
 }
 
-function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }: CourseTreeItemProps) {
+function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseIds }: CourseTreeItemProps) {
   const isExpanded = expanded.has(node.id);
   const hasChildren = node.children.length > 0;
-  const isSelected = node.type === 'course' && selectedCourseId === node.id.replace('course-', '');
+  const courseId = node.type === 'course' ? node.id.replace('course-', '') : '';
+  const isSelected = node.type === 'course' && selectedCourseIds.includes(courseId);
 
   const getNodeIcon = (type: NodeType) => {
     switch (type) {
@@ -347,6 +348,17 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
         ) : (
           <div className="w-5" />
         )}
+        {node.type === 'course' && (
+          <div className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
+            isSelected ? 'bg-[#2137D6] border-[#2137D6]' : 'border-[#CBD5E1]'
+          }`}>
+            {isSelected && (
+              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+          </div>
+        )}
         {getNodeIcon(node.type)}
         <span className="text-sm">{node.name}</span>
       </div>
@@ -356,7 +368,7 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseId }
             <CourseTreeItem
               key={child.id} node={child}
               expanded={expanded} onToggle={onToggle}
-              onSelect={onSelect} selectedCourseId={selectedCourseId}
+              onSelect={onSelect} selectedCourseIds={selectedCourseIds}
             />
           ))}
         </div>
@@ -386,7 +398,7 @@ export default function EditExamPage() {
   const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
-    title: '', course: '', chapter: '', type: 'exam',
+    title: '', courses: [], chapter: '', type: 'exam',
     duration: '60', totalMarks: '100', passingMarks: '60', maxAttempts: '1',
     status: 'Draft', startTime: '', endTime: '', is_public: false,
   });
@@ -418,12 +430,20 @@ export default function EditExamPage() {
 
   const handleCourseTreeSelect = (node: TreeNode) => {
     if (node.type === 'course') {
-      setExamDetails((prev) => ({ ...prev, course: node.id.replace('course-', ''), chapter: '' }));
+      const courseId = node.id.replace('course-', '');
+      setExamDetails((prev) => {
+        const current = prev.courses;
+        if (current.includes(courseId)) {
+          return { ...prev, courses: current.filter(id => id !== courseId), chapter: '' };
+        } else {
+          return { ...prev, courses: [...current, courseId], chapter: '' };
+        }
+      });
     }
   };
 
-  const filteredChapters = examDetails.course
-    ? chapters?.filter(ch => ch.attributes.course_id === parseInt(examDetails.course))
+  const filteredChapters = examDetails.courses.length > 0
+    ? chapters?.filter(ch => examDetails.courses.includes(String(ch.attributes.course_id)))
     : chapters;
 
   // ── load quiz ──
@@ -432,7 +452,7 @@ export default function EditExamPage() {
 
     setExamDetails({
       title: quiz.attributes.title || '',
-      course: quiz.attributes.course_id ? String(quiz.attributes.course_id) : '',
+      courses: quiz.attributes.course_id ? [String(quiz.attributes.course_id)] : [],
       chapter: quiz.attributes.chapter_id ? String(quiz.attributes.chapter_id) : '',
       type: quiz.attributes.type === 'exam' ? 'exam' : 'homework',
       duration: String(quiz.attributes.duration || 60),
@@ -539,15 +559,16 @@ export default function EditExamPage() {
     setIsSubmitting(true);
 
     try {
-      if (!examDetails.course) {
-        alert('Please select a course');
+      if (examDetails.courses.length === 0) {
+        alert('Please select at least one course');
         return;
       }
 
       // Build FormData
       const formData = new FormData();
 
-      formData.append('course_id', examDetails.course);
+      examDetails.courses.forEach(cid => formData.append('course_ids[]', cid));
+      formData.append('course_id', examDetails.courses[0]);
       if (examDetails.chapter) formData.append('chapter_id', examDetails.chapter);
       formData.append('title', examDetails.title);
       formData.append('type', examDetails.type);
@@ -671,22 +692,25 @@ export default function EditExamPage() {
                   </div>
                 ) : (
                   <div className="py-2">
+                    <div className="px-3 pb-2 text-xs text-[#94A3B8]">Click courses to select/deselect multiple</div>
                     {courseTree.map((node) => (
                       <CourseTreeItem
                         key={node.id} node={node}
                         expanded={courseTreeExpanded}
                         onToggle={handleCourseTreeToggle}
                         onSelect={handleCourseTreeSelect}
-                        selectedCourseId={examDetails.course}
+                        selectedCourseIds={examDetails.courses}
                       />
                     ))}
                   </div>
                 )}
               </div>
-              {examDetails.course && (
+              {examDetails.courses.length > 0 && (
                 <div className="mt-1 p-2 bg-[#EEF2FF] rounded-lg border border-[#2137D6]/20">
                   <p className="text-xs text-[#2137D6]">
-                    Selected: {courses?.find(c => c.id === examDetails.course)?.attributes.title || `Course ${examDetails.course}`}
+                    Selected ({examDetails.courses.length}): {examDetails.courses.map(id =>
+                      courses?.find(c => c.id === id)?.attributes.title
+                    ).filter(Boolean).join(', ')}
                   </p>
                 </div>
               )}
@@ -714,17 +738,17 @@ export default function EditExamPage() {
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
                   value={examDetails.chapter}
                   onChange={(e) => setExamDetails({ ...examDetails, chapter: e.target.value })}
-                  disabled={!examDetails.course || chaptersLoading}
+                  disabled={examDetails.courses.length === 0 || chaptersLoading}
                 >
                   <option value="">
-                    {!examDetails.course ? t('create.selectCourseFirst') : chaptersLoading ? t('create.loading') : t('create.selectChapter')}
+                    {examDetails.courses.length === 0 ? t('create.selectCourseFirst') : chaptersLoading ? t('create.loading') : t('create.selectChapter')}
                   </option>
                   {filteredChapters?.map((ch) => (
                     <option key={ch.id} value={ch.id}>{ch.attributes.title}</option>
                   ))}
                 </select>
                 <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
-                {chaptersLoading && examDetails.course && (
+                {chaptersLoading && examDetails.courses.length > 0 && (
                   <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />
                 )}
               </div>

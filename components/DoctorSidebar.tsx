@@ -13,7 +13,7 @@ import {
   Users,
   StickyNote,
   Library,
-  GraduationCap,
+  Power,
   Bell,
   Settings,
   LogOut,
@@ -32,7 +32,7 @@ interface DoctorSidebarProps {
   onToggle: () => void;
 }
 
-const menuItems = [
+const allMenuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/doctor/dashboard' },
   // { name: 'My Courses', icon: BookOpen, path: '/doctor/courses' },
   { name: 'Academic Structure', icon: School, path: '/doctor/departments' },
@@ -42,15 +42,22 @@ const menuItems = [
   { name: 'Community', icon: Users, path: '/doctor/community' },
   { name: 'Notes & Summaries', icon: StickyNote, path: '/doctor/notes-summaries' },
   { name: 'Electronic Library', icon: Library, path: '/doctor/electronic-library' },
-  { name: 'Students', icon: GraduationCap, path: '/doctor/students' },
   // { name: 'Notifications', icon: Bell, path: '/doctor/notifications' },
   // { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
 ];
 
 export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarProps) {
   const pathname = usePathname();
-  const { user, fullName, role } = useCurrentUser();
+  const { user, fullName, role, canUseActivations } = useCurrentUser();
   const { data: features } = usePlatformFeature();
+
+  const menuItems = React.useMemo(() => {
+    const items = [...allMenuItems];
+    if (canUseActivations) {
+      items.push({ name: 'Activation', icon: Power, path: '/doctor/activation' });
+    }
+    return items;
+  }, [canUseActivations]);
 
   // Initialize auth store from cookies on mount
   useEffect(() => {

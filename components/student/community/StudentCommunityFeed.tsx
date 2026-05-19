@@ -9,7 +9,8 @@ import { communityPostRelativeTime, communityPostTypeBadgeClasses } from '@/src/
 import { pickPostImageUrl } from '@/src/lib/community-post-media';
 import { useCreateComment } from '@/src/hooks/useComments';
 import { useCreatePost, usePosts, useReactToPost } from '@/src/hooks/usePosts';
-import type { CreatePostRequest, Post, SocialLink } from '@/src/types';
+import { useCourses } from '@/src/hooks/useCourses';
+import type { Course, CreatePostRequest, Post, SocialLink } from '@/src/types';
 
 const POST_TIME_AGO_PREFIX = 'community.posts.timeAgo';
 
@@ -139,6 +140,16 @@ export default function StudentCommunityFeed({
   const { mutate: createComment, isLoading: isReplying } = useCreateComment();
   const { mutate: reactToPost } = useReactToPost();
 
+  const { data: allCourses } = useCourses();
+  const draftCourseIds = useMemo(() => {
+    if (!allCourses) return new Set<number>();
+    return new Set<number>(
+      allCourses
+        .filter((c: Course) => c.attributes.status === 0)
+        .map((c: Course) => parseInt(c.id)),
+    );
+  }, [allCourses]);
+
   const [tab, setTab] = useState<FeedTab>('all');
   const [modalOpen, setModalOpen] = useState(false);
   const [replyTarget, setReplyTarget] = useState<Post | null>(null);
@@ -156,12 +167,17 @@ export default function StudentCommunityFeed({
           Number(p.attributes.course_id) === scopedCourseId,
       );
     }
+    roots = roots.filter(
+      (p) =>
+        p.attributes.course_id == null ||
+        !draftCourseIds.has(Number(p.attributes.course_id)),
+    );
     return [...roots].sort((a, b) => {
       const ta = new Date(a.attributes.created_at || 0).getTime();
       const tb = new Date(b.attributes.created_at || 0).getTime();
       return tb - ta;
     });
-  }, [postsRaw, scopedCourseId]);
+  }, [postsRaw, scopedCourseId, draftCourseIds]);
 
   const filteredPosts = useMemo(() => {
     if (tab === 'all') return topPosts;
