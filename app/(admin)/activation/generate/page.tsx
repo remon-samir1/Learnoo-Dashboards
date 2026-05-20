@@ -174,8 +174,8 @@ function GenerateCodeForm() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Configuration Section */}
-        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50">
+        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm">
+          <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 rounded-t-2xl">
             <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('activation.generate.sectionTitle')}</h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -93,7 +93,7 @@ export default function EditCodePage() {
         code: codeValue,
       });
       toast.success(t('activation.messages.codeUpdated'));
-      router.push('/activation');
+      router.push('/doctor/activation');
     } catch {
       // Error handled by hook
     }

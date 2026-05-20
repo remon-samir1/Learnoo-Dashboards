@@ -210,7 +210,7 @@ export default function AssignCodePage() {
               </div>
             ) : (
               <div className="text-center py-8 text-[#64748B]">
-                {t('activation.messages.noCodesAvailable')} <Link href="/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateCodesLink')}</Link>
+                {t('activation.messages.noCodesAvailable')} <Link href="/doctor/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateCodesLink')}</Link>
               </div>
             )}
           </div>

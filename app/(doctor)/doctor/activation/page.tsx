@@ -302,7 +302,7 @@ export default function ActivationPage() {
           title={t('activation.pageTitle')}
           description={t('activation.pageDescription')}
           actionLabel={t('activation.generateCodes')}
-          actionHref="/activation/generate"
+          actionHref="/doctor/activation/generate"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
           <p className="text-red-600">{t('activation.messages.loadError')}: {error}</p>
@@ -338,7 +338,7 @@ export default function ActivationPage() {
         title={t('activation.pageTitle')}
         description={t('activation.pageDescription')}
         actionLabel={t('activation.generateCodes')}
-        actionHref="/activation/generate"
+          actionHref="/doctor/activation/generate"
       />
 
       {/* Tabs */}
@@ -446,7 +446,7 @@ export default function ActivationPage() {
             isLoading={isLoading}
             keyExtractor={(item) => item.id}
             onDelete={handleDelete}
-            editHref={(item) => `/activation/${item.id}/edit`}
+            editHref={(item) => `/doctor/activation/${item.id}/edit`}
             emptyMessage={t('activation.messages.noCodesFound')}
           />
         </>
@@ -586,7 +586,7 @@ export default function ActivationPage() {
                       {availableCodes.length === 0 ? (
                         <>
                           {t('activation.messages.noAvailableCodes')}{' '}
-                          <Link href="/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateNewCodes')}</Link>
+                          <Link href="/doctor/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateNewCodes')}</Link>
                         </>
                       ) : (
                         <>
@@ -599,7 +599,7 @@ export default function ActivationPage() {
                 })()
               ) : (
                 <div className="text-center py-8 text-[#64748B]">
-                  {t('activation.messages.noCodesAvailable')} <Link href="/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateCodesLink')}</Link>
+                  {t('activation.messages.noCodesAvailable')} <Link href="/doctor/activation/generate" className="text-[#2137D6] hover:underline">{t('activation.messages.generateCodesLink')}</Link>
                 </div>
               )}
             </div>

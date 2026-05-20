@@ -387,7 +387,7 @@ export default function LibraryDetailPage() {
                 <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('electronicLibrary.detail.sections.libraryActivation')}</h2>
               </div>
               <Link
-                href={`/activation/generate?library_id=${libraryId}`}
+                href={`/doctor/activation/generate?library_id=${libraryId}`}
                 className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
                 title="Generate Activation Codes"
               >

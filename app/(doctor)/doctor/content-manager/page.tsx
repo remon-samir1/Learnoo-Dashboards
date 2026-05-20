@@ -1814,7 +1814,7 @@ export default function ContentManagerPage() {
 
                   <Link
 
-                    href={`/activation/generate?chapter_id=${selectedChapter.id}`}
+                    href={`/doctor/activation/generate?chapter_id=${selectedChapter.id}`}
 
                     className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
 
