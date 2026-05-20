@@ -762,6 +762,7 @@
       "videoControlsUnmute": "إلغاء الكتم",
       "videoControlsQuality": "الجودة",
       "videoControlsQualityLoading": "جاري تحميل خيارات الجودة…",
+      "videoControlsSpeed": "السرعة",
       "videoControlsFullscreen": "ملء الشاشة",
       "videoControlsExitFullscreen": "الخروج من ملء الشاشة"
     },

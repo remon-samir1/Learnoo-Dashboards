@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
-import { Maximize2, Minimize2, Pause, Play, Volume2, VolumeX } from 'lucide-react';
+import { Maximize2, Minimize2, Pause, Play, Volume2, VolumeX, Gauge } from 'lucide-react';
 
 function formatClock(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00';
@@ -18,6 +18,9 @@ type QualityOption = {
   bitrate?: number;
   label: string;
 };
+
+const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
+type SpeedValue = (typeof SPEED_OPTIONS)[number];
 
 export type HlsVideoCustomControlsProps = {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -61,6 +64,7 @@ export function HlsVideoCustomControls({
   const [duration, setDuration] = useState(0);
   const [muted, setMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<SpeedValue>(1);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -108,6 +112,13 @@ export function HlsVideoCustomControls({
     if (!v) return;
     v.muted = !v.muted;
     setMuted(v.muted);
+  }, [videoRef]);
+
+  const setSpeed = useCallback((speed: SpeedValue) => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.playbackRate = speed;
+    setPlaybackSpeed(speed);
   }, [videoRef]);
 
   const toggleShellFullscreen = useCallback(() => {
@@ -239,6 +250,22 @@ export function HlsVideoCustomControls({
               ) : null}
             </label>
           ) : null}
+
+          <label className="inline-flex min-w-0 shrink items-center gap-1 rounded bg-white/10 px-1.5 py-1 text-white/90 transition hover:bg-white/15 sm:gap-2 sm:px-2.5 sm:py-1.5">
+            <Gauge className="hidden size-3.5 text-white/70 sm:inline sm:size-4" />
+            <select
+              value={playbackSpeed}
+              onChange={(e) => setSpeed(Number(e.target.value) as SpeedValue)}
+              className="max-w-full truncate rounded bg-slate-950/80 px-1.5 py-0.5 text-[10px] text-white outline-none transition hover:bg-slate-900 sm:px-2 sm:py-1 sm:text-sm"
+              aria-label={t('videoControlsSpeed')}
+            >
+              {SPEED_OPTIONS.map((speed) => (
+                <option key={speed} value={speed}>
+                  {speed}x
+                </option>
+              ))}
+            </select>
+          </label>
 
           {endAction ? <div className="ms-auto shrink-0 sm:hidden">{endAction}</div> : null}
 

@@ -762,6 +762,7 @@
       "videoControlsUnmute": "Unmute",
       "videoControlsQuality": "Quality",
       "videoControlsQualityLoading": "Loading quality options…",
+      "videoControlsSpeed": "Speed",
       "videoControlsFullscreen": "Enter fullscreen",
       "videoControlsExitFullscreen": "Exit fullscreen"
     },
