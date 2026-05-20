@@ -11,7 +11,9 @@ import {
   FileText,
   Loader2,
   Lock,
+  Maximize2,
   MessageCircle,
+  Minimize2,
   Play,
   Send,
 } from 'lucide-react';
@@ -35,6 +37,9 @@ import {
   isStudentChapterVideoPlayable,
 } from '@/src/lib/student-chapter-access';
 import PdfPreviewModal from './PdfPreviewModal';
+import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
+import { VideoWatermark } from '@/components/student/watch/VideoWatermark';
+import { StudentVideoStaticOverlay } from '@/components/student/watch/StudentVideoStaticOverlay';
 
 type ChapterAttachment = NonNullable<Chapter['attributes']['attachments']>[number];
 
@@ -91,6 +96,7 @@ export default function ChapterWatchView({
   lectureChapters,
   lectureTitle,
   watchAccessDenied,
+  initialWatermarkResolution,
 }: {
   chapterId: string;
   chapter: Chapter | null;
@@ -99,6 +105,8 @@ export default function ChapterWatchView({
   lectureTitle: string;
   /** Server says `can_watch` is false — user cannot use this chapter URL to stream. */
   watchAccessDenied: boolean;
+  /** From server `GET /v1/feature` + bucket resolution; used until client query settles. */
+  initialWatermarkResolution?: WatermarkResolution | null;
 }) {
   const locale = useLocale();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
@@ -113,8 +121,11 @@ export default function ChapterWatchView({
   const [composerOpen, setComposerOpen] = useState(false);
   const [clientPlaybackBlocked, setClientPlaybackBlocked] = useState(false);
   const [playbackBlockMessage, setPlaybackBlockMessage] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
+  const playerWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
@@ -223,6 +234,23 @@ export default function ChapterWatchView({
   }, [chapterIdForApi, watchAccessDenied]);
 
   useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!playerWrapperRef.current) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void playerWrapperRef.current.requestFullscreen();
+    }
+  };
+
+  useEffect(() => {
     if (!composerOpen) return;
     const id = window.requestAnimationFrame(() => {
       composerTextareaRef.current?.focus();
@@ -313,29 +341,11 @@ export default function ChapterWatchView({
       ? buildStudentStartExamHref(locale, String(examQuiz.id), attrs.course_id ?? null)
       : null;
 
-  const pdfToggleButton =
-    pdfUrl && pdfPanelVisible ? (
-      <button
-        type="button"
-        onClick={() => setShowPdf((v) => !v)}
-        className={
-          showPdf
-            ? 'inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-md border border-slate-500/90 bg-slate-800 px-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-slate-700 active:bg-slate-600 sm:h-10 sm:gap-2 sm:rounded-lg sm:border-white/35 sm:bg-black/65 sm:px-4 sm:py-1.5 sm:text-sm sm:backdrop-blur-sm sm:hover:bg-black/75'
-            : 'inline-flex h-8 shrink-0 items-center justify-center gap-1 rounded-md border border-[#4f63e8]/80 bg-[#2D43D1] px-2.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[#2436b0] active:bg-[#1e2d96] sm:h-10 sm:gap-2 sm:rounded-lg sm:border-white/35 sm:bg-black/65 sm:px-4 sm:py-1.5 sm:text-sm sm:backdrop-blur-sm sm:hover:bg-black/75'
-        }
-        aria-label={showPdf ? t('hidePdf') : t('showPdf')}
-        aria-pressed={showPdf}
-      >
-        <FileText className="size-3.5 shrink-0 sm:size-4" aria-hidden />
-        <span className="max-w-[4.5rem] truncate sm:max-w-none">
-          {showPdf ? t('hidePdf') : t('showPdf')}
-        </span>
-      </button>
-    ) : null;
+  const pdfToggleVisible = pdfUrl && pdfPanelVisible;
 
   const pdfWatchPanel =
     showPdf && pdfUrl && pdfPanelVisible ? (
-      <div className="flex h-full min-h-0 flex-col bg-white">
+      <div className={`flex min-h-0 flex-col bg-white ${isFullscreen ? 'h-screen' : 'h-full'}`}>
         <div className="flex shrink-0 items-center  justify-between gap-2 border-b border-slate-200 bg-[#f8fafc] px-3 py-2.5 sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
             <FileText className="size-4 shrink-0 text-[#2D43D1]" aria-hidden />
@@ -349,7 +359,8 @@ export default function ChapterWatchView({
             {t('hidePdf')}
           </button>
         </div>
-        <div className="watch-pdf-scroll h-[75vh] min-h-[520px] max-h-[75vh] flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none]"> <PdfPreviewModal
+        <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none] ${isFullscreen ? 'h-[calc(100vh-44px)]' : ''}`}>
+          <PdfPreviewModal
             variant="inline"
             expandToContainer
             title={t('lectureMaterial')}
@@ -404,35 +415,61 @@ export default function ChapterWatchView({
       <div className="w-full max-w-full overflow-x-clip [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto w-full max-w-6xl px-0 sm:px-6 lg:px-8">
           <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
-            <div className="flex flex-col">
-              <div className="bg-black/50">
-                {videoSrc ? (
-                  accessDenied ? (
-                    <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
-                      <p className="max-w-md text-sm font-medium text-slate-200">
-                        {playbackBlockMessage ?? t('watchAccessDenied')}
-                      </p>
-                      <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
-                      <Link
-                        href={backHref}
-                        className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-                      >
-                        {tDetails('watchBack')}
-                      </Link>
-                    </div>
+              <div className="flex flex-col">
+                <div className="bg-black/50">
+                  {videoSrc ? (
+                    accessDenied ? (
+                      <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
+                        <p className="max-w-md text-sm font-medium text-slate-200">
+                          {playbackBlockMessage ?? t('watchAccessDenied')}
+                        </p>
+                        <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
+                        <Link
+                          href={backHref}
+                          className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                        >
+                          {tDetails('watchBack')}
+                        </Link>
+                      </div>
                     ) : (
-                    <div>
-                      <iframe
-                        src={videoSrc}
-                        className="aspect-video w-full max-w-full"
-                        allowFullScreen
-                        allow="encrypted-media"
-                        frameBorder="0"
-                        scrolling="no"
-                      />
-                    </div>
-                  )
-                ) : (
+                      <div ref={playerWrapperRef} className={`grid grid-cols-1 lg:grid-cols-2 items-stretch ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
+                        <div className="relative">
+                          <div className="relative">
+                            <iframe
+                              src={videoSrc}
+                              className="aspect-video w-full"
+                              allow="encrypted-media"
+                              frameBorder="0"
+                              scrolling="no"
+                            />
+                            <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
+                            <div className="pointer-events-none absolute inset-0 z-10">
+                              <VideoWatermark
+                                videoRef={watermarkDummyRef}
+                                contentType="chapters"
+                                initialResolution={initialWatermarkResolution ?? null}
+                              />
+                            </div>
+                          </div>
+                          {pdfToggleVisible && (
+                            <button
+                              type="button"
+                              onClick={toggleFullscreen}
+                              className="absolute bottom-2 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80"
+                              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                            >
+                              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            </button>
+                          )}
+                        </div>
+                        {showPdf && pdfWatchPanel && (
+                          <div className={`min-h-0 ${isFullscreen ? 'h-screen overflow-hidden' : 'max-h-[calc(50vw*9/16)]'}`}>
+                            <div className="h-full w-full">{pdfWatchPanel}</div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  ) : (
                   <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
                     <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
                       <Play className="size-8 translate-x-0.5" fill="currentColor" />
@@ -511,18 +548,35 @@ export default function ChapterWatchView({
                 </div>
 
                 <div className="flex justify-stretch md:min-w-0 md:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setDiscussionsOpen((o) => !o)}
-                    className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:inline-flex md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
-                    aria-expanded={discussionsOpen}
-                  >
-                    {t('discussionsCount', { count: discussions.length })}
-                    <ChevronDown
-                      className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
-                      aria-hidden
-                    />
-                  </button>
+                  <div className="flex w-full gap-2 md:w-auto">
+                    {pdfToggleVisible && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPdf((v) => !v)}
+                        className={`inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white transition active:scale-[0.99] sm:min-h-0 sm:px-4 sm:py-2.5 ${showPdf
+                          ? 'border-slate-500/90 bg-slate-800 hover:bg-slate-700'
+                          : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800'
+                          }`}
+                      >
+                        <FileText className="size-4 shrink-0" aria-hidden />
+                        <span className="max-w-[4.5rem] truncate sm:max-w-none">
+                          {showPdf ? t('hidePdf') : t('showPdf')}
+                        </span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setDiscussionsOpen((o) => !o)}
+                      className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:flex-1 md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
+                      aria-expanded={discussionsOpen}
+                    >
+                      {t('discussionsCount', { count: discussions.length })}
+                      <ChevronDown
+                        className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
+                        aria-hidden
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
