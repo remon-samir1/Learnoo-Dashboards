@@ -463,7 +463,7 @@ export default function ChapterWatchView({
                             )}
                           </div>
                           {showPdf && pdfWatchPanel && (
-                            <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'max-h-[calc(50vw*9/16)]'}`}>
+                            <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'h-64 sm:h-80 overflow-hidden'}`}>
                               <div className="h-full w-full">{pdfWatchPanel}</div>
                             </div>
                           )}
