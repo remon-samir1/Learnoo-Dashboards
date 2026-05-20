@@ -1084,7 +1084,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "lecture" && isInstructor && (
+          {node.type === "lecture" && !isInstructor && (
             <button
               onClick={() => onAdd("chapter", node.id)}
               className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
