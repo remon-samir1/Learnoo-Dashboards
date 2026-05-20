@@ -25,8 +25,8 @@ async function requestKeySystemAccess(
           initDataTypes: config.keySystem.includes('fairplay') ? ['sinf', 'spc', 'skd'] : ['cenc'],
           videoCapabilities: config.videoCapabilities || [{ contentType: 'video/mp4; codecs="avc1.42E01E"' }],
           audioCapabilities: config.audioCapabilities || [{ contentType: 'audio/mp4' }],
-          distinctiveIdentifier: config.distinctiveIdentifier || 'optional',
-          persistentState: config.persistentState || 'optional',
+          distinctiveIdentifier: (config.distinctiveIdentifier || 'optional') as MediaKeysRequirement,
+          persistentState: (config.persistentState || 'optional') as MediaKeysRequirement,
           sessionTypes: config.sessionTypes || ['temporary'],
         },
       ]);
