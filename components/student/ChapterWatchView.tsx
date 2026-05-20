@@ -443,6 +443,14 @@ export default function ChapterWatchView({
                               frameBorder="0"
                               scrolling="no"
                             />
+                            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                              <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
+                              <VideoWatermark
+                                videoRef={watermarkDummyRef}
+                                contentType="chapters"
+                                initialResolution={initialWatermarkResolution ?? null}
+                              />
+                            </div>
                             {pdfToggleVisible && (
                               <button
                                 type="button"
@@ -460,14 +468,7 @@ export default function ChapterWatchView({
                             </div>
                           )}
                         </div>
-                        <div className="relative h-8 w-full overflow-hidden sm:h-10">
-                          <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
-                          <VideoWatermark
-                            videoRef={watermarkDummyRef}
-                            contentType="chapters"
-                            initialResolution={initialWatermarkResolution ?? null}
-                          />
-                        </div>
+                        
                       </>
                     )
                   ) : (
