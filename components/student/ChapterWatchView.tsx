@@ -432,43 +432,43 @@ export default function ChapterWatchView({
                         </Link>
                       </div>
                     ) : (
-                      <div ref={playerWrapperRef} className={`flex flex-col lg:flex-row ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
-                        <div className="relative lg:flex-1">
-                          <div className="relative">
+                      <>
+                        <div ref={playerWrapperRef} className={`flex flex-col lg:flex-row ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
+                          <div className="relative lg:flex-1">
                             <iframe
                               src={videoSrc}
                               className="aspect-video w-full"
                               allowFullScreen
-                              allow="encrypted-media"
+                              allow="autoplay; encrypted-media; fullscreen"
                               frameBorder="0"
                               scrolling="no"
                             />
-                            <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
-                            <div className="pointer-events-none absolute inset-0 z-10">
-                              <VideoWatermark
-                                videoRef={watermarkDummyRef}
-                                contentType="chapters"
-                                initialResolution={initialWatermarkResolution ?? null}
-                              />
-                            </div>
+                            {pdfToggleVisible && (
+                              <button
+                                type="button"
+                                onClick={toggleFullscreen}
+                                className="absolute bottom-2 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80"
+                                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                              >
+                                {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                              </button>
+                            )}
                           </div>
-                          {pdfToggleVisible && (
-                            <button
-                              type="button"
-                              onClick={toggleFullscreen}
-                              className="absolute bottom-2 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80"
-                              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                            >
-                              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-                            </button>
+                          {showPdf && pdfWatchPanel && (
+                            <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'max-h-[calc(50vw*9/16)]'}`}>
+                              <div className="h-full w-full">{pdfWatchPanel}</div>
+                            </div>
                           )}
                         </div>
-                        {showPdf && pdfWatchPanel && (
-                          <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'max-h-[calc(50vw*9/16)]'}`}>
-                            <div className="h-full w-full">{pdfWatchPanel}</div>
-                          </div>
-                        )}
-                      </div>
+                        <div className="relative h-8 w-full overflow-hidden sm:h-10">
+                          <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
+                          <VideoWatermark
+                            videoRef={watermarkDummyRef}
+                            contentType="chapters"
+                            initialResolution={initialWatermarkResolution ?? null}
+                          />
+                        </div>
+                      </>
                     )
                   ) : (
                   <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
