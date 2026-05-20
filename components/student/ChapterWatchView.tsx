@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
@@ -15,13 +15,11 @@ import {
   Play,
   Send,
 } from 'lucide-react';
-import type { ErrorDetails } from 'hls.js';
 import toast from 'react-hot-toast';
 import type { Chapter, Quiz } from '@/src/types';
 import { api, ApiError } from '@/src/lib/api';
 import { quizStudentMustActivateOrReactivate } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
-import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import {
   discussionAuthorName,
   discussionContent,
@@ -31,9 +29,6 @@ import {
   discussionTypeLabel,
   normalizeDiscussions,
 } from '@/components/student/watch/watchChapterDiscussionUtils';
-import { HlsVideoPlayer } from '@/components/student/watch/HlsVideoPlayer';
-import { pickChapterStreams } from '@/src/lib/chapter-playback-urls';
-import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
 import {
   coerceCanWatchExplicitTrue,
   isStudentChapterPdfVisible,
@@ -96,7 +91,6 @@ export default function ChapterWatchView({
   lectureChapters,
   lectureTitle,
   watchAccessDenied,
-  initialWatermarkResolution,
 }: {
   chapterId: string;
   chapter: Chapter | null;
@@ -105,8 +99,6 @@ export default function ChapterWatchView({
   lectureTitle: string;
   /** Server says `can_watch` is false — user cannot use this chapter URL to stream. */
   watchAccessDenied: boolean;
-  /** From server `GET /v1/feature` + bucket resolution; used until client query settles. */
-  initialWatermarkResolution?: WatermarkResolution | null;
 }) {
   const locale = useLocale();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
@@ -116,30 +108,22 @@ export default function ChapterWatchView({
 
   const [showPdf, setShowPdf] = useState(false);
   const [discussionsOpen, setDiscussionsOpen] = useState(true);
-  const [playbackSec, setPlaybackSec] = useState(0);
   const [composerText, setComposerText] = useState('');
   const [composerSubmitting, setComposerSubmitting] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [clientPlaybackBlocked, setClientPlaybackBlocked] = useState(false);
   const [playbackBlockMessage, setPlaybackBlockMessage] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
   const chapterIdForApi = Number.isFinite(chapterNumericId) ? chapterNumericId : NaN;
 
-  const { primarySrc: videoSrc, mp4FallbackUrl } = useMemo(() => {
-    if (!chapter) return { primarySrc: '', mp4FallbackUrl: '' };
+  const videoSrc = useMemo(() => {
+    if (!chapter) return '';
     const attrs = chapter.attributes;
-    const cid = Number.parseInt(String(chapter.id), 10);
-    return pickChapterStreams(Number.isFinite(cid) ? cid : 0, {
-      video: attrs.video,
-      playlist: attrs.playlist,
-      video_hls_url: attrs.video_hls_url,
-      video_mp4_url: attrs.video_mp4_url,
-    });
+    return attrs.video_hls_url || attrs.video_mp4_url || attrs.video || attrs.playlist || '';
   }, [chapter]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
@@ -200,23 +184,6 @@ export default function ChapterWatchView({
     return u || '/logo.svg';
   }, [chapter]);
 
-  const momentForPost = useMemo(() => {
-    if (!videoSrc) return 0;
-    const s = playbackSec;
-    if (!Number.isFinite(s) || s < 0) return 0;
-    return Math.floor(s);
-  }, [playbackSec, videoSrc]);
-
-  const momentDisplay = useMemo(() => {
-    const label = formatMomentSeconds(momentForPost);
-    return label ? t('composerMomentLabel', { time: label }) : null;
-  }, [momentForPost, t]);
-
-  const viewByMinute = useMemo(
-    () => Math.max(0, Number(chapter?.attributes?.view_by_minute ?? 0) || 0),
-    [chapter]
-  );
-
   const accessDenied = watchAccessDenied || clientPlaybackBlocked;
 
   useEffect(() => {
@@ -255,42 +222,6 @@ export default function ChapterWatchView({
     };
   }, [chapterIdForApi, watchAccessDenied]);
 
-  const onViewRecordError = useCallback(
-    (message: string) => {
-      setClientPlaybackBlocked(true);
-      setPlaybackBlockMessage(message);
-      toast.error(message);
-      router.refresh();
-    },
-    [router]
-  );
-
-  const onFatalPlaybackError = useCallback(
-    (info: { reason: string; hlsDetails?: ErrorDetails }) => {
-      console.error('[ChapterWatchView] Fatal HLS playback:', info.reason, info.hlsDetails ?? '');
-      toast.error(t('hlsPlaybackError'));
-    },
-    [t]
-  );
-
-  useChapterViewRecording({
-    chapterId: chapterIdForApi,
-    videoRef,
-    videoSrc,
-    viewByMinute,
-    enabled: Number.isFinite(chapterIdForApi) && Boolean(videoSrc) && !accessDenied,
-    onViewRecordError,
-  });
-
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el || !videoSrc || accessDenied) return;
-    const onTime = () => setPlaybackSec(el.currentTime || 0);
-    el.addEventListener('timeupdate', onTime);
-    onTime();
-    return () => el.removeEventListener('timeupdate', onTime);
-  }, [videoSrc, chapterId, accessDenied]);
-
   useEffect(() => {
     if (!composerOpen) return;
     const id = window.requestAnimationFrame(() => {
@@ -317,7 +248,7 @@ export default function ChapterWatchView({
         chapter_id: chapterIdForApi,
         type: 'text',
         content: text,
-        moment: momentForPost,
+        moment: 0,
         parent_id: null,
       });
       toast.success(t('discussionPosted'));
@@ -489,31 +420,17 @@ export default function ChapterWatchView({
                         {tDetails('watchBack')}
                       </Link>
                     </div>
-                  ) : (
-                   <div>
-                     <HlsVideoPlayer
-                      id="watch-chapter-video"
-                      key={`${videoSrc}|${mp4FallbackUrl}`}
-                      ref={videoRef}
-                      src={videoSrc}
-                      mp4FallbackUrl={mp4FallbackUrl}
-                      switchingPlaybackLabel={t('switchingPlaybackMethod')}
-                      showCustomControls
-                      playsInline
-                      className="aspect-video w-full max-w-full"
-                      preload="metadata"
-                      onFatalPlaybackError={onFatalPlaybackError}
-                      initialWatermarkResolution={initialWatermarkResolution ?? null}
-                      staticOverlaySubtitle={lectureTitle.trim() || attrs.title?.trim() || undefined}
-                      watchOverlay={pdfToggleButton}
-                      watchPanel={pdfWatchPanel}
-                    >
-                      
-                      {tDetails('watchNoVideo')}
-                      
-                    </HlsVideoPlayer>
-                    
-                   </div>
+                    ) : (
+                    <div>
+                      <iframe
+                        src={videoSrc}
+                        className="aspect-video w-full max-w-full"
+                        allowFullScreen
+                        allow="encrypted-media"
+                        frameBorder="0"
+                        scrolling="no"
+                      />
+                    </div>
                   )
                 ) : (
                   <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
@@ -627,13 +544,7 @@ export default function ChapterWatchView({
                       className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60 sm:text-sm"
                     />
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      {momentDisplay ? (
-                        <span className="rounded-md border border-slate-700 bg-slate-800/90 px-2.5 py-1.5 text-[11px] font-semibold text-slate-300">
-                          {momentDisplay}
-                        </span>
-                      ) : (
-                        <span />
-                      )}
+                      <span />
                       <button
                         type="button"
                         onClick={() => void submitComposer()}
@@ -679,11 +590,7 @@ export default function ChapterWatchView({
                   const isQuestion = typeTag === 'question';
 
                   const jump = () => {
-                    if (momentSec == null || !videoRef.current) return;
-                    const el = videoRef.current;
-                    el.currentTime = Math.min(momentSec, el.duration || momentSec);
-                    void el.play().catch(() => { });
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Video jump disabled for iframe
                   };
 
                   return (
@@ -720,7 +627,7 @@ export default function ChapterWatchView({
                             ) : null}
                           </div>
                         </div>
-                        {momentSec != null && videoSrc && !accessDenied ? (
+                        {false && momentSec != null && videoSrc && !accessDenied ? (
                           <button
                             type="button"
                             onClick={jump}

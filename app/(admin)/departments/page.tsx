@@ -3801,23 +3801,26 @@ export default function DepartmentsPage() {
                     </label>
 
                     <div className="space-y-3">
-                      {/* Video Preview */}
+                       {/* Video Preview */}
 
-                      {(viewNode.data as Chapter).attributes.video && (
-                        <div>
-                          <label className="text-xs text-gray-400 mb-1 block">
-                            Video
-                          </label>
+                       {(viewNode.data as Chapter).attributes.video && (
+                         <div>
+                           <label className="text-xs text-gray-400 mb-1 block">
+                             Video
+                           </label>
 
-                          <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-900">
-                            <video
-                              src={(viewNode.data as Chapter).attributes.video}
-                              controls
-                              className="w-full h-40 object-contain"
-                            />
-                          </div>
-                        </div>
-                      )}
+                           <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-900">
+                             <iframe
+                               src={(viewNode.data as Chapter).attributes.video}
+                               className="w-full h-40"
+                               allowFullScreen
+                               allow="encrypted-media"
+                               frameBorder="0"
+                               scrolling="no"
+                             />
+                           </div>
+                         </div>
+                       )}
 
                       {/* Thumbnail */}
 
@@ -5783,9 +5786,13 @@ function EditModal({
                         onClick={handleVideoClick}
                         className="cursor-pointer rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm"
                       >
-                        <video
+                        <iframe
                           src={videoPreview}
-                          className="w-full h-40 object-cover"
+                          className="w-full h-40"
+                          allowFullScreen
+                          allow="encrypted-media"
+                          frameBorder="0"
+                          scrolling="no"
                         />
 
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -6949,9 +6956,13 @@ function AddModal({
                         onClick={handleVideoClick}
                         className="cursor-pointer rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm"
                       >
-                        <video
+                        <iframe
                           src={videoPreview}
-                          className="w-full h-40 object-cover"
+                          className="w-full h-40"
+                          allowFullScreen
+                          allow="encrypted-media"
+                          frameBorder="0"
+                          scrolling="no"
                         />
 
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
