@@ -432,12 +432,13 @@ export default function ChapterWatchView({
                         </Link>
                       </div>
                     ) : (
-                      <div ref={playerWrapperRef} className={`grid grid-cols-1 lg:grid-cols-2 items-stretch ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
-                        <div className="relative">
+                      <div ref={playerWrapperRef} className={`flex flex-col lg:flex-row ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
+                        <div className="relative lg:flex-1">
                           <div className="relative">
                             <iframe
                               src={videoSrc}
                               className="aspect-video w-full"
+                              allowFullScreen
                               allow="encrypted-media"
                               frameBorder="0"
                               scrolling="no"
@@ -463,7 +464,7 @@ export default function ChapterWatchView({
                           )}
                         </div>
                         {showPdf && pdfWatchPanel && (
-                          <div className={`min-h-0 ${isFullscreen ? 'h-screen overflow-hidden' : 'max-h-[calc(50vw*9/16)]'}`}>
+                          <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'max-h-[calc(50vw*9/16)]'}`}>
                             <div className="h-full w-full">{pdfWatchPanel}</div>
                           </div>
                         )}
