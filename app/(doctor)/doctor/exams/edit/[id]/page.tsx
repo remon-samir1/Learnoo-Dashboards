@@ -167,7 +167,7 @@ export default function EditExamPage() {
 
     setExamDetails({
       title: quiz.attributes.title || '',
-      courses: quiz.attributes.course_id ? [String(quiz.attributes.course_id)] : [],
+      courses: quiz.attributes.courses?.data?.map((c: any) => String(c.id)) || [],
       chapter: quiz.attributes.chapter_id ? String(quiz.attributes.chapter_id) : '',
       type: quiz.attributes.type === 'exam' ? 'exam' : 'homework',
       duration: String(quiz.attributes.duration || 60),
@@ -297,6 +297,9 @@ export default function EditExamPage() {
       if (examDetails.endTime) formData.append('end_time', examDetails.endTime);
 
       questions.forEach((q, qIndex) => {
+        if (q.id && !q.id.startsWith('new-')) {
+          formData.append(`questions[${qIndex}][id]`, q.id);
+        }
         formData.append(`questions[${qIndex}][text]`, q.text);
         formData.append(`questions[${qIndex}][type]`, q.type);
         formData.append(`questions[${qIndex}][score]`, String(q.score));
@@ -309,6 +312,9 @@ export default function EditExamPage() {
 
         if (q.type !== 'short_answer') {
           q.answers.forEach((a, aIndex) => {
+            if (a.id && !a.id.startsWith('a-')) {
+              formData.append(`questions[${qIndex}][answers][${aIndex}][id]`, a.id);
+            }
             formData.append(`questions[${qIndex}][answers][${aIndex}][text]`, a.text);
             formData.append(`questions[${qIndex}][answers][${aIndex}][is_correct]`, a.isCorrect ? '1' : '0'); // ✅
             if (a.reason) formData.append(`questions[${qIndex}][answers][${aIndex}][reason]`, a.reason);
@@ -553,7 +559,19 @@ export default function EditExamPage() {
                     <select
                       className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                       value={q.type}
-                      onChange={(e) => updateQuestion(q.id, { type: e.target.value as Question['type'] })}
+                      onChange={(e) => {
+                        const newType = e.target.value as Question['type'];
+                        let updates: Partial<Question> = { type: newType };
+                        
+                        if (newType === 'true_false') {
+                          updates.answers = [
+                            { id: `a-${Date.now()}-1`, text: 'صح', isCorrect: false, reason: '', image: null, imagePreview: '' },
+                            { id: `a-${Date.now()}-2`, text: 'خطأ', isCorrect: false, reason: '', image: null, imagePreview: '' }
+                          ];
+                        }
+                        
+                        updateQuestion(q.id, updates);
+                      }}
                     >
                       <option value="single_choice">{t('create.singleChoice')}</option>
                       <option value="multiple_choice">{t('create.multipleChoice')}</option>

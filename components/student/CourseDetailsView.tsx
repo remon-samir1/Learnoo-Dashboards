@@ -243,7 +243,14 @@ type LooseExamAttrs = {
   obtained_marks?: number;
   has_activation?: unknown;
   is_public?: unknown;
-  course_id?: number | string | null;
+  courses?: {
+    data: Array<{
+      id: string | number;
+      attributes?: {
+        title?: string;
+      };
+    }>;
+  };
 };
 
 function looseExamAttrs(
@@ -1858,10 +1865,10 @@ function ExamsTab({
                         {t("examsActivationRequiredSub")}
                       </p>
                       {(() => {
+                        const firstCid = attrs.courses?.data?.[0]?.id;
                         const cid =
-                          attrs.course_id != null &&
-                          String(attrs.course_id).trim() !== ""
-                            ? String(attrs.course_id)
+                          firstCid != null && String(firstCid).trim() !== ""
+                            ? String(firstCid)
                             : courseId.trim() || null;
                         return cid ? (
                           <p className="mt-2 text-xs font-semibold text-amber-950">

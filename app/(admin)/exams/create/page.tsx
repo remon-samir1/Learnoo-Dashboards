@@ -579,7 +579,19 @@ export default function CreateExamPage() {
                     <select
                       className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                       value={q.type}
-                      onChange={(e) => updateQuestion(q.id, { type: e.target.value as Question['type'] })}
+                      onChange={(e) => {
+                        const newType = e.target.value as Question['type'];
+                        let updates: Partial<Question> = { type: newType };
+                        
+                        if (newType === 'true_false') {
+                          updates.answers = [
+                            { id: '1', text: 'صح', isCorrect: false, reason: '' },
+                            { id: '2', text: 'خطأ', isCorrect: false, reason: '' }
+                          ];
+                        }
+                        
+                        updateQuestion(q.id, updates);
+                      }}
                     >
                       <option value="single_choice">{t('create.singleChoice')}</option>
                       <option value="multiple_choice">{t('create.multipleChoice')}</option>

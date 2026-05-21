@@ -3578,9 +3578,9 @@ export interface QuizAttributes {
 
 
 
-  course_id?: number;
-
-  course_ids?: number[];
+  courses?: {
+    data: any[];
+  };
 
 
 
@@ -3673,7 +3673,7 @@ export interface CreateQuizRequest {
 
 
 
-  course_id: number;
+  courses: number[];
 
 
 

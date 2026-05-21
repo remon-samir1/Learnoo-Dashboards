@@ -280,13 +280,12 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
           ) : (
             <ul className={STUDENT_EXAM_GRID}>
               {available.map((row) => {
-                const rawCid = hubQuizAttrs(row).course_id;
+                const coursesObj = hubQuizAttrs(row).courses as { data: Array<{ id: string | number }> } | undefined;
+                const firstCid = coursesObj?.data?.[0]?.id;
                 const courseForStart =
-                  typeof rawCid === 'number' && Number.isFinite(rawCid)
-                    ? rawCid
-                    : typeof rawCid === 'string' && /^\d+$/.test(rawCid.trim())
-                      ? rawCid.trim()
-                      : null;
+                  firstCid != null && String(firstCid).trim() !== ''
+                    ? String(firstCid).trim()
+                    : null;
                 const startHref = buildStudentStartExamHref(locale, row.id, courseForStart);
                 const title = hubQuizTitle(row);
                 return (
@@ -554,7 +553,8 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                 };
                 const needsActivation = quizStudentMustActivateOrReactivate(attrsForPolicy);
                 const reactivateOnly = quizNeedsReactivationAfterExhaustedAttempts(attrsForPolicy);
-                const cid = attrs.course_id;
+                const coursesObj = attrs.courses as { data: Array<{ id: string | number }> } | undefined;
+                const cid = coursesObj?.data?.[0]?.id;
 
                 return (
                   <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} text-[#64748B]`}>
