@@ -3575,9 +3575,8 @@ export interface QuizAttributes {
 
 
   chapter_id: number | null;
-
-
-
+  course_id?: number;
+  course_ids?: number[];
   courses?: {
     data: any[];
   };
