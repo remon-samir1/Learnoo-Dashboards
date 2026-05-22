@@ -25,6 +25,7 @@ import {
   questionAnswers,
 } from '@/src/lib/student-exam-question-utils';
 import { useExamCopyGuard } from '@/src/hooks/useExamCopyGuard';
+import { useExamCheatingGuard } from '@/src/hooks/useExamCheatingGuard';
 
 function formatHms(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
@@ -68,6 +69,12 @@ export default function TakeExamRun({
   const [timeExpired, setTimeExpired] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const timeOutHandled = useRef(false);
+  const isFinished = useRef(false);
+  const selectionsRef = useRef(selections);
+
+  useEffect(() => {
+    selectionsRef.current = selections;
+  }, [selections]);
 
   useEffect(() => {
     const p = readStudentTakePayload(quizId);
@@ -161,11 +168,30 @@ export default function TakeExamRun({
     if (!isLast) setCurrentIndex((i) => Math.min(i + 1, total - 1));
   };
 
+  const autoSubmit = useCallback(async () => {
+    if (!quiz || !attemptId || isFinished.current) return;
+    isFinished.current = true;
+
+    const { score, total_score } = computeExamScore(questions, selectionsRef.current);
+    try {
+      await api.quizAttempts.submit(attemptId, { score, total_score }, { keepalive: true });
+      clearStudentTakePayload(quizId);
+    } catch (err) {
+      console.error('Auto-submit failed:', err);
+    }
+  }, [quiz, attemptId, questions, quizId]);
+
+  useExamCheatingGuard({
+    onLeave: autoSubmit,
+    active: session !== null && session !== undefined && total > 0 && !isFinished.current,
+  });
+
   const handleFinish = async () => {
-    if (!quiz || !current || !attemptId || finishing) return;
+    if (!quiz || !current || !attemptId || finishing || isFinished.current) return;
     if (!isQuestionAnswered(current, selectedForCurrent)) return;
     const { score, total_score } = computeExamScore(questions, selections);
     setFinishing(true);
+    isFinished.current = true;
     try {
       const res = (await api.quizAttempts.submit(attemptId, {
         score,

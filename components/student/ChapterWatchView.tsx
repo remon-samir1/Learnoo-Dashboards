@@ -33,6 +33,7 @@ import {
 } from '@/components/student/watch/watchChapterDiscussionUtils';
 import {
   coerceCanWatchExplicitTrue,
+  isNoVideoUrl,
   isStudentChapterPdfVisible,
   isStudentChapterVideoPlayable,
 } from '@/src/lib/student-chapter-access';
@@ -122,10 +123,12 @@ export default function ChapterWatchView({
   const [clientPlaybackBlocked, setClientPlaybackBlocked] = useState(false);
   const [playbackBlockMessage, setPlaybackBlockMessage] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
 
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
   const playerWrapperRef = useRef<HTMLDivElement | null>(null);
+  const pdfPanelRef = useRef<HTMLDivElement | null>(null);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
@@ -134,7 +137,9 @@ export default function ChapterWatchView({
   const videoSrc = useMemo(() => {
     if (!chapter) return '';
     const attrs = chapter.attributes;
-    return attrs.video_hls_url || attrs.video_mp4_url || attrs.video || attrs.playlist || '';
+    const rawUrl = attrs.video_hls_url || attrs.video_mp4_url || attrs.video || attrs.playlist || '';
+    if (isNoVideoUrl(rawUrl)) return '';
+    return rawUrl;
   }, [chapter]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
@@ -206,6 +211,13 @@ export default function ChapterWatchView({
     if (!pdfPanelVisible) setShowPdf(false);
   }, [pdfPanelVisible]);
 
+  // If no video but PDF exists, auto-show PDF
+  useEffect(() => {
+    if (!videoSrc && pdfUrl && pdfPanelVisible) {
+      setShowPdf(true);
+    }
+  }, [videoSrc, pdfUrl, pdfPanelVisible]);
+
   useEffect(() => {
     if (!Number.isFinite(chapterIdForApi) || watchAccessDenied) return;
     let cancelled = false;
@@ -236,6 +248,7 @@ export default function ChapterWatchView({
   useEffect(() => {
     const onFsChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
+      setIsPdfFullscreen(document.fullscreenElement === pdfPanelRef.current);
     };
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
@@ -247,6 +260,15 @@ export default function ChapterWatchView({
       void document.exitFullscreen();
     } else {
       void playerWrapperRef.current.requestFullscreen();
+    }
+  };
+
+  const togglePdfFullscreen = () => {
+    if (!pdfPanelRef.current) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void pdfPanelRef.current.requestFullscreen();
     }
   };
 
@@ -345,21 +367,31 @@ export default function ChapterWatchView({
 
   const pdfWatchPanel =
     showPdf && pdfUrl && pdfPanelVisible ? (
-      <div className={`flex min-h-0 flex-col bg-white ${isFullscreen ? 'h-screen' : 'h-full'}`}>
-        <div className="flex shrink-0 items-center  justify-between gap-2 border-b border-slate-200 bg-[#f8fafc] px-3 py-2.5 sm:px-4">
+      <div ref={pdfPanelRef} className={`flex min-h-0 flex-col bg-white ${isPdfFullscreen ? 'fixed inset-0 z-[9999] h-screen w-screen' : isFullscreen ? 'h-screen' : 'h-full'}`}>
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-[#f8fafc] px-3 py-2.5 sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
             <FileText className="size-4 shrink-0 text-[#2D43D1]" aria-hidden />
             <span className="truncate text-sm font-semibold text-slate-900">{t('lectureMaterial')}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setShowPdf(false)}
-            className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-xs"
-          >
-            {t('hidePdf')}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={togglePdfFullscreen}
+              className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white p-1.5 text-[#64748B] transition hover:bg-slate-50"
+              title={isPdfFullscreen ? 'Exit fullscreen' : 'Full screen'}
+            >
+              {isPdfFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPdf(false)}
+              className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-xs"
+            >
+              {t('hidePdf')}
+            </button>
+          </div>
         </div>
-        <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none] ${isFullscreen ? 'h-[calc(100vh-44px)]' : ''}`}>
+        <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none] ${isPdfFullscreen || isFullscreen ? 'h-[calc(100vh-44px)]' : ''}`}>
           <PdfPreviewModal
             variant="inline"
             expandToContainer
@@ -472,17 +504,27 @@ export default function ChapterWatchView({
                       </>
                     )
                   ) : (
-                  <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
-                    <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
-                      <Play className="size-8 translate-x-0.5" fill="currentColor" />
-                    </div>
-                    <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
-                    <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
-                  </div>
-                )}
+                    // NO VIDEO CASE
+                    pdfUrl && pdfPanelVisible ? (
+                      <div className="bg-slate-950">
+                        <div className="mx-auto max-w-5xl">
+                          <div className="aspect-[16/10] w-full sm:aspect-[16/9]">
+                            {pdfWatchPanel}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
+                        <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
+                          <Play className="size-8 translate-x-0.5" fill="currentColor" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
+                        <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
+                      </div>
+                    )
+                  )}
+                </div>
               </div>
-
-            </div>
 
             {/* Under video: stacked on small screens; desktop = one row like design (Ask | Lecture parts inline | Discussions). */}
             <div className="border-t border-slate-800/80 bg-[#050915] px-0 py-0 sm:px-6 sm:py-3.5">

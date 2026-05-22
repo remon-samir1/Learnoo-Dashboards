@@ -47,3 +47,14 @@ export function isStudentChapterPdfVisible(chapter: Chapter): boolean {
     coerceCanWatchExplicitTrue(attrs.can_watch)
   );
 }
+
+/**
+ * Detects if a video URL from the backend is actually a placeholder indicating "no video".
+ * Common placeholder: "https://api.learnoo.app/storage"
+ */
+export function isNoVideoUrl(url: string | null | undefined): boolean {
+  if (!url) return true;
+  const s = url.trim();
+  if (!s) return true;
+  return s === 'https://api.learnoo.app/storage' || s === 'https://api.learnoo.app/storage/';
+}

@@ -17,7 +17,7 @@ export default function ContinueWatchingSection({
 }) {
   const [courseDetails, setCourseDetails] = useState<ICourse | null>(null);
 
-  const t = useTranslations("student.home.continueWatching");
+  const t = useTranslations("students.home.continueWatching");
   const locale = useLocale();
 
   const list = Array.isArray(progress) ? progress : [];

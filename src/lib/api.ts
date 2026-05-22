@@ -217,12 +217,14 @@ async function post<T>(
   path: string,
   data?: unknown,
   includeAuth: boolean = true,
-  skipAuthRedirect: boolean = false
+  skipAuthRedirect: boolean = false,
+  options?: { keepalive?: boolean }
 ): Promise<T> {
   const response = await fetch(buildUrl(path), {
     method: 'POST',
     headers: createHeaders(includeAuth),
     body: data !== undefined && data !== null ? JSON.stringify(data) : undefined,
+    keepalive: options?.keepalive,
   });
 
   return handleResponse<T>(response, skipAuthRedirect);
@@ -291,11 +293,17 @@ async function postMultipart<T>(path: string, formData: FormData, onProgress?: (
   return handleResponse<T>(response);
 }
 
-async function put<T>(path: string, data?: unknown, isMultipart: boolean = false): Promise<T> {
+async function put<T>(
+  path: string,
+  data?: unknown,
+  isMultipart: boolean = false,
+  options?: { keepalive?: boolean }
+): Promise<T> {
   const response = await fetch(buildUrl(path), {
     method: 'PUT',
     headers: createHeaders(true, isMultipart),
     body: data ? (isMultipart ? (data as FormData) : JSON.stringify(data)) : undefined,
+    keepalive: options?.keepalive,
   });
 
   return handleResponse<T>(response);
@@ -358,10 +366,11 @@ async function putMultipart<T>(path: string, formData: FormData, onProgress?: (p
   return put<T>(path, formData, true);
 }
 
-async function del<T>(path: string): Promise<T> {
+async function del<T>(path: string, options?: { keepalive?: boolean }): Promise<T> {
   const response = await fetch(buildUrl(path), {
     method: 'DELETE',
     headers: createHeaders(),
+    keepalive: options?.keepalive,
   });
 
   return handleResponse<T>(response);
@@ -907,8 +916,8 @@ export const quizAttemptsApi = {
   start: (data: StartQuizAttemptRequest) =>
     post<ApiResponse<QuizAttempt>>('/v1/quiz-attempt', data, true, true),
 
-  submit: (id: number | string, data: FinishQuizAttemptRequest) =>
-    put<FinishQuizAttemptResponse>(`/v1/quiz-attempt/${id}`, data),
+  submit: (id: number | string, data: FinishQuizAttemptRequest, options?: { keepalive?: boolean }) =>
+    put<FinishQuizAttemptResponse>(`/v1/quiz-attempt/${id}`, data, false, options),
 };
 
 // ============================================

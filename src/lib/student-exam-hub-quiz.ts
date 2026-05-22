@@ -136,7 +136,6 @@ export function classifyHubQuizRow(row: HubQuizListRow, nowMs: number): HubQuizB
   const status = String(attrs.status ?? '')
     .trim()
     .toLowerCase();
-  if (status === 'draft') return 'hidden';
 
   const startRaw = attrs.start_time;
   const endRaw = attrs.end_time;
@@ -145,7 +144,7 @@ export function classifyHubQuizRow(row: HubQuizListRow, nowMs: number): HubQuizB
 
   const rem = readHubQuizRemainingAttempts(row);
 
-  if (status !== 'active') {
+  if (status !== 'active' && status !== 'draft') {
     return 'locked';
   }
 

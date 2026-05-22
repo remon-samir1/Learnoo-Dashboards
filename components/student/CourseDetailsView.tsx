@@ -146,8 +146,6 @@ function classifyExamBucket(
 ): StudentExamBucket | null {
   const s = normalizeExamStatusToken(exam?.attributes?.status);
 
-  if (s === "draft") return null;
-
   if (examRequiresCourseActivation(exam)) return "locked";
 
   const rawAttrs = (exam?.attributes ?? {}) as Record<string, unknown>;
@@ -183,7 +181,7 @@ function classifyExamBucket(
   }
 
   // Align with student Exams hub (`classifyHubQuizRow`): `active` still respects start window.
-  if (s === "active") {
+  if (s === "active" || s === "draft") {
     if (!Number.isNaN(startTs) && startTs > now) return "upcoming";
     return "active";
   }

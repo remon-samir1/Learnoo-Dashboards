@@ -18,7 +18,7 @@ export default function MyCoursesSection() {
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("courses");
-  const tH = useTranslations("student.home.courses");
+  const tH = useTranslations("students.home.courses");
   const { data: courses, isLoading, error, refetch } = useCourses(STUDENT_COURSES_LIST_PARAMS);
   const activation = useStudentCourseListActivation();
    

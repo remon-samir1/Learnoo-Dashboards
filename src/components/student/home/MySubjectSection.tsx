@@ -54,7 +54,7 @@ export default function MySubjectSection({
 }: {
   categories: Category[];
 }) {
-  const t = useTranslations("student.home.subjects");
+  const t = useTranslations("students.home.subjects");
   const locale = useLocale();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);

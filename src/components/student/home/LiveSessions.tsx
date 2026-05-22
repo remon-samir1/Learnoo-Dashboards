@@ -15,7 +15,7 @@ export default function UpcomingLiveClasses({
 }: {
   sessions?: StudentLiveRoom[];
 }) {
-  const t = useTranslations("student.home.upcomingLive");
+  const t = useTranslations("students.home.upcomingLive");
   const locale = useLocale();
 
   const formatDate = (date?: string | null) => {

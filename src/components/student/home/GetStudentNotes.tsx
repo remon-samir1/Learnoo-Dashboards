@@ -2,7 +2,7 @@
 // import React from 'react'
 
 // const GetStudentNotes = ({notes}:{notes:IStudentNote[]}) => {
-//     const t = useTranslations("student.home.notes");
+//     const t = useTranslations("students.home.notes");
     
 //   return (
 //     <section className="rounded-2xl border border-[var(--border-color)] bg-white px-6 py-4 shadow-sm">
@@ -30,7 +30,7 @@
 // }: {
 //   notes: IStudentNote[];
 // }) {
-//   const t = useTranslations("student.home.notes");
+//   const t = useTranslations("students.home.notes");
 //   const locale = useLocale();
 // console.log(notes)
 //   const visibleNotes = notes.slice(0, 2);
@@ -104,7 +104,7 @@ export default function GetStudentNotes({
 }: {
   notes: IStudentNote[];
 }) {
-  const t = useTranslations("student.home.notes");
+  const t = useTranslations("students.home.notes");
   const locale = useLocale();
 
   const visibleNotes = notes.slice(0, 2);

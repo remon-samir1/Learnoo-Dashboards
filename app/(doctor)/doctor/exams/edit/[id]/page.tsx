@@ -140,6 +140,7 @@ export default function EditExamPage() {
 
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDraftRestored, setIsDraftRestored] = useState(false);
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '', courses: [], chapter: '', type: 'exam',
     duration: '60', totalMarks: '100', passingMarks: '60', maxAttempts: '1',
@@ -167,7 +168,21 @@ export default function EditExamPage() {
 
     setExamDetails({
       title: quiz.attributes.title || '',
-      courses: quiz.attributes.courses?.data?.map((c: any) => String(c.id)) || [],
+      courses: (() => {
+        if (quiz.attributes.courses?.data && Array.isArray(quiz.attributes.courses.data)) {
+          return quiz.attributes.courses.data.map((c: any) => String(c.id));
+        }
+        if (Array.isArray(quiz.attributes.courses)) {
+          return quiz.attributes.courses.map((c: any) => String(c.id));
+        }
+        if (quiz.attributes.course_id) {
+          return [String(quiz.attributes.course_id)];
+        }
+        if (quiz.attributes.course_ids && Array.isArray(quiz.attributes.course_ids)) {
+          return quiz.attributes.course_ids.map(id => String(id));
+        }
+        return [];
+      })(),
       chapter: quiz.attributes.chapter_id ? String(quiz.attributes.chapter_id) : '',
       type: quiz.attributes.type === 'exam' ? 'exam' : 'homework',
       duration: String(quiz.attributes.duration || 60),
@@ -202,6 +217,45 @@ export default function EditExamPage() {
       );
     }
   }, [quiz]);
+
+  // Load draft from localStorage after quiz is loaded
+  useEffect(() => {
+    if (!quiz || isDraftRestored) return;
+
+    const draftKey = `doctor_exam_edit_form_draft_${examId}`;
+    const savedDraft = localStorage.getItem(draftKey);
+    if (savedDraft) {
+      try {
+        const { examDetails: savedDetails, questions: savedQuestions } = JSON.parse(savedDraft);
+        if (savedDetails) setExamDetails(savedDetails);
+        if (savedQuestions) setQuestions(savedQuestions);
+      } catch (e) {
+        console.error('Failed to load exam draft', e);
+      }
+    }
+    setIsDraftRestored(true);
+  }, [quiz, examId, isDraftRestored]);
+
+  // Save draft to localStorage on changes
+  useEffect(() => {
+    if (!isDraftRestored) return;
+
+    const draftKey = `doctor_exam_edit_form_draft_${examId}`;
+    const draft = {
+      examDetails,
+      questions: questions.map(q => ({
+        ...q,
+        image: null, // Files cannot be saved in localStorage
+        imagePreview: q.imagePreview?.startsWith('blob:') ? '' : q.imagePreview,
+        answers: q.answers.map(a => ({
+          ...a,
+          image: null,
+          imagePreview: a.imagePreview?.startsWith('blob:') ? '' : a.imagePreview
+        }))
+      }))
+    };
+    localStorage.setItem(draftKey, JSON.stringify(draft));
+  }, [examDetails, questions, isDraftRestored, examId]);
 
   // ── question helpers ──
   const addQuestion = () => {
@@ -282,7 +336,9 @@ export default function EditExamPage() {
       // Build FormData
       const formData = new FormData();
 
+      // Send all selected course IDs to the API
       examDetails.courses.forEach(cid => formData.append('course_ids[]', cid));
+      // Also send the primary course ID for compatibility
       formData.append('course_id', examDetails.courses[0]);
       if (examDetails.chapter) formData.append('chapter_id', examDetails.chapter);
       formData.append('title', examDetails.title);
@@ -336,6 +392,7 @@ export default function EditExamPage() {
 
       console.log('✅ Quiz updated successfully:', responseData);
       alert('Exam updated successfully!');
+      localStorage.removeItem(`doctor_exam_edit_form_draft_${examId}`);
       router.push('/exams');
     } catch (error) {
       console.error('Error updating exam:', error);

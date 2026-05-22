@@ -15,7 +15,7 @@ const WelcomeSection = ({
   coursesCount: number;
   liveSessionsCount: number;
 }) => {
-  const t = useTranslations("student.home.welcome");
+  const t = useTranslations("students.home.welcome");
   const tC = useTranslations("universities");
 
   return (

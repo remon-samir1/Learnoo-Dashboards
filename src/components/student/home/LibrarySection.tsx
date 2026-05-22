@@ -11,7 +11,7 @@ export default function ElectronicLibrarySection({
 }: {
   library: ILibrary[];
 }) {
-  const t = useTranslations("student.home.library");
+  const t = useTranslations("students.home.library");
   const locale = useLocale();
 
   const visibleLibraries = library.slice(0, 2);

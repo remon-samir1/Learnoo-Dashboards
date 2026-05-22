@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
@@ -66,6 +66,7 @@ export default function CreateExamPage() {
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { mutate: createQuiz, isLoading: isCreatingQuiz, isError: isQuizError, error: quizError } = useCreateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '',
@@ -101,6 +102,41 @@ export default function CreateExamPage() {
       ]
     }
   ]);
+
+  // Load draft from localStorage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('exam_create_form_draft');
+    if (savedDraft) {
+      try {
+        const { examDetails: savedDetails, questions: savedQuestions } = JSON.parse(savedDraft);
+        if (savedDetails) setExamDetails(savedDetails);
+        if (savedQuestions) setQuestions(savedQuestions);
+      } catch (e) {
+        console.error('Failed to load exam draft', e);
+      }
+    }
+    setIsDraftLoaded(true);
+  }, []);
+
+  // Save draft to localStorage on changes
+  useEffect(() => {
+    if (!isDraftLoaded) return;
+
+    const draft = {
+      examDetails,
+      questions: questions.map(q => ({
+        ...q,
+        image: null, // Files cannot be saved in localStorage
+        imagePreview: q.imagePreview?.startsWith('blob:') ? '' : q.imagePreview,
+        answers: q.answers.map(a => ({
+          ...a,
+          image: null,
+          imagePreview: a.imagePreview?.startsWith('blob:') ? '' : a.imagePreview
+        }))
+      }))
+    };
+    localStorage.setItem('exam_create_form_draft', JSON.stringify(draft));
+  }, [examDetails, questions, isDraftLoaded]);
 
   const addQuestion = () => {
     const newId = (questions.length + 1).toString();
@@ -324,6 +360,7 @@ export default function CreateExamPage() {
       }
 
       // Success - redirect to exams page
+      localStorage.removeItem('exam_create_form_draft');
       router.push('/exams');
     } catch (error) {
       console.error('Error creating exam:', error);

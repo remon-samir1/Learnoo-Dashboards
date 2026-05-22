@@ -4,7 +4,7 @@ import { KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export default function QuickActivationCard() {
-  const t = useTranslations("student.home.quickActivation");
+  const t = useTranslations("students.home.quickActivation");
 
   return (
     <section className="flex flex-col gap-5 rounded-2xl bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] px-4 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-6">
