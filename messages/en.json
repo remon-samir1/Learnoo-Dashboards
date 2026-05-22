@@ -213,7 +213,52 @@
     "doctorDashboard": "Doctor Dashboard",
     "profile": "Profile",
     "settings": "Settings",
-    "helpFaq": "Help & FAQ"
+    "helpFaq": "Help & FAQ",
+    "support": "Support"
+  },
+  "issues": {
+    "title": "Technical Support",
+    "category": "Department where the problem occurred",
+    "type": "Issue Type",
+    "priority": "Priority Level",
+    "description": "Problem Description",
+    "steps": "Steps before problem appears",
+    "expected": "Expected Result",
+    "actual": "Actual Result",
+    "status": "Status",
+    "submit": "Submit Request",
+    "success": "Your request has been sent successfully",
+    "error": "An error occurred while sending your request",
+    "placeholders": {
+      "category": "Select Department",
+      "type": "Select Issue Type",
+      "priority": "Select Priority Level",
+      "description": "Explain the problem in detail",
+      "steps": "Write the steps you took before the problem appeared",
+      "expected": "What did you expect to happen?",
+      "actual": "What actually happened?"
+    },
+    "categories": {
+      "videos": "Videos & Files",
+      "live": "Live Streaming",
+      "exams": "Exams",
+      "community": "Community",
+      "library": "Electronic Library"
+    },
+    "types": {
+      "website": "Problem with the website",
+      "app": "Problem with the app",
+      "login": "Login problem",
+      "content": "Problem with videos or content",
+      "payment": "Problem with payment or subscription",
+      "suggestion": "Suggestion or note",
+      "other": "Other"
+    },
+    "priorities": {
+      "urgent": "Urgent",
+      "medium": "Medium",
+      "low": "Low"
+    }
   },
   "header": {
     "titles": {

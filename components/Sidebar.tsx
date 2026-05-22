@@ -50,7 +50,9 @@ import {
 
   Smartphone,
 
-  GraduationCap
+  GraduationCap,
+
+  LifeBuoy
 
 } from 'lucide-react';
 
@@ -123,6 +125,8 @@ const getMenuItems = (t: (key: string) => string): MenuItem[] => [
   { name: t('sidebar.featureControl'), icon: ShieldCheck, path: '/feature-control' },
 
   { name: t('sidebar.otaUpload'), icon: Smartphone, path: '/ota-upload' },
+
+  { name: t('sidebar.support'), icon: LifeBuoy, path: '/issues' },
 
 ];
 

@@ -19,6 +19,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  LifeBuoy
 } from 'lucide-react';
 
 import Logo from '@/components/Logo';
@@ -42,6 +43,7 @@ const allMenuItems = [
   { name: 'Community', icon: Users, path: '/doctor/community' },
   { name: 'Notes & Summaries', icon: StickyNote, path: '/doctor/notes-summaries' },
   { name: 'Electronic Library', icon: Library, path: '/doctor/electronic-library' },
+  { name: 'Support', icon: LifeBuoy, path: '/doctor/issues' },
   // { name: 'Notifications', icon: Bell, path: '/doctor/notifications' },
   // { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
 ];

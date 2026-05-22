@@ -1108,6 +1108,25 @@ export const adminApi = {
 };
 
 // ============================================
+// Issues API
+// ============================================
+
+export interface CreateIssueRequest {
+  category: string;
+  type: string;
+  priority: string;
+  description: string;
+  steps_before_problem_appears: string;
+  expected_result: string;
+  actual_result: string;
+  status: string;
+}
+
+export const issuesApi = {
+  create: (data: CreateIssueRequest) => post<ApiResponse<any>>('/v1/issues', data),
+};
+
+// ============================================
 // OTA Key Helper
 // ============================================
 
@@ -1254,6 +1273,7 @@ export const api = {
   socialLinks: socialLinksApi,
   appVersions: appVersionsApi,
   admin: adminApi,
+  issues: issuesApi,
 };
 
 export default api;
