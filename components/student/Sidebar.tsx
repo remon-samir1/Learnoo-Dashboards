@@ -11,6 +11,7 @@ import {
   HelpCircle,
   Home,
   Library,
+  LifeBuoy,
   Menu,
   NotebookText,
   Settings,
@@ -52,6 +53,7 @@ const sections: SidebarItem[][] = [
     { key: "profile", href: "/student/profile", icon: User },
     // { key: "settings", href: "/student/settings", icon: Settings },
     { key: "helpFaq", href: "/student/help", icon: HelpCircle },
+    { key: "support", href: "/student/support", icon: LifeBuoy },
   ],
 ];
 
