@@ -470,8 +470,7 @@ export default function ChapterWatchView({
                             <iframe
                               src={videoSrc}
                               className="aspect-video w-full"
-                              allowFullScreen
-                              allow="autoplay; encrypted-media; fullscreen"
+                              allow="autoplay; encrypted-media"
                               frameBorder="0"
                               scrolling="no"
                             />
@@ -483,16 +482,14 @@ export default function ChapterWatchView({
                                 initialResolution={initialWatermarkResolution ?? null}
                               />
                             </div>
-                            {pdfToggleVisible && (
-                              <button
-                                type="button"
-                                onClick={toggleFullscreen}
-                                className="absolute bottom-2 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80"
-                                aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                              >
-                                {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={toggleFullscreen}
+                              className="absolute bottom-2 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80"
+                              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                            >
+                              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            </button>
                           </div>
                           {showPdf && pdfWatchPanel && (
                             <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'h-64 sm:h-80 overflow-hidden'}`}>

@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
-import {
+import { useTranslations } from 'next-intl';import { toast } from 'sonner';import {
   ArrowLeft,
   Plus,
   Trash2,
@@ -328,7 +327,7 @@ export default function EditExamPage() {
 
     try {
       if (examDetails.courses.length === 0) {
-        alert('Please select at least one course');
+        toast.error('Please select at least one course');
         return;
       }
 
@@ -385,17 +384,17 @@ export default function EditExamPage() {
 
       if (!response.ok) {
         console.error('❌ Update error:', responseData);
-        alert(responseData.message || responseData.details || 'Failed to update exam');
+        toast.error(responseData.message || responseData.details || 'Failed to update exam');
         return;
       }
 
       console.log('✅ Quiz updated successfully:', responseData);
-      alert('Exam updated successfully!');
+      toast.success('Exam updated successfully!');
       localStorage.removeItem(`exam_edit_form_draft_${examId}`);
       router.push('/exams');
     } catch (error) {
       console.error('Error updating exam:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update exam');
+      toast.error(error instanceof Error ? error.message : 'Failed to update exam');
     } finally {
       setIsSubmitting(false);
     }

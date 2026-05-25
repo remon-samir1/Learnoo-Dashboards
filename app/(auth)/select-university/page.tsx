@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { useRegistrationOnboardingGuard } from '@/src/hooks/useRegistrationOnboardingGuard';
-import { universitiesApi, centersApi, facultiesApi } from '@/src/lib/api';
+import { getApiErrorMessage, universitiesApi, centersApi, facultiesApi } from '@/src/lib/api';
 import { Center, Faculty, University } from '@/src/types';
 import AuthPageLayout from '../components/AuthLayout';
 
@@ -39,7 +40,9 @@ export default function SelectUniversityPage() {
       setUniversities(universitiesRes.data ?? []);
       setAllCenters(centersRes.data ?? []);
       setAllFaculties(facultiesRes.data ?? []);
-    } catch (err) {
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'Failed to load data');
+      toast.error(message);
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoading(false);

@@ -5,8 +5,10 @@ import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import Cookies, { CookieAttributes } from '@/lib/cookies';
 import { getPostAuthHref } from '@/src/lib/auth-post-login-redirect';
+import { getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
 
@@ -145,8 +147,10 @@ export default function LoginPage() {
 
       sessionStorage.removeItem('registration_onboarding');
       router.push(getPostAuthHref(locale, userRole, user));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during login');
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, t('errors.loginFailed'));
+      toast.error(message);
+      setError(err instanceof Error ? err.message : t('errors.loginFailed'));
     } finally {
       setLoading(false);
     }

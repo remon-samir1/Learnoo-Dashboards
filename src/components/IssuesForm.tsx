@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { LifeBuoy, Send } from 'lucide-react';
-import api from '@/src/lib/api';
+import api, { getApiErrorMessage } from '@/src/lib/api';
 import Logo from '@/components/Logo';
 
 interface IssuesFormProps {
@@ -61,6 +61,11 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
   };
 
   const onSubmit = async (data: IssueFormData) => {
+    if (attachmentError) {
+      toast.error(attachmentError);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const formData = new FormData();
@@ -83,8 +88,9 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
-      toast.error(t('error'));
+    } catch (error: unknown) {
+      const message = getApiErrorMessage(error, t('error'));
+      toast.error(message);
       console.error(error);
     } finally {
       setIsSubmitting(false);

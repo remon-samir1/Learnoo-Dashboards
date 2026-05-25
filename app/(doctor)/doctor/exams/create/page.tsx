@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Plus,
@@ -269,7 +270,7 @@ export default function CreateExamPage() {
     try {
       // Validate at least one course is selected
       if (examDetails.courses.length === 0) {
-        alert('Please select at least one course');
+        toast.error('Please select at least one course');
         setIsSubmitting(false);
         return;
       }
@@ -354,7 +355,7 @@ export default function CreateExamPage() {
 
       if (!quizResponse.ok) {
         console.error('❌ Quiz creation error:', responseData);
-        alert(responseData.message || responseData.details || t('create.error'));
+        toast.error(responseData.message || responseData.details || t('create.error'));
         setIsSubmitting(false);
         return;
       }
@@ -369,7 +370,7 @@ export default function CreateExamPage() {
       router.push('/doctor/exams');
     } catch (error) {
       console.error('Error creating exam:', error);
-      alert(error instanceof Error ? error.message : t('create.error'));
+      toast.error(error instanceof Error ? error.message : t('create.error'));
     } finally {
       setIsSubmitting(false);
     }

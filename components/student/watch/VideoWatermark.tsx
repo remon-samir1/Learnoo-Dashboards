@@ -26,8 +26,6 @@ export function VideoWatermark({
   showWatermark = true,
   initialResolution = null,
 }: VideoWatermarkProps) {
-  const [mounted, setMounted] = useState(false);
-
   const user = useAuthStore(useShallow((s) => s.user));
   const { data: features } = usePlatformFeature();
 
@@ -49,13 +47,9 @@ export function VideoWatermark({
   }, [config, user]);
 
   const overlayActive =
-    mounted && showWatermark && Boolean(config?.enabled) && Boolean(displayText);
+    showWatermark && Boolean(config?.enabled) && Boolean(displayText);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted || !overlayActive || !config || !displayText) {
+  if (!overlayActive || !config || !displayText) {
     return null;
   }
 

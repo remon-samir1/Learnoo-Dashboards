@@ -4,8 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
 import Cookies from '@/lib/cookies';
-import { ApiError } from '@/src/lib/api';
+import { ApiError, getApiErrorMessage } from '@/src/lib/api';
 import { getPostAuthHref } from '@/src/lib/auth-post-login-redirect';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
@@ -99,7 +100,9 @@ export default function CreateAccountPage() {
       const userRole = user?.attributes?.role;
 
       router.push(getPostAuthHref(locale, userRole, user));
-    } catch (err) {
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, t('errors.registerFailed'));
+      toast.error(message);
       if (err instanceof ApiError) {
         const fieldMsg = formatRegisterFieldErrors(err.errors);
         setError(fieldMsg || err.message.trim() || t('errors.registerFailed'));

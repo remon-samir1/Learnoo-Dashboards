@@ -3,7 +3,7 @@
 // ============================================
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { ApiError } from '@/src/lib/api';
+import { ApiError, getApiErrorMessage } from '@/src/lib/api';
 
 export interface QueryState<T> {
   data: T | null;

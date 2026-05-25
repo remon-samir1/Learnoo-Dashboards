@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useLocale, useTranslations } from 'next-intl';
-import { authApi } from '@/src/lib/api';
+import { authApi, getApiErrorMessage } from '@/src/lib/api';
 import { useRegistrationOnboardingGuard } from '@/src/hooks/useRegistrationOnboardingGuard';
 import {
   clearRegistrationOnboarding,
@@ -57,7 +58,9 @@ export default function SelectFacultyPage() {
       );
 
       setFaculties(filteredFaculties);
-    } catch (err) {
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'Failed to load data');
+      toast.error(message);
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
       setLoading(false);
@@ -114,7 +117,9 @@ export default function SelectFacultyPage() {
       updateUser(completedUser);
 
       router.replace(`/${locale}/student`);
-    } catch (err) {
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'Failed to update profile');
+      toast.error(message);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
     } finally {
       setSubmitting(false);

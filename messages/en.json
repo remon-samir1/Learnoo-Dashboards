@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "Learnoo Admin",
+    "name": "Learnoo ",
     "tagline": "Pro Instructor"
   },
   "common": {
@@ -54,11 +54,11 @@
   },
   "auth": {
     "login": {
-      "title": "Learnoo Admin",
+      "title": "Learnoo Sign In",
       "subtitle": "Sign in to manage your platform",
       "email": "Email Address",
       "password": "Password",
-      "emailPlaceholder": "admin@learnoo.com",
+      "emailPlaceholder": "Jane@learnoo.com",
       "passwordPlaceholder": "Enter your password",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",

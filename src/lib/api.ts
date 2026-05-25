@@ -123,6 +123,22 @@ export function isValidationError(error: unknown): error is ValidationError {
   );
 }
 
+export function getApiErrorMessage(error: unknown, fallback: string = 'Request failed'): string {
+  if (error instanceof ApiError) {
+    if (error.errors) {
+      const validationMessages = Object.values(error.errors).flat().filter(Boolean);
+      return validationMessages.length > 0 ? validationMessages.join(' | ') : error.message || fallback;
+    }
+    return error.message || fallback;
+  }
+
+  if (error instanceof Error) {
+    return error.message || fallback;
+  }
+
+  return fallback;
+}
+
 // ============================================
 // Request Helpers
 // ============================================
