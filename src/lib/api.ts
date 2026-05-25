@@ -1123,7 +1123,13 @@ export interface CreateIssueRequest {
 }
 
 export const issuesApi = {
-  create: (data: CreateIssueRequest) => post<ApiResponse<any>>('/v1/issues', data),
+  create: (data: CreateIssueRequest | FormData) => {
+    if (data instanceof FormData) {
+      return postMultipart<ApiResponse<any>>('/v1/issues', data);
+    }
+
+    return post<ApiResponse<any>>('/v1/issues', data);
+  },
 };
 
 // ============================================

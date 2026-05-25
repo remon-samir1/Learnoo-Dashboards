@@ -26,6 +26,9 @@ interface IssueFormData {
 export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
   const t = useTranslations('issues');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [attachmentFile, setAttachmentFile] = React.useState<File | null>(null);
+  const [attachmentError, setAttachmentError] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -38,12 +41,48 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
     },
   });
 
+  const handleAttachmentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      setAttachmentFile(null);
+      setAttachmentError(null);
+      return;
+    }
+
+    const allowedTypes = ['image/png', 'image/jpeg', 'video/mp4'];
+    if (!allowedTypes.includes(file.type)) {
+      setAttachmentError('Only PNG, JPG, JPEG, or MP4 files are allowed.');
+      setAttachmentFile(null);
+      return;
+    }
+
+    setAttachmentError(null);
+    setAttachmentFile(file);
+  };
+
   const onSubmit = async (data: IssueFormData) => {
     setIsSubmitting(true);
     try {
-      await api.issues.create(data);
+      const formData = new FormData();
+
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
+      });
+
+      if (attachmentFile) {
+        formData.append('attachment', attachmentFile);
+      }
+
+      await api.issues.create(formData);
       toast.success(t('success'));
       reset();
+      setAttachmentFile(null);
+      setAttachmentError(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       toast.error(t('error'));
       console.error(error);
@@ -195,10 +234,42 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-gray-700">
+                Attachment
+              </label>
+              <label className="group flex flex-col md:flex-row items-center justify-between gap-4 rounded-3xl border border-dashed border-blue-200 bg-[#f7fbff] p-5 text-left transition hover:border-blue-300 hover:bg-[#eef6ff] cursor-pointer">
+                <div className="min-w-0">
+                  <p className="text-base font-semibold text-slate-900 truncate">
+                    {attachmentFile ? attachmentFile.name : 'Upload PNG, JPG, JPEG or MP4'}
+                  </p>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Optional attachment to help explain the issue.
+                  </p>
+                  {attachmentFile && (
+                    <p className="text-xs text-slate-400 mt-1">
+                      {(attachmentFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  )}
+                </div>
+                <span className="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
+                  Browse file
+                </span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,video/mp4"
+                  className="sr-only"
+                  onChange={handleAttachmentChange}
+                />
+              </label>
+              {attachmentError && <p className="text-red-500 text-xs mt-1">{attachmentError}</p>}
+            </div>
+
             <button
               type="submit"
               disabled={isSubmitting}
-              className="group relative w-full py-5 mt-4 overflow-hidden rounded-2xl bg-[#2437ff] text-black text-xl font-extrabold shadow-[0_10px_20px_-5px_rgba(36,55,255,0.4)] hover:shadow-[0_20px_35px_-10px_rgba(36,55,255,0.5)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              className="group relative w-full py-5 mt-4 overflow-hidden rounded-2xl bg-[#2437ff] text-black text-xl font-extrabold shadow-[0_10px_20px_-5px_rgba(36,55,255,0.4)] hover:shadow-[0_20px_35px_-10px_rgba(36,55,255,0.5)] hover:-translate-y-0.5 active:translate-y-0.5 transition-all duration-300 disabled:color-black disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               {/* Gradient overlay on hover */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
