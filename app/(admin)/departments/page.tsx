@@ -6281,8 +6281,16 @@ function AddModal({
 
   const attachmentInputRef = useRef<HTMLInputElement>(null);
 
+  const MAX_VIDEO_SIZE_BYTES = 500 * 1024 * 1024;
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const videoFile = formData.video as File | undefined;
+    if (videoFile && videoFile.size > MAX_VIDEO_SIZE_BYTES) {
+      toast.error("Video file is too large. Please upload a file smaller than 500MB.");
+      return;
+    }
 
     onSubmit(formData);
   };
@@ -6311,6 +6319,12 @@ function AddModal({
     const file = e.target.files?.[0];
 
     if (file) {
+      if (file.size > MAX_VIDEO_SIZE_BYTES) {
+        toast.error("Video file is too large. Please upload a file smaller than 500MB.");
+        e.target.value = "";
+        return;
+      }
+
       setFormData({ ...formData, video: file });
 
       setVideoPreview(URL.createObjectURL(file));
@@ -6359,8 +6373,11 @@ function AddModal({
     const files = e.target.files;
     if (files) {
       const newAttachments = Array.from(files);
-      setAttachments((prev) => [...prev, ...newAttachments]);
-      setFormData({ ...formData, attachments: [...attachments, ...newAttachments] });
+      setAttachments((prev) => {
+        const updated = [...prev, ...newAttachments];
+        setFormData((prevForm) => ({ ...prevForm, attachments: updated }));
+        return updated;
+      });
     }
   };
 

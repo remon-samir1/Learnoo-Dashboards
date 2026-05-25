@@ -255,6 +255,7 @@ async function postMultipart<T>(path: string, formData: FormData, onProgress?: (
       const headers = createHeaders(true, true) as Record<string, string>;
 
       xhr.open('POST', url, true);
+      xhr.timeout = 0;
 
       // Set headers
       Object.entries(headers).forEach(([key, value]) => {
@@ -334,6 +335,7 @@ async function putMultipart<T>(path: string, formData: FormData, onProgress?: (p
       const headers = createHeaders(true, true) as Record<string, string>;
 
       xhr.open('PUT', url, true);
+      xhr.timeout = 0;
 
       // Set headers
       Object.entries(headers).forEach(([key, value]) => {
