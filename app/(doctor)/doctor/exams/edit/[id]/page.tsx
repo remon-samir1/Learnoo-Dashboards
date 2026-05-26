@@ -170,9 +170,6 @@ export default function EditExamPage() {
     setExamDetails({
       title: quiz.attributes.title || '',
       courses: (() => {
-        if (quiz.attributes.courses?.data && Array.isArray(quiz.attributes.courses.data)) {
-          return quiz.attributes.courses.data.map((c: any) => String(c.id));
-        }
         if (Array.isArray(quiz.attributes.courses)) {
           return quiz.attributes.courses.map((c: any) => String(c.id));
         }
@@ -354,9 +351,8 @@ export default function EditExamPage() {
       if (examDetails.endTime) formData.append('end_time', examDetails.endTime);
 
       questions.forEach((q, qIndex) => {
-        if (q.id && !q.id.startsWith('new-')) {
-          formData.append(`questions[${qIndex}][id]`, q.id);
-        }
+        // Always send ID, but blank if it is a new question
+        formData.append(`questions[${qIndex}][id]`, (q.id && !q.id.startsWith('new-')) ? q.id : '');
         formData.append(`questions[${qIndex}][text]`, q.text);
         formData.append(`questions[${qIndex}][type]`, q.type);
         formData.append(`questions[${qIndex}][score]`, String(q.score));
@@ -369,9 +365,8 @@ export default function EditExamPage() {
 
         if (q.type !== 'short_answer') {
           q.answers.forEach((a, aIndex) => {
-            if (a.id && !a.id.startsWith('a-')) {
-              formData.append(`questions[${qIndex}][answers][${aIndex}][id]`, a.id);
-            }
+            // Always send ID, but blank if it is a new answer
+            formData.append(`questions[${qIndex}][answers][${aIndex}][id]`, (a.id && !a.id.startsWith('a-')) ? a.id : '');
             formData.append(`questions[${qIndex}][answers][${aIndex}][text]`, a.text);
             formData.append(`questions[${qIndex}][answers][${aIndex}][is_correct]`, a.isCorrect ? '1' : '0'); // ✅
             if (a.reason) formData.append(`questions[${qIndex}][answers][${aIndex}][reason]`, a.reason);

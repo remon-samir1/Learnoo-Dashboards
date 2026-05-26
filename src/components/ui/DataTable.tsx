@@ -104,8 +104,8 @@ export function DataTable<T>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="px-6 py-4 text-sm font-bold text-[#475569] uppercase tracking-wider"
-                  style={{ width: col.width }}
+                  className="px-6 py-4 text-sm font-bold text-[#475569] uppercase tracking-wider whitespace-nowrap"
+                  style={{ width: col.width, minWidth: col.width }}
                 >
                   {col.header}
                 </th>
@@ -121,8 +121,14 @@ export function DataTable<T>({
             {data.map((item) => (
               <tr key={keyExtractor(item)} className="hover:bg-[#F8FAFC]/50 transition-colors">
                 {columns.map((col) => (
-                  <td key={col.key} className="px-6 py-4 text-sm text-[#1E293B]">
-                    {col.render ? col.render(item) : (item as Record<string, unknown>)[col.key] as string}
+                  <td 
+                    key={col.key} 
+                    className="px-6 py-4 text-sm text-[#1E293B]"
+                    style={{ width: col.width, minWidth: col.width }}
+                  >
+                    <div className={col.key === 'title' ? 'font-medium' : ''}>
+                      {col.render ? col.render(item) : (item as Record<string, unknown>)[col.key] as string}
+                    </div>
                   </td>
                 ))}
                 {showActions && (

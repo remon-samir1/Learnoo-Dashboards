@@ -10,7 +10,7 @@ import { useCourses } from '@/src/hooks/useCourses';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { DataTable, Column } from '@/src/components/ui/DataTable';
 import { DeleteModal } from '@/src/components/ui/DeleteModal';
-import type { Quiz } from '@/src/types';
+import type { Quiz, Course } from '@/src/types';
 
 
 
@@ -70,6 +70,10 @@ export default function ExamsPage() {
   };
 
   const getCourseNames = (item: Quiz) => {
+    if (item.attributes.courses && item.attributes.courses.length > 0) {
+      return item.attributes.courses.map((c: Course) => c.attributes.title);
+    }
+
     const names: string[] = [];
     const ids = item.attributes.course_ids?.length ? item.attributes.course_ids : (item.attributes.course_id ? [item.attributes.course_id] : []);
     ids.forEach(id => {
@@ -83,7 +87,12 @@ export default function ExamsPage() {
     {
       key: 'title',
       header: t('exams.columns.title'),
-      render: (item) => item.attributes.title,
+      render: (item) => (
+        <div className="whitespace-nowrap font-medium text-[#1E293B]">
+          {item.attributes.title}
+        </div>
+      ),
+      width: '380px',
     },
     {
       key: 'type',

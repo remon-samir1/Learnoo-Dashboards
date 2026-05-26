@@ -295,6 +295,7 @@ export default function CreateExamPage() {
 
       // Add questions with answers and images
       questions.forEach((q, qIndex) => {
+        formData.append(`questions[${qIndex}][id]`, ''); // New items have no ID
         formData.append(`questions[${qIndex}][text]`, q.text);
         formData.append(`questions[${qIndex}][type]`, q.type);
         formData.append(`questions[${qIndex}][score]`, String(q.score));
@@ -310,6 +311,7 @@ export default function CreateExamPage() {
         // Add answers
         if (q.type !== 'short_answer' && q.answers) {
           q.answers.forEach((a, aIndex) => {
+            formData.append(`questions[${qIndex}][answers][${aIndex}][id]`, ''); // New items have no ID
             formData.append(`questions[${qIndex}][answers][${aIndex}][text]`, a.text);
             formData.append(`questions[${qIndex}][answers][${aIndex}][is_correct]`, a.isCorrect ? '1' : '0');
             if (a.reason) {
