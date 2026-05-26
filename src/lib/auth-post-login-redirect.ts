@@ -36,6 +36,7 @@ export function getPostAuthHref(
   const r = role?.trim();
   if (r === 'Admin') return '/dashboard';
   if (r === 'Instructor' || r === 'Doctor') return '/doctor/dashboard';
+  if (r === 'Support') return '/support/issues';
   if (isAppRole(r) && isStudentLikeRole(r)) {
     return getStudentDashboardHref(locale, user ?? null);
   }

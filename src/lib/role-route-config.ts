@@ -10,6 +10,7 @@ export const ROLE_TO_DASHBOARD: Record<AppRole, string | 'student'> = {
   Doctor: '/doctor/dashboard',
   Student: 'student',
   Unknown: 'student',
+  Support: '/support',
 };
 
 /**

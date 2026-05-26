@@ -1148,6 +1148,10 @@ export const issuesApi = {
 
     return post<ApiResponse<any>>('/v1/issues', data);
   },
+
+  list: () => get<ApiListResponse<any>>('/v1/issues'),
+
+  delete: (id: string | number) => del<ApiResponse<any>>(`/v1/issues/${id}`),
 };
 
 // ============================================

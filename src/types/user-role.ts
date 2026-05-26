@@ -13,6 +13,7 @@ export const APP_ROLES: readonly AppRole[] = [
   'Student',
   'Unknown',
   'Instructor',
+  'Support',
 ] as const;
 
 export function isAppRole(value: string | null | undefined): value is AppRole {
