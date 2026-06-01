@@ -15,16 +15,16 @@ export default function ProtectedRoute({
   requireProfileComplete = true 
 }: ProtectedRouteProps) {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const [authReady, setAuthReady] = useState(false);
-
-  useLayoutEffect(() => {
-    initializeAuthStore();
-    setAuthReady(true);
-  }, []);
+  const { user, isAuthenticated, isLoading, isInitialized } = useAuth();
 
   useEffect(() => {
-    if (!authReady || isLoading) return;
+    if (!isInitialized) {
+      initializeAuthStore();
+    }
+  }, [isInitialized]);
+
+  useEffect(() => {
+    if (!isInitialized || isLoading) return;
 
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
@@ -37,10 +37,10 @@ export default function ProtectedRoute({
       router.replace('/select-university');
       return;
     }
-  }, [authReady, isAuthenticated, user, isLoading, router, requireProfileComplete]);
+  }, [isInitialized, isAuthenticated, user, isLoading, router, requireProfileComplete]);
 
   // Show loading state while hydrating auth from cookies
-  if (!authReady || isLoading) {
+  if (!isInitialized || (isAuthenticated && !user && isLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />

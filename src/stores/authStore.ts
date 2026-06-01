@@ -23,6 +23,7 @@ interface AuthState {
   isAdmin: () => boolean;
   isDoctor: () => boolean;
   isProfileComplete: () => boolean;
+  isInitialized: boolean;
 
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
@@ -108,6 +109,7 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: false,
+      isInitialized: false,
       error: null,
 
       // Getters
@@ -323,11 +325,26 @@ export function initializeAuthStore() {
   const token = getTokenFromCookies();
   const user = getUserFromCookies();
 
-  if (token && user) {
+  if (token) {
+    // If we have a token, we are at least partially authenticated
     useAuthStore.setState({
-      user,
       token,
+      user,
       isAuthenticated: true,
+      isInitialized: true,
+    });
+
+    // If user data is missing, fetch it now
+    if (!user) {
+      useAuthStore.getState().fetchCurrentUser().catch(() => {
+        // If fetching user fails, it might be an invalid token
+        // but we've already set isInitialized: true which is what matters for UI state
+      });
+    }
+  } else {
+    // No token, definitely not authenticated
+    useAuthStore.setState({
+      isInitialized: true,
     });
   }
 }
@@ -349,6 +366,7 @@ export function useAuth() {
       isDoctor: state.isDoctor(),
       isProfileComplete: state.isProfileComplete(),
       userRole: state.getUserRole(),
+      isInitialized: state.isInitialized,
     }))
   );
 }
