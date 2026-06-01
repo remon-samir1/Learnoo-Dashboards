@@ -1151,6 +1151,9 @@ export const issuesApi = {
 
   list: () => get<ApiListResponse<any>>('/v1/issues'),
 
+  update: (id: string | number, data: Partial<CreateIssueRequest>) =>
+    put<ApiResponse<any>>(`/v1/issues/${id}`, data),
+
   delete: (id: string | number) => del<ApiResponse<any>>(`/v1/issues/${id}`),
 };
 

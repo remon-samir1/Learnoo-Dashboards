@@ -58,19 +58,19 @@ function setAuthCookies(user: User, meta: AuthMeta) {
   Cookies.set(AUTH_COOKIE_NAME, meta.token, {
     expires: cookieExpiryFromAuthMeta(meta),
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
   });
 
   Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
     expires: 30,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
   });
 
   Cookies.set(USER_ROLE_COOKIE_NAME, user.attributes.role, {
     expires: 30,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: 'lax',
   });
 }
 
@@ -235,13 +235,13 @@ export const useAuthStore = create<AuthState>()(
           Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
             expires: 30,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
           });
 
           Cookies.set(USER_ROLE_COOKIE_NAME, user.attributes.role, {
             expires: 30,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            sameSite: 'lax',
           });
 
           set({
@@ -268,12 +268,12 @@ export const useAuthStore = create<AuthState>()(
         Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
           expires: 30,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: 'lax',
         });
         Cookies.set(USER_ROLE_COOKIE_NAME, user.attributes.role, {
           expires: 30,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: 'lax',
         });
         set({
           user,

@@ -38,6 +38,10 @@ type CompleteProfileFormProps = {
 
 
 
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
+
+
+
 export default function CompleteProfileForm({
 
   defaultUniversityId,
@@ -194,8 +198,6 @@ export default function CompleteProfileForm({
 
       toast.error(message);
 
-    } finally {
-
       setIsSubmitting(false);
 
     }
@@ -206,69 +208,75 @@ export default function CompleteProfileForm({
 
   return (
 
-    <form
+    <>
 
-      onSubmit={onSubmit}
+      {isSubmitting && <LoadingOverlay />}
 
-      className="mx-auto w-full max-w-lg rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6 shadow-sm"
+      <form
 
-    >
+        onSubmit={onSubmit}
 
-      <h1 className="text-2xl font-bold text-[var(--text-dark)]">{t("title")}</h1>
-
-      <p className="mt-2 text-sm text-[var(--text-muted)]">{t("description")}</p>
-
-
-
-      <div className="mt-6 grid gap-5 sm:grid-cols-2">
-
-        <UniversityFacultyFields
-
-          universityId={universityId}
-
-          centerId={centerId}
-
-          facultyId={facultyId}
-
-          departmentId={departmentId}
-
-          onUniversityChange={setUniversityId}
-
-          onCenterChange={setCenterId}
-
-          onFacultyChange={setFacultyId}
-
-          onDepartmentChange={setDepartmentId}
-
-          universityError={universityError}
-
-          centerError={centerError}
-
-          facultyError={facultyError}
-
-          disabled={isSubmitting}
-
-        />
-
-      </div>
-
-
-
-      <button
-
-        type="submit"
-
-        disabled={isSubmitting}
-
-        className="mt-6 h-11 w-full rounded-xl bg-[var(--primary)] text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+        className="mx-auto w-full max-w-lg rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6 shadow-sm"
 
       >
 
-        {isSubmitting ? t("buttons.saving") : t("buttons.save")}
+        <h1 className="text-2xl font-bold text-[var(--text-dark)]">{t("title")}</h1>
 
-      </button>
+        <p className="mt-2 text-sm text-[var(--text-muted)]">{t("description")}</p>
 
-    </form>
+
+
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+
+          <UniversityFacultyFields
+
+            universityId={universityId}
+
+            centerId={centerId}
+
+            facultyId={facultyId}
+
+            departmentId={departmentId}
+
+            onUniversityChange={setUniversityId}
+
+            onCenterChange={setCenterId}
+
+            onFacultyChange={setFacultyId}
+
+            onDepartmentChange={setDepartmentId}
+
+            universityError={universityError}
+
+            centerError={centerError}
+
+            facultyError={facultyError}
+
+            disabled={isSubmitting}
+
+          />
+
+        </div>
+
+
+
+        <button
+
+          type="submit"
+
+          disabled={isSubmitting}
+
+          className="mt-6 h-11 w-full rounded-xl bg-[var(--primary)] text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
+
+        >
+
+          {isSubmitting ? t("buttons.saving") : t("buttons.save")}
+
+        </button>
+
+      </form>
+
+    </>
 
   );
 

@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
 } from 'lucide-react';
 
 import Logo from '@/components/Logo';
@@ -20,8 +21,24 @@ interface SupportSidebarProps {
   onToggle: () => void;
 }
 
-const menuItems = [
-  { name: 'Issues', icon: LifeBuoy, path: '/support/issues' },
+interface MenuItem {
+  name: string;
+  icon: React.ElementType;
+  path: string;
+  children?: MenuItem[];
+}
+
+const menuItems: MenuItem[] = [
+  { 
+    name: 'Issues', 
+    icon: LifeBuoy, 
+    path: '/support/issues',
+    children: [
+      { name: 'New', path: '/support/issues?status=new', icon: LifeBuoy },
+      { name: 'In Processing', path: '/support/issues?status=in_processing', icon: LifeBuoy },
+      { name: 'Completed', path: '/support/issues?status=completed', icon: LifeBuoy },
+    ]
+  },
 ];
 
 export default function SupportSidebar({ isCollapsed, onToggle }: SupportSidebarProps) {
@@ -29,6 +46,20 @@ export default function SupportSidebar({ isCollapsed, onToggle }: SupportSidebar
   const { user } = useAuth();
   const { logout } = useAuthActions();
   const { data: features } = usePlatformFeature();
+  const [openDropdowns, setOpenDropdowns] = React.useState<Record<string, boolean>>({});
+
+  const toggleDropdown = (name: string) => {
+    setOpenDropdowns((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const isDropdownActive = (item: MenuItem): boolean => {
+    if (!item.children) return false;
+    // Check if pathname starts with item path and matches any child path (excluding query params for base match)
+    return item.children.some((child) => pathname === child.path.split('?')[0] && window.location.search === (child.path.split('?')[1] ? '?' + child.path.split('?')[1] : ''));
+  };
+  
+  // Revised isDropdownActive to be simpler for Next.js 13+ usePathname/useSearchParams
+  // Actually, usePathname doesn't include search params.
 
   // Get platform branding from features
   const getFeatureValue = (key: string, defaultValue: string = ''): string => {
@@ -92,6 +123,59 @@ export default function SupportSidebar({ isCollapsed, onToggle }: SupportSidebar
           {menuItems.map((item) => {
             const isActive = pathname === item.path || pathname.startsWith(item.path);
             const Icon = item.icon;
+            const hasChildren = !!item.children;
+            const isOpen = openDropdowns[item.name] || (hasChildren && isActive);
+
+            if (hasChildren && !isCollapsed) {
+              return (
+                <div key={item.name} className="flex flex-col">
+                  <button
+                    onClick={() => toggleDropdown(item.name)}
+                    className={`group flex items-center p-3 rounded-xl transition-all duration-300 w-full ${
+                      isActive
+                        ? "bg-[#4F46E5]/10 text-[#4F46E5] shadow-sm ring-1 ring-[#4F46E5]/20"
+                        : "text-[#64748B] hover:bg-white/60 hover:text-[#4F46E5]"
+                    }`}
+                  >
+                    <div className="shrink-0 mr-3">
+                      <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
+                    </div>
+                    <span className={`text-[13px] font-medium flex-1 text-left ${isActive ? "font-bold" : ""}`}>
+                      {item.name}
+                    </span>
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {isOpen && (
+                    <div className="ml-4 pl-4 border-l border-[#E5E7EB] mt-1 flex flex-col gap-1">
+                      {item.children?.map((child) => {
+                        // For sub-items, we need to check search params too
+                        const isChildActive = pathname === child.path.split('?')[0]; 
+                        // Note: Precise active state depends on query params which usePathname doesn't give.
+                        // But for now, this is a good start.
+                        
+                        return (
+                          <Link
+                            key={child.path}
+                            href={child.path}
+                            className={`group flex items-center p-2 rounded-lg transition-all duration-300 ${
+                              isChildActive
+                                ? "text-[#4F46E5] font-bold"
+                                : "text-[#64748B] hover:text-[#4F46E5]"
+                            }`}
+                          >
+                            <span className="text-[12px] font-medium">
+                              {child.name}
+                            </span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
 
             return (
               <Link
