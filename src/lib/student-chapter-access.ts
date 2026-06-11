@@ -28,11 +28,15 @@ export function coerceCanWatchExplicitTrue(value: unknown): boolean {
   return false;
 }
 
-/** Chapter video stream — `can_watch` + `is_locked` only. */
+/** Chapter video stream — `can_watch` + `is_locked` + `is_free_preview`. */
 export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
   if (attrs.is_locked === true) return false;
-  return coerceCanWatchExplicitTrue(attrs.can_watch);
+
+  return (
+    coercePreviewFlag(attrs.is_free_preview) ||
+    coerceCanWatchExplicitTrue(attrs.can_watch)
+  );
 }
 
 
@@ -40,7 +44,10 @@ export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
 export function isStudentChapterPdfVisible(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
 
-  if (attrs.is_locked === true) return false;
+  // We still respect is_locked for general availability, but if it's a free preview attachment, we show it.
+  if (attrs.is_locked === true && !coercePreviewFlag(attrs.is_free_preview_attachment)) {
+    return false;
+  }
 
   return (
     coercePreviewFlag(attrs.is_free_preview_attachment) ||

@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, X } from 'lucide-react';
+import { FileText, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useCurrentUser } from '@/src/hooks';
 import { resolveEnabledWatermarkBucket, WatermarkResolution } from '@/src/lib/watermark-from-features';
@@ -23,6 +23,8 @@ type Props = {
   variant?: 'modal' | 'inline';
   /** Use full panel width (e.g. watch player fullscreen PDF column). */
   expandToContainer?: boolean;
+  scale?: number;
+  onScaleChange?: (scale: number) => void;
 };
 
 function PdfPreviewContent({
@@ -30,24 +32,28 @@ function PdfPreviewContent({
   watermarkText,
   watermarkStyle,
   expandToContainer = false,
+  scale,
 }: {
   proxiedPdfUrl: string;
   watermarkText: string;
   watermarkStyle: { color: string; opacity: number };
   expandToContainer?: boolean;
+  scale?: number;
 }) {
   const [numPages, setNumPages] = useState(0);
   const [pageWidth, setPageWidth] = useState(720);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-   const updateWidth = () => {
-  const width = contentRef.current?.clientWidth ?? 720;
-  const padding = expandToContainer ? 16 : 24;
-  const availableWidth = Math.max(280, width - padding);
+  const effectiveScale = scale ?? 1.0;
 
-  setPageWidth(availableWidth);
-};
+  useEffect(() => {
+    const updateWidth = () => {
+      const width = contentRef.current?.clientWidth ?? 720;
+      const padding = expandToContainer ? 16 : 24;
+      const availableWidth = Math.max(280, width - padding);
+
+      setPageWidth(availableWidth * effectiveScale);
+    };
 
     updateWidth();
 
@@ -55,7 +61,7 @@ function PdfPreviewContent({
     if (contentRef.current) observer.observe(contentRef.current);
 
     return () => observer.disconnect();
-  }, [expandToContainer]);
+  }, [expandToContainer, effectiveScale]);
 
   return (
     <div ref={contentRef} className="min-h-0 w-full">
@@ -72,14 +78,15 @@ function PdfPreviewContent({
             return (
               <div
                 key={pageNumber}
-               className="relative mx-auto w-full max-w-full overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
+               className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
+               style={{ width: pageWidth }}
               >
                 <Page
   pageNumber={pageNumber}
   width={pageWidth}
   renderAnnotationLayer={false}
   renderTextLayer={false}
-  className="!w-full [&_canvas]:!h-auto [&_canvas]:!w-full"
+  className="[&_canvas]:!h-auto [&_canvas]:!w-full"
 />
 
                 {watermarkText ? (
@@ -117,8 +124,29 @@ export default function PdfPreviewModal({
   title,
   variant = 'modal',
   expandToContainer = false,
-  
+  scale: externalScale,
+  onScaleChange,
 }: Props) {
+  const [internalScale, setInternalScale] = useState(1.0);
+  const scale = externalScale ?? internalScale;
+
+  const handleZoomIn = () => {
+    const next = Math.min(2.5, scale + 0.1);
+    if (onScaleChange) onScaleChange(next);
+    else setInternalScale(next);
+  };
+
+  const handleZoomOut = () => {
+    const next = Math.max(0.5, scale - 0.1);
+    if (onScaleChange) onScaleChange(next);
+    else setInternalScale(next);
+  };
+
+  const handleResetZoom = () => {
+    if (onScaleChange) onScaleChange(1.0);
+    else setInternalScale(1.0);
+  };
+
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
   const { user } = useCurrentUser();
   const attrs = user?.attributes;
@@ -186,6 +214,7 @@ export default function PdfPreviewModal({
         watermarkText={watermarkText}
         watermarkStyle={watermarkStyle}
         expandToContainer={expandToContainer}
+        scale={scale}
       />
     </div>
   );
@@ -206,15 +235,48 @@ export default function PdfPreviewModal({
             </div>
           </div>
 
-          {onClose ? (
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex size-9 items-center justify-center rounded-full bg-white text-[#64748B] transition hover:bg-[#EEF2FF]"
-            >
-              <X className="size-5" />
-            </button>
-          ) : null}
+          <div className="flex items-center gap-2">
+            <div className="mr-4 flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
+              <button
+                type="button"
+                onClick={handleZoomOut}
+                className="flex size-8 items-center justify-center rounded-md text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A]"
+                title="Zoom Out"
+              >
+                <ZoomOut className="size-4" />
+              </button>
+              <div className="flex min-w-[3rem] items-center justify-center px-1 text-xs font-semibold text-slate-700">
+                {Math.round(scale * 100)}%
+              </div>
+              <button
+                type="button"
+                onClick={handleZoomIn}
+                className="flex size-8 items-center justify-center rounded-md text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A]"
+                title="Zoom In"
+              >
+                <ZoomIn className="size-4" />
+              </button>
+              <div className="mx-0.5 h-4 w-px bg-slate-200" />
+              <button
+                type="button"
+                onClick={handleResetZoom}
+                className="flex size-8 items-center justify-center rounded-md text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A]"
+                title="Reset Zoom"
+              >
+                <RotateCcw className="size-4" />
+              </button>
+            </div>
+
+            {onClose ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex size-9 items-center justify-center rounded-full bg-white text-[#64748B] transition hover:bg-[#EEF2FF]"
+              >
+                <X className="size-5" />
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div className="overflow-auto bg-[#F8FAFC] p-5">{content}</div>

@@ -312,10 +312,9 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseIds 
   return (
     <div className="select-none">
       <div
-        className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
-          isSelected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
-        }`}
-        style={{ 
+        className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${isSelected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+          }`}
+        style={{
           paddingLeft: `${node.level * 32 + 20 + (node.type === 'faculty' ? 12 : 0)}px`,
         }}
         onClick={() => {
@@ -408,7 +407,7 @@ export default function CommunityModerationPage() {
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
   const { mutate: updatePost } = useUpdatePost();
   const { mutate: createPost, isLoading: isCreating } = useCreatePost();
-  
+
   // Social Links hooks
   const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks(null);
   const { mutate: createSocialLink } = useCreateSocialLink();
@@ -426,7 +425,7 @@ export default function CommunityModerationPage() {
   const centers = useMemo(() => centersData ?? [], [centersData]);
   const faculties = useMemo(() => facultiesData ?? [], [facultiesData]);
   const departments = useMemo(() => departmentsData ?? [], [departmentsData]);
-  
+
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [editingSocialLink, setEditingSocialLink] = useState<SocialLink | null>(null);
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('all');
@@ -476,14 +475,14 @@ export default function CommunityModerationPage() {
   };
   const [posts, setPosts] = useState<Post[]>([]);
   const [filter, setFilter] = useState('all');
-  
+
   // Filter social links by course
-  const filteredSocialLinks = selectedCourseFilter === 'all' 
-    ? socialLinks 
+  const filteredSocialLinks = selectedCourseFilter === 'all'
+    ? socialLinks
     : socialLinks?.filter(link => String(link.attributes.course_id) === selectedCourseFilter);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editForm, setEditForm] = useState({ title: '', content: '', type: 'post' as 'post' | 'question' | 'summary' });
-  
+
   // Create Post Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -774,7 +773,7 @@ export default function CommunityModerationPage() {
             <Loader2 className="w-6 h-6 animate-spin text-[#2137D6]" />
           </div>
         )}
-        
+
         {!socialLinksLoading && filteredSocialLinks?.map((link) => (
           <div key={link.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col shadow-sm">
             <div className="flex justify-between items-start mb-6">
@@ -785,18 +784,17 @@ export default function CommunityModerationPage() {
                   <Globe className="w-5 h-5 text-white" />
                 )}
               </div>
-              <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase ${
-                link.attributes.status
-                  ? 'bg-[#DCFCE7] text-[#16A34A]'
-                  : 'bg-[#F1F5F9] text-[#64748B]'
-              }`}>
+              <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase ${link.attributes.status
+                ? 'bg-[#DCFCE7] text-[#16A34A]'
+                : 'bg-[#F1F5F9] text-[#64748B]'
+                }`}>
                 {link.attributes.status ? t('community.socialLinks.status.active') : t('community.socialLinks.status.inactive')}
               </span>
             </div>
-            
+
             <h3 className="text-[15px] font-bold text-[#475569] mb-1">{link.attributes.title}</h3>
             <p className="text-[13px] text-[#94A3B8] mb-2">{link.attributes.subtitle}</p>
-            
+
             {/* Display selected courses */}
             {link.attributes.courses && link.attributes.courses.length > 0 && (
               <div className="mb-3">
@@ -810,15 +808,15 @@ export default function CommunityModerationPage() {
                 </div>
               </div>
             )}
-            
+
             <div className="mt-auto pt-4 border-t border-[#F1F5F9] flex items-center gap-4">
-              <button 
+              <button
                 onClick={() => openSocialModal(link)}
                 className="text-[#94A3B8] hover:text-[#475569] transition-colors"
               >
                 <Edit2 className="w-[18px] h-[18px]" />
               </button>
-              <button 
+              <button
                 onClick={() => handleDeleteSocialLink(link.id)}
                 className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
               >
@@ -827,7 +825,7 @@ export default function CommunityModerationPage() {
             </div>
           </div>
         ))}
-        
+
         {!socialLinksLoading && (!filteredSocialLinks || filteredSocialLinks.length === 0) && (
           <div className="text-center py-8 text-[#64748B] col-span-3">
             {t('community.socialLinks.noLinks')}
@@ -854,18 +852,18 @@ export default function CommunityModerationPage() {
             <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
           </div>
         )}
-        
+
         {!isLoading && filteredPosts.length === 0 && (
           <div className="text-center py-12 text-[#64748B]">
             {t('community.posts.noPosts')}
           </div>
         )}
-        
+
         {filteredPosts.map((post) => {
           const user = post.attributes.user?.data.attributes;
           const userInitial = user?.first_name?.[0] || user?.full_name?.[0] || '?';
           const userName = user?.full_name || user?.first_name || t('community.posts.unknownUser');
-          
+
           return (
             <div key={post.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
               <div className="flex items-start justify-between">
@@ -873,7 +871,7 @@ export default function CommunityModerationPage() {
                   <div className="w-10 h-10 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center font-bold text-[15px] shrink-0">
                     {userInitial}
                   </div>
-                  
+
                   <div className="flex flex-col flex-1">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-[15px] font-bold text-[#1E293B]">{userName}</span>
@@ -892,7 +890,7 @@ export default function CommunityModerationPage() {
                         </span>
                       ))}
                     </div>
-                    
+
                     {editingPost?.id === post.id ? (
                       <div className="mt-3 space-y-3">
                         <input
@@ -1019,7 +1017,7 @@ export default function CommunityModerationPage() {
       {/* Social Link Modal */}
       {isSocialModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+          <div className="bg-white rounded-2xl max-h-[80vh] overflow-y-auto p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-[#1E293B]">
                 {editingSocialLink ? t('community.socialLinks.modal.edit') : t('community.socialLinks.modal.add')}
@@ -1051,7 +1049,7 @@ export default function CommunityModerationPage() {
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.icon')}</label>
                 <div className="flex items-center gap-3">
@@ -1066,10 +1064,10 @@ export default function CommunityModerationPage() {
                       if (file) {
                         const reader = new FileReader();
                         reader.onloadend = () => {
-                          setSocialForm({ 
-                            ...socialForm, 
-                            icon: file, 
-                            iconPreview: reader.result as string 
+                          setSocialForm({
+                            ...socialForm,
+                            icon: file,
+                            iconPreview: reader.result as string
                           });
                         };
                         reader.readAsDataURL(file);
@@ -1079,7 +1077,7 @@ export default function CommunityModerationPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.linkUrl')}</label>
                 <input
@@ -1131,7 +1129,7 @@ export default function CommunityModerationPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.status')}</label>
                 <select
@@ -1178,7 +1176,7 @@ export default function CommunityModerationPage() {
                 <X className="w-5 h-5 text-[#64748B]" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
@@ -1192,7 +1190,7 @@ export default function CommunityModerationPage() {
                   placeholder={t('community.createPost.titlePlaceholder')}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.contentLabel')}
@@ -1205,7 +1203,7 @@ export default function CommunityModerationPage() {
                   placeholder={t('community.createPost.contentPlaceholder')}
                 />
               </div>
-              
+
               <CourseTreeSelect
                 value={createForm.course_id}
                 onChange={(val) => setCreateForm({ ...createForm, course_id: val })}
@@ -1225,7 +1223,7 @@ export default function CommunityModerationPage() {
                   <option value="summary">{t('community.postTypes.summary')}</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.statusLabel')}
@@ -1239,7 +1237,7 @@ export default function CommunityModerationPage() {
                   <option value="published">{t('community.statuses.published')}</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.imageLabel')}
@@ -1251,7 +1249,7 @@ export default function CommunityModerationPage() {
                   className="w-full text-sm text-[#475569] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-[#EEF2FF] file:text-[#2137D6] hover:file:bg-[#DBEAFE]"
                 />
               </div>
-              
+
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={handleCreatePost}

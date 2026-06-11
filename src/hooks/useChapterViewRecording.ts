@@ -52,7 +52,6 @@ export function useChapterViewRecording({
     const raf = window.requestAnimationFrame(() => {
       if (cancelled) return;
       const el = videoRef.current;
-      if (!el) return;
 
       const minutesRequired = Math.max(0, Number(viewByMinute) || 0);
 
@@ -68,7 +67,7 @@ export function useChapterViewRecording({
             err instanceof ApiError ? err.message : 'Could not record chapter view.';
           onViewRecordErrorRef.current(msg);
           try {
-            el.pause();
+            if (el) el.pause();
           } catch {
             /* ignore */
           }
@@ -76,6 +75,7 @@ export function useChapterViewRecording({
       };
 
       const onPlaying = () => {
+        if (!el) return;
         lastVideoTimeRef.current = el.currentTime;
         if (minutesRequired <= 0) {
           void recordViewOnce();
@@ -83,7 +83,7 @@ export function useChapterViewRecording({
       };
 
       const onTimeUpdate = () => {
-        if (el.paused || minutesRequired <= 0) return;
+        if (!el || el.paused || minutesRequired <= 0) return;
         const t = el.currentTime;
         const last = lastVideoTimeRef.current;
         lastVideoTimeRef.current = t;
@@ -97,25 +97,47 @@ export function useChapterViewRecording({
       };
 
       const onSeeking = () => {
-        lastVideoTimeRef.current = el.currentTime;
+        if (el) lastVideoTimeRef.current = el.currentTime;
       };
+
 
       const onPause = () => {
-        lastVideoTimeRef.current = el.currentTime;
+        lastVideoTimeRef.current = el ? el.currentTime : null;
       };
 
-      el.addEventListener('playing', onPlaying);
-      el.addEventListener('timeupdate', onTimeUpdate);
-      el.addEventListener('seeking', onSeeking);
-      el.addEventListener('pause', onPause);
+      if (el) {
+        el.addEventListener('playing', onPlaying);
+        el.addEventListener('timeupdate', onTimeUpdate);
+        el.addEventListener('seeking', onSeeking);
+        el.addEventListener('pause', onPause);
+      }
+
+      // If no video element (iframe case) or if we want a wall-clock fallback,
+      // use a standard interval to accumulate time.
+      const intervalId = window.setInterval(() => {
+        if (cancelled || recordedRef.current || minutesRequired <= 0) return;
+        
+        // If we have an element, we rely on its events. 
+        // If no element, we assume they are watching as long as the page is open.
+        if (!el) {
+          accumulatedSecRef.current += 1;
+          if (accumulatedSecRef.current >= minutesRequired * 60) {
+            void recordViewOnce();
+          }
+        }
+      }, 1000);
 
       detach = () => {
-        el.removeEventListener('playing', onPlaying);
-        el.removeEventListener('timeupdate', onTimeUpdate);
-        el.removeEventListener('seeking', onSeeking);
-        el.removeEventListener('pause', onPause);
+        if (el) {
+          el.removeEventListener('playing', onPlaying);
+          el.removeEventListener('timeupdate', onTimeUpdate);
+          el.removeEventListener('seeking', onSeeking);
+          el.removeEventListener('pause', onPause);
+        }
+        window.clearInterval(intervalId);
       };
     });
+
 
     return () => {
       cancelled = true;

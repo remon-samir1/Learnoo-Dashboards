@@ -379,7 +379,13 @@ export default function EditExamPage() {
 
       if (!response.ok) {
         console.error('❌ Update error:', responseData);
-        toast.error(responseData.message || responseData.details || 'Failed to update exam');
+        if (responseData.errors) {
+          Object.values(responseData.errors).flat().forEach((err: any) => {
+            toast.error(err);
+          });
+        } else {
+          toast.error(responseData.message || responseData.details || 'Failed to update exam');
+        }
         return;
       }
 

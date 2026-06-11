@@ -1,0 +1,96 @@
+[33m51d7eb0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m add favicon
+[33mbf7b077[m fix token and redirect bug
+[33m079beec[m complete support page and fix some errors
+[33m6e08942[m finish support role and route
+[33m764b06b[m exams fix
+[33m07ab425[m fix full screen watermark
+[33m0fcee83[m fix full screen watermark
+[33mb2a863a[m add attechment to technical support
+[33m2d0224d[m technical support
+[33m6848f9d[m update
+[33m614e789[m update
+[33m92f3066[m update
+[33m1a5930e[m update
+[33m16b43cc[m[33m ([m[1;31morigin/karl[m[33m)[m fix build
+[33m2dc14ab[m fix watermark
+[33m68c6966[m fix watermark
+[33m9917ac8[m vdo cipher player
+[33mf6a241f[m fix pdf
+[33md32de31[m watermark
+[33m58bc350[m vdo cipher player
+[33m08417c5[m add control speed for student video
+[33mc5e7bdd[m fix add course from lecture
+[33m55c2f5c[m activation fix admin/instructor
+[33m59b3a61[m Merge branch 'master' of https://github.com/remon-samir1/Learnoo-Dashboards into karl
+[33meac4d69[m stu:show/hide pdf
+[33m355ea63[m last change
+[33m9d69333[m academic structure handling, remove and add
+[33m9f5d3ae[m some changes
+[33m41b49be[m doctor filter
+[33m48a52a5[m department actions / doctor sidebar
+[33m4a2b29e[m ch1
+[33mfec3e66[m Merge pull request #31 from remon-samir1/karl
+[33m4db77ad[m Merge branch 'master' of https://github.com/remon-samir1/Learnoo-Dashboards into karl
+[33mfa78712[m update build
+[33m2754d45[m add some fields for academic structure
+[33m642f84c[m show content of locked courses
+[33mb65e28a[m admin
+[33mfcf1655[m doctor dashbaord
+[33me490658[m doctor dashbaord
+[33mc11ff54[m doctor dashbaord
+[33m0bef3fd[m[33m ([m[1;31morigin/feature/scroll[m[33m)[m fix video controllers
+[33m82cc764[m change pdf view in mobile
+[33mfb273f5[m fix pdf scroll
+[33m47f1476[m fix z-index of home
+[33m2c5a5a0[m Update MySubjectSection.tsx
+[33m87b18fc[m fix home-page suggested courses
+[33m8bd3be4[m fix forbidden redirect
+[33m78bbdf6[m fix pdf - home
+[33md5b63f3[m Merge pull request #30 from remon-samir1/final-updates
+[33mef145fd[m[33m ([m[1;31morigin/final-updates[m[33m)[m solve doc role
+[33m4b815d9[m fix pdf-preview
+[33m76f1694[m Merge pull request #29 from remon-samir1/final-updates
+[33m797fd3b[m some changes
+[33m8f24c5d[m fix profile, home
+[33m8981ba4[m last one
+[33madd0ec3[m update
+[33m3fbd4f1[m update
+[33m4677a3b[m fix note delete
+[33ma95f60a[m refresh notes after create or edit or delete
+[33m198da81[m fix exams images upload
+[33m5493329[m auth with create profile
+[33m69f72f8[m Merge pull request #28 from remon-samir1/feature/video-pdf
+[33md4bf055[m fix pdf of lecture video
+[33m2b2b295[m Merge pull request #27 from remon-samir1/feature/exam
+[33m600ff18[m fix ts error and ready to deploy
+[33m2a59d61[m fix watermark on exam/review answers
+[33m4f0a908[m Merge pull request #26 from remon-samir1/feature/pdf
+[33m9788b32[m done added pdf watermark
+[33m5102652[m Merge pull request #25 from remon-samir1/feature/chapter-pdf-lock/video-watermark
+[33ma3c9e61[m fix watermark - pdf locker
+[33m39b92b8[m Merge pull request #24 from remon-samir1/ali-branch
+[33m0fedf28[m final one
+[33md06ca2d[m fix the admin dash
+[33mf4d6c39[m move admin folder from main to master
+[33m2bcf574[m Merge pull request #22 from remon-samir1/ali-dashboard
+[33meb46832[m finish review answers flow
+[33mac36022[m fix create account
+[33m94e8e17[m Merge pull request #21 from remon-samir1/ali-dashboard
+[33m729178b[m last changes
+[33m4dcaaf6[m last changes
+[33m5ecb9b0[m Merge pull request #20 from remon-samir1/bug/null-student
+[33m044c3d0[m git commit -m "fix student data null handling"
+[33m2f7a89d[m Merge pull request #19 from remon-samir1/feature/live-sessions
+[33mda12150[m change live-sessions content to be coming soon
+[33m7de1522[m Merge pull request #18 from remon-samir1/fix-live-sessions
+[33mcc3540f[m Merge pull request #17 from remon-samir1/fix-notes
+[33m4ad2a03[m Merge pull request #16 from remon-samir1/fix-navbar
+[33mb5e455a[m fix ts error - build is ready
+[33m6efdee8[m fix live-session fall back till testing
+[33md5d9cc8[m fix navbar icon to bottom - fix notes - fix home section (subjects)
+[33mf5928a4[m delete unused imports
+[33mffe1721[m fix sticky navbar and sidebar
+[33m61af917[m fix auth store updateUser typing
+[33mfd3a9ea[m Merge pull request #15 from remon-samir1/integrate-student
+[33m20721e4[m add student dashboard
+[33m3ee51be[m is free preview attachment added to edit/create lesson

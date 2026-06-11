@@ -939,30 +939,6 @@ function ChapterRow({
     IconEl = Lock;
   }
 
-  const badgeBase =
-    "inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight";
-  const pdfUnlocked = Boolean(
-    (hasPdf && pdfVisible && pdfUrl && pdfLinkActive && !chapterLocked) ||
-    canWatchOk,
-  );
-  const pdfBadge = hasPdf ? (
-    pdfUnlocked ? (
-      <button
-        type="button"
-        onClick={() => setPdfPreviewOpen(true)}
-        className={`${badgeBase} bg-[#EFF6FF] text-[#1E40AF] transition hover:opacity-90`}
-      >
-        {t("hasPdf")}
-      </button>
-    ) : (
-      <span
-        className={`${badgeBase} cursor-not-allowed bg-[#F1F5F9] text-[#94A3B8] opacity-70`}
-      >
-        {t("hasPdf")}
-      </span>
-    )
-  ) : null;
-
   const heading = t("chapterItemHeading", {
     number: itemIndexWithinLecture,
     title: attrs.title,
@@ -1019,13 +995,12 @@ function ChapterRow({
           </div>
           <div className="mt-3 flex flex-wrap gap-2 sm:mt-4 sm:gap-2.5">
             {chapterHasExam && (
-              <span className={`${badgeBase} bg-[#FFF7ED] text-[#C2410C]`}>
+              <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-[#FFF7ED] text-[#C2410C]">
                 {t("hasExam")}
               </span>
             )}
-            {pdfBadge}
             {needsPlaybackActivation ? (
-              <span className={`${badgeBase} bg-amber-50 text-amber-900`}>
+              <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-amber-50 text-amber-900">
                 {t("watchAccessPending")}
               </span>
             ) : null}
@@ -1073,6 +1048,28 @@ function ChapterRow({
             {t("activateChapter")}
           </button>
         ) : null}
+
+        {hasPdf && (
+          pdfVisible && pdfUrl ? (
+            <button
+              type="button"
+              onClick={() => setPdfPreviewOpen(true)}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
+            >
+              <FileText className="size-4 shrink-0" strokeWidth={2} />
+              {t("hasPdf")}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#94A3B8] opacity-70 sm:min-h-10 sm:py-2.5"
+            >
+              <FileText className="size-4 shrink-0" strokeWidth={2} />
+              {t("hasPdf")}
+            </button>
+          )
+        )}
       </div>
 
       <PdfPreviewModal

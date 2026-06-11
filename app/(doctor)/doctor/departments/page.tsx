@@ -768,7 +768,7 @@ interface TreeItemProps {
 
   onEdit: (node: TreeNode) => void;
 
-  onAdd: (type: NodeType, parentId: string) => void;
+  onAdd: (type: NodeType, parentId: string, subType?: string) => void;
 
   onCopyMove?: (node: TreeNode, mode: "copy" | "move") => void;
 
@@ -1092,13 +1092,38 @@ function TreeItem({
           )}
 
           {node.type === "lecture" && (
-            <button
-              onClick={() => onAdd("chapter", node.id)}
-              className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
-              title="Add lesson"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            <div className="relative group/add">
+              <button
+                onClick={() => onAdd("chapter", node.id, "video-pdf")}
+                className="p-1 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                title="Add Lesson (Video & PDF)"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <div className="hidden group-hover/add:block absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px] py-1">
+                <button
+                  onClick={() => onAdd("chapter", node.id, "video-pdf")}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <FileVideo className="w-3.5 h-3.5 text-orange-500" />
+                  Video & PDF
+                </button>
+                <button
+                  onClick={() => onAdd("chapter", node.id, "video")}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <PlayCircle className="w-3.5 h-3.5 text-orange-500" />
+                  Video Only
+                </button>
+                <button
+                  onClick={() => onAdd("chapter", node.id, "pdf")}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <FileText className="w-3.5 h-3.5 text-blue-500" />
+                  PDF Only
+                </button>
+              </div>
+            </div>
           )}
 
           {isInstructor && node.type === "chapter" && onCopyMove && (
@@ -1206,6 +1231,7 @@ export default function DepartmentsPage() {
   const [addType, setAddType] = useState<NodeType | null>(null);
 
   const [addParentId, setAddParentId] = useState<string | null>(null);
+  const [lessonCreateType, setLessonCreateType] = useState<string>("video-pdf");
 
   const {
     data: universities,
@@ -1783,7 +1809,7 @@ export default function DepartmentsPage() {
 
   // Open add modal
 
-  const handleAdd = (type: NodeType, parentId?: string) => {
+  const handleAdd = (type: NodeType, parentId?: string, subType?: string) => {
     if (type === "note") {
       const courseId = parentId?.replace("course-", "") || "";
 
@@ -1814,6 +1840,12 @@ export default function DepartmentsPage() {
       setAddType(type);
 
       setAddParentId(parentId || null);
+      
+      if (type === "chapter" && subType) {
+        setLessonCreateType(subType);
+      } else {
+        setLessonCreateType("video-pdf");
+      }
 
       setAddModalOpen(true);
     }
@@ -6210,6 +6242,8 @@ interface AddModalProps {
   isLoading: boolean;
 
   progress?: number;
+
+  lessonCreateType?: string;
 }
 
 function AddModal({
@@ -6221,6 +6255,7 @@ function AddModal({
   onSubmit,
   isLoading,
   progress = 0,
+  lessonCreateType = "video-pdf",
 }: AddModalProps) {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
@@ -7055,67 +7090,69 @@ function AddModal({
 
               {/* Attachments Upload */}
 
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-500" />
-                  Attachments
-                </h4>
+              {(lessonCreateType === "video-pdf" || lessonCreateType === "pdf") && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-500" />
+                    Attachments
+                  </h4>
 
-                <input
-                  ref={attachmentInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.txt,.zip,.rar"
-                  onChange={handleAttachmentChange}
-                  className="hidden"
-                />
+                  <input
+                    ref={attachmentInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+                    onChange={handleAttachmentChange}
+                    className="hidden"
+                  />
 
-                <div
-                  onClick={handleAttachmentClick}
-                  className="w-full bg-white rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all group p-6"
-                >
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Upload className="w-6 h-6 text-blue-500" />
+                  <div
+                    onClick={handleAttachmentClick}
+                    className="w-full bg-white rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all group p-6"
+                  >
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6 text-blue-500" />
+                    </div>
+
+                    <span className="text-sm font-medium text-gray-600">
+                      Click to upload attachments
+                    </span>
+
+                    <span className="text-xs text-gray-400 mt-1">
+                      PDF, DOC, DOCX, TXT, ZIP, RAR (multiple files allowed)
+                    </span>
                   </div>
 
-                  <span className="text-sm font-medium text-gray-600">
-                    Click to upload attachments
-                  </span>
-
-                  <span className="text-xs text-gray-400 mt-1">
-                    PDF, DOC, DOCX, TXT, ZIP, RAR (multiple files allowed)
-                  </span>
-                </div>
-
-                {attachments.length > 0 && (
-                  <div className="space-y-2">
-                    {attachments.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm text-gray-700 truncate max-w-[200px]">
-                            {file.name}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            ({(file.size / 1024).toFixed(1)} KB)
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAttachment(index)}
-                          className="text-red-500 hover:text-red-600 transition-colors"
+                  {attachments.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
                         >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm text-gray-700 truncate max-w-[200px]">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              ({(file.size / 1024).toFixed(1)} KB)
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAttachment(index)}
+                            className="text-red-500 hover:text-red-600 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Type Field */}
               <div className="flex flex-col gap-2">

@@ -15,9 +15,13 @@ import {
   MessageCircle,
   Minimize2,
   Play,
+  RotateCcw,
   Send,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import type { Chapter, Quiz } from '@/src/types';
 import { api, ApiError } from '@/src/lib/api';
 import { quizStudentMustActivateOrReactivate } from '@/src/lib/student-quiz-activation-lock';
@@ -124,6 +128,17 @@ export default function ChapterWatchView({
   const [playbackBlockMessage, setPlaybackBlockMessage] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
+  const [pdfScale, setPdfScale] = useState(1.0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
@@ -206,6 +221,17 @@ export default function ChapterWatchView({
     setClientPlaybackBlocked(false);
     setPlaybackBlockMessage(null);
   }, [chapterId]);
+
+  useChapterViewRecording({
+    chapterId: chapterIdForApi,
+    videoRef: watermarkDummyRef, // Dummy ref because we use iframe + timer fallback
+    videoSrc: videoSrc || 'vdocipher', // Ensure hook is enabled even for iframes
+    viewByMinute: chapter?.attributes?.view_by_minute ?? 0,
+    enabled: Number.isFinite(chapterIdForApi) && !accessDenied,
+    onViewRecordError: (msg) => {
+      toast.error(msg, { id: 'view-record-error' });
+    },
+  });
 
   useEffect(() => {
     if (!pdfPanelVisible) setShowPdf(false);
@@ -374,14 +400,47 @@ export default function ChapterWatchView({
             <span className="truncate text-sm font-semibold text-slate-900">{t('lectureMaterial')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={togglePdfFullscreen}
-              className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white p-1.5 text-[#64748B] transition hover:bg-slate-50"
-              title={isPdfFullscreen ? 'Exit fullscreen' : 'Full screen'}
-            >
-              {isPdfFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-            </button>
+            <div className="flex items-center gap-1 rounded-md border border-slate-300 bg-white p-0.5">
+              <button
+                type="button"
+                onClick={() => setPdfScale((s) => Math.max(0.5, s - 0.1))}
+                className="flex size-7 items-center justify-center rounded text-[#64748B] hover:bg-slate-100"
+                title="Zoom Out"
+              >
+                <ZoomOut className="size-3.5" />
+              </button>
+              <span className="min-w-[2.5rem] text-center text-[10px] font-bold text-slate-600 sm:text-xs">
+                {Math.round(pdfScale * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setPdfScale((s) => Math.min(2.5, s + 0.1))}
+                className="flex size-7 items-center justify-center rounded text-[#64748B] hover:bg-slate-100"
+                title="Zoom In"
+              >
+                <ZoomIn className="size-3.5" />
+              </button>
+              <div className="mx-0.5 h-3 w-px bg-slate-200" />
+              <button
+                type="button"
+                onClick={() => setPdfScale(1.0)}
+                className="flex size-7 items-center justify-center rounded text-[#64748B] hover:bg-slate-100"
+                title="Reset Zoom"
+              >
+                <RotateCcw className="size-3.5" />
+              </button>
+            </div>
+            
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={togglePdfFullscreen}
+                className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-white p-1.5 text-[#64748B] transition hover:bg-slate-50"
+                title={isPdfFullscreen ? 'Exit fullscreen' : 'Full screen'}
+              >
+                {isPdfFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setShowPdf(false)}
@@ -391,13 +450,15 @@ export default function ChapterWatchView({
             </button>
           </div>
         </div>
-        <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none] ${isPdfFullscreen || isFullscreen ? 'h-[calc(100vh-44px)]' : ''}`}>
+        <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-auto overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-x touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none] ${isPdfFullscreen || isFullscreen ? 'h-[calc(100vh-44px)]' : ''}`}>
           <PdfPreviewModal
             variant="inline"
             expandToContainer
             title={t('lectureMaterial')}
             open={showPdf}
             pdfUrl={pdfUrl}
+            scale={pdfScale}
+            onScaleChange={setPdfScale}
           />
         </div>
         <p className="hidden shrink-0 border-t border-slate-200 bg-[#f8fafc] px-4 py-2 text-center text-[11px] text-slate-500 sm:block">
@@ -470,10 +531,12 @@ export default function ChapterWatchView({
                             <iframe
                               src={videoSrc}
                               className="aspect-video w-full"
-                              allow="autoplay; encrypted-media"
+                              allow="autoplay; encrypted-media; picture-in-picture; clipboard-write; web-share"
+                              allowFullScreen
                               frameBorder="0"
                               scrolling="no"
                             />
+                            {/* Overlays - ensured they don't block bottom interaction area on small screens */}
                             <div className="pointer-events-none absolute inset-0 overflow-hidden">
                               <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
                               <VideoWatermark
@@ -482,15 +545,18 @@ export default function ChapterWatchView({
                                 initialResolution={initialWatermarkResolution ?? null}
                               />
                             </div>
+                            
+                            {/* Fullscreen toggle - moved higher on mobile to avoid overlapping VdoCipher gear icon/controls */}
                             <button
                               type="button"
                               onClick={toggleFullscreen}
-                              className="absolute bottom-2 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80"
+                              className="absolute bottom-12 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80 sm:bottom-2"
                               aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
                             >
                               {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
                             </button>
                           </div>
+
                           {showPdf && pdfWatchPanel && (
                             <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'h-64 sm:h-80 overflow-hidden'}`}>
                               <div className="h-full w-full">{pdfWatchPanel}</div>

@@ -757,7 +757,7 @@ interface TreeItemProps {
 
   onEdit: (node: TreeNode) => void;
 
-  onAdd: (type: NodeType, parentId: string) => void;
+  onAdd: (type: NodeType, parentId: string, subType?: string) => void;
 
   onCopyMove?: (node: TreeNode, mode: "copy" | "move") => void;
 
@@ -785,6 +785,8 @@ function TreeItem({
   isInstructor = false,
 }: TreeItemProps) {
   const t = useTranslations();
+
+  const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
 
   const isExpanded = expanded.has(node.id);
 
@@ -1085,13 +1087,47 @@ function TreeItem({
           )}
 
           {node.type === "lecture" && !isInstructor && (
-            <button
-              onClick={() => onAdd("chapter", node.id)}
-              className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
-              title="Add lesson"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsAddDropdownOpen(!isAddDropdownOpen)}
+                className={`p-1.5 rounded-lg transition-all ${isAddDropdownOpen ? 'text-orange-600 bg-orange-100' : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'}`}
+                title="Add lesson"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              
+              {isAddDropdownOpen && (
+                <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+                  <button
+                    onClick={() => {
+                      onAdd("chapter", node.id, "video-pdf");
+                      setIsAddDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2"
+                  >
+                    <Plus className="w-3 h-3" /> Video and PDF
+                  </button>
+                  <button
+                    onClick={() => {
+                      onAdd("chapter", node.id, "video");
+                      setIsAddDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2"
+                  >
+                    <Plus className="w-3 h-3" /> Video Only
+                  </button>
+                  <button
+                    onClick={() => {
+                      onAdd("chapter", node.id, "pdf");
+                      setIsAddDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2"
+                  >
+                    <Plus className="w-3 h-3" /> PDF Only
+                  </button>
+                </div>
+              )}
+            </div>
           )}
 
           {node.type === "chapter" && !isInstructor && onCopyMove && (
@@ -1218,6 +1254,7 @@ export default function DepartmentsPage() {
   const [addType, setAddType] = useState<NodeType | null>(null);
 
   const [addParentId, setAddParentId] = useState<string | null>(null);
+  const [lessonCreateType, setLessonCreateType] = useState<string>("video-pdf");
 
   const {
     data: universities,
@@ -1783,7 +1820,7 @@ export default function DepartmentsPage() {
 
   // Open add modal
 
-  const handleAdd = (type: NodeType, parentId?: string) => {
+  const handleAdd = (type: NodeType, parentId?: string, subType?: string) => {
     if (type === "note") {
       const courseId = parentId?.replace("course-", "") || "";
 
@@ -1814,6 +1851,12 @@ export default function DepartmentsPage() {
       setAddType(type);
 
       setAddParentId(parentId || null);
+      
+      if (type === "chapter" && subType) {
+        setLessonCreateType(subType);
+      } else {
+        setLessonCreateType("video-pdf");
+      }
 
       setAddModalOpen(true);
     }
@@ -4384,10 +4427,10 @@ export default function DepartmentsPage() {
                       <p className="text-sm text-gray-700 mt-1">
                         {viewNode.meta.duration}
                       </p>
-                    </div>
-                  )}
-                </div>
-              )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {viewNode.type === "note" && (
                 <div className="space-y-4">
@@ -4598,6 +4641,7 @@ export default function DepartmentsPage() {
             setUploadProgress(0);
           }}
           onSubmit={handleAddSubmit}
+          lessonCreateType={lessonCreateType}
           isLoading={
             isCreatingDept ||
             isCreatingCourse ||
@@ -5786,13 +5830,11 @@ function EditModal({
                         onClick={handleVideoClick}
                         className="cursor-pointer rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm"
                       >
-                        <iframe
+                        <video
                           src={videoPreview}
                           className="w-full h-40"
-                          allowFullScreen
-                          allow="encrypted-media"
-                          frameBorder="0"
-                          scrolling="no"
+                          controls
+                          preload="metadata"
                         />
 
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -6251,6 +6293,8 @@ interface AddModalProps {
   isLoading: boolean;
 
   progress?: number;
+
+  lessonCreateType?: string;
 }
 
 function AddModal({
@@ -6262,6 +6306,7 @@ function AddModal({
   onSubmit,
   isLoading,
   progress = 0,
+  lessonCreateType = "video-pdf",
 }: AddModalProps) {
   const [formData, setFormData] = useState<Record<string, any>>({});
 
@@ -6954,74 +6999,75 @@ function AddModal({
 
                 {/* Video Upload */}
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
-                    Video
-                  </label>
+                {(lessonCreateType === "video-pdf" ||
+                  lessonCreateType === "video") && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
+                      Video
+                    </label>
 
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoChange}
-                    className="hidden"
-                  />
+                    <input
+                      ref={videoInputRef}
+                      type="file"
+                      accept="video/*"
+                      onChange={handleVideoChange}
+                      className="hidden"
+                    />
 
-                  {videoPreview ? (
-                    <div className="relative group">
+                    {videoPreview ? (
+                      <div className="relative group">
+                        <div
+                          onClick={handleVideoClick}
+                          className="cursor-pointer rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm"
+                        >
+                          <video
+                            src={videoPreview}
+                            className="w-full h-40"
+                            controls
+                            preload="metadata"
+                          />
+
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-white text-sm font-medium">
+                              Change Video
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+
+                            setVideoPreview(null);
+
+                            setFormData({ ...formData, video: null });
+                          }}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
                       <div
                         onClick={handleVideoClick}
-                        className="cursor-pointer rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm"
+                        className="w-full h-40 bg-white rounded-xl border-2 border-dashed border-orange-300 flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 hover:border-orange-400 transition-all group"
                       >
-                        <iframe
-                          src={videoPreview}
-                          className="w-full h-40"
-                          allowFullScreen
-                          allow="encrypted-media"
-                          frameBorder="0"
-                          scrolling="no"
-                        />
-
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-white text-sm font-medium">
-                            Change Video
-                          </span>
+                        <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                          <Upload className="w-7 h-7 text-orange-500" />
                         </div>
+
+                        <span className="text-sm font-medium text-gray-600">
+                          Click to upload video
+                        </span>
+
+                        <span className="text-xs text-gray-400 mt-1">
+                          MP4, WebM, MOV up to 500MB
+                        </span>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-
-                          setVideoPreview(null);
-
-                          setFormData({ ...formData, video: null });
-                        }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div
-                      onClick={handleVideoClick}
-                      className="w-full h-40 bg-white rounded-xl border-2 border-dashed border-orange-300 flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 hover:border-orange-400 transition-all group"
-                    >
-                      <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                        <Upload className="w-7 h-7 text-orange-500" />
-                      </div>
-
-                      <span className="text-sm font-medium text-gray-600">
-                        Click to upload video
-                      </span>
-
-                      <span className="text-xs text-gray-400 mt-1">
-                        MP4, WebM, MOV up to 500MB
-                      </span>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Thumbnail Upload */}
 
@@ -7141,67 +7187,69 @@ function AddModal({
 
               {/* Attachments Upload */}
 
-              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-4">
-                <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-blue-500" />
-                  Attachments
-                </h4>
+              {(lessonCreateType === "video-pdf" || lessonCreateType === "pdf") && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-4">
+                  <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-500" />
+                    Attachments
+                  </h4>
 
-                <input
-                  ref={attachmentInputRef}
-                  type="file"
-                  multiple
-                  accept=".pdf,.doc,.docx,.txt,.zip,.rar"
-                  onChange={handleAttachmentChange}
-                  className="hidden"
-                />
+                  <input
+                    ref={attachmentInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.zip,.rar"
+                    onChange={handleAttachmentChange}
+                    className="hidden"
+                  />
 
-                <div
-                  onClick={handleAttachmentClick}
-                  className="w-full bg-white rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all group p-6"
-                >
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Upload className="w-6 h-6 text-blue-500" />
+                  <div
+                    onClick={handleAttachmentClick}
+                    className="w-full bg-white rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all group p-6"
+                  >
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                      <Upload className="w-6 h-6 text-blue-500" />
+                    </div>
+
+                    <span className="text-sm font-medium text-gray-600">
+                      Click to upload attachments
+                    </span>
+
+                    <span className="text-xs text-gray-400 mt-1">
+                      PDF, DOC, DOCX, TXT, ZIP, RAR (multiple files allowed)
+                    </span>
                   </div>
 
-                  <span className="text-sm font-medium text-gray-600">
-                    Click to upload attachments
-                  </span>
-
-                  <span className="text-xs text-gray-400 mt-1">
-                    PDF, DOC, DOCX, TXT, ZIP, RAR (multiple files allowed)
-                  </span>
-                </div>
-
-                {attachments.length > 0 && (
-                  <div className="space-y-2">
-                    {attachments.map((file, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm text-gray-700 truncate max-w-[200px]">
-                            {file.name}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            ({(file.size / 1024).toFixed(1)} KB)
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveAttachment(index)}
-                          className="text-red-500 hover:text-red-600 transition-colors"
+                  {attachments.length > 0 && (
+                    <div className="space-y-2">
+                      {attachments.map((file, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
                         >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-blue-500" />
+                            <span className="text-sm text-gray-700 truncate max-w-[200px]">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              ({(file.size / 1024).toFixed(1)} KB)
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAttachment(index)}
+                            className="text-red-500 hover:text-red-600 transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Type Field */}
               <div className="flex flex-col gap-2">

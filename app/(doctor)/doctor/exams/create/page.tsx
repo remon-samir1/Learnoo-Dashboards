@@ -357,7 +357,13 @@ export default function CreateExamPage() {
 
       if (!quizResponse.ok) {
         console.error('❌ Quiz creation error:', responseData);
-        toast.error(responseData.message || responseData.details || t('create.error'));
+        if (responseData.errors) {
+          Object.values(responseData.errors).flat().forEach((err: any) => {
+            toast.error(err);
+          });
+        } else {
+          toast.error(responseData.message || responseData.details || t('create.error'));
+        }
         setIsSubmitting(false);
         return;
       }
