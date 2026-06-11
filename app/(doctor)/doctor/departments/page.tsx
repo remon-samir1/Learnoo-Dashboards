@@ -1030,7 +1030,7 @@ function TreeItem({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Add child buttons */}
-          
+
           {!isInstructor && node.type === "university" && (
             <button
               onClick={() => onAdd("center", node.id)}
@@ -1840,7 +1840,7 @@ export default function DepartmentsPage() {
       setAddType(type);
 
       setAddParentId(parentId || null);
-      
+
       if (type === "chapter" && subType) {
         setLessonCreateType(subType);
       } else {
@@ -5830,7 +5830,7 @@ function EditModal({
 
                 {/* Thumbnail Upload */}
 
-                <div>
+                {/* <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
                     Thumbnail
                   </label>
@@ -5886,7 +5886,7 @@ function EditModal({
                       </span>
                     </div>
                   )}
-                </div>
+                </div> */}
               </div>
 
               {/* Lesson Details */}
@@ -6974,7 +6974,7 @@ function AddModal({
 
                 {/* Thumbnail Upload */}
 
-                <div>
+                {/* <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
                     Thumbnail
                   </label>
@@ -7030,7 +7030,7 @@ function AddModal({
                       </span>
                     </div>
                   )}
-                </div>
+                </div> */}
               </div>
 
               {/* Lesson Details */}

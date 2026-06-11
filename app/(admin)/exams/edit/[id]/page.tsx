@@ -621,8 +621,8 @@ export default function EditExamPage() {
 
                         if (newType === 'true_false') {
                           updates.answers = [
-                            { id: `a-${Date.now()}-1`, text: 'صح', isCorrect: false, reason: '', image: null, imagePreview: '' },
-                            { id: `a-${Date.now()}-2`, text: 'خطأ', isCorrect: false, reason: '', image: null, imagePreview: '' }
+                            { id: `a-${Date.now()}-1`, text: 'صح (True)', isCorrect: false, reason: '', image: null, imagePreview: '' },
+                            { id: `a-${Date.now()}-2`, text: 'خطأ (False)', isCorrect: false, reason: '', image: null, imagePreview: '' }
                           ];
                         }
 

@@ -1095,7 +1095,7 @@ function TreeItem({
               >
                 <Plus className="w-4 h-4" />
               </button>
-              
+
               {isAddDropdownOpen && (
                 <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
                   <button
@@ -1224,7 +1224,7 @@ export default function DepartmentsPage() {
   const t = useTranslations();
   const { role, canUseActivations } = useCurrentUser();
   const isInstructor = role === 'Instructor';
-  
+
   const [searchQuery, setSearchQuery] = useState("");
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -1851,7 +1851,7 @@ export default function DepartmentsPage() {
       setAddType(type);
 
       setAddParentId(parentId || null);
-      
+
       if (type === "chapter" && subType) {
         setLessonCreateType(subType);
       } else {
@@ -3844,26 +3844,26 @@ export default function DepartmentsPage() {
                     </label>
 
                     <div className="space-y-3">
-                       {/* Video Preview */}
+                      {/* Video Preview */}
 
-                       {(viewNode.data as Chapter).attributes.video && (
-                         <div>
-                           <label className="text-xs text-gray-400 mb-1 block">
-                             Video
-                           </label>
+                      {(viewNode.data as Chapter).attributes.video && (
+                        <div>
+                          <label className="text-xs text-gray-400 mb-1 block">
+                            Video
+                          </label>
 
-                           <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-900">
-                             <iframe
-                               src={(viewNode.data as Chapter).attributes.video}
-                               className="w-full h-40"
-                               allowFullScreen
-                               allow="encrypted-media"
-                               frameBorder="0"
-                               scrolling="no"
-                             />
-                           </div>
-                         </div>
-                       )}
+                          <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-900">
+                            <iframe
+                              src={(viewNode.data as Chapter).attributes.video}
+                              className="w-full h-40"
+                              allowFullScreen
+                              allow="encrypted-media"
+                              frameBorder="0"
+                              scrolling="no"
+                            />
+                          </div>
+                        </div>
+                      )}
 
                       {/* Thumbnail */}
 
@@ -4427,10 +4427,10 @@ export default function DepartmentsPage() {
                       <p className="text-sm text-gray-700 mt-1">
                         {viewNode.meta.duration}
                       </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {viewNode.type === "note" && (
                 <div className="space-y-4">
@@ -5880,7 +5880,7 @@ function EditModal({
 
                 {/* Thumbnail Upload */}
 
-                <div>
+                {/* <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
                     Thumbnail
                   </label>
@@ -5936,7 +5936,7 @@ function EditModal({
                       </span>
                     </div>
                   )}
-                </div>
+                </div> */}
               </div>
 
               {/* Lesson Details */}
@@ -7001,77 +7001,77 @@ function AddModal({
 
                 {(lessonCreateType === "video-pdf" ||
                   lessonCreateType === "video") && (
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
-                      Video
-                    </label>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
+                        Video
+                      </label>
 
-                    <input
-                      ref={videoInputRef}
-                      type="file"
-                      accept="video/*"
-                      onChange={handleVideoChange}
-                      className="hidden"
-                    />
+                      <input
+                        ref={videoInputRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoChange}
+                        className="hidden"
+                      />
 
-                    {videoPreview ? (
-                      <div className="relative group">
+                      {videoPreview ? (
+                        <div className="relative group">
+                          <div
+                            onClick={handleVideoClick}
+                            className="cursor-pointer rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm"
+                          >
+                            <video
+                              src={videoPreview}
+                              className="w-full h-40"
+                              controls
+                              preload="metadata"
+                            />
+
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-white text-sm font-medium">
+                                Change Video
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              setVideoPreview(null);
+
+                              setFormData({ ...formData, video: null });
+                            }}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
                         <div
                           onClick={handleVideoClick}
-                          className="cursor-pointer rounded-xl overflow-hidden border-2 border-orange-200 shadow-sm"
+                          className="w-full h-40 bg-white rounded-xl border-2 border-dashed border-orange-300 flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 hover:border-orange-400 transition-all group"
                         >
-                          <video
-                            src={videoPreview}
-                            className="w-full h-40"
-                            controls
-                            preload="metadata"
-                          />
-
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-white text-sm font-medium">
-                              Change Video
-                            </span>
+                          <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <Upload className="w-7 h-7 text-orange-500" />
                           </div>
+
+                          <span className="text-sm font-medium text-gray-600">
+                            Click to upload video
+                          </span>
+
+                          <span className="text-xs text-gray-400 mt-1">
+                            MP4, WebM, MOV up to 500MB
+                          </span>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-
-                            setVideoPreview(null);
-
-                            setFormData({ ...formData, video: null });
-                          }}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        onClick={handleVideoClick}
-                        className="w-full h-40 bg-white rounded-xl border-2 border-dashed border-orange-300 flex flex-col items-center justify-center cursor-pointer hover:bg-orange-50 hover:border-orange-400 transition-all group"
-                      >
-                        <div className="w-14 h-14 bg-orange-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                          <Upload className="w-7 h-7 text-orange-500" />
-                        </div>
-
-                        <span className="text-sm font-medium text-gray-600">
-                          Click to upload video
-                        </span>
-
-                        <span className="text-xs text-gray-400 mt-1">
-                          MP4, WebM, MOV up to 500MB
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  )}
 
                 {/* Thumbnail Upload */}
 
-                <div>
+                {/* <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase mb-2">
                     Thumbnail
                   </label>
@@ -7127,7 +7127,7 @@ function AddModal({
                       </span>
                     </div>
                   )}
-                </div>
+                </div> */}
               </div>
 
               {/* Lesson Details */}

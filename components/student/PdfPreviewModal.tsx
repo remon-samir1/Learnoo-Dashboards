@@ -1,6 +1,6 @@
 'use client';
 
-import { FileText, X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { FileText, X, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { useCurrentUser } from '@/src/hooks';
 import { resolveEnabledWatermarkBucket, WatermarkResolution } from '@/src/lib/watermark-from-features';
@@ -33,14 +33,17 @@ function PdfPreviewContent({
   watermarkStyle,
   expandToContainer = false,
   scale,
+  currentPage,
+  onPagesLoaded,
 }: {
   proxiedPdfUrl: string;
   watermarkText: string;
   watermarkStyle: { color: string; opacity: number };
   expandToContainer?: boolean;
   scale?: number;
+  currentPage: number;
+  onPagesLoaded: (numPages: number) => void;
 }) {
-  const [numPages, setNumPages] = useState(0);
   const [pageWidth, setPageWidth] = useState(720);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
@@ -69,48 +72,41 @@ function PdfPreviewContent({
         file={proxiedPdfUrl}
         loading={<p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>}
         error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
-        onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
+        onLoadSuccess={({ numPages: pages }) => onPagesLoaded(pages)}
       >
         <div className="flex flex-col items-center gap-4 py-1 sm:gap-5 sm:py-2">
-          {Array.from({ length: numPages }, (_, index) => {
-            const pageNumber = index + 1;
+          <div
+            className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
+            style={{ width: pageWidth }}
+          >
+            <Page
+              pageNumber={currentPage}
+              width={pageWidth}
+              renderAnnotationLayer={false}
+              renderTextLayer={false}
+              className="[&_canvas]:!h-auto [&_canvas]:!w-full"
+            />
 
-            return (
+            {watermarkText ? (
               <div
-                key={pageNumber}
-               className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
-               style={{ width: pageWidth }}
+                className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
+                aria-hidden
               >
-                <Page
-  pageNumber={pageNumber}
-  width={pageWidth}
-  renderAnnotationLayer={false}
-  renderTextLayer={false}
-  className="[&_canvas]:!h-auto [&_canvas]:!w-full"
-/>
-
-                {watermarkText ? (
-                  <div
-                    className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
-                    aria-hidden
-                  >
-                    <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
-                      {Array.from({ length: 12 }).map((_, i) => (
-                        <div key={i} className="flex items-center justify-center">
-                          <span
-                            className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
-                            style={watermarkStyle}
-                          >
-                            {watermarkText}
-                          </span>
-                        </div>
-                      ))}
+                <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
+                  {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-center">
+                      <span
+                        className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
+                        style={watermarkStyle}
+                      >
+                        {watermarkText}
+                      </span>
                     </div>
-                  </div>
-                ) : null}
+                  ))}
+                </div>
               </div>
-            );
-          })}
+            ) : null}
+          </div>
         </div>
       </Document>
     </div>
@@ -128,6 +124,14 @@ export default function PdfPreviewModal({
   onScaleChange,
 }: Props) {
   const [internalScale, setInternalScale] = useState(1.0);
+  const [numPages, setNumPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
+
+  useEffect(() => {
+    setPageInput(String(currentPage));
+  }, [currentPage]);
+
   const scale = externalScale ?? internalScale;
 
   const handleZoomIn = () => {
@@ -145,6 +149,30 @@ export default function PdfPreviewModal({
   const handleResetZoom = () => {
     if (onScaleChange) onScaleChange(1.0);
     else setInternalScale(1.0);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(numPages, prev + 1));
+  };
+
+  const handlePageInputBlur = () => {
+    const val = parseInt(pageInput, 10);
+    if (!isNaN(val) && val >= 1 && val <= numPages) {
+      setCurrentPage(val);
+    } else {
+      setPageInput(String(currentPage));
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handlePageInputBlur();
+      (e.target as HTMLInputElement).blur();
+    }
   };
 
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
@@ -215,6 +243,8 @@ export default function PdfPreviewModal({
         watermarkStyle={watermarkStyle}
         expandToContainer={expandToContainer}
         scale={scale}
+        currentPage={currentPage}
+        onPagesLoaded={setNumPages}
       />
     </div>
   );
@@ -235,7 +265,40 @@ export default function PdfPreviewModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handlePrevPage}
+                disabled={currentPage <= 1 || numPages === 0}
+                className="flex size-8 items-center justify-center rounded-md text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A] disabled:opacity-30"
+              >
+                <ChevronLeft className="size-4" />
+              </button>
+
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={pageInput}
+                  onChange={(e) => setPageInput(e.target.value)}
+                  onBlur={handlePageInputBlur}
+                  onKeyDown={handlePageInputKeyDown}
+                  className="h-8 w-10 rounded-md border border-slate-200 bg-white text-center text-xs font-bold text-slate-700 outline-none focus:border-[#2D43D1] focus:ring-1 focus:ring-[#2D43D1]"
+                />
+                <span className="text-xs font-medium text-slate-500">
+                  of {numPages}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleNextPage}
+                disabled={currentPage >= numPages || numPages === 0}
+                className="flex size-8 items-center justify-center rounded-md text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A] disabled:opacity-30"
+              >
+                <ChevronRight className="size-4" />
+              </button>
+            </div>
             <div className="mr-4 flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
               <button
                 type="button"

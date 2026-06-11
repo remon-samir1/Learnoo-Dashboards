@@ -39,14 +39,13 @@ export default async function StudentPage() {
   const {
     data: { data: library },
   } = await getLibrary();
-  const {
-    data: { data: category },
-  } = await getCategories();
+  const categoryResult = await getCategories();
+  const category = categoryResult.success ? categoryResult.data?.data ?? [] : [];
 
   const coursesCount = courses?.length;
   const progressCount = progress?.length;
   const liveSessionsCount = liveSessions?.length;
-const studentData = student?.data?.data?.attributes ?? null;
+  const studentData = student ?? null;
 
   return (
     <div className="flex max-w-full flex-col gap-4 sm:gap-6">

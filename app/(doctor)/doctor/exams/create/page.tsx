@@ -636,8 +636,8 @@ export default function CreateExamPage() {
                         
                         if (newType === 'true_false') {
                           updates.answers = [
-                            { id: '1', text: 'صح', isCorrect: false, reason: '' },
-                            { id: '2', text: 'خطأ', isCorrect: false, reason: '' }
+                            { id: '1', text: 'صح (True)', isCorrect: false, reason: '' },
+                            { id: '2', text: 'خطأ (False)', isCorrect: false, reason: '' }
                           ];
                         }
                         
