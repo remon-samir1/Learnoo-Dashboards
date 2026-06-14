@@ -61,7 +61,7 @@ import { useStudents } from "@/src/hooks/useStudents";
 import { useInstructors } from "@/src/hooks/useInstructors";
 import { useCurrentUser } from "@/src/hooks/useAuth";
 
-import { api } from "@/src/lib/api";
+import { api, getApiErrorMessage } from "@/src/lib/api";
 
 import {
   GraduationCap,
@@ -1236,6 +1236,38 @@ export default function DepartmentsPage() {
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
 
   const [viewNode, setViewNode] = useState<TreeNode | null>(null);
+  const [viewersModalOpen, setViewersModalOpen] = useState(false);
+  const [viewersList, setViewersList] = useState<any[] | null>(null);
+  const [viewersLoading, setViewersLoading] = useState(false);
+
+  const openViewers = async (node: TreeNode | null) => {
+    if (!node) return;
+    try {
+      setViewersLoading(true);
+      setViewersList(null);
+
+      const rawId = node.data?.id;
+      const chapterId = Number(rawId);
+
+      if (!rawId || Number.isNaN(chapterId)) {
+        toast.error("Invalid chapter id");
+        setViewersLoading(false);
+        return;
+      }
+
+      const res: any = await api.chapters.get(chapterId, { skipAuthRedirect: true } as any);
+
+      const users = res?.data?.attributes?.userViews || [];
+
+      setViewersList(users);
+      setViewersModalOpen(true);
+    } catch (err) {
+      console.error("Failed to load viewers", err);
+      toast.error(getApiErrorMessage(err, "Failed to load viewers"));
+    } finally {
+      setViewersLoading(false);
+    }
+  };
 
   const [lecturesByCourse, setLecturesByCourse] = useState<
     Record<string, Lecture[]>
@@ -4559,6 +4591,14 @@ export default function DepartmentsPage() {
                         <ArrowRightLeft className="w-4 h-4" />
                         Move
                       </button>
+
+                      <button
+                        onClick={() => openViewers(viewNode)}
+                        className="px-3 py-2 bg-white border border-gray-200 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                      >
+                        <Users className="w-4 h-4 text-gray-600" />
+                        Viewers
+                      </button>
                     </>
                   )}
 
@@ -4672,6 +4712,57 @@ export default function DepartmentsPage() {
           onConfirm={handleCopyMoveSubmit}
           isLoading={isCopyingChapter}
         />
+      )}
+
+      {/* Viewers Modal */}
+      {viewersModalOpen && viewNode && viewNode.type === "chapter" && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-4 w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Lesson Viewers</h3>
+                <p className="text-sm text-gray-500 mt-0.5">List of users who viewed this lesson</p>
+              </div>
+
+              <button
+                onClick={() => setViewersModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {viewersLoading ? (
+                <div className="py-6 flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
+                </div>
+              ) : !viewersList || viewersList.length === 0 ? (
+                <p className="text-sm text-gray-400">No viewers recorded for this lesson.</p>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {viewersList.map((uv: any) => (
+                    <div key={uv.id} className="flex items-center justify-between py-3">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {uv.user ? `${uv.user.first_name || ''} ${uv.user.last_name || ''}`.trim() : uv.user_id}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {uv.user?.email || uv.user?.student_code || ''}
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <div className="text-sm text-gray-700">Views: <span className="font-medium">{uv.count}</span></div>
+                        <div className="text-xs text-gray-400">{uv.created_at ? new Date(uv.created_at).toLocaleString() : ''}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <DeleteModal

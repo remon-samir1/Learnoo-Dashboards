@@ -16,19 +16,17 @@
 
 export interface ApiResponse<T> {
 
-
-
   data: T;
-
-
 
   meta?: PaginationMeta | AuthMeta;
 
-
-
   message?: string;
 
-
+  included?: Array<{
+    id: string;
+    type: string;
+    attributes: Record<string, unknown>;
+  }>;
 
 }
 
@@ -40,19 +38,17 @@ export interface ApiResponse<T> {
 
 export interface ApiListResponse<T> {
 
-
-
   data: T[];
-
-
 
   meta?: PaginationMeta;
 
-
-
   links?: PaginationLinks;
 
-
+  included?: Array<{
+    id: string;
+    type: string;
+    attributes: Record<string, unknown>;
+  }>;
 
 }
 
@@ -336,7 +332,10 @@ export interface LoginRequest {
 
 
 
-  phone_or_email: string;
+  phone_or_email?: string;
+
+  /** Alias for phone_or_email – accepted by the login page form. */
+  phone?: string;
 
 
 
@@ -1904,27 +1903,34 @@ export interface CreateDepartmentRequest {
 
 export interface DiscussionAttributes {
 
-
-
   user_id: number;
-
-
 
   chapter_id: number;
 
-
-
   content: string;
 
+  type?: string | null;
 
+  moment?: number | null;
+
+  parent_id?: number | null;
 
   created_at: string | null;
 
-
-
   updated_at: string | null;
 
-
+  user?: {
+    data: {
+      id: string;
+      type: string;
+      attributes?: {
+        first_name?: string;
+        last_name?: string;
+        full_name?: string;
+        role?: string;
+      };
+    };
+  };
 
 }
 
@@ -2269,6 +2275,25 @@ export interface LectureAttributes {
 
 
 export type Lecture = JsonApiData<LectureAttributes>;
+
+export interface StudentViewData {
+  id: string | number;
+  name: string;
+  email: string;
+  viewCount: number;
+  watchTimeMinutes: number;
+  pdfOpenCount: number;
+  lastAccessed: string;
+}
+
+export interface StudentQuestion {
+  id: string;
+  student_name: string;
+  video_timestamp: number | null;
+  question: string;
+  reply: string | null;
+  created_at: string;
+}
 
 
 
@@ -3834,6 +3859,9 @@ export interface QuizQuestionAnswerAttributes {
 
   /** Optional per-option explanation shown after submission / in review. */
   reason?: string | null;
+
+  /** Reason image URL when present on the resource. */
+  reason_image?: string | null;
 
 
 

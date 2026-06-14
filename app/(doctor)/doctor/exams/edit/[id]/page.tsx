@@ -31,6 +31,8 @@ interface Answer {
   reason: string;
   image?: File | null;
   imagePreview?: string;
+  reason_image?: File | null;
+  reasonImagePreview?: string;
 }
 
 interface Question {
@@ -210,6 +212,8 @@ export default function EditExamPage() {
             reason: ans.attributes.reason || '',
             image: null,
             imagePreview: ans.attributes.image || '',      // ✅ existing image URL
+            reason_image: null,
+            reasonImagePreview: ans.attributes.reason_image || '', // ✅ existing reason image URL
           })) || [],
         }))
       );
@@ -248,7 +252,9 @@ export default function EditExamPage() {
         answers: q.answers.map(a => ({
           ...a,
           image: null,
-          imagePreview: a.imagePreview?.startsWith('blob:') ? '' : a.imagePreview
+          imagePreview: a.imagePreview?.startsWith('blob:') ? '' : a.imagePreview,
+          reason_image: null,
+          reasonImagePreview: a.reasonImagePreview?.startsWith('blob:') ? '' : a.reasonImagePreview
         }))
       }))
     };
@@ -256,15 +262,23 @@ export default function EditExamPage() {
   }, [examDetails, questions, isDraftRestored, examId]);
 
   // ── question helpers ──
-  const addQuestion = () => {
-    setQuestions((prev) => [...prev, {
+  const addQuestion = (atIndex?: number) => {
+    const newQuestion: Question = {
       id: `new-${Date.now()}`, text: '', type: 'single_choice',
       score: 1, autoCorrect: true, image: null, imagePreview: '',
       answers: [
-        { id: `a-${Date.now()}-1`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
-        { id: `a-${Date.now()}-2`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' },
+        { id: `a-${Date.now()}-1`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '', reason_image: null, reasonImagePreview: '' },
+        { id: `a-${Date.now()}-2`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '', reason_image: null, reasonImagePreview: '' },
       ],
-    }]);
+    };
+
+    if (typeof atIndex === 'number') {
+      const updatedQuestions = [...questions];
+      updatedQuestions.splice(atIndex, 0, newQuestion);
+      setQuestions(updatedQuestions);
+    } else {
+      setQuestions((prev) => [...prev, newQuestion]);
+    }
   };
 
   const removeQuestion = (id: string) => {
@@ -277,7 +291,7 @@ export default function EditExamPage() {
   const addAnswer = (qId: string) =>
     setQuestions((prev) => prev.map(q =>
       q.id === qId
-        ? { ...q, answers: [...q.answers, { id: `a-${Date.now()}`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '' }] }
+        ? { ...q, answers: [...q.answers, { id: `a-${Date.now()}`, text: '', isCorrect: false, reason: '', image: null, imagePreview: '', reason_image: null, reasonImagePreview: '' }] }
         : q
     ));
 
@@ -315,6 +329,17 @@ export default function EditExamPage() {
         ? {
           ...q, answers: q.answers.map(a =>
             a.id === answerId ? { ...a, image: file, imagePreview: file ? URL.createObjectURL(file) : '' } : a
+          )
+        }
+        : q
+    ));
+
+  const handleAnswerReasonImageChange = (qId: string, answerId: string, file: File | null) =>
+    setQuestions((prev) => prev.map(q =>
+      q.id === qId
+        ? {
+          ...q, answers: q.answers.map(a =>
+            a.id === answerId ? { ...a, reason_image: file, reasonImagePreview: file ? URL.createObjectURL(file) : '' } : a
           )
         }
         : q
@@ -371,6 +396,7 @@ export default function EditExamPage() {
             formData.append(`questions[${qIndex}][answers][${aIndex}][is_correct]`, a.isCorrect ? '1' : '0'); // ✅
             if (a.reason) formData.append(`questions[${qIndex}][answers][${aIndex}][reason]`, a.reason);
             if (a.image instanceof File) formData.append(`questions[${qIndex}][answers][${aIndex}][image]`, a.image);
+            if (a.reason_image instanceof File) formData.append(`questions[${qIndex}][answers][${aIndex}][reason_image]`, a.reason_image);
           });
         }
       });
@@ -589,9 +615,23 @@ export default function EditExamPage() {
         </section>
 
         {/* ── Questions ── */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
+          {/* Insert at top button */}
+          <div className="flex justify-center -mb-4 relative z-10">
+            <button
+              type="button"
+              onClick={() => addQuestion(0)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E8F0] rounded-full text-xs font-bold text-[#2137D6] hover:bg-[#F8FAFC] hover:shadow-md transition-all group shadow-sm"
+              title="Add question at the beginning"
+            >
+              <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
+              {t('create.addQuestion')} هنا
+            </button>
+          </div>
+
           {questions.map((q, index) => (
-            <section key={q.id} className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
+            <React.Fragment key={q.id}>
+              <section key={q.id} className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-[#1E293B]">{t('create.question')} {index + 1}</h3>
@@ -763,6 +803,19 @@ export default function EditExamPage() {
                               </label>
                             </div>
 
+                            {/* Reason image toggle */}
+                            <div className="relative">
+                              <input type="file" accept="image/*" className="hidden"
+                                id={`a-reason-img-${q.id}-${answer.id}`}
+                                onChange={(e) => handleAnswerReasonImageChange(q.id, answer.id, e.target.files?.[0] || null)} />
+                              <label htmlFor={`a-reason-img-${q.id}-${answer.id}`}
+                                className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${answer.reasonImagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
+                                  }`}
+                                title={answer.reasonImagePreview ? 'Change reason image' : 'Add reason image'}>
+                                <ImagePlus className="w-4 h-4 border border-[#2137D6] rounded-sm" />
+                              </label>
+                            </div>
+
                             {q.answers.length > 2 && q.type !== 'true_false' && (
                               <button type="button" onClick={() => removeAnswer(q.id, answer.id)}
                                 className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
@@ -771,16 +824,34 @@ export default function EditExamPage() {
                             )}
                           </div>
 
-                          {answer.imagePreview && (
-                            <div className="flex items-center gap-2 ml-9">
-                              <img src={answer.imagePreview} alt={`Answer ${ansIndex + 1} preview`}
-                                className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
-                              <button type="button" onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
-                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex gap-4 ml-9">
+                            {/* Answer image preview */}
+                            {answer.imagePreview && (
+                              <div className="flex items-center gap-2">
+                                <img src={answer.imagePreview} alt={`Answer ${ansIndex + 1} preview`}
+                                  className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
+                                <button type="button" onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
+                                  className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+
+                            {/* Reason image preview */}
+                            {answer.reasonImagePreview && (
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <img src={answer.reasonImagePreview} alt={`Reason ${ansIndex + 1} preview`}
+                                    className="h-16 w-auto rounded-lg border border-[#2137D6] object-cover" />
+                                  <span className="absolute -top-2 -left-2 bg-[#2137D6] text-white text-[10px] px-1 rounded">Reason</span>
+                                </div>
+                                <button type="button" onClick={() => handleAnswerReasonImageChange(q.id, answer.id, null)}
+                                  className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -807,11 +878,25 @@ export default function EditExamPage() {
                 )}
               </div>
             </section>
-          ))}
-        </div>
+
+            {/* Insert Question Button Between */}
+            <div className="flex justify-center -my-4 relative z-10">
+              <button
+                type="button"
+                onClick={() => addQuestion(index + 1)}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E8F0] rounded-full text-xs font-bold text-[#2137D6] hover:bg-[#F8FAFC] hover:shadow-md transition-all group shadow-sm"
+                title={`Add question after question ${index + 1}`}
+              >
+                <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
+                {t('create.addQuestion')} {index === questions.length - 1 ? '' : 'هنا'}
+              </button>
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
 
         {/* Add Question */}
-        <button type="button" onClick={addQuestion}
+        <button type="button" onClick={() => addQuestion()}
           className="flex items-center gap-2 px-6 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#1E293B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all w-fit">
           <Plus className="w-4 h-4" />
           {t('create.addQuestion')}

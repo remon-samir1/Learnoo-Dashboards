@@ -56,6 +56,8 @@
     "login": {
       "title": "Learnoo Sign In",
       "subtitle": "Sign in to manage your platform",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number",
       "email": "Email Address",
       "password": "Password",
       "emailPlaceholder": "Jane@learnoo.com",
@@ -202,6 +204,7 @@
     "liveSessions": "Live Sessions",
     "examsAndQA": "Exams & Q&A",
     "community": "Community",
+    "discussions": "Discussions",
     "notesSummaries": "Notes & Summaries",
     "electronicLibrary": "Electronic Library",
     "notifications": "Notifications",
@@ -276,6 +279,7 @@
       "academicStructure": "Academic Structure",
       "contentManager": "Content Manager",
       "community": "Community",
+      "discussions": "Discussions",
       "electronicLibrary": "Electronic Library",
       "notesSummaries": "Notes & Summaries",
       "liveSessions": "Live Sessions",
@@ -367,30 +371,30 @@
         "fallbackCourse": "Advanced Sorting Algorithms",
         "fallbackLecture": "Lecture"
       },
-     "subjects": {
-  "title": "My Subjects",
-  "fallbackTitle": "Category",
-  "chooseLevel": "Choose the next level",
-  "back": "Back",
-  "courses": "Courses",
-  "lectures": "Lectures",
-  "notes": "Notes",
-  "exams": "Exams",
-  "students": "Students",
-  "empty": "No content available here",
-  "activation": {
-    "button": "Activate course",
-    "title": "Activate course",
-    "description": "Enter the activation code for this course",
-    "placeholder": "Enter activation code",
-    "submit": "Activate now",
-    "loading": "Activating...",
-    "codeRequired": "Please enter the activation code",
-    "failed": "Failed to activate course",
-    "success": "Course activated successfully",
-    "error": "An error occurred while activating the course"
-  }
-},
+      "subjects": {
+        "title": "My Subjects",
+        "fallbackTitle": "Category",
+        "chooseLevel": "Choose the next level",
+        "back": "Back",
+        "courses": "Courses",
+        "lectures": "Lectures",
+        "notes": "Notes",
+        "exams": "Exams",
+        "students": "Students",
+        "empty": "No content available here",
+        "activation": {
+          "button": "Activate course",
+          "title": "Activate course",
+          "description": "Enter the activation code for this course",
+          "placeholder": "Enter activation code",
+          "submit": "Activate now",
+          "loading": "Activating...",
+          "codeRequired": "Please enter the activation code",
+          "failed": "Failed to activate course",
+          "success": "Course activated successfully",
+          "error": "An error occurred while activating the course"
+        }
+      },
       "courses": {
         "seeAll": "See All Courses"
       },
@@ -459,7 +463,6 @@
         "profileImage": "Profile Image",
         "accountStatus": "Account Status"
       },
-
       "fields": {
         "firstName": "First Name",
         "lastName": "Last Name",
@@ -795,6 +798,10 @@
       "composerPost": "Post",
       "composerMomentLabel": "At {time}",
       "anonymousUser": "Student",
+      "reply": "Reply",
+      "replyPlaceholder": "Type your reply here...",
+      "cancel": "Cancel",
+      "postReply": "Post Reply",
       "watchAccessDenied": "You can't watch this chapter.",
       "watchAccessDeniedHint": "Activate your course or chapter from the course page. If you opened this link directly, go back and open the chapter there so your access can update.",
       "hlsPlaybackError": "The video stream could not be played. Check your connection and try again.",
@@ -1941,6 +1948,30 @@
       "socialLinkDeleted": "Social link deleted successfully!"
     }
   },
+  "discussions": {
+    "pageTitle": "Discussions Management",
+    "pageDescription": "View, reply to, and delete student discussions across all chapters.",
+    "reply": "Reply",
+    "delete": "Delete",
+    "deleteConfirm": "Are you sure you want to delete this discussion?",
+    "noDiscussions": "No discussions found.",
+    "postedBy": "Posted by {name}",
+    "replies": "Replies",
+    "chapter": "Chapter",
+    "moment": "Moment",
+    "type": "Type",
+    "allChapters": "All Chapters",
+    "actions": "Actions",
+    "badges": {
+      "student": "Student",
+      "doctor": "Doctor",
+      "admin": "Admin"
+    },
+    "notifications": {
+      "deleted": "Discussion deleted successfully",
+      "replied": "Reply sent successfully"
+    }
+  },
   "universities": {
     "pageTitle": "Universities Management",
     "pageDescription": "Manage universities and institutions",
@@ -2484,7 +2515,6 @@
       }
     }
   },
-
   "notesDetails": {
     "backToNotes": "Back to Notes",
     "goToLecture": "Go to Lecture",
@@ -2616,12 +2646,12 @@
       "communityPosts": "Community Posts",
       "settings": "Settings"
     },
-   "qr": {
-  "title": "Student QR Code",
-  "description": "Scan to verify student identity",
-  "downloadSuccess": "QR Code downloaded successfully",
-  "downloadError": "Failed to download QR Code"
-}
+    "qr": {
+      "title": "Student QR Code",
+      "description": "Scan to verify student identity",
+      "downloadSuccess": "QR Code downloaded successfully",
+      "downloadError": "Failed to download QR Code"
+    }
   },
   "notifications": {
     "title": "Notifications",
@@ -2649,10 +2679,10 @@
     "passwordMismatch": "Passwords do not match",
     "passwordChanged": "Password changed successfully",
     "errors": {
-  "passwordMin": "Password must be at least 8 characters",
-  "confirmRequired": "Please confirm your password",
-  "passwordMismatch": "Passwords do not match"
-},
+      "passwordMin": "Password must be at least 8 characters",
+      "confirmRequired": "Please confirm your password",
+      "passwordMismatch": "Passwords do not match"
+    },
     "preferences": {
       "title": "Preferences",
       "notifications": {

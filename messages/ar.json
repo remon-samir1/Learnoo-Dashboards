@@ -52,11 +52,37 @@
     "welcome": "مرحباً",
     "dashboard": "لوحة التحكم"
   },
+  "discussions": {
+    "pageTitle": "إدارة النقاشات",
+    "pageDescription": "عرض والرد على وحذف نقاشات الطلاب في جميع الفصول.",
+    "reply": "رد",
+    "delete": "حذف",
+    "deleteConfirm": "هل أنت متأكد من حذف هذا النقاش؟",
+    "noDiscussions": "لم يتم العثور على نقاشات.",
+    "postedBy": "بواسطة {name}",
+    "replies": "ردود",
+    "chapter": "الفصل",
+    "moment": "اللحظة",
+    "type": "النوع",
+    "allChapters": "جميع الفصول",
+    "actions": "إجراءات",
+    "badges": {
+      "student": "طالب",
+      "doctor": "دكتور",
+      "admin": "أدمن"
+    },
+    "notifications": {
+      "deleted": "تم حذف النقاش بنجاح",
+      "replied": "تم إرسال الرد بنجاح"
+    }
+  },
   "auth": {
     "login": {
       "title": "Learnoo تسجيل الدخول",
       "subtitle": "سجل الدخول لإدارة منصتك",
       "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "أدخل رقم الهاتف",
       "password": "كلمة المرور",
       "emailPlaceholder": "Jane@learnoo.com",
       "passwordPlaceholder": "أدخل كلمة المرور",
@@ -178,6 +204,7 @@
     "liveSessions": "الجلسات المباشرة",
     "examsAndQA": "الاختبارات والأسئلة",
     "community": "المجتمع",
+    "discussions": "المناقشات",
     "notesSummaries": "الملاحظات والملخصات",
     "electronicLibrary": "المكتبة الإلكترونية",
     "notifications": "الإشعارات",
@@ -368,30 +395,30 @@
         "fallbackCourse": "الخوارزميات المتقدمة",
         "fallbackLecture": "محاضرة"
       },
-     "subjects": {
-  "title": "موادي الدراسية",
-  "fallbackTitle": "قسم",
-  "chooseLevel": "اختاري المستوى التالي",
-  "back": "رجوع",
-  "courses": "كورسات",
-  "lectures": "محاضرات",
-  "notes": "ملاحظات",
-  "exams": "اختبارات",
-  "students": "طلاب",
-  "empty": "لا يوجد محتوى متاح هنا",
-  "activation": {
-    "button": "تفعيل الكورس",
-    "title": "تفعيل الكورس",
-    "description": "أدخلي كود التفعيل الخاص بهذا الكورس",
-    "placeholder": "اكتبي كود التفعيل",
-    "submit": "تفعيل الآن",
-    "loading": "جارٍ التفعيل...",
-    "codeRequired": "من فضلك أدخلي كود التفعيل",
-    "failed": "فشل تفعيل الكورس",
-    "success": "تم تفعيل الكورس بنجاح",
-    "error": "حدث خطأ أثناء تفعيل الكورس"
-  }
-},
+      "subjects": {
+        "title": "موادي الدراسية",
+        "fallbackTitle": "قسم",
+        "chooseLevel": "اختاري المستوى التالي",
+        "back": "رجوع",
+        "courses": "كورسات",
+        "lectures": "محاضرات",
+        "notes": "ملاحظات",
+        "exams": "اختبارات",
+        "students": "طلاب",
+        "empty": "لا يوجد محتوى متاح هنا",
+        "activation": {
+          "button": "تفعيل الكورس",
+          "title": "تفعيل الكورس",
+          "description": "أدخلي كود التفعيل الخاص بهذا الكورس",
+          "placeholder": "اكتبي كود التفعيل",
+          "submit": "تفعيل الآن",
+          "loading": "جارٍ التفعيل...",
+          "codeRequired": "من فضلك أدخلي كود التفعيل",
+          "failed": "فشل تفعيل الكورس",
+          "success": "تم تفعيل الكورس بنجاح",
+          "error": "حدث خطأ أثناء تفعيل الكورس"
+        }
+      },
       "courses": {
         "seeAll": "مشاهدة جميع الكورسات"
       },
@@ -795,6 +822,10 @@
       "composerPost": "نشر",
       "composerMomentLabel": "عند {time}",
       "anonymousUser": "طالب",
+      "reply": "رد",
+      "replyPlaceholder": "اكتب ردك هنا...",
+      "cancel": "إلغاء",
+      "postReply": "نشر الرد",
       "watchAccessDenied": "لا يمكنك مشاهدة هذا الفصل.",
       "watchAccessDeniedHint": "فعّل الدورة أو الفصل من صفحة الدورة. إذا فتحت الرابط مباشرة، ارجع وافتح الفصل من هناك حتى يُحدَّث وصولك.",
       "hlsPlaybackError": "تعذّر تشغيل بث الفيديو. تحقق من الاتصال وحاول مرة أخرى.",
@@ -2484,7 +2515,6 @@
       }
     }
   },
-
   "notesDetails": {
     "backToNotes": "العودة إلى الملاحظات",
     "goToLecture": "الذهاب إلى المحاضرة",
@@ -2596,7 +2626,6 @@
         "error": "فشل تحديث الملف الشخصي"
       }
     },
-
     "links": {
       "title": "روابط سريعة"
     },
@@ -2617,12 +2646,12 @@
       "communityPosts": "المنشورات في المجتمع",
       "settings": "الاعدادات"
     },
-   "qr": {
-  "title": "رمز الطالب",
-  "description": "امسح للتحقق من هوية الطالب",
-  "downloadSuccess": "تم تحميل رمز QR بنجاح",
-  "downloadError": "فشل تحميل رمز QR"
-}
+    "qr": {
+      "title": "رمز الطالب",
+      "description": "امسح للتحقق من هوية الطالب",
+      "downloadSuccess": "تم تحميل رمز QR بنجاح",
+      "downloadError": "فشل تحميل رمز QR"
+    }
   },
   "notifications": {
     "title": "الإشعارات",
@@ -2649,18 +2678,17 @@
     "cancel": "إلغاء",
     "passwordMismatch": "كلمتا المرور غير متطابقتين",
     "passwordChanged": "تم تغيير كلمة المرور بنجاح",
-          "errors": {
-  "passwordMin": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
-  "confirmRequired": "يرجى تأكيد كلمة المرور",
-  "passwordMismatch": "كلمتا المرور غير متطابقتين"
-},
+    "errors": {
+      "passwordMin": "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+      "confirmRequired": "يرجى تأكيد كلمة المرور",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين"
+    },
     "preferences": {
       "title": "التفضيلات",
       "notifications": {
         "title": "الإشعارات",
         "description": "استقبال الإشعارات الفورية"
       },
-
       "darkMode": {
         "title": "الوضع الداكن",
         "description": "تفعيل المظهر الداكن"

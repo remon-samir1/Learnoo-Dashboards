@@ -323,8 +323,8 @@ export default function StudentCommunityFeed({
                 type="button"
                 onClick={() => setTab(item.key)}
                 className={`whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition sm:px-4 ${tab === item.key
-                    ? 'border-[#2563EB] text-[#2563EB]'
-                    : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
+                  ? 'border-[#2563EB] text-[#2563EB]'
+                  : 'border-transparent text-[#64748B] hover:text-[#0F172A]'
                   }`}
               >
                 {item.label}

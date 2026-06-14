@@ -112,20 +112,19 @@ export function useChapterViewRecording({
         el.addEventListener('pause', onPause);
       }
 
-      // If no video element (iframe case) or if we want a wall-clock fallback,
-      // use a standard interval to accumulate time.
-      const intervalId = window.setInterval(() => {
-        if (cancelled || recordedRef.current || minutesRequired <= 0) return;
-        
-        // If we have an element, we rely on its events. 
-        // If no element, we assume they are watching as long as the page is open.
-        if (!el) {
-          accumulatedSecRef.current += 1;
-          if (accumulatedSecRef.current >= minutesRequired * 60) {
-            void recordViewOnce();
-          }
+      // If no video element (iframe case): use wall-clock timers.
+      // view_by_minute <= 0 → record immediately on page open (once).
+      // view_by_minute >  0 → fire exactly once after (minutesRequired * 60) seconds.
+      let timeoutId: number | undefined;
+      if (!el) {
+        if (minutesRequired <= 0) {
+          void recordViewOnce();
+        } else {
+          timeoutId = window.setTimeout(() => {
+            if (!cancelled) void recordViewOnce();
+          }, minutesRequired * 60 * 1000);
         }
-      }, 1000);
+      }
 
       detach = () => {
         if (el) {
@@ -134,7 +133,7 @@ export function useChapterViewRecording({
           el.removeEventListener('seeking', onSeeking);
           el.removeEventListener('pause', onPause);
         }
-        window.clearInterval(intervalId);
+        if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       };
     });
 

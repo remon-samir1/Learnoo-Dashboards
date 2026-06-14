@@ -7,6 +7,7 @@ export type WatchDiscussionItem = {
     created_at?: string | null;
     moment?: number | null;
     type?: string | null;
+    parent_id?: number | null;
     user?: {
       data?: {
         attributes?: {
@@ -17,6 +18,7 @@ export type WatchDiscussionItem = {
       };
     };
   };
+  replies?: WatchDiscussionItem[];
 };
 
 export function normalizeDiscussions(raw: unknown): WatchDiscussionItem[] {
@@ -54,6 +56,10 @@ export function discussionAuthorName(d: WatchDiscussionItem): string | null {
   const ln = attrs.last_name?.trim() ?? '';
   const joined = `${fn} ${ln}`.trim();
   return joined || null;
+}
+
+export function discussionReplies(d: WatchDiscussionItem): WatchDiscussionItem[] {
+  return d.replies ?? [];
 }
 
 export function discussionKey(d: WatchDiscussionItem, index: number): string {

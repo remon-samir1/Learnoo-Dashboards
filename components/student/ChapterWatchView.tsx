@@ -32,8 +32,10 @@ import {
   discussionCreatedAt,
   discussionKey,
   discussionMoment,
+  discussionReplies,
   discussionTypeLabel,
   normalizeDiscussions,
+  type WatchDiscussionItem,
 } from '@/components/student/watch/watchChapterDiscussionUtils';
 import {
   coerceCanWatchExplicitTrue,
@@ -130,6 +132,9 @@ export default function ChapterWatchView({
   const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
   const [pdfScale, setPdfScale] = useState(1.0);
   const [isMobile, setIsMobile] = useState(false);
+  const [replyToId, setReplyToId] = useState<string | number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -170,10 +175,29 @@ export default function ChapterWatchView({
     return idx >= 0 ? idx : 0;
   }, [partChapters, chapterId]);
 
-  const discussions = useMemo(
-    () => (chapter ? normalizeDiscussions(chapter.attributes.discussions) : []),
-    [chapter]
-  );
+  const discussions = useMemo(() => {
+    if (!chapter) return [];
+    const flat = normalizeDiscussions(chapter.attributes.discussions);
+    const map = new Map<string | number, WatchDiscussionItem>();
+    const roots: WatchDiscussionItem[] = [];
+
+    flat.forEach((d) => {
+      if (d.id != null) map.set(d.id, { ...d, replies: [] });
+    });
+
+    flat.forEach((d) => {
+      const parentId = d.attributes?.parent_id;
+      if (parentId != null && map.has(parentId)) {
+        const parent = map.get(parentId)!;
+        parent.replies = parent.replies || [];
+        parent.replies.push(map.get(d.id!) || d);
+      } else {
+        roots.push(map.get(d.id!) || d);
+      }
+    });
+
+    return roots;
+  }, [chapter]);
 
   const quizzes = useMemo(() => (chapter ? chapterQuizzes(chapter) : []), [chapter]);
 
@@ -335,6 +359,35 @@ export default function ChapterWatchView({
       toast.error(msg);
     } finally {
       setComposerSubmitting(false);
+    }
+  };
+
+  const submitReply = async (parentId: string | number, momentSource?: number | null) => {
+    const text = replyText.trim();
+    if (!text) {
+      toast.error(t('discussionContentRequired'));
+      return;
+    }
+    if (!Number.isFinite(chapterIdForApi)) return;
+
+    setReplySubmitting(true);
+    try {
+      await api.discussions.create({
+        chapter_id: chapterIdForApi,
+        type: 'text',
+        content: text,
+        moment: momentSource ?? 0,
+        parent_id: Number(parentId),
+      });
+      toast.success(t('discussionPosted'));
+      setReplyText('');
+      setReplyToId(null);
+      await refreshChapter();
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : t('discussionPostError');
+      toast.error(msg);
+    } finally {
+      setReplySubmitting(false);
     }
   };
 
@@ -741,70 +794,7 @@ export default function ChapterWatchView({
             ) : (
               discussions
                 .filter((d) => Boolean(discussionContent(d)))
-                .map((d, i) => {
-                  const content = discussionContent(d);
-                  const author = discussionAuthorName(d) ?? t('anonymousUser');
-                  const created = formatDiscussionTime(discussionCreatedAt(d), locale);
-                  const momentSec = discussionMoment(d);
-                  const momentLabel = formatMomentSeconds(momentSec);
-                  const typeTag = discussionTypeLabel(d);
-                  const isQuestion = typeTag === 'question';
-
-                  const jump = () => {
-                    // Video jump disabled for iframe
-                  };
-
-                  return (
-                    <article
-                      key={discussionKey(d, i)}
-                      className="rounded-xl border border-slate-700/80 bg-slate-900/50 p-3.5 shadow-sm sm:p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#2D43D1] text-xs font-bold text-white">
-                            {author
-                              .split(/\s+/)
-                              .filter(Boolean)
-                              .slice(0, 2)
-                              .map((p) => p[0]?.toUpperCase())
-                              .join('') || '•'}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-100">
-                              {author}
-                              {created ? (
-                                <span className="font-normal text-slate-500"> • {created}</span>
-                              ) : null}
-                            </p>
-                            {typeTag ? (
-                              <span
-                                className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isQuestion
-                                  ? 'bg-orange-500/20 text-orange-300'
-                                  : 'bg-[#2D43D1]/25 text-[#93B4FF]'
-                                  }`}
-                              >
-                                {isQuestion ? t('badgeQuestion') : t('badgeComment')}
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                        {false && momentSec != null && videoSrc && !accessDenied ? (
-                          <button
-                            type="button"
-                            onClick={jump}
-                            className="-me-1 min-h-[44px] shrink-0 px-2 py-2 text-xs font-semibold text-[#5B8DEF] hover:underline sm:me-0 sm:min-h-0 sm:px-0 sm:py-0"
-                          >
-                            {t('jumpToTime')}
-                            {momentLabel ? (
-                              <span className="ms-1 text-slate-500">({momentLabel})</span>
-                            ) : null}
-                          </button>
-                        ) : null}
-                      </div>
-                      <p className="mt-3 text-sm leading-relaxed text-slate-300">{content}</p>
-                    </article>
-                  );
-                })
+                .map((d, i) => <DiscussionNode key={discussionKey(d, i)} discussion={d} />)
             )}
           </section>
         ) : null}
@@ -840,4 +830,114 @@ export default function ChapterWatchView({
       </div>
     </div>
   );
+
+  function DiscussionNode({ discussion, isReply = false }: { discussion: WatchDiscussionItem; isReply?: boolean }) {
+    const d = discussion;
+    const content = discussionContent(d);
+    const author = discussionAuthorName(d) ?? t('anonymousUser');
+    const created = formatDiscussionTime(discussionCreatedAt(d), locale);
+    const momentSec = discussionMoment(d);
+    const momentLabel = formatMomentSeconds(momentSec);
+    const typeTag = discussionTypeLabel(d);
+    const isQuestion = typeTag === 'question';
+    const replies = discussionReplies(d);
+
+    const jump = () => {
+      // jump logic
+    };
+
+    return (
+      <article
+        className={`${
+          isReply
+            ? 'mt-4 rounded-xl bg-slate-800/30 p-4 ring-1 ring-white/5 shadow-sm transition-all hover:bg-slate-800/40'
+            : 'rounded-xl border border-slate-700/80 bg-slate-900/50 p-3.5 shadow-sm sm:p-4'
+        }`}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className={`flex shrink-0 items-center justify-center rounded-full bg-[#2D43D1] font-bold text-white shadow-inner ${
+                isReply ? 'size-9 text-[11px]' : 'size-10 text-xs'
+              }`}
+            >
+              {author
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((p) => p[0]?.toUpperCase())
+                .join('') || '•'}
+            </div>
+            <div className="min-w-0">
+              <p className={`font-semibold text-slate-100 ${isReply ? 'text-[13px]' : 'text-sm'}`}>
+                {author}
+                {created ? <span className="font-normal text-slate-500"> • {created}</span> : null}
+              </p>
+              {!isReply && typeTag ? (
+                <span
+                  className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    isQuestion ? 'bg-orange-500/20 text-orange-300' : 'bg-[#2D43D1]/25 text-[#93B4FF]'
+                  }`}
+                >
+                  {isQuestion ? t('badgeQuestion') : t('badgeComment')}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+        <p className={`mt-3 leading-relaxed text-slate-300 ${isReply ? 'text-[13px]' : 'text-sm'}`}>{content}</p>
+
+        <div className="mt-4 flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              setReplyToId(replyToId === d.id ? null : d.id ?? null);
+              setReplyText('');
+            }}
+            className="text-xs font-semibold text-slate-400 transition-colors hover:text-white"
+          >
+            {t('reply')}
+          </button>
+        </div>
+
+        {replyToId === d.id && (
+          <div className="mt-4 space-y-3 rounded-lg bg-black/30 p-3 ring-1 ring-slate-800">
+            <textarea
+              rows={2}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              disabled={replySubmitting}
+              placeholder={t('replyPlaceholder')}
+              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setReplyToId(null)}
+                className="px-3 py-1 text-xs font-semibold text-slate-400 hover:text-white"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitReply(d.id!, d.attributes?.moment)}
+                disabled={replySubmitting || !replyText.trim()}
+                className="rounded-md bg-[#2D43D1] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+              >
+                {replySubmitting ? <Loader2 className="size-3 animate-spin" /> : t('postReply')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {replies.length > 0 && (
+          <div className="mt-5 border-s-2 border-slate-700/30 ps-4 sm:ps-6 ml-2 sm:ml-4">
+            {replies.map((r, ri) => (
+              <DiscussionNode key={discussionKey(r, ri)} discussion={r} isReply={true} />
+            ))}
+          </div>
+        )}
+      </article>
+    );
+  }
 }

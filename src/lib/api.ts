@@ -91,6 +91,8 @@ import type {
   // App Version types
   AppVersion,
   CreateAppVersionRequest,
+  StudentViewData,
+  StudentQuestion,
 } from '@/src/types';
 
 // ============================================
@@ -643,7 +645,7 @@ export const departmentsApi = {
 // ============================================
 
 export const discussionsApi = {
-  list: () => get<ApiListResponse<Discussion>>('/v1/discussion'),
+  list: (params?: any) => get<ApiListResponse<Discussion>>('/v1/discussion', { params }),
 
   get: (id: number) => get<ApiResponse<Discussion>>(`/v1/discussion/${id}`),
 
@@ -708,6 +710,28 @@ export const lecturesApi = {
   },
 
   delete: (id: number) => del<ApiResponse<Lecture>>(`/v1/lecture/${id}`),
+};
+
+// ============================================
+// Lecture Analytics API
+// ============================================
+
+export const lectureAnalyticsApi = {
+  list: (lectureId: number) => get<ApiResponse<StudentViewData[]>>(`/v1/lecture/${lectureId}/analytics`),
+};
+
+// ============================================
+// Lecture Questions API
+// ============================================
+
+export const lectureQuestionsApi = {
+  list: (lectureId: number) => get<ApiResponse<StudentQuestion[]>>(`/v1/lecture/${lectureId}/questions`),
+
+  reply: (questionId: number, reply: string) =>
+    post<ApiResponse<StudentQuestion>>(`/v1/lecture/question/${questionId}/reply`, { reply }),
+
+  delete: (questionId: number) =>
+    del<ApiResponse<void>>(`/v1/lecture/question/${questionId}`),
 };
 
 // ============================================
@@ -1305,6 +1329,8 @@ export const api = {
   appVersions: appVersionsApi,
   admin: adminApi,
   issues: issuesApi,
+  lectureAnalytics: lectureAnalyticsApi,
+  lectureQuestions: lectureQuestionsApi,
 };
 
 export default api;

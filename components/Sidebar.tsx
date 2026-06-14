@@ -22,6 +22,8 @@ import {
 
   ClipboardList,
 
+  MessageCircle,
+
   MessageSquare,
 
   Users2,
@@ -113,6 +115,8 @@ const getMenuItems = (t: (key: string) => string): MenuItem[] => [
   { name: t('sidebar.examsAndQA'), icon: ClipboardList, path: '/exams' },
 
   { name: t('sidebar.community'), icon: MessageSquare, path: '/community' },
+
+  { name: t('sidebar.discussions'), icon: MessageCircle, path: '/discussions' },
 
   { name: t('sidebar.electronicLibrary'), icon: BookOpen, path: '/electronic-library' },
 
