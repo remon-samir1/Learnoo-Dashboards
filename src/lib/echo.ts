@@ -92,8 +92,11 @@ export function disconnectEcho(): void {
 export function refreshEchoAuth(): void {
   if (echoInstance) {
     const token = Cookies.get("token");
-    echoInstance.connector.pusher.config.auth.headers.Authorization = `Bearer ${token || ""}`;
-    console.log("[Echo] Auth token refreshed");
+    const config = echoInstance.connector.pusher.config;
+    if (config.auth && config.auth.headers) {
+      config.auth.headers.Authorization = `Bearer ${token || ""}`;
+      console.log("[Echo] Auth token refreshed");
+    }
   }
 }
 
