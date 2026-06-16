@@ -7,7 +7,6 @@ import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import Cookies from '@/lib/cookies';
 import { ApiError, getApiErrorMessage } from '@/src/lib/api';
-import { getPostAuthHref } from '@/src/lib/auth-post-login-redirect';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
 
@@ -46,8 +45,8 @@ export default function CreateAccountPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('20');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  // const [password, setPassword] = useState('');
+  // const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -60,15 +59,15 @@ export default function CreateAccountPage() {
     const ph = phone.trim().replace(/\s+/g, '');
     const fullPhone = `${countryCode}${ph}`;
 
-    if (!fn || !ln || !em || !ph || !password || !confirmPassword) {
+    if (!fn || !ln || !em || !ph) {
       setError(t('errors.missingFields'));
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError(t('errors.passwordMismatch'));
-      return;
-    }
+    // if (password !== confirmPassword) {
+    //   setError(t('errors.passwordMismatch'));
+    //   return;
+    // }
 
     if (!agreeToTerms) {
       setError(t('errors.agreeToTerms'));
@@ -89,7 +88,7 @@ export default function CreateAccountPage() {
         last_name: ln,
         phone: fullPhone,
         email: em,
-        password,
+        // password,
         device_name: DEVICE_NAME,
       });
 
@@ -99,7 +98,7 @@ export default function CreateAccountPage() {
       const user = userData ? JSON.parse(userData) : null;
       const userRole = user?.attributes?.role;
 
-      router.push(getPostAuthHref(locale, userRole, user));
+      router.push(`/${locale}/verification-code`);
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, t('errors.registerFailed'));
       toast.error(message);
@@ -182,7 +181,7 @@ export default function CreateAccountPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2">
+        {/* <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('password')}</label>
           <input
             type="password"
@@ -206,7 +205,7 @@ export default function CreateAccountPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
           />
-        </div>
+        </div> */}
 
         {error ? (
           <div className="rounded-md border border-red-200 bg-red-50 p-3">

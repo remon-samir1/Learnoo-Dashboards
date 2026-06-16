@@ -431,6 +431,11 @@
         "empty": "No notes or summaries available now.",
         "fallbackTitle": "Untitled Note",
         "fallbackLecture": "General"
+      },
+      "posts": {
+        "title": "Latest Community Posts",
+        "viewAll": "View All",
+        "empty": "No community posts available now."
       }
     },
     "pageTitle": "Students Management",
@@ -960,6 +965,16 @@
       "like": "Like",
       "tagsLabel": "Tags (optional)",
       "tagsPlaceholder": "e.g. math, calculus"
+    },
+    "community": {
+      "posts": {
+        "showComments": "{count, plural, one {# comment} other {# comments}}",
+        "hideComments": "Hide {count, plural, one {# comment} other {# comments}}",
+        "noCommentsYet": "No comments yet. Be the first to comment!",
+        "unknownUser": "Anonymous",
+        "instructorBadge": "Instructor",
+        "deleteComment": "Delete comment"
+      }
     },
     "studentLibrary": {
       "pageTitle": "Electronic Library",

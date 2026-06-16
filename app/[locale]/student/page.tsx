@@ -1,5 +1,6 @@
 import ContinueWatchingSection from "@/src/components/student/home/ContinueWatchingSection";
 import GetStudentNotes from "@/src/components/student/home/GetStudentNotes";
+import LatestPostsSection from "@/src/components/student/home/LatestPostsSection";
 import LibrarySection from "@/src/components/student/home/LibrarySection";
 import UpcomingLiveClasses from "@/src/components/student/home/LiveSessions";
 import MyCoursesSection from "@/src/components/student/home/MyCoursesSection";
@@ -9,6 +10,7 @@ import WelcomeSection from "@/src/components/student/home/WelcomeSection";
 import { getCourseById } from "@/src/services/student/course.service";
 import { getCategories } from "@/src/services/student/department.service";
 import { getLibrary } from "@/src/services/student/library.service";
+import { getLatestGeneralPosts } from "@/src/services/student/post.service";
 import { getStudentLiveRooms } from "@/src/services/student/live-room.service";
 import {
   getStudentCourses,

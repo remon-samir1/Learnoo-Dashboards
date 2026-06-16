@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEchoOTP } from '@/src/hooks/useEchoOTP';
-import AuthPageLayout from '../components/AuthLayout';
+import AuthPageLayout from '../../(auth)/components/AuthLayout';
 
 export default function VerificationCodePage() {
   const t = useTranslations('auth.verification');

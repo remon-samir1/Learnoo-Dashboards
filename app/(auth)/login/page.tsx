@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import Cookies from '@/lib/cookies';
-import { getPostAuthHref } from '@/src/lib/auth-post-login-redirect';
 import { getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
@@ -116,7 +115,7 @@ export default function LoginPage() {
       const userRole = user?.attributes?.role;
 
       sessionStorage.removeItem('registration_onboarding');
-      router.push(getPostAuthHref(locale, userRole, user));
+      router.push(`/${locale}/verification-code`);
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, t('errors.loginFailed'));
       toast.error(message);

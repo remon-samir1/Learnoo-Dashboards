@@ -204,6 +204,11 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           clearAuthCookies();
 
+          if (typeof window !== 'undefined') {
+            const { disconnectEcho } = await import('@/src/lib/echo');
+            disconnectEcho();
+          }
+
           set({
             user: null,
             token: null,

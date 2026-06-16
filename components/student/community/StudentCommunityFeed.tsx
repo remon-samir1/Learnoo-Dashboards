@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import StudentCommunityCreatePostModal from '@/components/student/community/StudentCommunityCreatePostModal';
+import StudentCommunityPostComments from '@/components/student/community/StudentCommunityPostComments';
 import { communityPostRelativeTime, communityPostTypeBadgeClasses } from '@/src/lib/community-post-display';
 import { pickPostImageUrl } from '@/src/lib/community-post-media';
 import { useCreateComment } from '@/src/hooks/useComments';
@@ -470,6 +471,13 @@ export default function StudentCommunityFeed({
                         </>
                       )}
                     </div>
+
+                    {/* Comments section */}
+                    <StudentCommunityPostComments
+                      postId={post.id}
+                      commentsCount={comments}
+                      readOnly={readOnly}
+                    />
                   </div>
                 </div>
               </li>

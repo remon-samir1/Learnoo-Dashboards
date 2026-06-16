@@ -455,6 +455,11 @@
         "empty": "لا توجد ملاحظات أو ملخصات متاحة حالياً.",
         "fallbackTitle": "ملاحظة بدون عنوان",
         "fallbackLecture": "عام"
+      },
+      "posts": {
+        "title": "أحدث منشورات المجتمع",
+        "viewAll": "عرض الكل",
+        "empty": "لا توجد منشورات في المجتمع حالياً."
       }
     },
     "pageTitle": "إدارة الطلاب",
@@ -984,6 +989,16 @@
       "like": "إعجاب",
       "tagsLabel": "وسوم (اختياري)",
       "tagsPlaceholder": "مثال: رياضيات، تفاضل"
+    },
+    "community": {
+      "posts": {
+        "showComments": "{count, plural, one {تعليق واحد} other {# تعليقات}}",
+        "hideComments": "إخفاء {count, plural, one {التعليق} other {# تعليقات}}",
+        "noCommentsYet": "لا توجد تعليقات بعد. كن أول من يعلق!",
+        "unknownUser": "مجهول",
+        "instructorBadge": "مدرّس",
+        "deleteComment": "حذف التعليق"
+      }
     },
     "studentLibrary": {
       "pageTitle": "المكتبة الإلكترونية",
