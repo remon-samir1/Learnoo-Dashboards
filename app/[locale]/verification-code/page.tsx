@@ -83,7 +83,7 @@ export default function VerificationCodePage() {
           )}
         </div>
 
-        <Link href="/reset-password" virtual-link-type="internal">
+        <Link href="/en/student" virtual-link-type="internal">
           <button className="w-full h-9 bg-primary border-none rounded-lg font-sans font-medium text-[11.9px] leading-5 text-white cursor-pointer hover:opacity-90 active:scale-[0.99] transition-all">{t('verify')}</button>
         </Link>
 

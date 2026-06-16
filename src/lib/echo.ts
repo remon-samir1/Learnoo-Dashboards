@@ -30,6 +30,7 @@ interface EchoConfig {
 
 function getEchoConfig(): EchoConfig {
   const token = Cookies.get("token");
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
 
   return {
     broadcaster: "reverb",
@@ -38,7 +39,7 @@ function getEchoConfig(): EchoConfig {
     wsPort: 8090,
     forceTLS: false,
     enabledTransports: ["ws"],
-    authEndpoint: "/v1/broadcasting/auth",
+    authEndpoint: `${apiBaseUrl}/v1/broadcasting/auth`,
     auth: {
       headers: {
         Authorization: `Bearer ${token || ""}`,
@@ -92,6 +93,7 @@ export function disconnectEcho(): void {
 export function refreshEchoAuth(): void {
   if (echoInstance) {
     const token = Cookies.get("token");
+    console.log("[Echo] Refreshing auth with token:", token ? "present" : "missing");
     const config = echoInstance.connector.pusher.config;
     if (config.auth && config.auth.headers) {
       config.auth.headers.Authorization = `Bearer ${token || ""}`;
@@ -118,9 +120,17 @@ export function listenForOTP(userId: string | number, callback: OTPCallback): ()
   const channelName = `auto-otp.${userId}`;
   const channel = echo.private(channelName);
 
+  channel.subscribed(() => {
+    console.log(`[Echo] Subscribed to channel: ${channelName}`);
+  });
+
   channel.listen("SendOtpEvent", (payload: OTPPayload) => {
     console.log("[Echo] OTP received:", payload);
     callback(payload);
+  });
+
+  channel.error((err: Error) => {
+    console.error(`[Echo] Channel error for ${channelName}:`, err);
   });
 
   console.log(`[Echo] Listening for OTP on channel: ${channelName}`);

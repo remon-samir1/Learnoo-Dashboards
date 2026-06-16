@@ -46,6 +46,7 @@ export function useEchoOTP(): UseEchoOTPReturn {
     refreshEchoAuth();
 
     const userId = user.id;
+    console.log("[useEchoOTP] User ID:", userId, "User object:", user);
     if (!userId) {
       console.warn("[Echo] User ID not available");
       return;
