@@ -55,22 +55,38 @@
   "auth": {
     "login": {
       "title": "Learnoo Sign In",
-      "subtitle": "Sign in to manage your platform",
+      "subtitle": "Sign in with your phone number",
       "phone": "Phone Number",
       "phonePlaceholder": "Enter your phone number",
-      "email": "Email Address",
+      "signIn": "Sign In",
+      "signingIn": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create account",
+      "adminLink": "Admin or Instructor? Sign in with password",
+      "forgotPassword": "Forgot password?",
+      "registeredSuccess": "Account created successfully. Sign in with your phone number.",
+      "errors": {
+        "missingFields": "Please enter your phone number",
+        "loginFailed": "Login failed",
+        "noToken": "No token received",
+        "noPermission": "You do not have permission to access this platform"
+      }
+    },
+    "adminLogin": {
+      "title": "Admin & Instructor Sign In",
+      "subtitle": "Sign in to manage the platform",
+      "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number",
       "password": "Password",
-      "emailPlaceholder": "Jane@learnoo.com",
       "passwordPlaceholder": "Enter your password",
       "rememberMe": "Remember me",
       "forgotPassword": "Forgot password?",
       "signIn": "Sign In",
       "signingIn": "Signing in...",
-      "noAccount": "Don't have an account?",
-      "createAccount": "Create account",
-      "registeredSuccess": "Account created successfully. Sign in with your email and password.",
+      "studentLink": "Student? Sign in with phone only",
+      "registeredSuccess": "Account created successfully. Sign in with your phone and password.",
       "errors": {
-        "missingFields": "Please enter both email and password",
+        "missingFields": "Please enter both phone and password",
         "loginFailed": "Login failed",
         "noToken": "No token received",
         "noPermission": "You do not have permission to access this platform"

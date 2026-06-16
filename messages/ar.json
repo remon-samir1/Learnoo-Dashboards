@@ -79,22 +79,38 @@
   "auth": {
     "login": {
       "title": "Learnoo تسجيل الدخول",
-      "subtitle": "سجل الدخول لإدارة منصتك",
-      "email": "البريد الإلكتروني",
+      "subtitle": "سجل الدخول برقم هاتفك",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "أدخل رقم الهاتف",
+      "signIn": "تسجيل الدخول",
+      "signingIn": "جارٍ تسجيل الدخول...",
+      "noAccount": "ليس لديك حساب؟",
+      "createAccount": "إنشاء حساب",
+      "adminLink": "مدير أو معلم؟ سجل الدخول بكلمة المرور",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "registeredSuccess": "تم إنشاء الحساب بنجاح. سجّل الدخول برقم هاتفك.",
+      "errors": {
+        "missingFields": "الرجاء إدخال رقم الهاتف",
+        "loginFailed": "فشل تسجيل الدخول",
+        "noToken": "لم يتم استلام الرمز المميز",
+        "noPermission": "ليس لديك صلاحية للوصول إلى هذه المنصة"
+      }
+    },
+    "adminLogin": {
+      "title": "تسجيل دخول المدير والمدرسين",
+      "subtitle": "سجل الدخول لإدارة المنصة",
       "phone": "رقم الهاتف",
       "phonePlaceholder": "أدخل رقم الهاتف",
       "password": "كلمة المرور",
-      "emailPlaceholder": "Jane@learnoo.com",
       "passwordPlaceholder": "أدخل كلمة المرور",
       "rememberMe": "تذكرني",
       "forgotPassword": "نسيت كلمة المرور؟",
       "signIn": "تسجيل الدخول",
       "signingIn": "جارٍ تسجيل الدخول...",
-      "noAccount": "ليس لديك حساب؟",
-      "createAccount": "إنشاء حساب",
-      "registeredSuccess": "تم إنشاء الحساب بنجاح. سجّل الدخول بالبريد الإلكتروني وكلمة المرور.",
+      "studentLink": "طالب؟ سجل الدخول برقم الهاتف فقط",
+      "registeredSuccess": "تم إنشاء الحساب بنجاح. سجّل الدخول برقم الهاتف وكلمة المرور.",
       "errors": {
-        "missingFields": "الرجاء إدخال البريد الإلكتروني وكلمة المرور",
+        "missingFields": "الرجاء إدخال رقم الهاتف وكلمة المرور",
         "loginFailed": "فشل تسجيل الدخول",
         "noToken": "لم يتم استلام الرمز المميز",
         "noPermission": "ليس لديك صلاحية للوصول إلى هذه المنصة"

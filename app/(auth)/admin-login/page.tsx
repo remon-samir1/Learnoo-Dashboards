@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
@@ -11,11 +12,14 @@ import { getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
 
-export default function LoginPage() {
-  const t = useTranslations('auth.login');
+export default function AdminLoginPage() {
+  const t = useTranslations('auth.adminLogin');
   const router = useRouter();
   const { login, fetchCurrentUser } = useAuthActions();
+  const [rememberMe, setRememberMe] = useState(false);
   const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [justRegistered, setJustRegistered] = useState(false);
@@ -55,6 +59,43 @@ export default function LoginPage() {
           />
         </div>
 
+        {/* Password */}
+        <div className="flex flex-col gap-2">
+          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('password')}</label>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              className="w-full h-10 px-3 py-[9px] bg-white border border-border-color shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-sans text-sm leading-5 text-text-main outline-none focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)] transition-colors placeholder:text-text-placeholder pr-10"
+              placeholder={t('passwordPlaceholder')}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Remember me + Forgot password */}
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 font-sans text-[11.9px] leading-5 text-text-main cursor-pointer">
+            <input
+              type="checkbox"
+              className="w-[14px] h-[14px] border border-border-color rounded-[3px] accent-primary cursor-pointer"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+            />
+            <span>{t('rememberMe')}</span>
+          </label>
+          <Link href="/forgot-password" virtual-link-type="internal" className="font-sans font-medium text-[11.9px] leading-5 text-primary hover:opacity-80 transition-opacity">
+            {t('forgotPassword')}
+          </Link>
+        </div>
+
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="font-sans text-xs leading-5 text-red-600">{error}</p>
@@ -70,31 +111,18 @@ export default function LoginPage() {
           {loading ? t('signingIn') : t('signIn')}
         </button>
 
-        {/* Links */}
-        <div className="flex flex-col gap-2 text-center">
-          <p className="font-sans text-xs leading-5 text-text-muted">
-            <Link href="/admin-login" virtual-link-type="internal" className="font-sans font-medium text-xs text-primary hover:opacity-80 transition-opacity">
-              {t('adminLink')}
-            </Link>
-          </p>
-          <p className="font-sans text-xs leading-5 text-text-muted">
-            {t('noAccount')}{' '}
-            <Link href="/create-account" virtual-link-type="internal" className="font-sans font-medium text-xs text-primary hover:opacity-80 transition-opacity">
-              {t('createAccount')}
-            </Link>
-          </p>
-          <p className="font-sans text-xs leading-5 text-text-muted">
-            <Link href="/forgot-password" virtual-link-type="internal" className="font-sans font-medium text-xs text-primary hover:opacity-80 transition-opacity">
-              {t('forgotPassword')}
-            </Link>
-          </p>
-        </div>
+        {/* Student link */}
+        <p className="font-sans text-xs leading-5 text-text-muted text-center">
+          <Link href="/login" virtual-link-type="internal" className="font-sans font-medium text-xs text-primary hover:opacity-80 transition-opacity">
+            {t('studentLink')}
+          </Link>
+        </p>
       </div>
     </AuthPageLayout>
   );
 
   async function handleLogin() {
-    if (!phone) {
+    if (!phone || !password) {
       setError(t('errors.missingFields'));
       return;
     }
@@ -103,11 +131,11 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Use auth store login action - omit password entirely for student login
       await login({
         phone: phone,
+        password: password,
         device_name: 'learnoo-web',
-      } as any);
+      });
 
       await fetchCurrentUser();
 

@@ -312,7 +312,7 @@ export interface RegisterRequest {
 
 
 
-  password: string;
+  password?: string;
 
 
 
@@ -339,7 +339,7 @@ export interface LoginRequest {
 
 
 
-  password: string;
+  password?: string;
 
 
 
@@ -387,7 +387,7 @@ export interface ResetPasswordRequest {
 
 
 
-  password: string;
+  password?: string;
 
 
 

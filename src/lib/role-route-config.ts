@@ -28,6 +28,7 @@ export const ROUTE_ZONE_TO_ROLES = {
 /** Auth pages — signed-in users are redirected to their dashboard. */
 export const AUTH_ROUTE_PREFIXES = [
   '/login',
+  '/admin-login',
   '/create-account',
   '/forgot-password',
   '/reset-password',
