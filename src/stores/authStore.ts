@@ -27,6 +27,7 @@ interface AuthState {
 
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
+  loginWithCookies: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   fetchCurrentUser: () => Promise<void>;
