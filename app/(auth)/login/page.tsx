@@ -103,19 +103,24 @@ export default function LoginPage() {
 
     try {
       // Use auth store login action - omit password entirely for student login
+      // This will store token in state only (not cookies) - cookies will be set after OTP verification
       await login({
         phone: phone,
         device_name: 'learnoo-web',
       } as any);
 
-      await fetchCurrentUser();
-
-      const userData = Cookies.get('user_data');
-      const user = userData ? JSON.parse(userData) : null;
-      const userRole = user?.attributes?.role;
-
       sessionStorage.removeItem('registration_onboarding');
-      router.push(`/${locale}/verification-code`);
+      // Ensure any leftover registration flow flag is cleared so login flow is not
+      // mistaken for a registration that should go to complete-profile.
+      try {
+        sessionStorage.removeItem('auth_flow');
+      } catch {}
+      try {
+        Cookies.set('auth_flow', 'login');
+      } catch {}
+      // Redirect to verification page - user must verify OTP before accessing dashboard
+      // Note: We don't call fetchCurrentUser() here because token is not in cookies yet
+      router.push('/verification-code');
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, t('errors.loginFailed'));
       toast.error(message);

@@ -146,7 +146,13 @@ export function getApiErrorMessage(error: unknown, fallback: string = 'Request f
 // ============================================
 
 function getAuthToken(): string | undefined {
-  return Cookies.get('token');
+  // Priority: permanent cookie → temporary sessionStorage (during phone verification flow)
+  const cookieToken = Cookies.get('token');
+  if (cookieToken) return cookieToken;
+  if (typeof window !== 'undefined') {
+    return sessionStorage.getItem('pending_auth_token') ?? undefined;
+  }
+  return undefined;
 }
 
 function buildUrl(path: string): string {
@@ -471,6 +477,9 @@ export const authApi = {
 
   sendPhoneVerification: () =>
     post<ApiResponse<{ message: string }>>('/v1/auth/phone/verification-notification'),
+
+  verifyPhone: (code: string) =>
+    post<ApiResponse<{ message: string }>>('/v1/auth/phone/verify', { code }, true, true),
 
   verifyEmail: (code: string) =>
     post<ApiResponse<{ message: string }>>('/v1/auth/email/verify', { code }),

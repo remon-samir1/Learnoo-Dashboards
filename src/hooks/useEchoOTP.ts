@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@/src/stores/authStore";
 import {
   getEchoInstance,
-  refreshEchoAuth,
   listenForOTP,
   type OTPPayload,
 } from "@/src/lib/echo";
@@ -43,8 +42,6 @@ export function useEchoOTP(): UseEchoOTPReturn {
       return;
     }
 
-    refreshEchoAuth();
-
     const userId = user.id;
     console.log("[useEchoOTP] User ID:", userId, "User object:", user);
     if (!userId) {
@@ -52,49 +49,51 @@ export function useEchoOTP(): UseEchoOTPReturn {
       return;
     }
 
-    if (isListeningRef.current) {
-      return;
-    }
+    const pusher = echo.connector.pusher;
 
-    isListeningRef.current = true;
+    // ✅ ابدأ الـ subscription بس لما الـ connection يكون جاهز
+    const startListening = () => {
+      if (isListeningRef.current) return;
+      isListeningRef.current = true;
 
-    const cleanup = listenForOTP(userId, (payload: OTPPayload) => {
-      const receivedOtp = payload?.user?.otp;
-      if (receivedOtp) {
-        setOtp(receivedOtp);
-      }
-    });
+      console.log("[Echo] Starting to listen, connection state:", pusher.connection.state);
 
-    cleanupRef.current = cleanup;
+      const cleanup = listenForOTP(userId, (payload: OTPPayload) => {
+        console.log("[Echo] Raw payload received:", JSON.stringify(payload));
+        const receivedOtp = payload?.user?.otp;
+        if (receivedOtp) {
+          setOtp(receivedOtp);
+        }
+      });
 
-    const checkConnection = () => {
-      const pusher = echo.connector.pusher;
-      if (pusher && pusher.connection) {
-        setIsConnected(pusher.connection.state === "connected");
-      }
+      cleanupRef.current = cleanup;
     };
 
-    checkConnection();
-    const interval = setInterval(checkConnection, 5000);
-
-    echo.connector.pusher.connection.bind("connected", () => {
+    // ✅ لو متصل فعلاً ابدأ فوراً، لو لسه بيتصل استنى الـ event
+    if (pusher.connection.state === "connected") {
       setIsConnected(true);
-    });
+      startListening();
+    } else {
+      pusher.connection.bind("connected", () => {
+        setIsConnected(true);
+        startListening();
+      });
+    }
 
-    echo.connector.pusher.connection.bind("disconnected", () => {
+    pusher.connection.bind("disconnected", () => {
+      console.warn("[Echo] Disconnected");
       setIsConnected(false);
     });
 
-    echo.connector.pusher.connection.bind("error", (err: Error) => {
-      console.error("[Echo] Connection error:", err.message);
+    pusher.connection.bind("error", (err: Error) => {
+      console.error("[Echo] Connection error:", err);
       setIsConnected(false);
     });
 
     return () => {
-      clearInterval(interval);
-      echo.connector.pusher.connection.unbind("connected");
-      echo.connector.pusher.connection.unbind("disconnected");
-      echo.connector.pusher.connection.unbind("error");
+      pusher.connection.unbind("connected");
+      pusher.connection.unbind("disconnected");
+      pusher.connection.unbind("error");
 
       if (cleanupRef.current) {
         cleanupRef.current();
@@ -104,6 +103,7 @@ export function useEchoOTP(): UseEchoOTPReturn {
     };
   }, [isAuthenticated, user, token]);
 
+  // cleanup عند unmount
   useEffect(() => {
     return () => {
       if (cleanupRef.current) {

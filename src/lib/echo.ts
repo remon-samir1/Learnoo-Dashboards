@@ -13,38 +13,49 @@ declare global {
 
 let echoInstance: Echo<any> | null = null;
 
-interface EchoConfig {
-  broadcaster: "reverb";
-  key: string;
-  wsHost: string;
-  wsPort: number;
-  forceTLS: boolean;
-  enabledTransports: ("ws" | "wss")[];
-  authEndpoint: string;
-  auth: {
-    headers: {
-      Authorization: string;
-    };
-  };
-}
-
-function getEchoConfig(): EchoConfig {
-  const token = Cookies.get("token");
+function getEchoConfig() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
 
   return {
-    broadcaster: "reverb",
+    broadcaster: "reverb" as const,
     key: "ecnn3pfvurlo73fkabhm",
     wsHost: "31.97.36.130",
     wsPort: 8090,
     forceTLS: false,
-    enabledTransports: ["ws"],
-    authEndpoint: `${apiBaseUrl}/v1/broadcasting/auth`,
-    auth: {
-      headers: {
-        Authorization: `Bearer ${token || ""}`,
+    enabledTransports: ["ws" as const],
+
+    authorizer: (channel: { name: string }) => ({
+      authorize: (socketId: string, callback: Function) => {
+        const token = sessionStorage.getItem("pending_auth_token") || Cookies.get("token");
+
+        console.log("[Echo] Authorizing channel:", channel.name);
+        console.log("[Echo] Token:", token ? "present" : "MISSING ❌");
+
+        fetch("/api/broadcasting/auth", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${token || ""}`,
+          },
+          body: new URLSearchParams({
+            socket_id: socketId,
+            channel_name: channel.name,
+          }),
+        })
+          .then((res) => {
+            console.log("[Echo] Auth response status:", res.status);
+            return res.json();
+          })
+          .then((data) => {
+            console.log("[Echo] Auth response data:", data);
+            callback(false, data);
+          })
+          .catch((err) => {
+            console.error("[Echo] Auth request failed:", err);
+            callback(true, err);
+          });
       },
-    },
+    }),
   };
 }
 
@@ -53,17 +64,15 @@ export function getEchoInstance(): Echo<any> | null {
 
   if (!echoInstance) {
     window.Pusher = Pusher;
-
     const config = getEchoConfig();
-
     echoInstance = new Echo(config);
 
     echoInstance.connector.pusher.connection.bind("connected", () => {
-      console.log("[Echo] Connected to WebSocket server");
+      console.log("[Echo] ✅ Connected to WebSocket server");
     });
 
     echoInstance.connector.pusher.connection.bind("disconnected", () => {
-      console.log("[Echo] Disconnected from WebSocket server");
+      console.log("[Echo] ❌ Disconnected from WebSocket server");
     });
 
     echoInstance.connector.pusher.connection.bind("error", (error: Error) => {
@@ -90,18 +99,6 @@ export function disconnectEcho(): void {
   }
 }
 
-export function refreshEchoAuth(): void {
-  if (echoInstance) {
-    const token = Cookies.get("token");
-    console.log("[Echo] Refreshing auth with token:", token ? "present" : "missing");
-    const config = echoInstance.connector.pusher.config;
-    if (config.auth && config.auth.headers) {
-      config.auth.headers.Authorization = `Bearer ${token || ""}`;
-      console.log("[Echo] Auth token refreshed");
-    }
-  }
-}
-
 export type OTPPayload = {
   user: {
     otp: string;
@@ -114,30 +111,31 @@ export function listenForOTP(userId: string | number, callback: OTPCallback): ()
   const echo = getEchoInstance();
   if (!echo) {
     console.warn("[Echo] Echo instance not available");
-    return () => {};
+    return () => { };
   }
 
   const channelName = `auto-otp.${userId}`;
+  console.log("[Echo] Calling echo.private() for channel:", channelName);
+
   const channel = echo.private(channelName);
 
   channel.subscribed(() => {
-    console.log(`[Echo] Subscribed to channel: ${channelName}`);
+    console.log(`✅ [Echo] Subscribed successfully to: private-${channelName}`);
   });
 
+  channel.error((err: unknown) => {
+    console.error(`❌ [Echo] Channel subscription failed:`, JSON.stringify(err));
+  });
+
+  // ✅ نقطة قبل اسم الـ event
   channel.listen("SendOtpEvent", (payload: OTPPayload) => {
-    console.log("[Echo] OTP received:", payload);
+    console.log("[Echo] 🎉 OTP received! Raw payload:", JSON.stringify(payload));
     callback(payload);
   });
 
-  channel.error((err: Error) => {
-    console.error(`[Echo] Channel error for ${channelName}:`, err);
-  });
-
-  console.log(`[Echo] Listening for OTP on channel: ${channelName}`);
-
   return () => {
     channel.stopListening("SendOtpEvent");
-    echo.leaveChannel(channelName);
-    console.log(`[Echo] Stopped listening on channel: ${channelName}`);
+    echo.leave(channelName);
+    console.log(`[Echo] Left channel: ${channelName}`);
   };
 }

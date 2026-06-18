@@ -15,7 +15,7 @@ import AuthPageLayout from '../components/AuthLayout';
 export default function AdminLoginPage() {
   const t = useTranslations('auth.adminLogin');
   const router = useRouter();
-  const { login, fetchCurrentUser } = useAuthActions();
+  const { login, loginWithCookies, fetchCurrentUser } = useAuthActions();
   const [rememberMe, setRememberMe] = useState(false);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -91,9 +91,9 @@ export default function AdminLoginPage() {
             />
             <span>{t('rememberMe')}</span>
           </label>
-          <Link href="/forgot-password" virtual-link-type="internal" className="font-sans font-medium text-[11.9px] leading-5 text-primary hover:opacity-80 transition-opacity">
+          {/* <Link href="/forgot-password" virtual-link-type="internal" className="font-sans font-medium text-[11.9px] leading-5 text-primary hover:opacity-80 transition-opacity">
             {t('forgotPassword')}
-          </Link>
+          </Link> */}
         </div>
 
         {error && (
@@ -131,12 +131,15 @@ export default function AdminLoginPage() {
     setError('');
 
     try {
-      await login({
+      // For admin/instructor users we save token & user cookies immediately
+      // (no OTP). Use `loginWithCookies` which writes cookies on success.
+      await loginWithCookies({
         phone: phone,
         password: password,
         device_name: 'learnoo-web',
       });
 
+      // Ensure auth store has fresh user data
       await fetchCurrentUser();
 
       const userData = Cookies.get('user_data');

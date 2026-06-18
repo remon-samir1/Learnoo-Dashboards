@@ -7,6 +7,7 @@ import Sidebar from "@/components/student/Sidebar";
 import { StudentToaster } from "@/components/student/StudentToaster";
 import type { CurrentUser } from "@/src/interfaces/current-user.interface";
 import { useAuth } from "@/src/stores/authStore";
+import Cookies from "@/lib/cookies";
 
 type StudentLayoutShellProps = {
   locale: string;
@@ -28,9 +29,23 @@ export default function StudentLayoutShell({
   const { isAuthenticated, isLoading } = useAuth();
 
   const isCompleteProfilePage = pathname?.includes("/student/complete-profile");
+  // Read once whether we should skip the profile gate (user_role === 'Student').
+  let skipProfileGate = false;
+  try {
+    const roleCookie = Cookies.get('auth_flow');
+    console.log(roleCookie);
+    if (roleCookie && (roleCookie === 'login' || roleCookie.toLowerCase() === 'login')) {
+      skipProfileGate = true;
+    }
+  } catch {}
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) return;
+
+    // If skipProfileGate is true (user_role cookie says 'Student'), do not
+    // run the redirect to complete-profile. Otherwise keep the normal behavior.
+    if (skipProfileGate) return;
+
     if (!isAcademicProfileComplete && !isCompleteProfilePage) {
       router.replace(`/${locale}/student/complete-profile`);
     }
@@ -51,7 +66,7 @@ export default function StudentLayoutShell({
     );
   }
 
-  if (!isAcademicProfileComplete && !isCompleteProfilePage) {
+  if (!isAcademicProfileComplete && !isCompleteProfilePage && !skipProfileGate) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--primary)] border-t-transparent" />

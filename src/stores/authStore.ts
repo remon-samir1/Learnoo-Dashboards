@@ -32,6 +32,7 @@ interface AuthState {
   fetchCurrentUser: () => Promise<void>;
   updateUser: (user: User) => void;
   clearError: () => void;
+  activateSession: () => void;
 }
 
 // ============================================
@@ -41,6 +42,44 @@ interface AuthState {
 const AUTH_COOKIE_NAME = 'token';
 const USER_COOKIE_NAME = 'user_data';
 const USER_ROLE_COOKIE_NAME = 'user_role';
+
+// sessionStorage keys for the pending (pre-verification) auth state
+const PENDING_TOKEN_KEY = 'pending_auth_token';
+const PENDING_USER_KEY  = 'pending_auth_user';
+const PENDING_META_KEY  = 'pending_auth_meta';
+
+function setPendingAuth(token: string, user: User, meta: AuthMeta) {
+  if (typeof window === 'undefined') return;
+  sessionStorage.setItem(PENDING_TOKEN_KEY, token);
+  sessionStorage.setItem(PENDING_USER_KEY,  JSON.stringify(user));
+  sessionStorage.setItem(PENDING_META_KEY,  JSON.stringify(meta));
+}
+
+function clearPendingAuth() {
+  if (typeof window === 'undefined') return;
+  sessionStorage.removeItem(PENDING_TOKEN_KEY);
+  sessionStorage.removeItem(PENDING_USER_KEY);
+  sessionStorage.removeItem(PENDING_META_KEY);
+}
+
+function getPendingToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return sessionStorage.getItem(PENDING_TOKEN_KEY);
+}
+
+function getPendingUser(): User | null {
+  if (typeof window === 'undefined') return null;
+  const raw = sessionStorage.getItem(PENDING_USER_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw) as User; } catch { return null; }
+}
+
+function getPendingMeta(): AuthMeta | null {
+  if (typeof window === 'undefined') return null;
+  const raw = sessionStorage.getItem(PENDING_META_KEY);
+  if (!raw) return null;
+  try { return JSON.parse(raw) as AuthMeta; } catch { return null; }
+}
 
 function cookieExpiryFromAuthMeta(meta: AuthMeta): number | Date {
   const exp = meta.expires_at;
@@ -141,7 +180,41 @@ export const useAuthStore = create<AuthState>()(
           const response = await authApi.login(credentials);
           const { data: user, meta } = response;
 
+          // Store token + user in sessionStorage temporarily.
+          // Cookies are NOT written yet - they will be set after OTP verification.
+          setPendingAuth(meta.token, user, meta);
+
+          set({
+            user,
+            token: meta.token,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          const message = error instanceof ApiError
+            ? error.message
+            : 'Failed to login. Please try again.';
+
+          set({
+            isLoading: false,
+            error: message,
+            isAuthenticated: false,
+          });
+          throw error;
+        }
+      },
+
+      // Login and save to cookies immediately (for non-OTP flows, e.g. admin)
+      loginWithCookies: async (credentials: LoginRequest) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await authApi.login(credentials);
+          const { data: user, meta } = response;
+
           setAuthCookies(user, meta);
+          clearPendingAuth(); // make sure no leftover pending state
 
           set({
             user,
@@ -171,7 +244,8 @@ export const useAuthStore = create<AuthState>()(
           const response = await authApi.register(data);
           const { data: user, meta } = response;
 
-          setAuthCookies(user, meta);
+          // Same as login: store in sessionStorage temporarily, write cookies after OTP.
+          setPendingAuth(meta.token, user, meta);
 
           set({
             user,
@@ -203,6 +277,7 @@ export const useAuthStore = create<AuthState>()(
           // Silently ignore logout API errors
         } finally {
           clearAuthCookies();
+          clearPendingAuth();
 
           if (typeof window !== 'undefined') {
             const { disconnectEcho } = await import('@/src/lib/echo');
@@ -271,6 +346,28 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      // Activate session: promote pending sessionStorage data to permanent cookies.
+      // Called after successful OTP verification.
+      activateSession: () => {
+        // Prefer sessionStorage (most up-to-date) then fall back to Zustand state
+        const pendingToken = getPendingToken();
+        const pendingUser  = getPendingUser();
+        const pendingMeta  = getPendingMeta();
+
+        const token = pendingToken ?? get().token;
+        const user  = pendingUser  ?? get().user;
+
+        if (!user || !token) return;
+
+        const meta: AuthMeta = pendingMeta ?? { token, token_type: 'Bearer', expires_at: 365 };
+
+        setAuthCookies(user, meta);
+        clearPendingAuth(); // no longer needed
+
+        // Make sure Zustand state is in sync
+        set({ user, token, isAuthenticated: true });
+      },
+
       updateUser: (user) => {
         Cookies.set(USER_COOKIE_NAME, JSON.stringify(user), {
           expires: 30,
@@ -327,11 +424,17 @@ export const useAuthStore = create<AuthState>()(
 // ============================================
 
 export function initializeAuthStore() {
-  const token = getTokenFromCookies();
-  const user = getUserFromCookies();
+  // Check permanent cookies first, then fall back to pending sessionStorage
+  const cookieToken = getTokenFromCookies();
+  const cookieUser  = getUserFromCookies();
+
+  const pendingToken = getPendingToken();
+  const pendingUser  = getPendingUser();
+
+  const token = cookieToken ?? pendingToken;
+  const user  = cookieUser  ?? pendingUser;
 
   if (token) {
-    // If we have a token, we are at least partially authenticated
     useAuthStore.setState({
       token,
       user,
@@ -339,15 +442,14 @@ export function initializeAuthStore() {
       isInitialized: true,
     });
 
-    // If user data is missing, fetch it now
-    if (!user) {
+    // If token is from cookie and user data is missing, refetch
+    if (cookieToken && !cookieUser) {
       useAuthStore.getState().fetchCurrentUser().catch(() => {
-        // If fetching user fails, it might be an invalid token
-        // but we've already set isInitialized: true which is what matters for UI state
+        // Non-fatal: isInitialized is already true
       });
     }
   } else {
-    // No token, definitely not authenticated
+    // No token anywhere — definitely not authenticated
     useAuthStore.setState({
       isInitialized: true,
     });
@@ -379,12 +481,14 @@ export function useAuth() {
 export function useAuthActions() {
   return useAuthStore(
     useShallow((state) => ({
+      loginWithCookies: state.loginWithCookies,
       login: state.login,
       register: state.register,
       logout: state.logout,
       fetchCurrentUser: state.fetchCurrentUser,
       updateUser: state.updateUser,
       clearError: state.clearError,
+      activateSession: state.activateSession,
     }))
   );
 }

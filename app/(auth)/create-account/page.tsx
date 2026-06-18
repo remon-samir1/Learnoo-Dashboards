@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import Cookies from '@/lib/cookies';
 import { ApiError, getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
+import Cookies from '@/lib/cookies';
 import AuthPageLayout from '../components/AuthLayout';
 
 const DEVICE_NAME = 'learnoo-web';
@@ -38,7 +38,7 @@ export default function CreateAccountPage() {
   const t = useTranslations('auth.createAccount');
   const router = useRouter();
   const locale = useLocale() || 'ar';
-  const { register, fetchCurrentUser } = useAuthActions();
+  const { register } = useAuthActions();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -92,13 +92,18 @@ export default function CreateAccountPage() {
         device_name: DEVICE_NAME,
       });
 
-      await fetchCurrentUser();
+      // Do NOT call fetchCurrentUser() here — cookies are not set until after OTP verification.
+      // Redirect immediately to verification page, same as login flow.
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem('auth_flow', 'register');
+        } catch {}
+        try {
+          Cookies.set('auth_flow', 'register');
+        } catch {}
+      }
 
-      const userData = Cookies.get('user_data');
-      const user = userData ? JSON.parse(userData) : null;
-      const userRole = user?.attributes?.role;
-
-      router.push(`/${locale}/verification-code`);
+      router.push('/verification-code');
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, t('errors.registerFailed'));
       toast.error(message);

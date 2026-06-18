@@ -132,10 +132,17 @@
     },
     "verification": {
       "title": "Verification Code",
-      "subtitle": "Enter the code sent to your email",
+      "subtitle": "Wait for the verification code to shown here, then verify your account",
       "code": "Verification Code",
       "verify": "Verify",
-      "resend": "Resend Code"
+      "verifying": "Verifying...",
+      "resend": "Resend Code",
+      "success": "OTP verified successfully!",
+      "connected": "Connected to OTP service",
+      "errors": {
+        "codeRequired": "Please enter a valid 6-digit code",
+        "verificationFailed": "Verification failed. Please try again."
+      }
     },
     "resetPassword": {
       "title": "Reset Password",

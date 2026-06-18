@@ -78,6 +78,12 @@ export function proxy(request: NextRequest) {
 
   if (roleCanAccessZone(auth.role, zone)) {
     if (zone === 'student') {
+      // If a `user_role` cookie exists and resolves to 'Student', allow access
+      // to the student area immediately (skip the profile gate).
+      if (auth.role === 'Student' || (typeof auth.role === 'string' && auth.role.toLowerCase() === 'student')) {
+        return NextResponse.next();
+      }
+
       const profileGate = getStudentProfileGateRedirect(
         pathname,
         auth.locale,
