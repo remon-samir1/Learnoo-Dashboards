@@ -20,7 +20,8 @@ console.log(process.env.NODE_ENV);
   return {
     broadcaster: "reverb" as const,
     key: "ecnn3pfvurlo73fkabhm",
-    wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
+    wsHost: "api.learnoo.app" , 
+    // wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
     
     wsPort: 8090,
     wssPort:  8090,
