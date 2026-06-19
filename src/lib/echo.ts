@@ -23,11 +23,11 @@ console.log(process.env.NODE_ENV);
     wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
     
     wsPort: 8090,
-    wssPort:  8090,
+    // wssPort:  8090,
     
-    forceTLS: isProd, 
+    forceTLS: false, 
     
-    enabledTransports: ["ws" as const, "wss" as const],
+    enabledTransports: ["ws" as const],
 
     authorizer: (channel: { name: string }) => ({
       authorize: (socketId: string, callback: Function) => {
