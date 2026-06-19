@@ -21,6 +21,7 @@ function getEchoConfig() {
     key: "ecnn3pfvurlo73fkabhm",
     wsHost: "31.97.36.130",
     wsPort: 8090,
+    wssPort: 8090,
     forceTLS: false,
     enabledTransports: ["ws" as const],
 
