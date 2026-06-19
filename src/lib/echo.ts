@@ -25,7 +25,7 @@ console.log(process.env.NODE_ENV);
     wsPort: 8090,
     // wssPort:  8090,
     
-    forceTLS: false, 
+    forceTLS: isProd, 
     
     enabledTransports: ["ws" as const],
 
