@@ -20,10 +20,10 @@ console.log(isProd);
   return {
     broadcaster: "reverb" as const,
     key: "ecnn3pfvurlo73fkabhm",
-  wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
-    
-    wsPort: isProd ? 443 : 8090,
-    wssPort: isProd ? 443 : 8090,
+    wsHost: "31.97.36.130", 
+    wssHost:"31.97.36.130",
+    wsPort: 8090,
+    wssPort:  8090,
     
     forceTLS: isProd, 
     
