@@ -16,12 +16,12 @@ let echoInstance: Echo<any> | null = null;
 function getEchoConfig() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
 const isProd = process.env.NODE_ENV === "production";
-console.log(isProd);
+console.log(process.env.NODE_ENV);
   return {
     broadcaster: "reverb" as const,
     key: "ecnn3pfvurlo73fkabhm",
-    wsHost: "31.97.36.130", 
-    wssHost:"31.97.36.130",
+    wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
+    
     wsPort: 8090,
     wssPort:  8090,
     
