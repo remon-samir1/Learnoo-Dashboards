@@ -23,7 +23,7 @@ console.log(process.env.NODE_ENV);
     wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
     
     wsPort: 8090,
-    // wssPort:  8090,
+    wssPort:  8090,
     
     forceTLS: isProd, 
     
