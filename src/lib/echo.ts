@@ -15,16 +15,19 @@ let echoInstance: Echo<any> | null = null;
 
 function getEchoConfig() {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
-
+const isProd = process.env.NODE_ENV === "production";
+console.log(isProd);
   return {
     broadcaster: "reverb" as const,
     key: "ecnn3pfvurlo73fkabhm",
-    wsHost: "31.97.36.130",
-    wsPort: 8090,
-    // wssPort: 8090,
-
-    forceTLS: false,
-    enabledTransports: ["ws" as const , "wss" as const],
+  wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
+    
+    wsPort: isProd ? 443 : 8090,
+    wssPort: isProd ? 443 : 8090,
+    
+    forceTLS: isProd, 
+    
+    enabledTransports: ["ws" as const, "wss" as const],
 
     authorizer: (channel: { name: string }) => ({
       authorize: (socketId: string, callback: Function) => {
