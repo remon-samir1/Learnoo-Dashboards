@@ -27,7 +27,7 @@ console.log(process.env.NODE_ENV);
     
     forceTLS: isProd, 
     
-    enabledTransports: ["ws" as const],
+    enabledTransports: ["ws" as const , "wss" as const],
 
     authorizer: (channel: { name: string }) => ({
       authorize: (socketId: string, callback: Function) => {
