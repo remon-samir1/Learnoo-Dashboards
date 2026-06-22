@@ -19,7 +19,7 @@ function getEchoConfig() {
   // console.log(process.env.NODE_ENV);
   return {
     // broadCasting
-    broadcaster: "reverb",
+    broadcaster: "reverb" as const,
     
     // keys & hosts
     key: "ecnn3pfvurlo73fkabhm",
@@ -32,7 +32,7 @@ function getEchoConfig() {
     // TLS
     forceTLS: false,
 
-    enabledTransports: ["ws", "wss"],
+    enabledTransports: ["ws" as const, "wss" as const],
 
     authorizer: (channel: { name: string }) => ({
       authorize: (socketId: string, callback: Function) => {
@@ -76,26 +76,26 @@ export function getEchoInstance(): Echo<any> | null {
     window.Pusher = Pusher;
     const config = getEchoConfig();
     echoInstance = new Echo(config);
-    console.log(echoInstance)
-    // echoInstance.connector.pusher.connection.bind("connected", () => {
-    //   console.log("[Echo] ✅ Connected to WebSocket server");
-    // });
 
-    // echoInstance.connector.pusher.connection.bind("disconnected", () => {
-    //   console.log("[Echo] ❌ Disconnected from WebSocket server");
-    // });
+    echoInstance.connector.pusher.connection.bind("connected", () => {
+      console.log("[Echo] ✅ Connected to WebSocket server");
+    });
 
-    // echoInstance.connector.pusher.connection.bind("error", (error: Error) => {
-    //   console.error("[Echo] Connection error:", error);
-    // });
+    echoInstance.connector.pusher.connection.bind("disconnected", () => {
+      console.log("[Echo] ❌ Disconnected from WebSocket server");
+    });
 
-    // echoInstance.connector.pusher.connection.bind("reconnecting", () => {
-    //   console.log("[Echo] Reconnecting...");
-    // });
+    echoInstance.connector.pusher.connection.bind("error", (error: Error) => {
+      console.error("[Echo] Connection error:", error);
+    });
 
-    // echoInstance.connector.pusher.connection.bind("reconnected", () => {
-    //   console.log("[Echo] Reconnected");
-    // });
+    echoInstance.connector.pusher.connection.bind("reconnecting", () => {
+      console.log("[Echo] Reconnecting...");
+    });
+
+    echoInstance.connector.pusher.connection.bind("reconnected", () => {
+      console.log("[Echo] Reconnected");
+    });
   }
 
   return echoInstance;
