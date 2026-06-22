@@ -34,38 +34,38 @@ function getEchoConfig() {
 
     enabledTransports: ["ws", "wss"],
 
-    // authorizer: (channel: { name: string }) => ({
-    //   authorize: (socketId: string, callback: Function) => {
-    //     const token = sessionStorage.getItem("pending_auth_token") || Cookies.get("token");
+    authorizer: (channel: { name: string }) => ({
+      authorize: (socketId: string, callback: Function) => {
+        const token = sessionStorage.getItem("pending_auth_token") || Cookies.get("token");
 
-    //     console.log("[Echo] Authorizing channel:", channel.name);
-    //     console.log("[Echo] Token:", token ? "present" : "MISSING ❌");
+        console.log("[Echo] Authorizing channel:", channel.name);
+        console.log("[Echo] Token:", token ? "present" : "MISSING ❌");
 
-    //     fetch("/api/broadcasting/auth", {
-    //       method: "POST",
-    //       headers: {
-    //         "Content-Type": "application/x-www-form-urlencoded",
-    //         Authorization: `Bearer ${token || ""}`,
-    //       },
-    //       body: new URLSearchParams({
-    //         socket_id: socketId,
-    //         channel_name: channel.name,
-    //       }),
-    //     })
-    //       .then((res) => {
-    //         console.log("[Echo] Auth response status:", res.status);
-    //         return res.json();
-    //       })
-    //       .then((data) => {
-    //         console.log("[Echo] Auth response data:", data);
-    //         callback(false, data);
-    //       })
-    //       .catch((err) => {
-    //         console.error("[Echo] Auth request failed:", err);
-    //         callback(true, err);
-    //       });
-    //   },
-    // }),
+        fetch("/broadcasting/auth", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Bearer ${token || ""}`,
+          },
+          body: new URLSearchParams({
+            socket_id: socketId,
+            channel_name: channel.name,
+          }),
+        })
+          .then((res) => {
+            console.log("[Echo] Auth response status:", res.status);
+            return res.json();
+          })
+          .then((data) => {
+            console.log("[Echo] Auth response data:", data);
+            callback(false, data);
+          })
+          .catch((err) => {
+            console.error("[Echo] Auth request failed:", err);
+            callback(true, err);
+          });
+      },
+    }),
   };
 }
 
