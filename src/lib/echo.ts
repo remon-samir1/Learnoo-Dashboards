@@ -23,14 +23,13 @@ function getEchoConfig() {
     
     // keys & hosts
     key: "ecnn3pfvurlo73fkabhm",
-    wsHost: "api.learnoo.app",
+    wsHost: "api.learnoo.app", // default: api.learnoo.app
 
     // Ports
-    wsPort: 8090,
     wssPort: 8090,
 
     // TLS
-    forceTLS: false,
+    forceTLS: true,
 
     enabledTransports: ["ws" as const, "wss" as const],
 
