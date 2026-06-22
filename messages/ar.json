@@ -100,7 +100,8 @@
       "title": "تسجيل دخول المدير والمدرسين",
       "subtitle": "سجل الدخول لإدارة المنصة",
       "phone": "رقم الهاتف",
-      "phonePlaceholder": "أدخل رقم الهاتف",
+      "phonePlaceholder": "ادخل رقم الهاتف او بريدك الالكتروني",
+      "phone_email": "رقم الهاتف والبريد الإلكتروني",
       "password": "كلمة المرور",
       "passwordPlaceholder": "أدخل كلمة المرور",
       "rememberMe": "تذكرني",
@@ -1902,7 +1903,8 @@
         "status": "الحالة",
         "update": "تحديث",
         "create": "إنشاء",
-        "cancel": "إلغاء"
+        "cancel": "إلغاء",
+        "isPaid": "مدفوع"
       }
     },
     "posts": {

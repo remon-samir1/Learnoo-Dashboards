@@ -875,8 +875,8 @@ export const postsApi = {
 
   delete: (id: number) => del<ApiResponse<Post>>(`/v1/post/${id}`),
 
-  /** POST `/v1/post/{post_id}/react` — body `{ type: "like" }` per API. */
-  react: (postId: number | string, data: { type: 'like' }) =>
+  /** POST `/v1/post/{post_id}/react` — body `{ type: string }` per API. */
+  react: (postId: number | string, data: { type: string }) =>
     post<ApiResponse<Post>>(`/v1/post/${postId}/react`, data),
 };
 

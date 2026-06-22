@@ -3511,7 +3511,7 @@ export interface SocialLinkAttributes {
 
   updated_at: string | null;
 
-
+  is_paid?: boolean;
 
 }
 
@@ -3556,6 +3556,8 @@ export interface CreateSocialLinkRequest {
 
 
   color: string;
+
+  is_paid?: boolean;
 
 
 

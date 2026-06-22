@@ -14,54 +14,58 @@ declare global {
 let echoInstance: Echo<any> | null = null;
 
 function getEchoConfig() {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
-const isProd = process.env.NODE_ENV === "production";
-console.log(process.env.NODE_ENV);
+  // const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
+  // const isProd = process.env.NODE_ENV === "production";
+  // console.log(process.env.NODE_ENV);
   return {
-    broadcaster: "reverb" as const,
+    // broadCasting
+    broadcaster: "reverb",
+    
+    // keys & hosts
     key: "ecnn3pfvurlo73fkabhm",
-    wsHost: "api.learnoo.app" , 
-    // wsHost: isProd ? "api.learnoo.app" : "31.97.36.130", 
-    
+    wsHost: "api.learnoo.app",
+
+    // Ports
     wsPort: 8090,
-    wssPort:  8090,
-    
-    forceTLS: isProd, 
-    
-    enabledTransports: ["ws" as const , "wss" as const],
+    wssPort: 8090,
 
-    authorizer: (channel: { name: string }) => ({
-      authorize: (socketId: string, callback: Function) => {
-        const token = sessionStorage.getItem("pending_auth_token") || Cookies.get("token");
+    // TLS
+    forceTLS: false,
 
-        console.log("[Echo] Authorizing channel:", channel.name);
-        console.log("[Echo] Token:", token ? "present" : "MISSING ❌");
+    enabledTransports: ["ws", "wss"],
 
-        fetch("/api/broadcasting/auth", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-            Authorization: `Bearer ${token || ""}`,
-          },
-          body: new URLSearchParams({
-            socket_id: socketId,
-            channel_name: channel.name,
-          }),
-        })
-          .then((res) => {
-            console.log("[Echo] Auth response status:", res.status);
-            return res.json();
-          })
-          .then((data) => {
-            console.log("[Echo] Auth response data:", data);
-            callback(false, data);
-          })
-          .catch((err) => {
-            console.error("[Echo] Auth request failed:", err);
-            callback(true, err);
-          });
-      },
-    }),
+    // authorizer: (channel: { name: string }) => ({
+    //   authorize: (socketId: string, callback: Function) => {
+    //     const token = sessionStorage.getItem("pending_auth_token") || Cookies.get("token");
+
+    //     console.log("[Echo] Authorizing channel:", channel.name);
+    //     console.log("[Echo] Token:", token ? "present" : "MISSING ❌");
+
+    //     fetch("/api/broadcasting/auth", {
+    //       method: "POST",
+    //       headers: {
+    //         "Content-Type": "application/x-www-form-urlencoded",
+    //         Authorization: `Bearer ${token || ""}`,
+    //       },
+    //       body: new URLSearchParams({
+    //         socket_id: socketId,
+    //         channel_name: channel.name,
+    //       }),
+    //     })
+    //       .then((res) => {
+    //         console.log("[Echo] Auth response status:", res.status);
+    //         return res.json();
+    //       })
+    //       .then((data) => {
+    //         console.log("[Echo] Auth response data:", data);
+    //         callback(false, data);
+    //       })
+    //       .catch((err) => {
+    //         console.error("[Echo] Auth request failed:", err);
+    //         callback(true, err);
+    //       });
+    //   },
+    // }),
   };
 }
 
@@ -72,26 +76,26 @@ export function getEchoInstance(): Echo<any> | null {
     window.Pusher = Pusher;
     const config = getEchoConfig();
     echoInstance = new Echo(config);
+    console.log(echoInstance)
+    // echoInstance.connector.pusher.connection.bind("connected", () => {
+    //   console.log("[Echo] ✅ Connected to WebSocket server");
+    // });
 
-    echoInstance.connector.pusher.connection.bind("connected", () => {
-      console.log("[Echo] ✅ Connected to WebSocket server");
-    });
+    // echoInstance.connector.pusher.connection.bind("disconnected", () => {
+    //   console.log("[Echo] ❌ Disconnected from WebSocket server");
+    // });
 
-    echoInstance.connector.pusher.connection.bind("disconnected", () => {
-      console.log("[Echo] ❌ Disconnected from WebSocket server");
-    });
+    // echoInstance.connector.pusher.connection.bind("error", (error: Error) => {
+    //   console.error("[Echo] Connection error:", error);
+    // });
 
-    echoInstance.connector.pusher.connection.bind("error", (error: Error) => {
-      console.error("[Echo] Connection error:", error);
-    });
+    // echoInstance.connector.pusher.connection.bind("reconnecting", () => {
+    //   console.log("[Echo] Reconnecting...");
+    // });
 
-    echoInstance.connector.pusher.connection.bind("reconnecting", () => {
-      console.log("[Echo] Reconnecting...");
-    });
-
-    echoInstance.connector.pusher.connection.bind("reconnected", () => {
-      console.log("[Echo] Reconnected");
-    });
+    // echoInstance.connector.pusher.connection.bind("reconnected", () => {
+    //   console.log("[Echo] Reconnected");
+    // });
   }
 
   return echoInstance;

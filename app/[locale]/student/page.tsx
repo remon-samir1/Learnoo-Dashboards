@@ -43,6 +43,8 @@ export default async function StudentPage() {
   } = await getLibrary();
   const categoryResult = await getCategories();
   const category = categoryResult.success ? categoryResult.data?.data ?? [] : [];
+  const postsResult = await getLatestGeneralPosts(3);
+  const latestPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
 
   const coursesCount = courses?.length;
   const progressCount = progress?.length;
@@ -61,6 +63,7 @@ export default async function StudentPage() {
       <ContinueWatchingSection progress={progress ?? []} />
       <MySubjectSection categories={category} />
       <MyCoursesSection />
+      <LatestPostsSection posts={latestPosts} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
         <div className="min-w-0">
           <UpcomingLiveClasses sessions={liveSessions} />

@@ -8,6 +8,8 @@ import { usePosts, useDeletePost, useUpdatePost, useCreatePost } from '@/src/hoo
 import { useSocialLinks, useCreateSocialLink, useUpdateSocialLink, useDeleteSocialLink } from '@/src/hooks/useSocialLinks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useCurrentUser } from '@/src/hooks/useAuth';
+import { getApiErrorMessage } from '@/src/lib/api';
+import { toast } from 'sonner';
 import { useUniversities } from '@/src/hooks/useUniversities';
 import { useCenters } from '@/src/hooks/useCenters';
 import { useFaculties } from '@/src/hooks/useFaculties';
@@ -424,9 +426,9 @@ export default function CommunityModerationPage() {
   
   // Social Links hooks
   const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks(null);
-  const { mutate: createSocialLink } = useCreateSocialLink();
-  const { mutate: updateSocialLink } = useUpdateSocialLink();
-  const { mutate: deleteSocialLink } = useDeleteSocialLink();
+  const { mutate: createSocialLink, isLoading: isCreatingSocial } = useCreateSocialLink();
+  const { mutate: updateSocialLink, isLoading: isUpdatingSocial } = useUpdateSocialLink();
+  const { mutate: deleteSocialLink, isLoading: isDeletingSocial } = useDeleteSocialLink();
   const { data: courses, isLoading: coursesLoading } = useCourses();
 
   const doctorCourseIds = useMemo(() => {
@@ -455,7 +457,8 @@ export default function CommunityModerationPage() {
     title: '',
     subtitle: '',
     color: '',
-    status: true as boolean
+    status: true as boolean,
+    is_paid: false as boolean
   });
 
   // Tree selection state
@@ -636,7 +639,8 @@ export default function CommunityModerationPage() {
         title: link.attributes.title || '',
         subtitle: link.attributes.subtitle || '',
         color: link.attributes.color || '',
-        status: link.attributes.status
+        status: link.attributes.status,
+        is_paid: link.attributes.is_paid || false
       });
       // Expand tree to show selected courses
       const parentIds = findParentIdsForCourses(courseTree, selectedIds);
@@ -651,7 +655,8 @@ export default function CommunityModerationPage() {
         title: '',
         subtitle: '',
         color: '',
-        status: true
+        status: true,
+        is_paid: false
       });
       setCourseTreeExpanded(new Set());
     }
@@ -669,7 +674,8 @@ export default function CommunityModerationPage() {
       title: '',
       subtitle: '',
       color: '',
-      status: true
+      status: true,
+      is_paid: false
     });
   };
 
@@ -681,7 +687,8 @@ export default function CommunityModerationPage() {
         title: socialForm.title,
         subtitle: socialForm.subtitle,
         color: socialForm.color,
-        status: socialForm.status
+        status: socialForm.status,
+        is_paid: socialForm.is_paid
       };
 
       if (socialForm.icon) {
@@ -690,14 +697,15 @@ export default function CommunityModerationPage() {
 
       if (editingSocialLink) {
         await updateSocialLink(parseInt(editingSocialLink.id), data);
-        alert(t('community.notifications.socialLinkUpdated'));
+        toast.success(t('community.notifications.socialLinkUpdated'));
       } else {
-        await createSocialLink(data as { course_ids: number[]; link: string; title: string; subtitle: string; color: string; status: boolean; icon?: File | null });
-        alert(t('community.notifications.socialLinkCreated'));
+        await createSocialLink(data as { course_ids: number[]; link: string; title: string; subtitle: string; color: string; status: boolean; is_paid?: boolean; icon?: File | null });
+        toast.success(t('community.notifications.socialLinkCreated'));
       }
       await refetchSocialLinks();
       closeSocialModal();
-    } catch {
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to save social link'));
       await refetchSocialLinks();
     }
   };
@@ -707,8 +715,9 @@ export default function CommunityModerationPage() {
     try {
       await deleteSocialLink(parseInt(id));
       await refetchSocialLinks();
-      alert(t('community.notifications.socialLinkDeleted'));
-    } catch {
+      toast.success(t('community.notifications.socialLinkDeleted'));
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to delete social link'));
       await refetchSocialLinks();
     }
   };
@@ -1169,16 +1178,31 @@ export default function CommunityModerationPage() {
                 </select>
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.isPaid')}</label>
+                <select
+                  value={socialForm.is_paid ? 'true' : 'false'}
+                  onChange={(e) => setSocialForm({ ...socialForm, is_paid: e.target.value === 'true' })}
+                  className="w-full px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
+                >
+                  <option value="true">{t('community.socialLinks.modal.isPaid')}</option>
+                  <option value="false">Free</option>
+                </select>
+              </div>
+
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={handleSaveSocialLink}
-                  className="flex-1 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all"
+                  disabled={isCreatingSocial || isUpdatingSocial}
+                  className="flex-1 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] disabled:bg-[#94A3B8] text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
                 >
+                  {(isCreatingSocial || isUpdatingSocial) && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingSocialLink ? t('community.socialLinks.modal.update') : t('community.socialLinks.modal.create')}
                 </button>
                 <button
                   onClick={closeSocialModal}
-                  className="flex-1 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
+                  disabled={isCreatingSocial || isUpdatingSocial}
+                  className="flex-1 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] disabled:opacity-50 rounded-xl text-sm font-bold transition-all"
                 >
                   {t('community.socialLinks.modal.cancel')}
                 </button>

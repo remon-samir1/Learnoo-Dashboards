@@ -76,7 +76,8 @@
       "title": "Admin & Instructor Sign In",
       "subtitle": "Sign in to manage the platform",
       "phone": "Phone Number",
-      "phonePlaceholder": "Enter your phone number",
+      "phone_email": "Phone & Email",
+      "phonePlaceholder": "Enter your phone number or your email",
       "password": "Password",
       "passwordPlaceholder": "Enter your password",
       "rememberMe": "Remember me",
@@ -971,17 +972,13 @@
       "toastReplyFailed": "Could not post your comment. Please try again.",
       "like": "Like",
       "tagsLabel": "Tags (optional)",
-      "tagsPlaceholder": "e.g. math, calculus"
-    },
-    "community": {
-      "posts": {
-        "showComments": "{count, plural, one {# comment} other {# comments}}",
-        "hideComments": "Hide {count, plural, one {# comment} other {# comments}}",
-        "noCommentsYet": "No comments yet. Be the first to comment!",
-        "unknownUser": "Anonymous",
-        "instructorBadge": "Instructor",
-        "deleteComment": "Delete comment"
-      }
+      "tagsPlaceholder": "e.g. math, calculus",
+      "showComments": "{count, plural, one {# comment} other {# comments}}",
+      "hideComments": "Hide {count, plural, one {# comment} other {# comments}}",
+      "noCommentsYet": "No comments yet. Be the first to comment!",
+      "unknownUser": "Anonymous",
+      "instructorBadge": "Instructor",
+      "deleteComment": "Delete comment"
     },
     "studentLibrary": {
       "pageTitle": "Electronic Library",
@@ -1878,7 +1875,8 @@
         "status": "Status",
         "update": "Update",
         "create": "Create",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "isPaid": "Is Paid"
       }
     },
     "posts": {

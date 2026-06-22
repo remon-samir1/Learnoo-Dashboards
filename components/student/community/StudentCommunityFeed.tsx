@@ -259,11 +259,11 @@ export default function StudentCommunityFeed({
   }, [isCreating, isReplying]);
 
   const handleReact = useCallback(
-    async (post: Post) => {
+    async (post: Post, type: string = 'like') => {
       const id = String(post.id);
       setReactingId(id);
       try {
-        await reactToPost(parseInt(id, 10), { type: 'like' });
+        await reactToPost(parseInt(id, 10), { type });
         await refetchPosts();
       } catch {
         toast.error(tPage('toastReactFailed'));
@@ -333,7 +333,7 @@ export default function StudentCommunityFeed({
             ))}
           </div>
         </div>
-        {!readOnly ? (
+        {/* {!readOnly ? (
           <button
             type="button"
             onClick={openCreateModal}
@@ -342,7 +342,7 @@ export default function StudentCommunityFeed({
             <Plus className="size-4" aria-hidden />
             {tPage('createPost')}
           </button>
-        ) : null}
+        ) : null} */}
       </div>
 
       {postsError ? (
@@ -477,6 +477,7 @@ export default function StudentCommunityFeed({
                       postId={post.id}
                       commentsCount={comments}
                       readOnly={readOnly}
+                      onRefresh={refetchPosts}
                     />
                   </div>
                 </div>

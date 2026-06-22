@@ -64,11 +64,14 @@ export const getLatestGeneralPosts = async (limit: number = 5): Promise<ServiceR
     }
 
     // Filter posts that don't have a course_id and are published top-level posts
-    const allPosts: Post[] = result.data?.data || [];
+    // Note: API response structure is { data: Post[] }
+    const allPosts: Post[] = result.data || [];
     const generalPosts = allPosts.filter((post: Post) => {
       const isTopLevel = post.attributes.parent_id == null || post.attributes.parent_id === 0;
       const isPublished = post.attributes.status === 'published';
-      const hasNoCourse = post.attributes.course_id == null;
+      const courseId = post.attributes.course_id;
+      // Consider it general if course_id is null, undefined, or 0
+      const hasNoCourse = courseId == null || Number(courseId) === 0;
       return isTopLevel && isPublished && hasNoCourse;
     });
 

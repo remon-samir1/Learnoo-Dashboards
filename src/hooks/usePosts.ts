@@ -36,6 +36,6 @@ export const useDeletePost = createMutationHook(
 );
 
 export const useReactToPost = createMutationHook(
-  (postId: number, body: { type: 'like' }) =>
+  (postId: number, body: { type: string }) =>
     api.posts.react(postId, body).then((res) => res.data),
 );
