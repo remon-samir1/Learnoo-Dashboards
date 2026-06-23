@@ -40,7 +40,7 @@ function getEchoConfig() {
         console.log("[Echo] Authorizing channel:", channel.name);
         console.log("[Echo] Token:", token ? "present" : "MISSING ❌");
 
-        fetch("/broadcasting/auth", {
+        fetch("/api/broadcasting/auth", {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",

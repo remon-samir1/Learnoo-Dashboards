@@ -27,7 +27,12 @@ export default function VerificationCodePage() {
   useEffect(() => {
     const sendVerificationNotification = async () => {
       try {
-        await authApi.sendPhoneVerification();
+        const response = await authApi.sendPhoneVerification();
+        // @ts-ignore - The type is updated but sometimes inference is slow
+        const receivedOtp = response?.user?.otp;
+        if (receivedOtp) {
+          setCode(receivedOtp);
+        }
       } catch (err: unknown) {
         const message = getApiErrorMessage(err, t('errors.verificationFailed') || 'Failed to send verification code');
         toast.error(message);
