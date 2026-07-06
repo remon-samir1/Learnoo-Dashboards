@@ -26,6 +26,7 @@ export default function AddLibraryItemPage() {
   const [materialType, setMaterialType] = useState('booklet');
   const [codeActivation, setCodeActivation] = useState(false);
   const [isPublish, setIsPublish] = useState(false);
+  const [downloadable, setDownloadable] = useState(true);
   const [price, setPrice] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -81,7 +82,9 @@ export default function AddLibraryItemPage() {
         course_id: parseInt(courseId),
         material_type: materialType as any,
         code_activation: codeActivation,
+        is_preview: codeActivation,
         is_publish: isPublish,
+        downloadable: downloadable,
         price: parseFloat(price)
       });
       router.push('/electronic-library');
@@ -108,7 +111,7 @@ export default function AddLibraryItemPage() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         {/* Item Details Section */}
-        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-6">
+        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm  p-6 flex flex-col gap-6">
           <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.add.sections.itemDetails')}</h2>
           
           {/* Title */}
@@ -310,6 +313,23 @@ export default function AddLibraryItemPage() {
                 className="sr-only peer"
                 checked={isPublish}
                 onChange={(e) => setIsPublish(e.target.checked)}
+              />
+              <div className="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
+            </label>
+          </div>
+
+          {/* Downloadable Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.add.settings.downloadable')}</span>
+              <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.add.settings.downloadableDescription')}</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={downloadable}
+                onChange={(e) => setDownloadable(e.target.checked)}
               />
               <div className="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
             </label>

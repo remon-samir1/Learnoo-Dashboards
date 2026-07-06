@@ -1041,6 +1041,9 @@ export const studentsApi = {
     formData.append('password', password);
     return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData);
   },
+
+  removeActivation: (studentId: string | number, data: { item_id: number; item_type: string }) =>
+    post<ApiResponse<void>>(`/v1/student/${studentId}/remove-activation`, data),
 };
 
 // ============================================

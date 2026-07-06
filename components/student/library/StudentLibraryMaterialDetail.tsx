@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Download, Loader2, Lock, Minus, Plus, Search } from 'lucide-react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
+import { ArrowLeft, Download, Loader2, Lock, Minus, Plus, Search, Droplets } from 'lucide-react';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { formatLibraryAttachmentSize } from '@/src/lib/student-library-utils';
 import { useLibrary } from '@/src/hooks/useLibraries';
+import { resolveEnabledWatermarkBucket } from '@/src/lib/watermark-from-features';
+import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
 import type { Attachment } from '@/src/types';
+import PdfPreviewModal from '../PdfPreviewModal';
 
 function extOf(att: Attachment): string {
   return (att.attributes?.extension ?? '').trim().toLowerCase();
@@ -29,6 +32,30 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
 
   const [activationOpen, setActivationOpen] = useState(false);
   const [selectedAttachmentId, setSelectedAttachmentId] = useState<string | null>(null);
+  const [watermarkEnabled, setWatermarkEnabled] = useState(false);
+
+  // Fetch watermark settings
+  useEffect(() => {
+    let mounted = true;
+
+    const loadWatermarkSettings = async () => {
+      try {
+        const features = await getStudentPlatformFeatures();
+        const resolution = resolveEnabledWatermarkBucket(features, 'library');
+        if (mounted) {
+          setWatermarkEnabled(resolution?.config.enabled ?? false);
+        }
+      } catch (error) {
+        console.error('Failed to load watermark settings:', error);
+      }
+    };
+
+    loadWatermarkSettings();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const listHref = `/${locale}/student/library`;
 
@@ -143,14 +170,18 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
           </button>
           {selected?.attributes?.path && canAccessAttachment ? (
             <a
-              href={selected.attributes.path}
+              href={`/api/pdf-proxy?url=${encodeURIComponent(selected.attributes.path)}`}
               download={selected.attributes.name}
               target="_blank"
               rel="noopener noreferrer"
               className="order-1 inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#2137D6] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] sm:order-none sm:min-h-0 sm:w-auto sm:py-2.5"
+              title={watermarkEnabled ? 'Download includes security watermark' : 'Download file'}
             >
               <Download className="size-4 shrink-0" aria-hidden />
               {t('download')}
+              {watermarkEnabled ? (
+                <Droplets className="size-3.5 shrink-0" aria-hidden />
+              ) : null}
             </a>
           ) : (
             <button
@@ -183,7 +214,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
               <p className="mt-2 text-sm leading-relaxed text-[#475569]">{a.description.trim()}</p>
             </div>
           ) : null}
-
+{/* 
           <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
             <h2 className="text-xs font-bold uppercase tracking-wide text-[#64748B]">{t('attachments')}</h2>
             <ul className="mt-3 space-y-2">
@@ -248,7 +279,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
                 })
               )}
             </ul>
-          </div>
+          </div> */}
 
           {locked ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -264,7 +295,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
           ) : null}
         </aside>
 
-        <section className="order-first min-h-[min(50vh,420px)] overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm lg:order-none lg:min-h-[480px]">
+        <section className="order-first min-h-[min(50vh,420px)] overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-sm lg:order-none lg:min-h-[480px]">
           {locked ? (
             <div className="flex min-h-[480px] flex-col items-center justify-center gap-3 bg-slate-900/5 px-6 py-16 text-center">
               <Lock className="size-14 text-[#94A3B8]" aria-hidden />
@@ -272,17 +303,29 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
               <p className="max-w-md text-sm text-[#94A3B8]">{t('activateCourseHint')}</p>
             </div>
           ) : showPdfFrame && selected?.attributes?.path ? (
-            <iframe
-              title={selected.attributes.name ?? 'PDF'}
-              src={selected.attributes.path}
-              className="h-[min(78vh,900px)] w-full border-0 bg-[#F8FAFC]"
-            />
+            <div className="relative w-full h-[min(78vh,900px)]">
+              {watermarkEnabled ? (
+                <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+                  <Droplets className="size-4 text-blue-600" aria-hidden />
+                  <span className="text-xs font-semibold text-blue-700">Watermarked</span>
+                </div>
+              ) : null}
+          
+  <PdfPreviewModal
+    open={true}
+    pdfUrl={selected.attributes.path}
+    title={selected.attributes.name ?? 'PDF'}
+    variant="inline"
+    expandToContainer={true}
+    contentType="library"
+  />
+            </div>
           ) : canOpenUnlocked && selected?.attributes?.path ? (
             <div className="flex min-h-[480px] flex-col items-center justify-center gap-4 px-6 py-16 text-center">
               <p className="text-lg font-bold text-[#1E293B]">{t('previewUnavailableTitle')}</p>
               <p className="max-w-md text-sm text-[#64748B]">{t('previewUnavailableBody')}</p>
               <a
-                href={selected.attributes.path}
+                href={`/api/pdf-proxy?url=${encodeURIComponent(selected.attributes.path)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex rounded-xl bg-[#2137D6] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#1a2bb3]"

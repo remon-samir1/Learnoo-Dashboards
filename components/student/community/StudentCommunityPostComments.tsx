@@ -35,8 +35,8 @@ export default function StudentCommunityPostComments({
   const t = useTranslations('courses.studentCommunity');
   const { user: currentUser } = useAuth();
   const [expanded, setExpanded] = useState(false);
-  const { mutate: deleteComment, isLoading: isDeleting } = useDeleteComment();
-  const { mutate: reactToPost } = useReactToPost();
+  const { mutateAsync: deleteComment, isLoading: isDeleting } = useDeleteComment();
+  const { mutateAsync: reactToPost } = useReactToPost();
   const [reactingId, setReactingId] = useState<number | null>(null);
 
   const { data: commentsResponse, isLoading: commentsLoading, refetch: refetchComments } = useComments(
@@ -48,8 +48,8 @@ export default function StudentCommunityPostComments({
     if (isDeleting) return;
     try {
       await deleteComment(commentId);
-      if (onRefresh) await onRefresh();
       await refetchComments();
+      if (onRefresh) await onRefresh();
     } catch {
       // toast handled
     }
@@ -74,10 +74,16 @@ export default function StudentCommunityPostComments({
     return String(commentUserId) === String(currentUser.id);
   };
 
-  const displayComments = (
-    Array.isArray(commentsResponse) ? commentsResponse : (commentsResponse as any)?.data ?? []
-  ).filter((c: any) => String(c.attributes?.parent_id) === String(postId));
+  const commentsArray = Array.isArray(commentsResponse)
+    ? commentsResponse
+    : (commentsResponse as any)?.data ?? [];
 
+  const displayComments = commentsArray.filter(
+    (c: any) =>
+      c.attributes?.type === 'post' &&
+      c.attributes?.parent_id != null &&
+      String(c.attributes.parent_id) === String(postId)
+  );
   return (
     <div className="mt-5 border-t border-[#E2E8F0] pt-4">
       {/* Comments header with toggle */}
@@ -103,7 +109,7 @@ export default function StudentCommunityPostComments({
             <div className="flex items-center justify-center py-4">
               <Loader2 className="size-5 animate-spin text-[#2137D6]" />
             </div>
-          ) : displayComments.length === 0 ? (
+          ) : displayComments.length == 0 ? (
             <p className="text-sm text-[#64748B] italic">
               {t('noCommentsYet')}
             </p>
@@ -122,15 +128,15 @@ export default function StudentCommunityPostComments({
                 const instructor = isLikelyInstructorRole(commentUser?.role);
                 const commentDate = comment.attributes.created_at
                   ? new Date(comment.attributes.created_at).toLocaleDateString(
-                      'en-US',
-                      {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      }
-                    )
+                    'en-US',
+                    {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    }
+                  )
                   : '';
-                
+
                 const cId = typeof comment.id === 'string' ? parseInt(comment.id, 10) : comment.id;
                 const reactions = comment.attributes.reactions_count ?? 0;
                 const liked = Boolean(comment.attributes.user_reaction);
@@ -138,11 +144,10 @@ export default function StudentCommunityPostComments({
                 return (
                   <li
                     key={comment.id}
-                    className={`group flex gap-3 rounded-xl p-3 transition-colors ${
-                      instructor
-                        ? 'bg-amber-50/50 hover:bg-amber-50'
-                        : 'bg-[#F8FAFC] hover:bg-[#F1F5F9]'
-                    }`}
+                    className={`group flex gap-3 rounded-xl p-3 transition-colors ${instructor
+                      ? 'bg-amber-50/50 hover:bg-amber-50'
+                      : 'bg-[#F8FAFC] hover:bg-[#F1F5F9]'
+                      }`}
                   >
                     <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-[13px] font-bold text-[#2137D6]">
                       {userInitial}
@@ -166,20 +171,19 @@ export default function StudentCommunityPostComments({
                       <p className="mt-1 text-sm leading-relaxed text-[#475569]">
                         {comment.attributes.content}
                       </p>
-                      
+
                       {!readOnly && (
                         <div className="mt-2 flex items-center gap-4">
                           <button
                             type="button"
                             onClick={() => handleReact(cId, liked)}
                             disabled={reactingId === cId}
-                            className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors ${
-                              liked ? 'text-[#2137D6]' : 'text-[#64748B] hover:text-[#1E293B]'
-                            } disabled:opacity-50`}
+                            className={`flex items-center gap-1.5 text-[11px] font-bold transition-colors ${liked ? 'text-[#2137D6]' : 'text-[#64748B] hover:text-[#1E293B]'
+                              } disabled:opacity-50`}
                           >
-                            <LikeIcon 
-                              className={`size-3.5 ${liked ? 'fill-current' : ''}`} 
-                              aria-hidden 
+                            <LikeIcon
+                              className={`size-3.5 ${liked ? 'fill-current' : ''}`}
+                              aria-hidden
                             />
                             <span>{reactions}</span>
                           </button>

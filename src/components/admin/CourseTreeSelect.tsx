@@ -390,7 +390,7 @@ export function CourseTreeSelect({
     }
   };
 
-  const renderTreeItem = (node: TreeNode) => {
+const renderTreeItem = (node: TreeNode) => {
     const isExpanded = !!expandedNodes[node.id];
     const isCourse = node.type === 'course';
     const courseId = node.originalId;
@@ -472,7 +472,7 @@ export function CourseTreeSelect({
   };
 
   const treeContent = (
-    <div className={`flex flex-col gap-1 ${inline ? 'max-h-[500px] overflow-y-auto' : ''}`}>
+    <div className="flex flex-col gap-1">
       {filteredTree.length === 0 ? (
         <div className="py-8 text-center text-sm text-[#64748B]">
           {searchQuery ? 'No matching courses found' : 'No courses available'}
@@ -507,7 +507,7 @@ export function CourseTreeSelect({
 
   if (inline) {
     return (
-      <div ref={containerRef} className="flex flex-col gap-2 w-full md:col-span-2">
+      <div ref={containerRef} className="flex flex-col gap-2 w-full md:col-span-2 overflow-y-auto max-h-[min(80vh,600px)] custom-scrollbar">
         <label className="text-[13px] font-bold text-[#475569]">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
@@ -515,7 +515,7 @@ export function CourseTreeSelect({
 
         <div className="border border-[#E2E8F0] rounded-xl overflow-hidden bg-white">
           {searchBar}
-          <div className="p-2">
+          <div className="p-2 overflow-y-auto max-h-[20px] custom-scrollbar">
             {isLoading ? (
               <div className="py-8 text-center text-sm text-[#64748B] flex items-center justify-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-[#2137D6]" />

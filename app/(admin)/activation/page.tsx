@@ -9,7 +9,7 @@ import { SearchFilter } from '@/src/components/admin/SearchFilter';
 import { DataTable, Column } from '@/src/components/ui/DataTable';
 import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import { useCodes, useDeleteCode, useActivateCode } from '@/src/hooks';
-import { useStudents } from '@/src/hooks/useStudents';
+import { useStudents, useRemoveStudentActivation } from '@/src/hooks/useStudents';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
@@ -42,11 +42,17 @@ export default function ActivationPage() {
   // History tab states
   const [historyStudentSearch, setHistoryStudentSearch] = useState('');
   const [selectedHistoryStudent, setSelectedHistoryStudent] = useState<Student | null>(null);
+  const [removingCodeId, setRemovingCodeId] = useState<string | null>(null);
 
   const { data: codes, isLoading, error, refetch } = useCodes();
   const { mutate: deleteCode, isLoading: isDeleting } = useDeleteCode();
   const { mutate: activateCode, isLoading: isAssigning } = useActivateCode();
-  const { data: students, isLoading: isLoadingStudents } = useStudents();
+  const { data: students, isLoading: isLoadingStudents, refetch: refetchStudents } = useStudents();
+  const { mutateAsync: removeStudentActivation } = useRemoveStudentActivation();
+
+  const currentHistoryStudent = selectedHistoryStudent
+    ? (students?.data || []).find((s: Student) => s.id === selectedHistoryStudent.id) || selectedHistoryStudent
+    : null;
   const { data: courses } = useCourses();
   const { data: chapters } = useChapters();
   const { data: libraries } = useLibraries();

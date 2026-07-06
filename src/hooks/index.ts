@@ -175,7 +175,7 @@ export function createMutationHook<T, P extends unknown[] = []>(
       setState({ data: null, isLoading: false, error: null, isError: false, isSuccess: false });
     }, []);
 
-    return { ...state, mutate, reset };
+    return { ...state, mutate, mutateAsync: mutate, reset };
   };
 }
 

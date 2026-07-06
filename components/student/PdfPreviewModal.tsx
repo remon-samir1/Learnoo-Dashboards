@@ -25,6 +25,8 @@ type Props = {
   expandToContainer?: boolean;
   scale?: number;
   onScaleChange?: (scale: number) => void;
+  /** Content type used to resolve the correct watermark bucket. Defaults to 'chapters'. */
+  contentType?: 'library' | 'chapters';
 };
 
 function PdfPreviewContent({
@@ -45,6 +47,7 @@ function PdfPreviewContent({
   onPagesLoaded: (numPages: number) => void;
 }) {
   const [pageWidth, setPageWidth] = useState(720);
+  const [totalPages, setTotalPages] = useState(0);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   const effectiveScale = scale ?? 1.0;
@@ -66,47 +69,55 @@ function PdfPreviewContent({
     return () => observer.disconnect();
   }, [expandToContainer, effectiveScale]);
 
+  const handleLoadSuccess = ({ numPages: pages }: { numPages: number }) => {
+    setTotalPages(pages);
+    onPagesLoaded(pages);
+  };
+
   return (
     <div ref={contentRef} className="min-h-0 w-full">
       <Document
         file={proxiedPdfUrl}
         loading={<p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>}
         error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
-        onLoadSuccess={({ numPages: pages }) => onPagesLoaded(pages)}
+        onLoadSuccess={handleLoadSuccess}
       >
         <div className="flex flex-col items-center gap-4 py-1 sm:gap-5 sm:py-2">
-          <div
-            className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
-            style={{ width: pageWidth }}
-          >
-            <Page
-              pageNumber={currentPage}
-              width={pageWidth}
-              renderAnnotationLayer={false}
-              renderTextLayer={false}
-              className="[&_canvas]:!h-auto [&_canvas]:!w-full"
-            />
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+            <div
+              key={pageNum}
+              className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
+              style={{ width: pageWidth }}
+            >
+              <Page
+                pageNumber={pageNum}
+                width={pageWidth}
+                renderAnnotationLayer={false}
+                renderTextLayer={false}
+                className="[&_canvas]:!h-auto [&_canvas]:!w-full"
+              />
 
-            {watermarkText ? (
-              <div
-                className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
-                aria-hidden
-              >
-                <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="flex items-center justify-center">
-                      <span
-                        className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
-                        style={watermarkStyle}
-                      >
-                        {watermarkText}
-                      </span>
-                    </div>
-                  ))}
+              {watermarkText ? (
+                <div
+                  className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
+                  aria-hidden
+                >
+                  <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-center">
+                        <span
+                          className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
+                          style={watermarkStyle}
+                        >
+                          {watermarkText}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          ))}
         </div>
       </Document>
     </div>
@@ -122,6 +133,7 @@ export default function PdfPreviewModal({
   expandToContainer = false,
   scale: externalScale,
   onScaleChange,
+  contentType = 'chapters',
 }: Props) {
   const [internalScale, setInternalScale] = useState(1.0);
   const [numPages, setNumPages] = useState(0);
@@ -205,7 +217,7 @@ export default function PdfPreviewModal({
     const loadWatermark = async () => {
       try {
         const platformFeatures = await getStudentPlatformFeatures();
-        const resolution = resolveEnabledWatermarkBucket(platformFeatures, 'chapters');
+        const resolution = resolveEnabledWatermarkBucket(platformFeatures, contentType);
 
         if (mounted) {
           setWatermarkConfig(resolution);

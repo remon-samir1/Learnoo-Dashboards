@@ -2449,6 +2449,8 @@ export type Attachment = JsonApiData<AttachmentAttributes>;
 
 
 
+
+
 export interface LibraryAttributes {
 
 
@@ -2485,6 +2487,10 @@ export interface LibraryAttributes {
 
 
 
+  is_preview: boolean;
+
+
+
   price: string;
 
 
@@ -2510,6 +2516,9 @@ export interface LibraryAttributes {
 
 
 export type Library = JsonApiData<LibraryAttributes>;
+
+
+
 
 
 
@@ -2557,11 +2566,18 @@ export interface CreateLibraryRequest {
 
 
 
+  downloadable?: boolean;
+
+
+
   price: number;
 
 
 
 }
+
+
+
 
 
 
@@ -2606,6 +2622,10 @@ export interface UpdateLibraryRequest {
 
 
   is_locked?: boolean;
+
+
+
+  downloadable?: boolean;
 
 
 

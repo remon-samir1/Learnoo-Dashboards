@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { api, ApiError } from '@/src/lib/api';
-import type { Student, CreateStudentRequest, StudentStatus } from '@/src/types';
+import type { Student, CreateStudentRequest, StudentStatus, ApiResponse } from '@/src/types';
 import { createQueryHook, createMutationHook, MutationState } from './index';
 
 // ============================================
@@ -116,4 +116,11 @@ export const useDeleteStudent = createMutationHook(
 export const useResetStudentPassword = createMutationHook(
   ({ studentId, password }: { studentId: string; password: string }) => 
     api.students.resetPassword(studentId, password)
+);
+
+export const useRemoveStudentActivation = createMutationHook<
+  ApiResponse<void>,
+  [{ studentId: string | number; item_id: number; item_type: string }]
+>(
+  ({ studentId, item_id, item_type }) => api.students.removeActivation(studentId, { item_id, item_type })
 );

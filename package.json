@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@jitsi/react-sdk": "^1.4.4",
     "@tanstack/react-query": "^5.99.0",
     "@tanstack/react-query-devtools": "^5.99.0",
     "@types/xlsx": "^0.0.35",
@@ -20,6 +21,7 @@
     "lucide-react": "^1.7.0",
     "next": "16.2.2",
     "next-intl": "^4.9.1",
+    "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.4.296",
     "peerjs": "^1.5.5",
     "pusher-js": "^8.5.0",
