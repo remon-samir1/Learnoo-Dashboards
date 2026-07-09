@@ -4,7 +4,7 @@ import type { JwtUserData } from '@/src/interfaces/jwt-user.interface';
 /**
  * Extracts student code from user data (from JWT or full User object).
  */
-export async function extractStudentCode(user: User | JwtUserData | null): string | null {
+export function extractStudentCode(user: User | JwtUserData | null): string | null {
   if (!user) return null;
 
   // If it's a JwtUserData, we don't have rich student info

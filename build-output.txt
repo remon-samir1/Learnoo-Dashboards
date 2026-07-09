@@ -1,0 +1,22 @@
+
+> Learnoo@0.1.0 build
+> next build
+
+▲ Next.js 16.2.2 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 24.7s
+  Running TypeScript ...
+Failed to type check.
+
+./app/(doctor)/doctor/electronic-library/add/page.tsx:544:9
+Type error: Object literal may only specify known properties, and 'is_preview' does not exist in type 'CreateLibraryRequest'.
+
+  [90m542 |[0m         material_type: materialType [36mas[0m any,
+  [90m543 |[0m         code_activation: codeActivation,
+[31m[1m>[0m [90m544 |[0m         is_preview: codeActivation,
+  [90m    |[0m         [31m[1m^[0m
+  [90m545 |[0m         is_publish: isPublish,
+  [90m546 |[0m         downloadable: downloadable,
+  [90m547 |[0m         price: parseFloat(price)
+Next.js build worker exited with code: 1 and signal: null

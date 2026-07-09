@@ -2558,6 +2558,10 @@ export interface CreateLibraryRequest {
 
 
 
+  is_preview?: boolean;
+
+
+
   is_publish?: boolean;
 
 
