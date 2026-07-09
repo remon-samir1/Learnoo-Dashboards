@@ -491,7 +491,7 @@ export interface UserAttributes {
 
 
 
-  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown' | 'Instructor' | 'Support';
+  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown' | 'Instructor' | 'Support' | 'Super Admin';
 
 
 

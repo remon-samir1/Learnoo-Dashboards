@@ -14,6 +14,7 @@ export const APP_ROLES: readonly AppRole[] = [
   'Unknown',
   'Instructor',
   'Support',
+  'Super Admin',
 ] as const;
 
 export function isAppRole(value: string | null | undefined): value is AppRole {
@@ -26,5 +27,5 @@ export function isStudentLikeRole(role: AppRole | null | undefined): boolean {
 }
 
 export function isAdminZoneRole(role: AppRole | null | undefined): boolean {
-  return role === 'Admin' || role === 'Instructor';
+  return role === 'Admin' || role === 'Instructor' || role === 'Super Admin';
 }

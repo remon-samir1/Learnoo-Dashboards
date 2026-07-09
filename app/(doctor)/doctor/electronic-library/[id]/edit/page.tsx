@@ -551,7 +551,6 @@ export default function EditLibraryItemPage() {
         course_id: parseInt(courseId || '0'),
         material_type: materialType as any,
         code_activation: codeActivation,
-        is_preview: codeActivation,
         is_publish: isPublish,
         downloadable: downloadable,
         price: price ? parseFloat(price) : 0

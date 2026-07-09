@@ -5,12 +5,13 @@ import type { AppRole } from '@/src/types/user-role';
  * Use `student` for locale-aware paths (`/{locale}/student` or complete-profile).
  */
 export const ROLE_TO_DASHBOARD: Record<AppRole, string | 'student'> = {
-  Admin: '/dashboard',
+  Admin: '/departments',
   Instructor: '/doctor/dashboard',
   Doctor: '/doctor/dashboard',
   Student: 'student',
   Unknown: 'student',
   Support: '/support',
+  'Super Admin': '/dashboard',
 };
 
 /**
@@ -19,7 +20,7 @@ export const ROLE_TO_DASHBOARD: Record<AppRole, string | 'student'> = {
  */
 export const ROUTE_ZONE_TO_ROLES = {
   onboarding: ['Student', 'Unknown'],
-  admin: ['Admin'],
+  admin: ['Admin', 'Super Admin'],
   doctor: ['Doctor', 'Instructor'],
   student: ['Student', 'Unknown'],
   'locale-root': ['Student', 'Unknown'],

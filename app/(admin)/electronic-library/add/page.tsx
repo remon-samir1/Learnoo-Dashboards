@@ -82,7 +82,6 @@ export default function AddLibraryItemPage() {
         course_id: parseInt(courseId),
         material_type: materialType as any,
         code_activation: codeActivation,
-        is_preview: codeActivation,
         is_publish: isPublish,
         downloadable: downloadable,
         price: parseFloat(price)

@@ -1,19 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "./providers";
 import { Toaster } from "sonner";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Learnoo-Dashboard",
@@ -61,7 +50,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={isRTL ? "rtl" : "ltr"}
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`geist-sans geist-mono`}
     >
       {/* Extensions (e.g. ColorZilla: cz-shortcut-listen) mutate <body> before hydration */}
       <body suppressHydrationWarning>

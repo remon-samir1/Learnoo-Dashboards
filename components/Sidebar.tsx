@@ -1,7 +1,5 @@
 'use client';
 
-
-
 import React, { useEffect } from 'react';
 
 import Link from 'next/link';
@@ -94,45 +92,53 @@ interface MenuItem {
 
   children?: MenuItem[];
 
+  roles?: string[];
+
 }
 
 
 
-const getMenuItems = (t: (key: string) => string): MenuItem[] => [
+const getMenuItems = (t: (key: string) => string, role: string | null | undefined): MenuItem[] => {
 
-  { name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' },
+  const items: MenuItem[] = [];
 
-  { name: t('sidebar.academicStructure'), icon: School, path: '/departments' },
+  if (role === 'Super Admin') {
+    items.push({ name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' });
+  }
 
-  { name: t('sidebar.instructors'), icon: GraduationCap, path: '/instructors' },
+  items.push({ name: t('sidebar.academicStructure'), icon: School, path: '/departments' });
 
-  { name: t('sidebar.students'), icon: Users2, path: '/students' },
+  items.push({ name: t('sidebar.instructors'), icon: GraduationCap, path: '/instructors' });
 
-  { name: t('sidebar.activation'), icon: Power, path: '/activation' },
+  items.push({ name: t('sidebar.students'), icon: Users2, path: '/students' });
 
-  { name: t('sidebar.liveSessions'), icon: Video, path: '/live-sessions' },
+  items.push({ name: t('sidebar.activation'), icon: Power, path: '/activation' });
 
-  { name: t('sidebar.examsAndQA'), icon: ClipboardList, path: '/exams' },
+  items.push({ name: t('sidebar.liveSessions'), icon: Video, path: '/live-sessions' });
 
-  { name: t('sidebar.community'), icon: MessageSquare, path: '/community' },
+  items.push({ name: t('sidebar.examsAndQA'), icon: ClipboardList, path: '/exams' });
 
-  { name: t('sidebar.discussions'), icon: MessageCircle, path: '/discussions' },
+  items.push({ name: t('sidebar.community'), icon: MessageSquare, path: '/community' });
 
-  { name: t('sidebar.electronicLibrary'), icon: BookOpen, path: '/electronic-library' },
+  items.push({ name: t('sidebar.discussions'), icon: MessageCircle, path: '/discussions' });
 
-  { name: t('sidebar.notifications'), icon: Bell, path: '/notifications', comingSoon: true },
+  items.push({ name: t('sidebar.electronicLibrary'), icon: BookOpen, path: '/electronic-library' });
 
-  { name: t('sidebar.downloads'), icon: Download, path: '/downloads', comingSoon: true },
+  items.push({ name: t('sidebar.notifications'), icon: Bell, path: '/notifications', comingSoon: true });
 
-  { name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' },
+  items.push({ name: t('sidebar.downloads'), icon: Download, path: '/downloads', comingSoon: true });
 
-  { name: t('sidebar.featureControl'), icon: ShieldCheck, path: '/feature-control' },
+  items.push({ name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' });
 
-  { name: t('sidebar.otaUpload'), icon: Smartphone, path: '/ota-upload' },
+  items.push({ name: t('sidebar.featureControl'), icon: ShieldCheck, path: '/feature-control' });
 
-  { name: t('sidebar.support'), icon: LifeBuoy, path: '/issues' },
+  items.push({ name: t('sidebar.otaUpload'), icon: Smartphone, path: '/ota-upload' });
 
-];
+  items.push({ name: t('sidebar.support'), icon: LifeBuoy, path: '/issues' });
+
+  return items;
+
+};
 
 
 
@@ -150,7 +156,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
 
 
-  const menuItems = getMenuItems(t);
+  const menuItems = getMenuItems(t, role);
 
 
 
@@ -273,13 +279,9 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
             onClick={() => toggleDropdown(item.name)}
 
             className={`group flex items-center p-3 rounded-xl transition-all duration-300 w-full ${
-
               isDropdownActive(item)
-
                 ? 'bg-[#4F46E5]/10 text-[#4F46E5] shadow-sm ring-1 ring-[#4F46E5]/20'
-
                 : 'text-[#64748B] hover:bg-white/60 hover:text-[#4F46E5]'
-
             }`}
 
           >
@@ -331,13 +333,9 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           href={item.children?.[0]?.path || '#'}
 
           className={`group flex items-center p-3 rounded-xl transition-all duration-300 relative ${
-
             isDropdownActive(item)
-
               ? 'text-[#4F46E5] scale-110 z-10'
-
               : 'text-[#64748B] hover:bg-white/60 hover:text-[#4F46E5]'
-
           } justify-center mx-1.5`}
 
           title={item.name}
@@ -367,17 +365,11 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         href={item.path || '#'}
 
         className={`group flex items-center p-3 rounded-xl transition-all duration-300 relative ${
-
           isActive
-
             ? isCollapsed
-
               ? 'text-[#4F46E5] scale-110 z-10'
-
               : 'bg-[#4F46E5]/10 text-[#4F46E5] shadow-sm ring-1 ring-[#4F46E5]/20'
-
             : 'text-[#64748B] hover:bg-white/60 hover:text-[#4F46E5]'
-
         } ${isCollapsed ? 'justify-center mx-1.5' : ''} ${isChild ? 'text-[12px]' : ''}`}
 
         title={isCollapsed ? item.name : ''}
@@ -439,7 +431,6 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     <aside
 
       className={`bg-[#F9FAFF] flex flex-col min-h-full border-r border-[#E5E7EB] transition-all duration-300 ease-in-out z-50 ${isCollapsed ? 'w-20' : 'w-64'
-
         }`}
 
     >
@@ -651,4 +642,3 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   );
 
 }
-
