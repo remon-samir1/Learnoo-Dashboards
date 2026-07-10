@@ -20,8 +20,9 @@ export async function POST(request: NextRequest) {
     // Get the raw body as FormData
     const formData = await request.formData();
     
-    // We only need the file from this formdata
+    // We only need the file and count from this formdata
     const file = formData.get('file');
+    const count = formData.get('count');
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
@@ -30,11 +31,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Since we are proxying to the external web hook, it takes form-data with "file"
+    // Since we are proxying to the external web hook, it takes form-data with "file" and optionally "count"
     const newFormData = new FormData();
     const arrayBuffer = await file.arrayBuffer();
     const blob = new Blob([arrayBuffer], { type: file.type || 'application/pdf' });
     newFormData.append('file', blob, file.name);
+    if (count) {
+      newFormData.append('count', String(count));
+    }
 
     console.log(`🚀 Forwarding PDF to AI Webhook: http://31.97.36.130:5678/webhook/form`);
 

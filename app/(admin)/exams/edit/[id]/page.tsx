@@ -148,6 +148,10 @@ export default function EditExamPage() {
   const [showReplaceModal, setShowReplaceModal] = useState(false);
   const [pendingQuestions, setPendingQuestions] = useState<Question[] | null>(null);
 
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [aiQuestionCount, setAiQuestionCount] = useState<string>('5');
+  const [aiFile, setAiFile] = useState<File | null>(null);
+
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '', courses: [], chapter: '', type: 'exam',
     duration: '60', totalMarks: '100', passingMarks: '60', maxAttempts: '1',
@@ -349,15 +353,21 @@ export default function EditExamPage() {
         : q
     ));
 
-  const handleAIUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleAIUpload = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!aiFile) {
+      toast.error('Please select a file first.');
+      return;
+    }
 
     setIsExtractingAI(true);
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', aiFile);
+      if (aiQuestionCount) {
+        formData.append('count', aiQuestionCount);
+      }
 
       const res = await fetch('/api/ai-exam-extract', {
         method: 'POST',
@@ -406,7 +416,8 @@ export default function EditExamPage() {
       toast.error(error instanceof Error ? error.message : 'Something went wrong during AI extraction');
     } finally {
       setIsExtractingAI(false);
-      e.target.value = '';
+      setShowAIModal(false);
+      setAiFile(null);
     }
   };
 
@@ -530,6 +541,64 @@ export default function EditExamPage() {
   // ── render ──
   return (
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
+      {/* AI Modal */}
+      {showAIModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-800">Extract Questions</h3>
+                <p className="text-sm text-slate-500 mt-1">Upload a PDF to extract questions with AI.</p>
+              </div>
+            </div>
+            <form onSubmit={handleAIUpload} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#475569]">Number of questions</label>
+                <input
+                  type="number"
+                  min="1"
+                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                  value={aiQuestionCount}
+                  onChange={e => setAiQuestionCount(e.target.value)}
+                  placeholder="e.g. 5"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#475569]">PDF File <span className="text-[#EF4444]">*</span></label>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  required
+                  className="w-full px-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
+                  onChange={e => setAiFile(e.target.files?.[0] || null)}
+                />
+              </div>
+              <div className="flex flex-col gap-3 mt-2">
+                <button
+                  type="submit"
+                  disabled={isExtractingAI || !aiFile}
+                  className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isExtractingAI ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  {isExtractingAI ? 'Extracting AI...' : 'Extract'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAIModal(false)}
+                  disabled={isExtractingAI}
+                  className="w-full px-4 py-3 text-slate-500 hover:text-slate-700 font-medium transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Show Replace Modal */}
       {showReplaceModal && pendingQuestions && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
@@ -589,29 +658,14 @@ export default function EditExamPage() {
 
         {/* AI Upload Button */}
         <div>
-          <input 
-            type="file" 
-            accept=".pdf" 
-            id="ai-pdf-upload" 
-            className="hidden" 
-            onChange={handleAIUpload}
-            disabled={isExtractingAI}
-          />
-          <label 
-            htmlFor="ai-pdf-upload"
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all shadow-purple-100 ${
-              isExtractingAI 
-                ? 'bg-purple-100 text-purple-400 cursor-not-allowed' 
-                : 'bg-purple-600 hover:bg-purple-700 text-white cursor-pointer hover:shadow-md'
-            }`}
+          <button 
+            type="button"
+            onClick={() => setShowAIModal(true)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all shadow-purple-100 bg-purple-600 hover:bg-purple-700 text-white hover:shadow-md`}
           >
-            {isExtractingAI ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4" />
-            )}
-            {isExtractingAI ? 'Extracting AI...' : 'Extract with AI'}
-          </label>
+            <Sparkles className="w-4 h-4" />
+            Extract with AI
+          </button>
         </div>
       </div>
 
