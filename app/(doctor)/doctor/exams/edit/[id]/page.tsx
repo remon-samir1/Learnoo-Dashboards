@@ -15,7 +15,10 @@ import {
   RotateCcw,
   Loader2,
   X,
-  ImagePlus
+  ImagePlus,
+  FileUp,
+  Sparkles,
+  AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -144,6 +147,10 @@ export default function EditExamPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDraftRestored, setIsDraftRestored] = useState(false);
+
+  const [isExtractingAI, setIsExtractingAI] = useState(false);
+  const [showReplaceModal, setShowReplaceModal] = useState(false);
+  const [pendingQuestions, setPendingQuestions] = useState<Question[] | null>(null);
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '', courses: [], chapter: '', type: 'exam',
     duration: '60', totalMarks: '100', passingMarks: '60', maxAttempts: '1',
@@ -345,6 +352,81 @@ export default function EditExamPage() {
         : q
     ));
 
+  const handleAIUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsExtractingAI(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/ai-exam-extract', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to extract questions');
+      }
+
+      if (Array.isArray(data) && data[0] && Array.isArray(data[0].output)) {
+        const extractedQuestions = data[0].output;
+        
+        const newQuestions: Question[] = extractedQuestions.map((q: any, i: number) => ({
+          id: `ai-q-${Date.now()}-${i}`,
+          quizId: '',
+          text: q.text || '',
+          type: q.type || 'single_choice',
+          score: q.score || 1,
+          autoCorrect: q.auto_correct === 1 || q.auto_correct === true,
+          image: null,
+          imagePreview: '',
+          answers: Array.isArray(q.answers) ? q.answers.map((a: any, j: number) => ({
+            id: `ai-a-${Date.now()}-${i}-${j}`,
+            text: a.text || '',
+            isCorrect: a.is_correct === 1 || a.is_correct === true,
+            reason: a.reason || '',
+            image: null,
+            imagePreview: '',
+            reason_image: null,
+            reasonImagePreview: ''
+          })) : [
+            { id: `ai-a-${Date.now()}-${i}-1`, text: 'Open-ended response', isCorrect: false, reason: '' }
+          ]
+        }));
+        
+        setPendingQuestions(newQuestions);
+        setShowReplaceModal(true);
+      } else {
+        throw new Error('Invalid format returned from AI');
+      }
+    } catch (error) {
+      console.error('AI Extraction Error:', error);
+      toast.error(error instanceof Error ? error.message : 'Something went wrong during AI extraction');
+    } finally {
+      setIsExtractingAI(false);
+      e.target.value = '';
+    }
+  };
+
+  const confirmAIQuestions = (mode: 'replace' | 'append') => {
+    if (!pendingQuestions) return;
+    
+    if (mode === 'replace') {
+      setQuestions(pendingQuestions);
+    } else {
+      setQuestions(prev => [...prev, ...pendingQuestions]);
+    }
+    
+    setShowReplaceModal(false);
+    setPendingQuestions(null);
+    toast.success('Questions updated from PDF successfully');
+  };
+
   // ── submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -451,17 +533,88 @@ export default function EditExamPage() {
   // ── render ──
   return (
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
+      {/* Show Replace Modal */}
+      {showReplaceModal && pendingQuestions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-slate-800">New Questions Extracted</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  We extracted <span className="font-bold text-slate-700">{pendingQuestions.length}</span> questions from the document. How would you like to add them?
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button 
+                onClick={() => confirmAIQuestions('replace')}
+                className="w-full px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors border border-red-200 shadow-sm"
+              >
+                Replace Current Questions
+              </button>
+              <button 
+                onClick={() => confirmAIQuestions('append')}
+                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-colors shadow-sm"
+              >
+                Add to Current Questions
+              </button>
+              <button 
+                onClick={() => {
+                  setShowReplaceModal(false);
+                  setPendingQuestions(null);
+                }}
+                className="w-full px-4 py-2 mt-2 text-slate-500 hover:text-slate-700 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/exams"
-          className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/exams"
+            className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-[#1E293B]">{t('edit.pageTitle')}</h1>
+            <p className="text-sm text-[#64748B] mt-0.5">{t('edit.pageDescription')}</p>
+          </div>
+        </div>
+
+        {/* AI Upload Button */}
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">{t('edit.pageTitle')}</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">{t('edit.pageDescription')}</p>
+          <input 
+            type="file" 
+            accept=".pdf" 
+            id="ai-pdf-upload" 
+            className="hidden" 
+            onChange={handleAIUpload}
+            disabled={isExtractingAI}
+          />
+          <label 
+            htmlFor="ai-pdf-upload"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all shadow-purple-100 ${
+              isExtractingAI 
+                ? 'bg-purple-100 text-purple-400 cursor-not-allowed' 
+                : 'bg-purple-600 hover:bg-purple-700 text-white cursor-pointer hover:shadow-md'
+            }`}
+          >
+            {isExtractingAI ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            {isExtractingAI ? 'Extracting AI...' : 'Extract with AI'}
+          </label>
         </div>
       </div>
 

@@ -15,7 +15,9 @@ import {
   RotateCcw,
   Loader2,
   X,
-  ImagePlus
+  ImagePlus,
+  FileUp,
+  Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -74,6 +76,7 @@ export default function CreateExamPage() {
   const { mutate: createQuiz, isLoading: isCreatingQuiz, isError: isQuizError, error: quizError } = useCreateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  const [isExtractingAI, setIsExtractingAI] = useState(false);
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '',
@@ -176,6 +179,75 @@ export default function CreateExamPage() {
   const removeQuestion = (id: string) => {
     if (questions.length > 1) {
       setQuestions(questions.filter(q => q.id !== id));
+    }
+  };
+
+  const handleAIUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsExtractingAI(true);
+    // Use the file name (without extension) as the default title for the exam
+    const titleWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/ai-exam-extract', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to extract questions');
+      }
+
+      // the response is typically an array with one object that has `output`
+      if (Array.isArray(data) && data[0] && Array.isArray(data[0].output)) {
+        const extractedQuestions = data[0].output;
+        
+        const newQuestions: Question[] = extractedQuestions.map((q: any, i: number) => ({
+          id: `ai-q-${Date.now()}-${i}`,
+          quizId: '',
+          text: q.text || '',
+          type: q.type || 'single_choice',
+          score: q.score || 1,
+          autoCorrect: q.auto_correct === 1 || q.auto_correct === true,
+          image: null,
+          imagePreview: '',
+          answers: Array.isArray(q.answers) ? q.answers.map((a: any, j: number) => ({
+            id: `ai-a-${Date.now()}-${i}-${j}`,
+            text: a.text || '',
+            isCorrect: a.is_correct === 1 || a.is_correct === true,
+            reason: a.reason || '',
+            image: null,
+            imagePreview: '',
+            reason_image: null,
+            reasonImagePreview: ''
+          })) : [
+            { id: `ai-a-${Date.now()}-${i}-1`, text: 'Open-ended response', isCorrect: false, reason: '' }
+          ]
+        }));
+        
+        setExamDetails(prev => ({
+          ...prev,
+          title: prev.title || titleWithoutExt
+        }));
+        setQuestions(newQuestions);
+        toast.success(t('extract_success') || 'Questions extracted successfully from PDF');
+      } else {
+        throw new Error('Invalid format returned from AI');
+      }
+    } catch (error) {
+      console.error('AI Extraction Error:', error);
+      toast.error(error instanceof Error ? error.message : 'Something went wrong during AI extraction');
+    } finally {
+      setIsExtractingAI(false);
+      // Reset input so they can pick same file again if they want
+      e.target.value = '';
     }
   };
 
@@ -421,16 +493,45 @@ export default function CreateExamPage() {
   return (
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link
-          href="/exams"
-          className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/exams"
+            className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-[#1E293B]">{t('create.pageTitle')}</h1>
+            <p className="text-sm text-[#64748B] mt-0.5">{t('create.pageDescription')}</p>
+          </div>
+        </div>
+
+        {/* AI Upload Button */}
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">{t('create.pageTitle')}</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">{t('create.pageDescription')}</p>
+          <input 
+            type="file" 
+            accept=".pdf" 
+            id="ai-pdf-upload" 
+            className="hidden" 
+            onChange={handleAIUpload}
+            disabled={isExtractingAI}
+          />
+          <label 
+            htmlFor="ai-pdf-upload"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all shadow-purple-100 ${
+              isExtractingAI 
+                ? 'bg-purple-100 text-purple-400 cursor-not-allowed' 
+                : 'bg-purple-600 hover:bg-purple-700 text-white cursor-pointer hover:shadow-md'
+            }`}
+          >
+            {isExtractingAI ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4" />
+            )}
+            {isExtractingAI ? 'Extracting AI...' : 'Extract with AI'}
+          </label>
         </div>
       </div>
 
