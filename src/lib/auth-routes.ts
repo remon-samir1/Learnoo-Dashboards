@@ -11,6 +11,7 @@ import {
   ADMIN_ROUTE_PREFIXES,
   AUTH_ROUTE_PREFIXES,
   DOCTOR_ROUTE_PREFIX,
+  PARENT_ROUTE_PREFIX,
   ONBOARDING_ROUTE_PREFIXES,
   ROLE_TO_DASHBOARD,
   ROUTE_ZONE_TO_ROLES,
@@ -23,6 +24,7 @@ export type RouteZone =
   | 'admin'
   | 'doctor'
   | 'student'
+  | 'parent'
   | 'locale-root'
   | 'unknown';
 
@@ -36,6 +38,7 @@ export {
   ADMIN_ROUTE_PREFIXES,
   AUTH_ROUTE_PREFIXES,
   DOCTOR_ROUTE_PREFIX,
+  PARENT_ROUTE_PREFIX,
   ONBOARDING_ROUTE_PREFIXES,
   ROLE_TO_DASHBOARD,
   ROUTE_ZONE_TO_ROLES,
@@ -112,6 +115,13 @@ export function getRouteZone(pathname: string): RouteZone {
     normalized.startsWith(`${DOCTOR_ROUTE_PREFIX}/`)
   ) {
     return 'doctor';
+  }
+
+  if (
+    normalized === PARENT_ROUTE_PREFIX ||
+    normalized.startsWith(`${PARENT_ROUTE_PREFIX}/`)
+  ) {
+    return 'parent';
   }
 
   if (matchesRoutePrefix(normalized, ADMIN_ROUTE_PREFIXES)) {

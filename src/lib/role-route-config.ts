@@ -9,6 +9,7 @@ export const ROLE_TO_DASHBOARD: Record<AppRole, string | 'student'> = {
   Instructor: '/doctor/dashboard',
   Doctor: '/doctor/dashboard',
   Student: 'student',
+  Parent: '/parent/dashboard',
   Unknown: 'student',
   Support: '/support',
   'Super Admin': '/dashboard',
@@ -23,12 +24,14 @@ export const ROUTE_ZONE_TO_ROLES = {
   admin: ['Admin', 'Super Admin'],
   doctor: ['Doctor', 'Instructor'],
   student: ['Student', 'Unknown'],
+  parent: ['Parent'],
   'locale-root': ['Student', 'Unknown'],
 } as const satisfies Record<string, readonly AppRole[]>;
 
 /** Auth pages — signed-in users are redirected to their dashboard. */
 export const AUTH_ROUTE_PREFIXES = [
   '/login',
+  '/parent-login',
   '/admin-login',
   '/create-account',
   '/forgot-password',
@@ -73,3 +76,5 @@ export const ADMIN_ROUTE_PREFIXES = [
 ] as const;
 
 export const DOCTOR_ROUTE_PREFIX = '/doctor' as const;
+
+export const PARENT_ROUTE_PREFIX = '/parent' as const;

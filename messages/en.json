@@ -55,8 +55,33 @@
   "auth": {
     "login": {
       "title": "Learnoo Sign In",
+      "parentLink": "Parent? Sign in with your phone number",
       "subtitle": "Sign in with your phone number",
       "phone": "Phone Number",
+      "phonePlaceholder": "Enter your phone number",
+      "signIn": "Sign In",
+      "signingIn": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create account",
+      "adminLink": "Admin or Instructor? Sign in with password",
+      "forgotPassword": "Forgot password?",
+      "registeredSuccess": "Account created successfully. Sign in with your phone number.",
+      "errors": {
+        "missingFields": "Please enter your phone number",
+        "loginFailed": "Login failed",
+        "noToken": "No token received",
+        "noPermission": "You do not have permission to access this platform"
+      }
+    },
+    "parentLogin": {
+      "title": "Parent Sign In",
+      "subtitle": "Sign in with your phone number",
+      "phone": "Phone Number",
+      "password": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "rememberMe": "Remember me",
+      "studentLink": "Student? Sign in with phone only",
+      "createAccountLink": "Create account",
       "phonePlaceholder": "Enter your phone number",
       "signIn": "Sign In",
       "signingIn": "Signing in...",
@@ -105,6 +130,8 @@
       "subtitle": "Register to access the platform",
       "firstName": "First Name",
       "lastName": "Last Name",
+      "studentRole": "Student",
+      "parentRole": "Parent",
       "email": "Email Address",
       "phone": "Phone",
       "password": "Password",
@@ -238,6 +265,7 @@
     "otaUpload": "OTA Upload",
     "adminDashboard": "Admin Dashboard",
     "doctorDashboard": "Doctor Dashboard",
+    "parentDashboard": "Parent Dashboard",
     "profile": "Profile",
     "settings": "Settings",
     "helpFaq": "Help & FAQ",
@@ -2751,5 +2779,16 @@
       "help": "Help & FAQ",
       "terms": "Terms & Privacy Policy"
     }
+  },
+  "parentDashboard": {
+    "welcome": "Welcome",
+    "subtitle": "Here is an overview of your children's progress.",
+    "selectChild": "Select Child:",
+    "attendance": "Attendance Rate",
+    "courseProgress": "Course Progress",
+    "examAverage": "Exam Average",
+    "engagement": "Engagement Level",
+    "recentActivity": "Recent Activity",
+    "alerts": "Alerts & Reminders"
   }
 }

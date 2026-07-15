@@ -38,6 +38,7 @@ export function getPostAuthHref(
   if (r === 'Admin') return '/departments';
   if (r === 'Instructor' || r === 'Doctor') return '/doctor/dashboard';
   if (r === 'Support') return '/support/issues';
+  if (r === 'Parent') return '/parent/dashboard';
   if (isAppRole(r) && isStudentLikeRole(r)) {
     return getStudentDashboardHref(locale, user ?? null);
   }

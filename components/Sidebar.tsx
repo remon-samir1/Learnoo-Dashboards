@@ -102,6 +102,12 @@ const getMenuItems = (t: (key: string) => string, role: string | null | undefine
 
   const items: MenuItem[] = [];
 
+  if (role === 'Parent') {
+    items.push({ name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/parent/dashboard' });
+    items.push({ name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' });
+    return items;
+  }
+
   if (role === 'Super Admin') {
     items.push({ name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' });
   }
@@ -231,6 +237,8 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
     if (role === 'Admin') return t('sidebar.adminDashboard');
 
     if (role === 'Doctor') return t('sidebar.doctorDashboard');
+
+    if (role === 'Parent') return t('sidebar.parentDashboard') || 'Parent Dashboard';
 
     return role || 'User';
 

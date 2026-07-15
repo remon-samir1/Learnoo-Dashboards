@@ -38,15 +38,15 @@ export default function CreateAccountPage() {
   const t = useTranslations('auth.createAccount');
   const router = useRouter();
   const locale = useLocale() || 'ar';
-  const { register } = useAuthActions();
-
+  const { register, activateSession } = useAuthActions();
+  const [role, setRole] = useState<'Student' | 'Parent'>('Student');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [countryCode, setCountryCode] = useState('20');
-  // const [password, setPassword] = useState('');
-  // const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -64,10 +64,12 @@ export default function CreateAccountPage() {
       return;
     }
 
-    // if (password !== confirmPassword) {
-    //   setError(t('errors.passwordMismatch'));
-    //   return;
-    // }
+    if (role === 'Parent') {
+      if (!password || password !== confirmPassword) {
+        setError(t('errors.passwordMismatch'));
+        return;
+      }
+    }
 
     if (!agreeToTerms) {
       setError(t('errors.agreeToTerms'));
@@ -88,22 +90,26 @@ export default function CreateAccountPage() {
         last_name: ln,
         phone: fullPhone,
         email: em,
-        // password,
+        password: role === 'Parent' ? password : undefined,
         device_name: DEVICE_NAME,
+        role: role === "Parent" ? 3 : "Student",
       });
 
-      // Do NOT call fetchCurrentUser() here — cookies are not set until after OTP verification.
-      // Redirect immediately to verification page, same as login flow.
       if (typeof window !== 'undefined') {
         try {
           sessionStorage.setItem('auth_flow', 'register');
-        } catch {}
+        } catch { }
         try {
           Cookies.set('auth_flow', 'register');
-        } catch {}
+        } catch { }
       }
 
-      router.push('/verification-code');
+      if (role === 'Parent') {
+        activateSession();
+        router.push('/parent/link-student');
+      } else {
+        router.push('/verification-code');
+      }
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, t('errors.registerFailed'));
       toast.error(message);
@@ -121,6 +127,23 @@ export default function CreateAccountPage() {
   return (
     <AuthPageLayout title={t('title')} subtitle={t('subtitle')}>
       <div className="flex flex-col gap-5">
+        <div className="flex bg-gray-100 p-1 rounded-lg">
+          <button
+            type="button"
+            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${role === 'Student' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`}
+            onClick={() => setRole('Student')}
+          >
+            {t('studentRole') || 'Student'}
+          </button>
+          <button
+            type="button"
+            className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${role === 'Parent' ? 'bg-white shadow-sm text-text-main' : 'text-text-muted hover:text-text-main'}`}
+            onClick={() => setRole('Parent')}
+          >
+            {t('parentRole') || 'Parent'}
+          </button>
+        </div>
+
         <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('firstName')}</label>
           <input
@@ -186,31 +209,35 @@ export default function CreateAccountPage() {
           </div>
         </div>
 
-        {/* <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('password')}</label>
-          <input
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            className="h-10 w-full rounded-md border border-border-color bg-white px-3 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors placeholder:text-text-placeholder focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
-            placeholder={t('passwordPlaceholder')}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+        {role === 'Parent' && (
+          <>
+            <div className="flex flex-col gap-2">
+              <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('password')}</label>
+              <input
+                type="password"
+                name="password"
+                autoComplete="new-password"
+                className="h-10 w-full rounded-md border border-border-color bg-white px-3 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors placeholder:text-text-placeholder focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
+                placeholder={t('passwordPlaceholder')}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-        <div className="flex flex-col gap-2">
-          <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('confirmPassword')}</label>
-          <input
-            type="password"
-            name="confirmPassword"
-            autoComplete="new-password"
-            className="h-10 w-full rounded-md border border-border-color bg-white px-3 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors placeholder:text-text-placeholder focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
-            placeholder={t('confirmPasswordPlaceholder')}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </div> */}
+            <div className="flex flex-col gap-2">
+              <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('confirmPassword')}</label>
+              <input
+                type="password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                className="h-10 w-full rounded-md border border-border-color bg-white px-3 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors placeholder:text-text-placeholder focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
+                placeholder={t('confirmPasswordPlaceholder')}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
+          </>
+        )}
 
         {error ? (
           <div className="rounded-md border border-red-200 bg-red-50 p-3">

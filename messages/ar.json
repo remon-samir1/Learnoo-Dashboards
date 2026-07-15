@@ -80,6 +80,29 @@
     "login": {
       "title": "Learnoo تسجيل الدخول",
       "subtitle": "سجل الدخول برقم هاتفك",
+      "parentLogin": "تسجيل دخول ولي الأمر",
+      "phone": "رقم الهاتف",
+      "phonePlaceholder": "أدخل رقم الهاتف",
+      "signIn": "تسجيل الدخول",
+      "signingIn": "جارٍ تسجيل الدخول...",
+      "noAccount": "ليس لديك حساب؟",
+      "createAccount": "إنشاء حساب",
+      "adminLink": "مدير أو معلم؟ سجل الدخول بكلمة المرور",
+      "forgotPassword": "نسيت كلمة المرور؟",
+      "registeredSuccess": "تم إنشاء الحساب بنجاح. سجّل الدخول برقم هاتفك.",
+      "errors": {
+        "missingFields": "الرجاء إدخال رقم الهاتف",
+        "loginFailed": "فشل تسجيل الدخول",
+        "noToken": "لم يتم استلام الرمز المميز",
+        "noPermission": "ليس لديك صلاحية للوصول إلى هذه المنصة"
+      }
+    },
+    "parentLogin": {
+      "title": "Learnoo تسجيل الدخول",
+      "subtitle": "سجل الدخول برقم هاتفك",
+      "rememberMe": "تذكرني",
+      "studentLink": "طالب؟ سجل الدخول برقم الهاتف فقط",
+      "createAccountLink": "إنشاء حساب",
       "phone": "رقم الهاتف",
       "phonePlaceholder": "أدخل رقم الهاتف",
       "signIn": "تسجيل الدخول",
@@ -129,6 +152,8 @@
       "subtitle": "سجل للوصول إلى المنصة",
       "firstName": "الاسم الأول",
       "lastName": "الاسم الأخير",
+      "studentRole": "طالب",
+      "parentRole": "ولي أمر",
       "email": "البريد الإلكتروني",
       "phone": "رقم الهاتف",
       "password": "كلمة المرور",
@@ -238,6 +263,7 @@
     "otaUpload": "رفع تحديثات الهواء",
     "adminDashboard": "لوحة تحكم المشرف",
     "doctorDashboard": "لوحة تحكم الدكتور",
+    "parentDashboard": "لوحة تحكم ولي الأمر",
     "profile": "الملف الشخصي",
     "settings": "الإعدادات",
     "helpFaq": "المساعدة والأسئلة",
@@ -2755,5 +2781,16 @@
       "help": "المساعدة والأسئلة الشائعة",
       "terms": "الشروط وسياسة الخصوصية"
     }
+  },
+  "parentDashboard": {
+    "welcome": "مرحباً",
+    "subtitle": "إليك نظرة عامة على تقدم أطفالك.",
+    "selectChild": "اختر الابن:",
+    "attendance": "نسبة الحضور",
+    "courseProgress": "التقدم في المقررات",
+    "examAverage": "متوسط الامتحانات",
+    "engagement": "مستوى التفاعل",
+    "recentActivity": "النشاط الأخير",
+    "alerts": "التنبيهات والتذكيرات"
   }
 }

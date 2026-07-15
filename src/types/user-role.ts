@@ -15,6 +15,7 @@ export const APP_ROLES: readonly AppRole[] = [
   'Instructor',
   'Support',
   'Super Admin',
+  'Parent',
 ] as const;
 
 export function isAppRole(value: string | null | undefined): value is AppRole {

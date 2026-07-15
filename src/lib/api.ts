@@ -486,6 +486,15 @@ export const authApi = {
 };
 
 // ============================================
+// Parent API
+// ============================================
+
+export const parentApi = {
+  linkStudents: (codes: string[]) =>
+    post<ApiResponse<{ message: string }>>('/v1/parent/students', { codes }, true),
+};
+
+// ============================================
 // Centers API
 // ============================================
 

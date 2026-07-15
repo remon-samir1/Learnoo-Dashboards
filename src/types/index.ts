@@ -320,6 +320,10 @@ export interface RegisterRequest {
 
 
 
+  role?: any;
+
+
+
 }
 
 
@@ -491,7 +495,7 @@ export interface UserAttributes {
 
 
 
-  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown' | 'Instructor' | 'Support' | 'Super Admin';
+  role: 'Admin' | 'Doctor' | 'Student' | 'Unknown' | 'Instructor' | 'Support' | 'Super Admin' | 'Parent';
 
 
 
