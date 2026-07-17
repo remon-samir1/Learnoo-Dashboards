@@ -12,6 +12,7 @@ import {
   RefreshCcw,
   Award
 } from 'lucide-react';
+import type { LinkedStudent } from '@/src/types/parent.types';
 import { useCurrentUser } from '@/src/hooks/useAuth';
 import { useLinkedStudents, useStudentActivity, useStudentAlerts, useStudentDashboard } from '@/src/hooks';
 
@@ -83,6 +84,7 @@ export default function ParentDashboard() {
   const isLoading = isStudentsLoading || dashboardQuery.isLoading || activityQuery.isLoading || alertsQuery.isLoading;
   const hasError = linkedError || dashboardQuery.isError || activityQuery.isError || alertsQuery.isError;
   const errorMessage = linkedErrorMessage ?? dashboardQuery.error ?? activityQuery.error ?? alertsQuery.error;
+  const errorMessageText = typeof errorMessage === 'string' ? errorMessage : errorMessage?.message ?? '';
 
   // The API returns { student, quick_overview } at the top level — no `.data` wrapper.
   const rawDash = dashboardQuery.data as unknown as Record<string, unknown>;
@@ -149,7 +151,7 @@ export default function ParentDashboard() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-semibold">{t('errorTitle') || 'Unable to load parent dashboard'}</p>
-              <p className="mt-2 text-sm text-rose-700/80">{errorMessage || t('errorMessage') || 'There was an error fetching data. Please try again.'}</p>
+              <p className="mt-2 text-sm text-rose-700/80">{errorMessageText || t('errorMessage') || 'There was an error fetching data. Please try again.'}</p>
             </div>
             <button
               onClick={() => {

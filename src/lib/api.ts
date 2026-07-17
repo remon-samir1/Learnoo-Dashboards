@@ -1158,6 +1158,33 @@ export const dashboardApi = {
 };
 
 // ============================================
+// Instructor Dashboard API
+// ============================================
+
+export const instructorDashboardApi = {
+  getHeader: () => get<ApiResponse<any>>('v1/instructor/dashboard/header'),
+
+  getStats: () => get<ApiResponse<any>>('v1/instructor/dashboard/stats'),
+
+  getStudentGrowth: (params?: { period?: string }) =>
+    get<ApiResponse<any>>('v1/instructor/dashboard/student-growth', params),
+
+  getCourseActivity: () => get<ApiResponse<any>>('v1/instructor/dashboard/course-activity'),
+
+  getRecentActivity: () => get<ApiResponse<any[]>>('v1/instructor/dashboard/recent-activity'),
+
+  getUpcomingLiveClasses: () => get<ApiResponse<any[]>>('v1/instructor/dashboard/upcoming-live-classes'),
+
+  getStudentsNeedingAttention: () => get<ApiResponse<any[]>>('v1/instructor/dashboard/students-needing-attention'),
+
+  getPendingQuestions: () => get<ApiResponse<any>>('v1/instructor/dashboard/pending-questions'),
+
+  getRecentEnrollments: () => get<ApiResponse<any[]>>('v1/instructor/dashboard/recent-enrollments'),
+
+  getRevenue: () => get<ApiResponse<any>>('v1/instructor/dashboard/revenue'),
+};
+
+// ============================================
 // Platform Feature API (General Settings)
 // ============================================
 
@@ -1350,6 +1377,7 @@ export const api = {
   libraries: librariesApi,
   liveRooms: liveRoomsApi,
   notes: notesApi,
+  instructorDashboard: instructorDashboardApi,
   posts: postsApi,
   comments: commentsApi,
   quizzes: quizzesApi,

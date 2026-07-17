@@ -90,10 +90,10 @@ export default function ParentStudentLinkPage() {
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                disabled={linkStudentMutation.isLoading}
+                disabled={linkStudentMutation.isPending}
                 className="inline-flex h-11 items-center justify-center rounded-2xl bg-indigo-600 px-5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
-                {linkStudentMutation.isLoading ? 'Linking...' : t('linkButton') ?? 'Link Student'}
+                {linkStudentMutation.isPending ? 'Linking...' : t('linkButton') ?? 'Link Student'}
               </button>
               <button
                 type="button"

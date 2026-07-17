@@ -73,7 +73,7 @@ export default function ParentStudentAlertsPage() {
         {isError ? (
           <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-700">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p>{alertsQuery.error ?? 'Unable to load alerts.'}</p>
+              <p>{alertsQuery.error?.message ?? 'Unable to load alerts.'}</p>
               <button onClick={() => alertsQuery.refetch()} className="inline-flex h-11 items-center justify-center rounded-2xl bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50">
                 <RefreshCcw className="mr-2 h-4 w-4" /> Retry
               </button>
