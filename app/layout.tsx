@@ -54,7 +54,10 @@ export default async function RootLayout({
     >
       {/* Extensions (e.g. ColorZilla: cz-shortcut-listen) mutate <body> before hydration */}
       <body suppressHydrationWarning>
-        <Providers messages={messages} locale={locale}>
+        <Providers
+          messages={messages as unknown as Record<string, unknown>}
+          locale={locale}
+        >
         <Toaster />
           {children}
         </Providers>

@@ -52,7 +52,11 @@ import {
 
   GraduationCap,
 
-  LifeBuoy
+  LifeBuoy,
+
+  Clock,
+
+  TrendingUp
 
 } from 'lucide-react';
 
@@ -98,13 +102,19 @@ interface MenuItem {
 
 
 
-const getMenuItems = (t: (key: string) => string, role: string | null | undefined): MenuItem[] => {
+const getMenuItems = (t: (key: string) => string, role: string | null | undefined, studentId?: string | null): MenuItem[] => {
 
   const items: MenuItem[] = [];
 
   if (role === 'Parent') {
     items.push({ name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/parent/dashboard' });
-    items.push({ name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' });
+    items.push({ name: t('sidebar.attendance'), icon: Clock, path: studentId ? `/parent/students/${studentId}/activity` : '/parent/dashboard/activity' });
+    // items.push({ name: t('sidebar.examsAndResults'), icon: ClipboardList, path: studentId ? `/parent/students/${studentId}/weekly-stats` : '/parent/dashboard/weekly-stats' });
+    items.push({ name: t('sidebar.courseProgress'), icon: BookOpen, path: studentId ? `/parent/students/${studentId}/progress` : '/parent/dashboard/progress' });
+    items.push({ name: t('sidebar.engagement'), icon: TrendingUp, path: studentId ? `/parent/students/${studentId}/weekly-stats` : '/parent/dashboard/weekly-stats' });
+    items.push({ name: t('sidebar.teacherFeedback'), icon: MessageSquare, path: studentId ? `/parent/students/${studentId}/feedback` : '/parent/dashboard/feedback' });
+    items.push({ name: t('sidebar.notifications'), icon: Bell, path: studentId ? `/parent/students/${studentId}/alerts` : '/parent/dashboard/alerts' });
+    // items.push({ name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' });
     return items;
   }
 
@@ -154,15 +164,41 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const pathname = usePathname();
 
-  const { user, fullName, role } = useCurrentUser();
+  const { user, fullName, role, isLoading } = useCurrentUser();
 
   const { data: features } = usePlatformFeature();
 
   const [openDropdowns, setOpenDropdowns] = React.useState<Record<string, boolean>>({});
 
+  const [activeStudentId, setActiveStudentId] = React.useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const pathParts = pathname.split('/');
+      const studentIndex = pathParts.indexOf('students');
+      let studentId = studentIndex !== -1 && pathParts[studentIndex + 1] ? pathParts[studentIndex + 1] : null;
+      if (studentId) {
+        studentId = studentId.split('?')[0];
+      }
+      if (studentId) {
+        setActiveStudentId(studentId);
+        localStorage.setItem('parentStudentId', studentId);
+      } else {
+        const persisted = localStorage.getItem('parentStudentId');
+        if (persisted) {
+          setActiveStudentId(persisted);
+        }
+      }
+    }
+  }, [pathname]);
 
-  const menuItems = getMenuItems(t, role);
+  const menuItems = React.useMemo(() => {
+    if (isLoading && !role) {
+      return [];
+    }
+
+    return getMenuItems(t, role, activeStudentId);
+  }, [t, role, activeStudentId, isLoading]);
 
 
 
@@ -336,7 +372,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
         <Link
 
-          key={item.name}
+          key={`${item.name}-${item.children?.[0]?.path ?? 'no-path'}-collapsed`}
 
           href={item.children?.[0]?.path || '#'}
 
@@ -368,7 +404,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
       <Link
 
-        key={item.path || item.name}
+        key={`${item.name}-${item.path || 'no-path'}`}
 
         href={item.path || '#'}
 

@@ -492,6 +492,22 @@ export const authApi = {
 export const parentApi = {
   linkStudents: (codes: string[]) =>
     post<ApiResponse<{ message: string }>>('/v1/parent/students', { codes }, true),
+  linkStudent: (student_code: string) =>
+    post<ApiResponse<{ message: string; data: { id: number; name: string; relationship: string } }>>('/v1/parent/students', { student_code }, true),
+  linkedStudents: () =>
+    get<ApiResponse<any[]>>('/v1/parent/students'),
+  studentDashboard: (id: string | number) =>
+    get<ApiResponse<any>>(`/v1/parent/students/${id}/dashboard`),
+  studentProgress: (id: string | number) =>
+    get<ApiResponse<any>>(`/v1/parent/students/${id}/progress`),
+  studentWeeklyStats: (id: string | number) =>
+    get<ApiResponse<any>>(`/v1/parent/students/${id}/weekly-stats`),
+  studentAlerts: (id: string | number) =>
+    get<ApiResponse<any[]>>(`/v1/parent/students/${id}/alerts`),
+  studentFeedback: (id: string | number) =>
+    get<ApiResponse<any[]>>(`/v1/parent/students/${id}/feedback`),
+  studentActivity: (id: string | number) =>
+    get<ApiResponse<any[]>>(`/v1/parent/students/${id}/activity`),
 };
 
 // ============================================
@@ -1352,6 +1368,7 @@ export const api = {
   issues: issuesApi,
   lectureAnalytics: lectureAnalyticsApi,
   lectureQuestions: lectureQuestionsApi,
+  parent: parentApi,
 };
 
 export default api;

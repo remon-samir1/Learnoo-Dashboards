@@ -207,3 +207,5 @@ export * from './useCourses';
 export * from './useAppVersions';
 export * from './useExamCheatingGuard';
 export * from './useEchoOTP';
+export * from './useParent';
+

@@ -269,7 +269,12 @@
     "profile": "Profile",
     "settings": "Settings",
     "helpFaq": "Help & FAQ",
-    "support": "Support"
+    "support": "Support",
+    "attendance": "Attendance",
+    "examsAndResults": "Exams & Results",
+    "courseProgress": "Course Progress",
+    "engagement": "Engagement",
+    "teacherFeedback": "Teacher Feedback"
   },
   "issues": {
     "title": "Technical Support",
@@ -2789,6 +2794,95 @@
     "examAverage": "Exam Average",
     "engagement": "Engagement Level",
     "recentActivity": "Recent Activity",
-    "alerts": "Alerts & Reminders"
+    "recentActivitySubtitle": "Latest learning events and course activity",
+    "alerts": "Alerts & Reminders",
+    "alertsSubtitle": "Urgent updates for attendance, exams, and learning progress",
+    "noRecentActivity": "No recent activity is available yet.",
+    "noAlerts": "No alerts at the moment.",
+    "noStudentSelected": "No linked children",
+    "manageChildren": "Manage Children",
+    "errorTitle": "Unable to load parent dashboard",
+    "errorMessage": "There was an error fetching data. Please try again.",
+    "retry": "Retry"
+  },
+  "parentStudents": {
+    "title": "Student Management",
+    "description": "Link a child to your parent account and view their learning progress.",
+    "codeLabel": "Student Code",
+    "codePlaceholder": "Enter student code",
+    "linkButton": "Link Student",
+    "linkedStudentsTitle": "Linked Students",
+    "noStudents": "No children are linked yet.",
+    "successLinked": "Student linked successfully.",
+    "errorLinked": "Unable to link the student. Please check the code and try again.",
+    "viewDashboard": "View Dashboard",
+    "manageChildren": "Manage Children"
+  },
+  "parentStudentOverview": {
+    "title": "Student Overview",
+    "subtitle": "Summary of learning progress and recent performance.",
+    "attendance": "Attendance Rate",
+    "courseProgress": "Course Progress",
+    "examAverage": "Exam Average",
+    "engagement": "Engagement Level",
+    "recentActivity": "Recent Activity",
+    "alerts": "Alerts",
+    "noRecentActivity": "No recent activity found.",
+    "noAlerts": "No alerts available.",
+    "retry": "Retry"
+  },
+  "parentStudentProgress": {
+    "title": "Course Progress",
+    "subtitle": "Track completed lectures and progress across courses.",
+    "overallProgress": "Overall Progress",
+    "chapterBreakdown": "Chapter Breakdown",
+    "lectures": "lectures",
+    "noData": "Progress data is not available for this student yet."
+  },
+  "parentWeeklyStats": {
+    "title": "Weekly Stats",
+    "subtitle": "Engagement and study activity for the current week.",
+    "timeThisWeek": "Time This Week",
+    "sessionsThisWeek": "Sessions This Week",
+    "questionsAsked": "Questions Asked",
+    "avgPerDay": "Avg. Per Day",
+    "dailyTimeSpent": "Daily Time Spent",
+    "activityBreakdown": "Activity Breakdown",
+    "interactionMetrics": "Interaction Metrics",
+    "learningConsistency": "Learning Consistency",
+    "consistencyMessage": "Great consistency! Your child has maintained regular learning sessions over the past few weeks.",
+    "noData": "Weekly statistics are not available for this student yet."
+  },
+  "parentAlerts": {
+    "title": "Notifications & Alerts",
+    "filterAll": "All",
+    "filterAttendance": "Attendance",
+    "filterExams": "Exams",
+    "filterFeedback": "Feedback",
+    "filterPerformance": "Performance",
+    "highPriority": "High Priority",
+    "markAsRead": "Mark as read",
+    "noAlerts": "No alerts to show."
+  },
+  "parentFeedback": {
+    "title": "Teacher Feedback",
+    "subtitle": "Read feedback from instructors about your child's engagement and progress.",
+    "totalFeedback": "Total Feedback",
+    "positiveFeedback": "Positive Feedback",
+    "needsAttention": "Needs Attention",
+    "allFeedback": "All Feedback",
+    "detailedFeedback": "Detailed Feedback",
+    "noFeedback": "No feedback entries are available yet."
+  },
+  "parentActivity": {
+    "title": "Attendance History",
+    "subtitle": "Monitor attendance and lecture participation.",
+    "attendanceRate": "Attendance Rate",
+    "filterAll": "All",
+    "filterAttended": "Attended",
+    "filterMissed": "Missed",
+    "timeline": "Activity Timeline",
+    "noActivity": "No attendance activity found yet."
   }
+
 }

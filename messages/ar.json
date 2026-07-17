@@ -267,7 +267,12 @@
     "profile": "الملف الشخصي",
     "settings": "الإعدادات",
     "helpFaq": "المساعدة والأسئلة",
-    "support": "الدعم الفني"
+    "support": "الدعم الفني",
+    "attendance": "الحضور",
+    "examsAndResults": "الاختبارات والنتائج",
+    "courseProgress": "تقدم المساقات",
+    "engagement": "التفاعل والنشاط",
+    "teacherFeedback": "ملاحظات المعلمين"
   },
   "issues": {
     "title": "الدعم الفني",
@@ -2791,6 +2796,95 @@
     "examAverage": "متوسط الامتحانات",
     "engagement": "مستوى التفاعل",
     "recentActivity": "النشاط الأخير",
-    "alerts": "التنبيهات والتذكيرات"
+    "recentActivitySubtitle": "أحدث أحداث التعلم ونشاط المقررات",
+    "alerts": "التنبيهات والتذكيرات",
+    "alertsSubtitle": "تحديثات هامة عن الحضور والامتحانات والتقدم الدراسي",
+    "noRecentActivity": "لا يوجد نشاط حديث متاح بعد.",
+    "noAlerts": "لا توجد تنبيهات في الوقت الحالي.",
+    "noStudentSelected": "لا يوجد أطفال مرتبطين",
+    "manageChildren": "إدارة الأطفال",
+    "errorTitle": "لا يمكن تحميل لوحة ولي الأمر",
+    "errorMessage": "حدث خطأ أثناء جلب البيانات. الرجاء المحاولة مرة أخرى.",
+    "retry": "إعادة المحاولة"
+  },
+  "parentStudents": {
+    "title": "إدارة الطلاب",
+    "description": "اربط طفلاً بحساب ولي الأمر الخاص بك واطلع على تقدمه التعليمي.",
+    "codeLabel": "كود الطالب",
+    "codePlaceholder": "أدخل كود الطالب",
+    "linkButton": "ربط الطالب",
+    "linkedStudentsTitle": "الطلاب المرتبطون",
+    "noStudents": "لا يوجد أطفال مرتبطين حتى الآن.",
+    "successLinked": "تم ربط الطالب بنجاح.",
+    "errorLinked": "تعذر ربط الطالب. يرجى التحقق من الكود والمحاولة مرة أخرى.",
+    "viewDashboard": "عرض لوحة القيادة",
+    "manageChildren": "إدارة الأطفال"
+  },
+  "parentStudentOverview": {
+    "title": "نظرة عامة على الطالب",
+    "subtitle": "ملخص التقدم الدراسي والأداء الأخير.",
+    "attendance": "نسبة الحضور",
+    "courseProgress": "تقدم المقرر",
+    "examAverage": "متوسط الامتحانات",
+    "engagement": "مستوى التفاعل",
+    "recentActivity": "النشاط الأخير",
+    "alerts": "التنبيهات",
+    "noRecentActivity": "لا يوجد نشاط حديث.",
+    "noAlerts": "لا توجد تنبيهات.",
+    "retry": "إعادة المحاولة"
+  },
+  "parentStudentProgress": {
+    "title": "تقدم المقرر",
+    "subtitle": "تابع المحاضرات المكتملة والتقدم عبر المقررات.",
+    "overallProgress": "التقدم الكلي",
+    "chapterBreakdown": "تفاصيل الفصول",
+    "lectures": "محاضرات",
+    "noData": "بيانات التقدم غير متاحة لهذا الطالب بعد."
+  },
+  "parentWeeklyStats": {
+    "title": "إحصائيات الأسبوع",
+    "subtitle": "التفاعل ونشاط الدراسة لهذا الأسبوع.",
+    "timeThisWeek": "الوقت هذا الأسبوع",
+    "sessionsThisWeek": "الحصص هذا الأسبوع",
+    "questionsAsked": "الأسئلة المطروحة",
+    "avgPerDay": "متوسط في اليوم",
+    "dailyTimeSpent": "الوقت اليومي",
+    "activityBreakdown": "تفاصيل النشاط",
+    "interactionMetrics": "مؤشرات التفاعل",
+    "learningConsistency": "انتظام التعلم",
+    "consistencyMessage": "انتظام رائع! حافظ طفلك على جلسات تعلم منتظمة خلال الأسابيع الماضية.",
+    "noData": "إحصائيات الأسبوع غير متاحة لهذا الطالب بعد."
+  },
+  "parentAlerts": {
+    "title": "الإشعارات والتنبيهات",
+    "filterAll": "الكل",
+    "filterAttendance": "الحضور",
+    "filterExams": "الامتحانات",
+    "filterFeedback": "التعليقات",
+    "filterPerformance": "الأداء",
+    "highPriority": "أولوية عالية",
+    "markAsRead": "تحديد كمقروء",
+    "noAlerts": "لا توجد تنبيهات للعرض."
+  },
+  "parentFeedback": {
+    "title": "تعليقات المعلمين",
+    "subtitle": "اطلع على تعليقات المدرسين حول مشاركة طفلك وتقدمه.",
+    "totalFeedback": "إجمالي التعليقات",
+    "positiveFeedback": "تعليقات إيجابية",
+    "needsAttention": "يحتاج انتباه",
+    "allFeedback": "كل التعليقات",
+    "detailedFeedback": "تعليق مفصل",
+    "noFeedback": "لا توجد تعليقات متاحة بعد."
+  },
+  "parentActivity": {
+    "title": "سجل الحضور",
+    "subtitle": "تابع الحضور والمشاركة في المحاضرات.",
+    "attendanceRate": "نسبة الحضور",
+    "filterAll": "الكل",
+    "filterAttended": "حضرت",
+    "filterMissed": "تغيب",
+    "timeline": "جدول النشاط",
+    "noActivity": "لا يوجد نشاط حضور حتى الآن."
   }
+
 }
