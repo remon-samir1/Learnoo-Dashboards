@@ -26,7 +26,7 @@ type Props = {
   scale?: number;
   onScaleChange?: (scale: number) => void;
   /** Content type used to resolve the correct watermark bucket. Defaults to 'chapters'. */
-  contentType?: 'library' | 'chapters';
+  contentType?: 'chapters' | 'library' | 'liveStreams' | 'videos' | 'files' | 'exams';
 };
 
 function PdfPreviewContent({
@@ -192,7 +192,7 @@ export default function PdfPreviewModal({
   const attrs = user?.attributes;
 
   const safePdfUrl = pdfUrl ? encodeURI(pdfUrl) : '';
-  const proxiedPdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(safePdfUrl)}`;
+  const proxiedPdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(safePdfUrl)}&contentType=${contentType}`;
 
   const watermarkText = useMemo(() => {
     const config = watermarkConfig?.config;
@@ -208,8 +208,17 @@ export default function PdfPreviewModal({
       parts.push(String(attrs.phone).trim());
     }
 
-    return parts.join(' · ');
-  }, [watermarkConfig, attrs]);
+    // Fall back to the static text configured in admin if no dynamic parts
+    let text = parts.length > 0 ? parts.join(' · ') : config.text;
+
+    // Append user ID for traceability (matches server-side PDF watermark behavior)
+    const userId = user?.id != null ? String(user.id).trim() : '';
+    if (userId && !text.includes(userId)) {
+      text = text ? `${text} · ${userId}` : userId;
+    }
+
+    return text;
+  }, [watermarkConfig, attrs, user]);
 
   useEffect(() => {
     let mounted = true;

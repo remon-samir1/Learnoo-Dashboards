@@ -512,6 +512,7 @@ export default function ChapterWatchView({
             pdfUrl={pdfUrl}
             scale={pdfScale}
             onScaleChange={setPdfScale}
+            contentType="chapters"
           />
         </div>
         <p className="hidden shrink-0 border-t border-slate-200 bg-[#f8fafc] px-4 py-2 text-center text-[11px] text-slate-500 sm:block">

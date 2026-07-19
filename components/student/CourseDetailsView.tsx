@@ -1077,6 +1077,7 @@ function ChapterRow({
         onClose={() => setPdfPreviewOpen(false)}
         pdfUrl={pdfUrl}
         title={attrs.title}
+        contentType="chapters"
       />
     </div>
   );

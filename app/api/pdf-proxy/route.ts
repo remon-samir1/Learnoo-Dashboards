@@ -4,11 +4,21 @@ import { getJwtUserDataFromToken } from '@/src/lib/jwt-decode';
 import { normalizePlatformFeatureList } from '@/src/services/student/platform-feature.service';
 import { parseWatermarkConfigFromFeatures } from '@/src/lib/watermark-from-features';
 import { addWatermarkToPdf } from '@/src/lib/server-pdf-watermark';
+import type { WatermarkContentType } from '@/src/types/watermark-config';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app').replace(/\/$/, '');
 
 export async function GET(req: NextRequest) {
   const pdfUrl = req.nextUrl.searchParams.get('url');
+  const contentTypeParam = req.nextUrl.searchParams.get('contentType');
+
+  // Validate contentType against allowed values
+  const validContentTypes: WatermarkContentType[] = ['chapters', 'library', 'liveStreams', 'videos', 'files', 'exams'];
+  const contentType: WatermarkContentType = (
+    contentTypeParam && validContentTypes.includes(contentTypeParam as WatermarkContentType)
+      ? contentTypeParam as WatermarkContentType
+      : 'library'
+  );
 
   if (!pdfUrl) {
     return new Response('Missing PDF URL', { status: 400 });
@@ -47,8 +57,8 @@ export async function GET(req: NextRequest) {
           const featuresJson = await featuresRes.json();
           const features = normalizePlatformFeatureList(featuresJson);
 
-          // Parse watermark config for library content type
-          const watermarkConfig = parseWatermarkConfigFromFeatures(features, 'library');
+          // Parse watermark config for the specified content type
+          const watermarkConfig = parseWatermarkConfigFromFeatures(features, contentType);
 
           console.log('[PDF Proxy] watermarkConfig:', JSON.stringify(watermarkConfig));
 

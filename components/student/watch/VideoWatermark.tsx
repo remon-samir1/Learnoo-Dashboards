@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { DualMotionWatermark } from '@/components/student/watermark/DualMotionWatermark';
 import { usePlatformFeature } from '@/src/hooks';
+import { useVoiceWatermark } from '@/src/hooks/useVoiceWatermark';
 import {
   resolveEnabledWatermarkBucket,
   type WatermarkResolution,
@@ -14,7 +15,7 @@ import { useAuthStore } from '@/src/stores/authStore';
 import type { WatermarkContentType } from '@/src/types/watermark-config';
 
 export type VideoWatermarkProps = {
-  videoRef: RefObject<HTMLVideoElement | null>;
+  videoRef?: RefObject<HTMLVideoElement | null>;
   contentType?: WatermarkContentType;
   showWatermark?: boolean;
   initialResolution?: WatermarkResolution | null;
@@ -48,6 +49,14 @@ export function VideoWatermark({
 
   const overlayActive =
     showWatermark && Boolean(config?.enabled) && Boolean(displayText);
+
+  // Voice watermark hook
+  useVoiceWatermark({
+    enabled: config?.voiceEnabled ?? false,
+    text: displayText,
+    interval: config?.voiceInterval ?? 5,
+    videoRef: _videoRef,
+  });
 
   if (!overlayActive || !config || !displayText) {
     return null;

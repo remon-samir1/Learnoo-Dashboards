@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Radio, Users, Video } from "lucide-react";
+import { Radio, Users, Video, Droplets } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { JitsiMeeting } from "@jitsi/react-sdk";
 import type { StudentLiveRoom } from "@/src/interfaces/student-live-room.interface";
@@ -15,6 +15,10 @@ import {
   normalizeLiveStatus,
 } from "@/src/lib/student-live-room";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { VideoWatermark } from "@/components/student/watch/VideoWatermark";
+import { resolveEnabledWatermarkBucket } from "@/src/lib/watermark-from-features";
+import { getStudentPlatformFeatures } from "@/src/services/student/platform-feature.service";
 
 const JITSI_DOMAIN = "meet.jit.si";
 
@@ -50,6 +54,32 @@ export default function LiveSessionRoomClient({
 
   const jitsiRoomName = `learnoo-room-${room.id}`;
   const displayName = studentName?.trim() || "Student";
+
+  // Watermark state management
+  const [watermarkEnabled, setWatermarkEnabled] = useState(false);
+  const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadWatermarkSettings = async () => {
+      try {
+        const features = await getStudentPlatformFeatures();
+        const resolution = resolveEnabledWatermarkBucket(features, 'liveStreams');
+        if (mounted) {
+          setWatermarkEnabled(resolution?.config.enabled ?? false);
+        }
+      } catch (error) {
+        console.error('Failed to load watermark settings:', error);
+      }
+    };
+
+    loadWatermarkSettings();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const title = attrs?.title?.trim() || t("liveSession");
   const instructor =
@@ -123,7 +153,13 @@ export default function LiveSessionRoomClient({
       {/* Live — Jitsi embed */}
       {liveView ? (
         <section className="overflow-hidden rounded-2xl border border-[var(--border-color)] shadow-sm">
-          <div style={{ height: "min(75vh, 640px)" }}>
+          <div className="relative" style={{ height: "min(75vh, 640px)" }}>
+            {watermarkEnabled ? (
+              <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+                <Droplets className="size-4 text-blue-600" aria-hidden />
+                <span className="text-xs font-semibold text-blue-700">Watermarked</span>
+              </div>
+            ) : null}
             <JitsiMeeting
               domain={JITSI_DOMAIN}
               roomName={jitsiRoomName}
@@ -152,6 +188,14 @@ export default function LiveSessionRoomClient({
                 iframe.style.border = "none";
               }}
             />
+            {/* Watermark overlay */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+              <VideoWatermark
+                videoRef={watermarkDummyRef}
+                contentType="liveStreams"
+                showWatermark={watermarkEnabled}
+              />
+            </div>
           </div>
         </section>
       ) : null}

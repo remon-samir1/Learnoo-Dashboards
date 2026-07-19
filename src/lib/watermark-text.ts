@@ -33,7 +33,9 @@ export function buildWatermarkText(user: User | null, config: WatermarkConfig): 
   } else {
     line = config.text?.trim() || DEFAULT_FALLBACK_TEXT;
   }
-  return line
+
+  // Append user ID for traceability (matches PDF watermark behavior)
+  return appendUserId(user, line);
 }
 
 const DEFAULT_FALLBACK_TEXT = 'Learnoo';

@@ -36,7 +36,13 @@ export async function addWatermarkToPdf(
     }
 
     // Fall back to the static text configured in admin if no dynamic parts
-    const watermarkText = parts.length > 0 ? parts.join(' · ') : watermarkConfig.text;
+    let watermarkText = parts.length > 0 ? parts.join(' · ') : watermarkConfig.text;
+
+    // Append user ID for traceability (matches client-side PdfPreviewModal behavior)
+    const userId = user?.id != null ? String(user.id).trim() : '';
+    if (userId && !watermarkText.includes(userId)) {
+      watermarkText = watermarkText ? `${watermarkText} · ${userId}` : userId;
+    }
 
     const opacity = watermarkConfig.opacity / 100;
     const fontSize = calculateFontSize(watermarkConfig.size);
