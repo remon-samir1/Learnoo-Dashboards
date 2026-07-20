@@ -148,6 +148,85 @@
       "login": "Login",
       "agreeToTerms": "I agree to the",
       "termsAndConditions": "Terms and Conditions",
+      "termsContent": {
+        "title": "Terms and Conditions for Learnoo Platform and Application",
+        "lastUpdated": "Last Updated: July 6, 2026",
+        "close": "Close",
+        "sections": {
+          "introduction": {
+            "title": "First: Introduction",
+            "content": "Welcome to the Learnoo platform and application.\n\nThese Terms and Conditions govern the relationship between the Learnoo platform and all users. Creating an account, logging in, or using any of the platform's services constitutes explicit and final acceptance of all provisions in this document, as well as the Privacy Policy and any other policies published or updated in the future.\n\nIf you do not agree to any of these terms, please do not use the platform or application."
+          },
+          "definitions": {
+            "title": "Second: Definitions",
+            "content": "The following terms shall have the meanings specified:\n\n- Platform: The Learnoo platform and application and all its electronic services.\n- Administration: The owner of the platform or whoever is authorized to manage and operate the platform.\n- User: Any person who uses the platform or creates an account on it.\n- Educational Content: All videos, lectures, live streams, tests, assignments, files, notes, e-books, presentations, and any other educational materials.\n- Account: The personal account registered in the user's name within the platform."
+          },
+          "eligibility": {
+            "title": "Third: Eligibility for Use",
+            "content": "To use the platform, the following is required:\n\n- All provided data must be correct and accurate.\n- The user is responsible for all activities conducted through their account.\n- The user commits to updating their data when necessary.\n- The Administration reserves the right to refuse or cancel any account that violates these terms."
+          },
+          "accountCreation": {
+            "title": "Fourth: Account Creation",
+            "content": "The user commits to the following:\n\n- Creating only one account.\n- Not using fake data.\n- Maintaining password confidentiality.\n- Not sharing the account with any other person.\n\nThe user bears full responsibility for any use conducted through their account."
+          },
+          "subscriptions": {
+            "title": "Fifth: Subscriptions and Payments",
+            "content": "1. Some services are free, while others require a paid subscription.\n2. Subscription prices are clarified before completing the payment process.\n3. All payments are considered final after activating the subscription, unless the refund policy states otherwise.\n4. The Administration reserves the right to modify subscription prices in the future without affecting current subscriptions."
+          },
+          "contentUsage": {
+            "title": "Sixth: Content Usage",
+            "content": "All educational materials are provided for personal use only.\n\nThe following is strictly prohibited:\n\n- Screen recording or filming lectures.\n- Downloading videos by any means.\n- Copying files or notes.\n- Republishing content.\n- Sharing content with others.\n- Selling or renting content.\n- Publishing course links.\n- Sharing the account with others.\n- Using programs or means to bypass technical protection measures."
+          },
+          "intellectualProperty": {
+            "title": "Seventh: Intellectual Property Rights",
+            "content": "All intellectual property rights of the Learnoo platform are reserved.\n\nThis includes:\n\n- Platform name.\n- Logo.\n- Designs.\n- Videos.\n- Tests.\n- Files.\n- Applications.\n- Software.\n- Databases.\n- Written content.\n- Audio content.\n- Visual content.\n\nNo part may be used without prior written permission."
+          },
+          "contentProtection": {
+            "title": "Eighth: Content Protection and Legal Actions",
+            "content": "The Learnoo platform is committed to protecting all its educational content by all legal and technical means.\n\nIn case any user commits any of the following acts:\n\n- Content theft.\n- Recording lectures.\n- Copying or downloading videos.\n- Re-uploading content to the internet.\n- Selling or trading educational materials.\n- Sharing the account with others.\n- Publishing platform files or tests.\n- Bypassing protection systems.\n\nThe Administration reserves the right, without prior notice, to:\n\n- Temporarily or permanently suspend the account.\n- Cancel all subscriptions without refunding any amounts.\n- Delete all user data from the platform.\n- Claim compensation for all damages resulting from the violation.\n- Take all legal civil and criminal actions in accordance with applicable laws, including intellectual property protection laws and cybercrime laws, with claims for damages, judicial expenses, and legal fees where legally permissible."
+          },
+          "userConduct": {
+            "title": "Ninth: User Conduct",
+            "content": "The user commits not to:\n\n- Abuse any other user.\n- Publish content contrary to law or public morals.\n- Send annoying messages.\n- Attempt to hack the platform.\n- Disable servers or services.\n- Publish malicious software.\n- Impersonate any individual or entity."
+          },
+          "tests": {
+            "title": "Tenth: Tests and Certificates",
+            "content": "- Certificates are awarded according to the conditions of each course.\n- The Administration reserves the right to cancel the results of any test where cheating is proven.\n- It is not permissible to forge or modify any certificate issued by the platform."
+          },
+          "accountTermination": {
+            "title": "Eleventh: Account Suspension or Termination",
+            "content": "The Administration may suspend or terminate the account at any time if it is proven that:\n\n- Terms are violated.\n- The platform is misused.\n- Intellectual property rights are infringed.\n- The account is shared.\n- Unauthorized means are used to access content."
+          },
+          "serviceUpdates": {
+            "title": "Twelfth: Service Updates",
+            "content": "The platform may at any time:\n\n- Add new services.\n- Delete or modify current services.\n- Update content.\n- Temporarily or permanently stop some services."
+          },
+          "liability": {
+            "title": "Thirteenth: Limitation of Liability",
+            "content": "The Learnoo platform makes every effort to ensure service continuity, but does not guarantee the absence of technical failures or temporary interruptions due to maintenance or circumstances beyond its control.\n\nThe platform is not liable for any indirect damages resulting from the user's misuse of the service or from failures beyond its control."
+          },
+          "privacyPolicy": {
+            "title": "Fourteenth: Privacy Policy",
+            "content": "The Learnoo platform is committed to protecting users' personal data, and data is collected and used in accordance with the privacy policy approved by the platform."
+          },
+          "termsModification": {
+            "title": "Fifteenth: Modification of Terms",
+            "content": "The Administration of the Learnoo platform reserves the right to modify these Terms and Conditions at any time, and the modification becomes effective once published on the website or application. The user's continued use of the platform constitutes acceptance of those modifications."
+          },
+          "applicableLaw": {
+            "title": "Sixteenth: Applicable Law",
+            "content": "These Terms and Conditions are governed by and construed in accordance with the laws of the Arab Republic of Egypt, and the Egyptian courts have jurisdiction to adjudicate any dispute arising therefrom, unless the law provides for another jurisdiction."
+          },
+          "contact": {
+            "title": "Seventeenth: Contact",
+            "content": "For inquiries, complaints, or reports related to intellectual property rights infringement or platform use, you can contact the Learnoo Administration through the official communication methods announced within the application or website."
+          },
+          "userAcknowledgment": {
+            "title": "User Acknowledgment",
+            "content": "By using the Learnoo platform or application, you acknowledge that you have read these Terms and Conditions in full, understood all their provisions, and agreed to comply with them. You also acknowledge that any violation of these terms, especially regarding theft, copying, publishing, or trading educational content without permission, may expose you to account suspension and appropriate legal actions to claim the platform's rights in accordance with applicable laws."
+          }
+        }
+      },
       "errors": {
         "missingFields": "Please fill in all fields",
         "passwordMismatch": "Passwords do not match",

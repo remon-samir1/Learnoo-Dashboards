@@ -9,6 +9,7 @@ import { ApiError, getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import Cookies from '@/lib/cookies';
 import AuthPageLayout from '../components/AuthLayout';
+import TermsModal from '@/components/modals/TermsModal';
 
 const DEVICE_NAME = 'learnoo-web';
 
@@ -50,6 +51,7 @@ export default function CreateAccountPage() {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   async function handleSubmit() {
     setError('');
@@ -254,9 +256,13 @@ export default function CreateAccountPage() {
           />
           <span>
             {t('agreeToTerms')}{' '}
-            <Link href="/terms" virtual-link-type="internal" className="font-sans text-[11.9px] font-medium text-primary hover:opacity-80 transition-opacity">
+            <button
+              type="button"
+              onClick={() => setShowTermsModal(true)}
+              className="font-sans text-[11.9px] font-medium text-primary hover:opacity-80 transition-opacity bg-transparent border-none p-0 cursor-pointer"
+            >
               {t('termsAndConditions')}
-            </Link>
+            </button>
           </span>
         </label>
 
@@ -280,6 +286,8 @@ export default function CreateAccountPage() {
           </Link>
         </p>
       </div>
+
+      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </AuthPageLayout>
   );
 }
