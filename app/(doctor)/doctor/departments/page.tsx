@@ -798,6 +798,8 @@ function TreeItem({
 }: TreeItemProps) {
   const t = useTranslations();
 
+  const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
+
   const isExpanded = expanded.has(node.id);
 
   const hasChildren = node.children.length > 0;
@@ -1032,7 +1034,7 @@ function TreeItem({
         >
           {/* Add child buttons */}
 
-          {!isInstructor && node.type === "university" && (
+          {node.type === "university" && !isInstructor && (
             <button
               onClick={() => onAdd("center", node.id)}
               className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
@@ -1042,7 +1044,7 @@ function TreeItem({
             </button>
           )}
 
-          {!isInstructor && node.type === "center" && (
+          {node.type === "center" && !isInstructor && (
             <button
               onClick={() => onAdd("faculty", node.id)}
               className="p-1.5 text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-lg transition-all"
@@ -1052,7 +1054,7 @@ function TreeItem({
             </button>
           )}
 
-          {!isInstructor && node.type === "faculty" && (
+          {node.type === "faculty" && !isInstructor && (
             <button
               onClick={() => onAdd("department", node.id)}
               className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
@@ -1062,15 +1064,17 @@ function TreeItem({
             </button>
           )}
 
-          {!isInstructor && node.type === "department" && (
+          {node.type === "department" && (
             <>
-              <button
-                onClick={() => onAdd("department", node.id)}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                title="Add sub-department"
-              >
-                <GraduationCap className="w-4 h-4" />
-              </button>
+              {!isInstructor && (
+                <button
+                  onClick={() => onAdd("department", node.id)}
+                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                  title="Add sub-department"
+                >
+                  <GraduationCap className="w-4 h-4" />
+                </button>
+              )}
 
               <button
                 onClick={() => onAdd("course", node.id)}
@@ -1082,52 +1086,63 @@ function TreeItem({
             </>
           )}
 
-          {!isInstructor && node.type === "course" && (
-            <button
-              onClick={() => onAdd("lecture", node.id)}
-              className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
-              title="Add lecture"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          )}
-
-          {node.type === "lecture" && (
-            <div className="relative group/add">
+          {node.type === "course" && (
+            <>
               <button
-                onClick={() => onAdd("chapter", node.id, "video-pdf")}
-                className="p-1 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
-                title="Add Lesson (Video & PDF)"
+                onClick={() => onAdd("lecture", node.id)}
+                className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
+                title="Add lecture"
               >
                 <Plus className="w-4 h-4" />
               </button>
-              <div className="hidden group-hover/add:block absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px] py-1">
-                <button
-                  onClick={() => onAdd("chapter", node.id, "video-pdf")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <FileVideo className="w-3.5 h-3.5 text-orange-500" />
-                  Video & PDF
-                </button>
-                <button
-                  onClick={() => onAdd("chapter", node.id, "video")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <PlayCircle className="w-3.5 h-3.5 text-orange-500" />
-                  Video Only
-                </button>
-                <button
-                  onClick={() => onAdd("chapter", node.id, "pdf")}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-gray-50 flex items-center gap-2"
-                >
-                  <FileText className="w-3.5 h-3.5 text-blue-500" />
-                  PDF Only
-                </button>
-              </div>
+            </>
+          )}
+
+          {node.type === "lecture" && (
+            <div className="relative">
+              <button
+                onClick={() => setIsAddDropdownOpen(!isAddDropdownOpen)}
+                className={`p-1.5 rounded-lg transition-all ${isAddDropdownOpen ? 'text-orange-600 bg-orange-100' : 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'}`}
+                title="Add lesson"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+
+              {isAddDropdownOpen && (
+                <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+                  <button
+                    onClick={() => {
+                      onAdd("chapter", node.id, "video-pdf");
+                      setIsAddDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2"
+                  >
+                    <Plus className="w-3 h-3" /> Video and PDF
+                  </button>
+                  <button
+                    onClick={() => {
+                      onAdd("chapter", node.id, "video");
+                      setIsAddDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2"
+                  >
+                    <Plus className="w-3 h-3" /> Video Only
+                  </button>
+                  <button
+                    onClick={() => {
+                      onAdd("chapter", node.id, "pdf");
+                      setIsAddDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 flex items-center gap-2"
+                  >
+                    <Plus className="w-3 h-3" /> PDF Only
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {isInstructor && node.type === "chapter" && onCopyMove && (
+          {node.type === "chapter" && onCopyMove && (
             <>
               <button
                 onClick={() => onCopyMove(node, "copy")}
@@ -1147,9 +1162,8 @@ function TreeItem({
             </>
           )}
 
-          {/* Edit and Delete buttons - only for non-instructors */}
-
-          {isInstructor && node.type === "chapter" && (
+          {/* Edit and Delete buttons */}
+          {(node.type === 'course' || node.type === 'lecture' || node.type === 'chapter') && (
             <>
               <button
                 onClick={() => onEdit(node)}
@@ -1168,6 +1182,27 @@ function TreeItem({
               </button>
             </>
           )}
+
+          {node.type !== 'chapter' && node.type !== 'course' && node.type !== 'lecture' && !isInstructor && (
+            <>
+              <button
+                onClick={() => onEdit(node)}
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                title={t("common.edit")}
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => onDelete(node)}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                title={t("common.delete")}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+
         </div>
       </div>
 
@@ -2691,7 +2726,13 @@ export default function DepartmentsPage() {
       </div>
 
             {/* Miller Columns Navigation and Details Panel */}
-      <MillerColumns
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-gray-200 rounded-xl">
+          <Loader2 className="w-8 h-8 text-[#2137D6] animate-spin" />
+          <p className="text-sm text-gray-500">Loading content...</p>
+        </div>
+      ) : (
+        <MillerColumns
         treeData={treeData}
         searchQuery={searchQuery}
         onEdit={handleEdit}
@@ -2729,6 +2770,7 @@ export default function DepartmentsPage() {
           setGenerateCodeModalOpen(true);
         }}
       />
+      )}
 
       {/* Edit Modal */}
 
