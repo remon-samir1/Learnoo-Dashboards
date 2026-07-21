@@ -94,7 +94,7 @@ export default function CreateAccountPage() {
         email: em,
         password: role === 'Parent' ? password : undefined,
         device_name: DEVICE_NAME,
-        role: role === "Parent" ? 3 : "Student",
+        role: role === "Parent" ? 3 : 1,
       });
 
       if (typeof window !== 'undefined') {

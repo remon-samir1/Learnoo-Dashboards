@@ -9,6 +9,7 @@ import Cookies from '@/lib/cookies';
 import { getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
@@ -36,6 +37,10 @@ export default function LoginPage() {
       subtitle={t('subtitle')}
     >
       <div className="flex flex-col gap-6">
+        {/* Language Switcher */}
+        <div className="flex justify-end">
+          <LanguageSwitcher />
+        </div>
         {justRegistered ? (
           <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
             <p className="font-sans text-xs leading-5 text-emerald-800">{t('registeredSuccess')}</p>

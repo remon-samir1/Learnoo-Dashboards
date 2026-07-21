@@ -80,6 +80,7 @@
     "login": {
       "title": "Learnoo تسجيل الدخول",
       "subtitle": "سجل الدخول برقم هاتفك",
+      "parentLink":"تسجيل ولي الامر",
       "parentLogin": "تسجيل دخول ولي الأمر",
       "phone": "رقم الهاتف",
       "phonePlaceholder": "أدخل رقم الهاتف",
