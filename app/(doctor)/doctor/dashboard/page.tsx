@@ -134,8 +134,20 @@ export default function DoctorDashboardPage() {
 }
 
 function WelcomeBanner({ data }: { data: any }) {
-  const { user } = useCurrentUser();
+  const { user, isLoading } = useCurrentUser();
   const firstName = user?.attributes.first_name || data?.name?.split(' ')[0] || 'Doctor';
+
+  if (isLoading) {
+    return (
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] p-6 text-white">
+        <div className="animate-pulse">
+          <div className="h-4 bg-white/20 rounded w-32 mb-2"></div>
+          <div className="h-8 bg-white/20 rounded w-48 mb-4"></div>
+          <div className="h-4 bg-white/20 rounded w-64"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] p-6 text-white">
@@ -149,7 +161,7 @@ function WelcomeBanner({ data }: { data: any }) {
       
       <div className="relative flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-white/80 mb-1">{data?.date || 'Loading...'}</p>
+          <p className="text-sm text-white/80 mb-1">{data?.date || new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           <h1 className="text-2xl font-bold mb-2">{data?.greeting || 'Good morning'}, {firstName}! 👋</h1>
           <p className="text-sm text-white/90 mb-4">
             You have <span className="font-bold">{data?.summary?.today_live_classes || 0} live classes</span> today and <span className="font-bold">{data?.summary?.pending_questions || 0} pending questions</span> to review.

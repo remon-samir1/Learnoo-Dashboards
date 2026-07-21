@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NextIntlClientProvider } from 'next-intl';
+import { initializeAuthStore } from '@/src/stores/authStore';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -20,6 +21,11 @@ export default function Providers({ children, messages, locale }: ProvidersProps
       },
     },
   }));
+
+  useEffect(() => {
+    // Initialize auth store from cookies on mount
+    initializeAuthStore();
+  }, []);
 
   return (
     <NextIntlClientProvider messages={messages} locale={locale} timeZone="UTC">

@@ -7,7 +7,7 @@ import { getUserProfileData } from "@/src/services/student/user.service";
 import { getTranslations } from "next-intl/server";
 
 type ProfileAttributes = {
-  student_id?: string | null;
+  student_code?: string | null;
   first_name?: string | null;
   last_name?: string | null;
   full_name?: string | null;
@@ -124,12 +124,13 @@ export default async function StudentProfilePage() {
           device={`${student?.device_access?.device || "Unknown"} - ${
             student?.device_access?.last_ip || "Unknown IP"
           }`}
+          studentCode={student?.student_code || undefined}
         />
 
         <div className="space-y-5">
           <ProfileQrCard
             student={{
-              id: student?.student_id || "",
+              id: student?.student_code || "",
               fullName,
               email,
               phone,

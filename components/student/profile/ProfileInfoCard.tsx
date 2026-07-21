@@ -10,6 +10,7 @@ import {
   Phone,
   Settings,
   UserRound,
+  Key,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import InfoRow from "./ProfileInfoRow";
@@ -28,6 +29,7 @@ type Props = {
   status: string;
   device: string;
   image?: string;
+  studentCode?: string;
 };
 
 export default function ProfileInfoCard({
@@ -42,6 +44,7 @@ export default function ProfileInfoCard({
   status,
   device,
   image,
+  studentCode,
 }: Props) {
   const t = useTranslations("studentProfile");
 const locale = useLocale();
@@ -101,6 +104,29 @@ const locale = useLocale();
           label={t("fields.phone")}
           value={phone}
         />
+
+        {studentCode && (
+          <div className="rounded-xl bg-blue-50 border border-blue-200 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <Key size={20} className="text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-blue-900 mb-1">
+                  Student Code
+                </p>
+                <div className="flex items-center gap-2 mb-2">
+                  <code className="px-3 py-1.5 bg-white border border-blue-300 rounded-lg text-sm font-mono font-bold text-blue-700 select-all">
+                    {studentCode}
+                  </code>
+                </div>
+                <p className="text-xs text-blue-700">
+                  Use this code to link your parent account by entering it in the <span className="font-semibold">student_code</span> field.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <InfoRow
           icon={<Building2 size={20} />}

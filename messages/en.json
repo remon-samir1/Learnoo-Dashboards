@@ -287,6 +287,23 @@
       "back": "Back",
       "finish": "Finish",
       "submitting": "Saving..."
+    },
+    "linkStudent": {
+      "title": "Link Student Account",
+      "subtitle": "Enter your student's code to link their account to your parent dashboard",
+      "codeLabel": "Student Code",
+      "codePlaceholder": "Enter the student code",
+      "verify": "Verify",
+      "verifying": "Verifying...",
+      "success": "Student linked successfully!",
+      "errors": {
+        "missingCode": "Please enter the student code",
+        "verificationFailed": "Failed to verify student code. Please try again."
+      },
+      "howToGetCode": {
+        "title": "How to get the student code?",
+        "description": "The student code can be found in your student's profile settings or by contacting the school administration."
+      }
     }
   },
   "navbar": {
@@ -2963,5 +2980,4 @@
     "timeline": "Activity Timeline",
     "noActivity": "No attendance activity found yet."
   }
-
 }
