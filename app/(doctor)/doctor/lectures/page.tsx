@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useLectures, useDeleteLecture } from '@/src/hooks/useLectures';
 import { useCourses } from '@/src/hooks/useCourses';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
@@ -10,6 +11,7 @@ import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import type { Lecture } from '@/src/types';
 
 export default function LecturesPage() {
+  const t = useTranslations('lectures');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -57,17 +59,17 @@ export default function LecturesPage() {
   const columns: Column<Lecture>[] = [
     {
       key: 'title',
-      header: 'Title',
+      header: t('columns.title'),
       render: (item) => item.attributes.title,
     },
     {
       key: 'course',
-      header: 'Course',
+      header: t('columns.course'),
       render: (item) => getCourseName(item.attributes.course_id),
     },
     {
       key: 'description',
-      header: 'Description',
+      header: t('columns.description'),
       render: (item) => (
         <span className="truncate max-w-xs block" title={item.attributes.description}>
           {item.attributes.description}
@@ -76,7 +78,7 @@ export default function LecturesPage() {
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t('columns.created'),
       render: (item) => item.attributes.created_at 
         ? new Date(item.attributes.created_at).toLocaleDateString() 
         : '-',
@@ -87,18 +89,18 @@ export default function LecturesPage() {
     return (
       <div className="flex flex-col gap-8">
         <AdminPageHeader
-          title="Lectures Management"
-          description="Manage course lectures"
-          actionLabel="Add Lecture"
+          title={t('pageTitle')}
+          description={t('pageDescription')}
+          actionLabel={t('addLecture')}
           actionHref="/lectures/add"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="text-red-600">Failed to load lectures: {error}</p>
+          <p className="text-red-600">{t('error')}: {error}</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Retry
+            {t('retry')}
           </button>
         </div>
       </div>
@@ -108,20 +110,20 @@ export default function LecturesPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <AdminPageHeader
-        title="Lectures Management"
-        description="Manage course lectures"
-        actionLabel="Add Lecture"
+        title={t('pageTitle')}
+        description={t('pageDescription')}
+        actionLabel={t('addLecture')}
         actionHref="/lectures/add"
       />
 
       <SearchFilter
-        searchPlaceholder="Search lectures..."
+        searchPlaceholder={t('searchPlaceholder')}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
         filters={[
           {
             key: 'course',
-            label: 'All Courses',
+            label: t('allCourses'),
             options: courseOptions,
             value: selectedCourse,
             onChange: setSelectedCourse,
@@ -136,7 +138,7 @@ export default function LecturesPage() {
         keyExtractor={(item) => item.id}
         onDelete={handleDelete}
         editHref={(item) => `/lectures/${item.id}/edit`}
-        emptyMessage="No lectures found. Create your first lecture!"
+        emptyMessage={t('emptyMessage')}
       />
 
       <DeleteModal
@@ -146,7 +148,7 @@ export default function LecturesPage() {
           setSelectedLecture(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Lecture"
+        title={t('deleteTitle')}
         itemName={selectedLecture?.attributes.title || ''}
         isLoading={isDeleting}
       />

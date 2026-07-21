@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
   BookOpen,
@@ -34,33 +35,34 @@ interface DoctorSidebarProps {
   onToggle: () => void;
 }
 
-const allMenuItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/doctor/dashboard' },
-  { name: 'My Courses', icon: BookOpen, path: '/doctor/courses' },
-  { name: 'Academic Structure', icon: School, path: '/doctor/departments' },
-  { name: 'Live Sessions', icon: Video, path: '/doctor/live-sessions' },
-  { name: 'Exams', icon: ClipboardList, path: '/doctor/exams' },
-  { name: 'Discussions', icon: MessageCircle, path: '/doctor/discussions' },
-  { name: 'Community', icon: Users, path: '/doctor/community' },
-  { name: 'Notes & Summaries', icon: StickyNote, path: '/doctor/notes-summaries' },
-  { name: 'Electronic Library', icon: Library, path: '/doctor/electronic-library' },
-  { name: 'Support', icon: LifeBuoy, path: '/doctor/issues' },
-  // { name: 'Notifications', icon: Bell, path: '/doctor/notifications' },
-  // { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
-];
-
 export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarProps) {
+  const t = useTranslations('sidebar');
   const pathname = usePathname();
   const { user, fullName, role, canUseActivations } = useCurrentUser();
   const { data: features } = usePlatformFeature();
 
+  const allMenuItems = [
+    { name: t('dashboard'), icon: LayoutDashboard, path: '/doctor/dashboard' },
+    { name: t('myCourses'), icon: BookOpen, path: '/doctor/courses' },
+    { name: t('academicStructure'), icon: School, path: '/doctor/departments' },
+    { name: t('liveSessions'), icon: Video, path: '/doctor/live-sessions' },
+    { name: t('exams'), icon: ClipboardList, path: '/doctor/exams' },
+    { name: t('discussions'), icon: MessageCircle, path: '/doctor/discussions' },
+    { name: t('community'), icon: Users, path: '/doctor/community' },
+    { name: t('notesSummaries'), icon: StickyNote, path: '/doctor/notes-summaries' },
+    { name: t('electronicLibrary'), icon: Library, path: '/doctor/electronic-library' },
+    { name: t('support'), icon: LifeBuoy, path: '/doctor/issues' },
+    // { name: 'Notifications', icon: Bell, path: '/doctor/notifications' },
+    // { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
+  ];
+
   const menuItems = React.useMemo(() => {
     const items = [...allMenuItems];
     if (canUseActivations) {
-      items.push({ name: 'Activation', icon: Power, path: '/doctor/activation' });
+      items.push({ name: t('activation'), icon: Power, path: '/doctor/activation' });
     }
     return items;
-  }, [canUseActivations]);
+  }, [canUseActivations, t]);
 
   // Initialize auth store from cookies on mount
   useEffect(() => {
@@ -147,7 +149,7 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
                 {isActive && !isCollapsed && (
                   <div className="absolute left-[-16px] top-1/2 -translate-y-1/2 w-1.5 h-8 bg-[#4F46E5] rounded-r-full shadow-[2px_0px_10px_rgba(79,70,229,0.4)]" />
                 )}
-                <div className={`shrink-0 ${isCollapsed ? '' : 'mr-3'}`}>
+                <div className={`shrink-0 ${isCollapsed ? '' : 'mx-3'}`}>
                   <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
                 </div>
                 {!isCollapsed && (

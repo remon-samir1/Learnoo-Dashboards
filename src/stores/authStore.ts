@@ -46,14 +46,14 @@ const USER_ROLE_COOKIE_NAME = 'user_role';
 
 // sessionStorage keys for the pending (pre-verification) auth state
 const PENDING_TOKEN_KEY = 'pending_auth_token';
-const PENDING_USER_KEY  = 'pending_auth_user';
-const PENDING_META_KEY  = 'pending_auth_meta';
+const PENDING_USER_KEY = 'pending_auth_user';
+const PENDING_META_KEY = 'pending_auth_meta';
 
 function setPendingAuth(token: string, user: User, meta: AuthMeta) {
   if (typeof window === 'undefined') return;
   sessionStorage.setItem(PENDING_TOKEN_KEY, token);
-  sessionStorage.setItem(PENDING_USER_KEY,  JSON.stringify(user));
-  sessionStorage.setItem(PENDING_META_KEY,  JSON.stringify(meta));
+  sessionStorage.setItem(PENDING_USER_KEY, JSON.stringify(user));
+  sessionStorage.setItem(PENDING_META_KEY, JSON.stringify(meta));
 }
 
 function clearPendingAuth() {
@@ -141,15 +141,18 @@ function getUserFromCookies(): User | null {
 // Store
 // ============================================
 
+const _initToken = typeof window !== 'undefined' ? getTokenFromCookies() : null;
+const _initUser = typeof window !== 'undefined' ? getUserFromCookies() : null;
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       // Initial state
-      user: null,
-      token: null,
-      isAuthenticated: false,
+      user: _initUser,
+      token: _initToken,
+      isAuthenticated: !!_initToken,
       isLoading: false,
-      isInitialized: false,
+      isInitialized: typeof window !== 'undefined',
       error: null,
 
       // Getters
@@ -352,11 +355,11 @@ export const useAuthStore = create<AuthState>()(
       activateSession: () => {
         // Prefer sessionStorage (most up-to-date) then fall back to Zustand state
         const pendingToken = getPendingToken();
-        const pendingUser  = getPendingUser();
-        const pendingMeta  = getPendingMeta();
+        const pendingUser = getPendingUser();
+        const pendingMeta = getPendingMeta();
 
         const token = pendingToken ?? get().token;
-        const user  = pendingUser  ?? get().user;
+        const user = pendingUser ?? get().user;
 
         if (!user || !token) return;
 
@@ -416,6 +419,11 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isInitialized = typeof window !== 'undefined';
+        }
+      },
     }
   )
 );
@@ -427,13 +435,13 @@ export const useAuthStore = create<AuthState>()(
 export function initializeAuthStore() {
   // Check permanent cookies first, then fall back to pending sessionStorage
   const cookieToken = getTokenFromCookies();
-  const cookieUser  = getUserFromCookies();
+  const cookieUser = getUserFromCookies();
 
   const pendingToken = getPendingToken();
-  const pendingUser  = getPendingUser();
+  const pendingUser = getPendingUser();
 
   const token = cookieToken ?? pendingToken;
-  const user  = cookieUser  ?? pendingUser;
+  const user = cookieUser ?? pendingUser;
 
   if (token) {
     useAuthStore.setState({

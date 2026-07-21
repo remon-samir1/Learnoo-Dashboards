@@ -80,7 +80,7 @@
     "login": {
       "title": "Learnoo تسجيل الدخول",
       "subtitle": "سجل الدخول برقم هاتفك",
-      "parentLink":"تسجيل ولي الامر",
+      "parentLink": "تسجيل ولي الامر",
       "parentLogin": "تسجيل دخول ولي الأمر",
       "phone": "رقم الهاتف",
       "phonePlaceholder": "أدخل رقم الهاتف",
@@ -2982,5 +2982,161 @@
     "filterMissed": "تغيب",
     "timeline": "جدول النشاط",
     "noActivity": "لا يوجد نشاط حضور حتى الآن."
+  },
+  "doctorDashboard": {
+    "pageTitle": "لوحة تحكم الدكتور",
+    "stats": {
+      "totalStudents": "إجمالي الطلاب",
+      "activeCourses": "الدورات النشطة",
+      "liveClasses": "الفصول المباشرة",
+      "pendingQuestions": "الأسئلة المعلقة",
+      "currentlyTeaching": "يتم التدريس حالياً",
+      "today": "اليوم",
+      "needResponse": "تحتاج إلى رد"
+    },
+    "charts": {
+      "studentEnrollment": "تسجيل الطلاب",
+      "monthlyGrowth": "الاتجاه الشهري للنمو",
+      "week": "أسبوع",
+      "month": "شهر",
+      "year": "سنة",
+      "courseActivity": "نشاط الدورة",
+      "lectures": "المحاضرات",
+      "liveClasses": "الفصول المباشرة",
+      "quizzes": "الاختبارات"
+    },
+    "activity": {
+      "recentActivity": "النشاط الأخير",
+      "viewAll": "عرض الكل",
+      "upcomingLiveClasses": "الفصول المباشرة القادمة",
+      "students": "طلاب",
+      "studentsNeedingAttention": "الطلاب الذين يحتاجون إلى انتباه",
+      "noDataAvailable": "لا توجد بيانات متاحة"
+    },
+    "welcome": {
+      "goodMorning": "صباح الخير",
+      "startLiveSessions": "بدء الجلسات المباشرة",
+      "quickCreate": "إنشاء سريع",
+      "satisfaction": "الرضا"
+    }
+  },
+  "lectures": {
+    "pageTitle": "إدارة المحاضرات",
+    "pageDescription": "إدارة محاضرات الدورة",
+    "addLecture": "إضافة محاضرة",
+    "searchPlaceholder": "بحث في المحاضرات...",
+    "allCourses": "جميع الدورات",
+    "columns": {
+      "title": "العنوان",
+      "course": "الدورة",
+      "description": "الوصف",
+      "created": "تم الإنشاء"
+    },
+    "error": "فشل تحميل المحاضرات",
+    "retry": "إعادة المحاولة",
+    "emptyMessage": "لم يتم العثور على محاضرات. أنشئ أول محاضرة!",
+    "deleteTitle": "حذف المحاضرة"
+  },
+  "chapters": {
+    "pageTitle": "إدارة الفصول",
+    "pageDescription": "إدارة فصول المحاضرة والفيديوهات",
+    "addChapter": "إضافة فصل",
+    "searchPlaceholder": "بحث في الفصول...",
+    "allLectures": "جميع المحاضرات",
+    "columns": {
+      "title": "العنوان",
+      "lecture": "المحاضرة",
+      "duration": "المدة",
+      "freePreview": "معاينة مجانية",
+      "created": "تم الإنشاء"
+    },
+    "yes": "نعم",
+    "no": "لا",
+    "error": "فشل تحميل الفصول",
+    "retry": "إعادة المحاولة",
+    "emptyMessage": "لم يتم العثور على فصول. أنشئ أول فصل!",
+    "deleteTitle": "حذف الفصل"
+  },
+  "levels": {
+    "pageTitle": "إدارة المستويات",
+    "pageDescription": "إدارة مستويات الطلاب وتقديراتهم",
+    "addLevel": "إضافة مستوى",
+    "searchPlaceholder": "بحث في المستويات...",
+    "columns": {
+      "name": "الاسم",
+      "description": "الوصف",
+      "created": "تم الإنشاء"
+    },
+    "error": "فشل تحميل المستويات",
+    "retry": "إعادة المحاولة",
+    "emptyMessage": "لم يتم العثور على مستويات. أنشئ أول مستوى!",
+    "deleteTitle": "حذف المستوى"
+  },
+  "doctorCourses": {
+    "title": "دوراتي",
+    "subtitle": "إدارة وتتبع جميع دوراتك",
+    "createCourse": "إنشاء دورة",
+    "editContent": "تعديل المحتوى",
+    "searchPlaceholder": "بحث في الدورات...",
+    "allCenters": "جميع المراكز",
+    "allStatus": "جميع الحالات",
+    "active": "نشط",
+    "draft": "مسودة",
+    "columns": {
+      "course": "الدورة",
+      "subject": "الموضوع",
+      "students": "الطلاب",
+      "progress": "التقدم",
+      "exam": "الامتحان",
+      "notes": "الملاحظات",
+      "status": "الحالة",
+      "actions": "الإجراءات"
+    },
+    "stats": {
+      "students": "طلاب",
+      "exams": "امتحانات",
+      "lectures": "محاضرات",
+      "notes": "ملاحظات"
+    },
+    "contentProgress": "تقدم المحتوى",
+    "viewCourse": "عرض الدورة",
+    "deleteConfirm": "هل أنت متأكد من حذف هذه الدورة؟"
+  },
+  "settings": {
+    "profile": {
+      "pageTitle": "إعدادات الملف الشخصي",
+      "pageDescription": "تحديث معلوماتك الشخصية",
+      "personalInformation": "المعلومات الشخصية",
+      "profilePhoto": "صورة الملف الشخصي",
+      "changePhoto": "تغيير الصورة",
+      "remove": "إزالة",
+      "photoHint": "JPG، PNG أو GIF. الحد الأقصى 2MB.",
+      "firstName": "الاسم الأول",
+      "lastName": "اسم العائلة",
+      "email": "البريد الإلكتروني",
+      "phone": "رقم الهاتف",
+      "validation": {
+        "nameRequired": "الاسم الأول واسم العائلة مطلوبان"
+      },
+      "success": "تم تحديث الملف الشخصي بنجاح!",
+      "error": "فشل تحديث الملف الشخصي",
+      "cancel": "إلغاء",
+      "saveChanges": "حفظ التغييرات",
+      "saving": "جاري الحفظ..."
+    }
+  },
+  "sidebar": {
+    "mainMenu": "القائمة الرئيسية",
+    "dashboard": "لوحة التحكم",
+    "myCourses": "دوراتي",
+    "academicStructure": "الهيكل الأكاديمي",
+    "liveSessions": "الجلسات المباشرة",
+    "exams": "الامتحانات",
+    "discussions": "النقاشات",
+    "community": "المجتمع",
+    "notesSummaries": "الملاحظات والملخصات",
+    "electronicLibrary": "المكتبة الإلكترونية",
+    "support": "الدعم",
+    "activation": "التفعيل"
   }
 }

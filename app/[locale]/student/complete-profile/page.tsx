@@ -8,7 +8,6 @@ import {
   isStudentAcademicProfileComplete,
 } from "@/src/lib/student-profile-completeness";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 
 type ProfileAttributes = {
   first_name?: string | null;
@@ -35,12 +34,6 @@ type PageProps = {
 
 export default async function StudentCompleteProfilePage({ params }: PageProps) {
   const { locale } = await params;
-
-  const cookieStore = await cookies();
-  const userRole = cookieStore.get("user_role")?.value || null;
-  if (userRole && userRole == "Student") {
-    redirect(`/${locale}/student`);
-  }
 
   const response = await getUserProfileData();
 

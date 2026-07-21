@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useLevels, useDeleteLevel } from '@/src/hooks/useLevels';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { SearchFilter } from '@/src/components/admin/SearchFilter';
@@ -9,6 +10,7 @@ import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import type { Level } from '@/src/types';
 
 export default function LevelsPage() {
+  const t = useTranslations('levels');
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null);
@@ -42,12 +44,12 @@ export default function LevelsPage() {
   const columns: Column<Level>[] = [
     {
       key: 'name',
-      header: 'Name',
+      header: t('columns.name'),
       render: (item) => item.attributes.name,
     },
     {
       key: 'description',
-      header: 'Description',
+      header: t('columns.description'),
       render: (item) => (
         <span className="truncate max-w-xs block" title={item.attributes.description}>
           {item.attributes.description}
@@ -56,7 +58,7 @@ export default function LevelsPage() {
     },
     {
       key: 'created_at',
-      header: 'Created',
+      header: t('columns.created'),
       render: (item) => item.attributes.created_at 
         ? new Date(item.attributes.created_at).toLocaleDateString() 
         : '-',
@@ -67,18 +69,18 @@ export default function LevelsPage() {
     return (
       <div className="flex flex-col gap-8">
         <AdminPageHeader
-          title="Levels Management"
-          description="Manage student levels and grades"
-          actionLabel="Add Level"
+          title={t('pageTitle')}
+          description={t('pageDescription')}
+          actionLabel={t('addLevel')}
           actionHref="/levels/add"
         />
         <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-          <p className="text-red-600">Failed to load levels: {error}</p>
+          <p className="text-red-600">{t('error')}: {error}</p>
           <button
             onClick={refetch}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
-            Retry
+            {t('retry')}
           </button>
         </div>
       </div>
@@ -88,14 +90,14 @@ export default function LevelsPage() {
   return (
     <div className="flex flex-col gap-8 pb-12">
       <AdminPageHeader
-        title="Levels Management"
-        description="Manage student levels and grades"
-        actionLabel="Add Level"
+        title={t('pageTitle')}
+        description={t('pageDescription')}
+        actionLabel={t('addLevel')}
         actionHref="/levels/add"
       />
 
       <SearchFilter
-        searchPlaceholder="Search levels..."
+        searchPlaceholder={t('searchPlaceholder')}
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
       />
@@ -107,7 +109,7 @@ export default function LevelsPage() {
         keyExtractor={(item) => item.id}
         onDelete={handleDelete}
         editHref={(item) => `/levels/${item.id}/edit`}
-        emptyMessage="No levels found. Create your first level!"
+        emptyMessage={t('emptyMessage')}
       />
 
       <DeleteModal
@@ -117,7 +119,7 @@ export default function LevelsPage() {
           setSelectedLevel(null);
         }}
         onConfirm={handleConfirmDelete}
-        title="Delete Level"
+        title={t('deleteTitle')}
         itemName={selectedLevel?.attributes.name || ''}
         isLoading={isDeleting}
       />

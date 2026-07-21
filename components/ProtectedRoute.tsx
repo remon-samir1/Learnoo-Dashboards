@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { initializeAuthStore, useAuth } from '@/src/stores/authStore';
+import { useAuth } from '@/src/stores/authStore';
 import { isProfileComplete } from '@/src/lib/profile-completeness';
 
 interface ProtectedRouteProps {
@@ -10,18 +10,12 @@ interface ProtectedRouteProps {
   requireProfileComplete?: boolean;
 }
 
-export default function ProtectedRoute({ 
-  children, 
-  requireProfileComplete = true 
+export default function ProtectedRoute({
+  children,
+  requireProfileComplete = true
 }: ProtectedRouteProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, isInitialized } = useAuth();
-
-  useEffect(() => {
-    if (!isInitialized) {
-      initializeAuthStore();
-    }
-  }, [isInitialized]);
 
   useEffect(() => {
     if (!isInitialized || isLoading) return;

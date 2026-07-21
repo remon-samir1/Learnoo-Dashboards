@@ -17,8 +17,10 @@ import {
 } from 'lucide-react';
 import { useCurrentUser } from '@/src/hooks/useAuth';
 import { instructorDashboardApi } from '@/src/lib/api';
+import { useTranslations } from 'next-intl';
 
 export default function DoctorDashboardPage() {
+  const t = useTranslations('doctorDashboard');
   const [headerData, setHeaderData] = useState<any>(null);
   const [statsData, setStatsData] = useState<any>(null);
   const [studentGrowthData, setStudentGrowthData] = useState<any>(null);
@@ -69,41 +71,41 @@ export default function DoctorDashboardPage() {
   return (
     <div className="flex flex-col gap-6 pb-8">
       {/* Welcome Banner */}
-      <WelcomeBanner data={headerData} />
+      <WelcomeBanner data={headerData} t={t} />
 
       {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
-          label="Total Students" 
+          label={t('stats.totalStudents')}
           value={statsData?.students?.value?.toLocaleString() || '0'}
-          subtext={`Growth: ${statsData?.students?.growth || 0}%`}
+          subtext={`${t('stats.currentlyTeaching')}: ${statsData?.students?.growth || 0}%`}
           icon={<Users className="w-5 h-5" />}
           iconBg="bg-[#EEF2FF]"
           iconColor="text-[#4F46E5]"
           borderColor="border-l-4 border-l-[#4F46E5]"
         />
         <StatCard 
-          label="Active Courses" 
+          label={t('stats.activeCourses')}
           value={statsData?.courses?.value?.toString() || '0'}
-          subtext="Currently teaching"
+          subtext={t('stats.currentlyTeaching')}
           icon={<BookOpen className="w-5 h-5" />}
           iconBg="bg-[#FEF2F2]"
           iconColor="text-[#EF4444]"
           borderColor="border-l-4 border-l-[#EF4444]"
         />
         <StatCard 
-          label="Live Classes" 
+          label={t('stats.liveClasses')}
           value={statsData?.live_sessions_today?.value?.toString() || '0'}
-          subtext="Today"
+          subtext={t('stats.today')}
           icon={<Video className="w-5 h-5" />}
           iconBg="bg-[#FEFCE8]"
           iconColor="text-[#EAB308]"
           borderColor="border-l-4 border-l-[#EAB308]"
         />
         <StatCard 
-          label="Pending Questions" 
+          label={t('stats.pendingQuestions')}
           value={headerData?.summary?.pending_questions?.toString() || '0'}
-          subtext="Need your response"
+          subtext={t('stats.needResponse')}
           icon={<MessageCircle className="w-5 h-5" />}
           iconBg="bg-[#F0FDF4]"
           iconColor="text-[#22C55E]"
@@ -114,26 +116,26 @@ export default function DoctorDashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <EnrollmentChart data={studentGrowthData} />
+          <EnrollmentChart data={studentGrowthData} t={t} />
         </div>
         <div>
-          <CourseActivityChart data={courseActivityData} />
+          <CourseActivityChart data={courseActivityData} t={t} />
         </div>
       </div>
 
       {/* Activity and Live Classes Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentActivity data={recentActivityData} />
-        <UpcomingLiveClasses data={upcomingLiveClassesData} />
+        <RecentActivity data={recentActivityData} t={t} />
+        <UpcomingLiveClasses data={upcomingLiveClassesData} t={t} />
       </div>
 
       {/* Students Needing Attention */}
-      <StudentsNeedingAttention data={studentsNeedingAttentionData} />
+      <StudentsNeedingAttention data={studentsNeedingAttentionData} t={t} />
     </div>
   );
 }
 
-function WelcomeBanner({ data }: { data: any }) {
+function WelcomeBanner({ data, t }: { data: any; t: ReturnType<typeof useTranslations> }) {
   const { user, isLoading } = useCurrentUser();
   const firstName = user?.attributes.first_name || data?.name?.split(' ')[0] || 'Doctor';
 
@@ -162,18 +164,18 @@ function WelcomeBanner({ data }: { data: any }) {
       <div className="relative flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-white/80 mb-1">{data?.date || new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          <h1 className="text-2xl font-bold mb-2">{data?.greeting || 'Good morning'}, {firstName}! 👋</h1>
+          <h1 className="text-2xl font-bold mb-2">{t('welcome.goodMorning')}, {firstName}! 👋</h1>
           <p className="text-sm text-white/90 mb-4">
-            You have <span className="font-bold">{data?.summary?.today_live_classes || 0} live classes</span> today and <span className="font-bold">{data?.summary?.pending_questions || 0} pending questions</span> to review.
+            {t('welcome.startLiveSessions')}: <span className="font-bold">{data?.summary?.today_live_classes || 0} {t('stats.liveClasses')}</span> - {t('welcome.quickCreate')}: <span className="font-bold">{data?.summary?.pending_questions || 0} {t('stats.pendingQuestions')}</span>
           </p>
           <div className="flex gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-white text-[#4F46E5] rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors">
               <Video className="w-4 h-4" />
-              Start Live Sessions
+              {t('welcome.startLiveSessions')}
             </button>
             <button className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg text-sm font-semibold hover:bg-white/30 transition-colors">
               <TrendingUp className="w-4 h-4" />
-              Quick Create
+              {t('welcome.quickCreate')}
             </button>
           </div>
         </div>
@@ -192,7 +194,7 @@ function WelcomeBanner({ data }: { data: any }) {
             </div>
             <div className="text-right">
               <span className="text-2xl font-bold">98%</span>
-              <p className="text-xs text-white/70">Satisfaction</p>
+              <p className="text-xs text-white/70">{t('welcome.satisfaction')}</p>
             </div>
           </div>
         </div>
@@ -226,7 +228,7 @@ function StatCard({ label, value, subtext, icon, iconBg, iconColor, borderColor 
   );
 }
 
-function EnrollmentChart({ data: growthData }: { data: any }) {
+function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typeof useTranslations> }) {
   const data = growthData?.labels?.map((label: string, i: number) => ({
     month: label,
     value: growthData.datasets[0]?.data[i] || 0,
@@ -237,12 +239,12 @@ function EnrollmentChart({ data: growthData }: { data: any }) {
       <div className="bg-white rounded-xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h3 className="text-base font-semibold text-[#1E293B]">Student Enrollment</h3>
-            <p className="text-xs text-[#64748B]">Monthly growth trend</p>
+            <h3 className="text-base font-semibold text-[#1E293B]">{t('charts.studentEnrollment')}</h3>
+            <p className="text-xs text-[#64748B]">{t('charts.monthlyGrowth')}</p>
           </div>
         </div>
         <div className="flex items-center justify-center h-48 text-[#94A3B8] text-sm">
-          No data available
+          {t('activity.noDataAvailable')}
         </div>
       </div>
     );
@@ -254,11 +256,11 @@ function EnrollmentChart({ data: growthData }: { data: any }) {
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-base font-semibold text-[#1E293B]">Student Enrollment</h3>
-          <p className="text-xs text-[#64748B]">Monthly growth trend</p>
+          <h3 className="text-base font-semibold text-[#1E293B]">{t('charts.studentEnrollment')}</h3>
+          <p className="text-xs text-[#64748B]">{t('charts.monthlyGrowth')}</p>
         </div>
         <div className="flex bg-[#F1F5F9] rounded-lg p-1">
-          {['Week', 'Month', 'Year'].map((period, i) => (
+          {[t('charts.week'), t('charts.month'), t('charts.year')].map((period, i) => (
             <button 
               key={period}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
@@ -355,7 +357,7 @@ function EnrollmentChart({ data: growthData }: { data: any }) {
   );
 }
 
-function CourseActivityChart({ data: activityData }: { data: any }) {
+function CourseActivityChart({ data: activityData, t }: { data: any; t: ReturnType<typeof useTranslations> }) {
   const courses = activityData?.labels || [];
   const lecturesData = activityData?.datasets?.[0]?.data || [];
   const liveClassesData = activityData?.datasets?.[1]?.data || [];
@@ -371,8 +373,8 @@ function CourseActivityChart({ data: activityData }: { data: any }) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-[#1E293B]">Course Activity</h3>
-        <p className="text-xs text-[#64748B]">Lectures · Live Classes · Quizzes</p>
+        <h3 className="text-base font-semibold text-[#1E293B]">{t('charts.courseActivity')}</h3>
+        <p className="text-xs text-[#64748B]">{t('charts.lectures')} · {t('charts.liveClasses')} · {t('charts.quizzes')}</p>
       </div>
 
       <div className="flex items-end justify-between h-40 gap-2">
@@ -401,22 +403,22 @@ function CourseActivityChart({ data: activityData }: { data: any }) {
       <div className="flex items-center justify-center gap-4 mt-4">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 bg-[#3B82F6] rounded-sm" />
-          <span className="text-xs text-[#64748B]">Lectures</span>
+          <span className="text-xs text-[#64748B]">{t('charts.lectures')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 bg-[#10B981] rounded-sm" />
-          <span className="text-xs text-[#64748B]">Live Classes</span>
+          <span className="text-xs text-[#64748B]">{t('charts.liveClasses')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 bg-[#F59E0B] rounded-sm" />
-          <span className="text-xs text-[#64748B]">Quizzes</span>
+          <span className="text-xs text-[#64748B]">{t('charts.quizzes')}</span>
         </div>
       </div>
     </div>
   );
 }
 
-function RecentActivity({ data: activities }: { data: any }) {
+function RecentActivity({ data: activities, t }: { data: any; t: ReturnType<typeof useTranslations> }) {
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case 'user-plus': return <UserPlus className="w-4 h-4" />;
@@ -440,9 +442,9 @@ function RecentActivity({ data: activities }: { data: any }) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1E293B]">Recent Activity</h3>
+        <h3 className="text-base font-semibold text-[#1E293B]">{t('activity.recentActivity')}</h3>
         <button className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 hover:underline">
-          View all <ChevronRight className="w-3 h-3" />
+          {t('activity.viewAll')} <ChevronRight className="w-3 h-3" />
         </button>
       </div>
 
@@ -458,18 +460,21 @@ function RecentActivity({ data: activities }: { data: any }) {
             </div>
           </div>
         ))}
+        {(!activities || activities.length === 0) && (
+          <p className="text-sm text-[#94A3B8] text-center py-8">{t('activity.noDataAvailable')}</p>
+        )}
       </div>
     </div>
   );
 }
 
-function UpcomingLiveClasses({ data: classes }: { data: any }) {
+function UpcomingLiveClasses({ data: classes, t }: { data: any; t: ReturnType<typeof useTranslations> }) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1E293B]">Upcoming Live Classes</h3>
+        <h3 className="text-base font-semibold text-[#1E293B]">{t('activity.upcomingLiveClasses')}</h3>
         <button className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 hover:underline">
-          View all <ChevronRight className="w-3 h-3" />
+          {t('activity.viewAll')} <ChevronRight className="w-3 h-3" />
         </button>
       </div>
 
@@ -488,16 +493,19 @@ function UpcomingLiveClasses({ data: classes }: { data: any }) {
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold text-[#1E293B]">{cls.participants}</p>
-              <p className="text-xs text-[#94A3B8]">students</p>
+              <p className="text-xs text-[#94A3B8]">{t('activity.students')}</p>
             </div>
           </div>
         ))}
+        {(!classes || classes.length === 0) && (
+          <p className="text-sm text-[#94A3B8] text-center py-8">{t('activity.noDataAvailable')}</p>
+        )}
       </div>
     </div>
   );
 }
 
-function StudentsNeedingAttention({ data: students }: { data: any }) {
+function StudentsNeedingAttention({ data: students, t }: { data: any; t: ReturnType<typeof useTranslations> }) {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -510,9 +518,9 @@ function StudentsNeedingAttention({ data: students }: { data: any }) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold text-[#1E293B]">Students Needing Attention</h3>
+        <h3 className="text-base font-semibold text-[#1E293B]">{t('activity.studentsNeedingAttention')}</h3>
         <button className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 hover:underline">
-          View all <ChevronRight className="w-3 h-3" />
+          {t('activity.viewAll')} <ChevronRight className="w-3 h-3" />
         </button>
       </div>
 
@@ -527,7 +535,7 @@ function StudentsNeedingAttention({ data: students }: { data: any }) {
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#64748B]">{student.progress.toFixed(1)}% progress</span>
+                <span className="text-[#64748B]">{student.progress.toFixed(1)}% {t('activity.students')}</span>
               </div>
               <div className="h-1.5 bg-[#FECACA] rounded-full overflow-hidden">
                 <div 
@@ -538,6 +546,11 @@ function StudentsNeedingAttention({ data: students }: { data: any }) {
             </div>
           </div>
         ))}
+        {(!students || students.length === 0) && (
+          <div className="col-span-full text-center py-8 text-[#94A3B8] text-sm">
+            {t('activity.noDataAvailable')}
+          </div>
+        )}
       </div>
     </div>
   );

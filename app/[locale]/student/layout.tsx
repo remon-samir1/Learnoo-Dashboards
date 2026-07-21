@@ -1,4 +1,3 @@
-import { StudentAuthStoreInit } from "@/components/student/StudentAuthStoreInit";
 import StudentLayoutShell from "@/components/student/StudentLayoutShell";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { getCurrentUser } from "@/src/services/auth/me.service";
@@ -42,7 +41,6 @@ export default async function StudentLayout({ children, params }: LayoutProps) {
 
   return (
     <ProtectedRoute requireProfileComplete={false}>
-      <StudentAuthStoreInit />
       <StudentLayoutShell
         locale={locale}
         isAcademicProfileComplete={isAcademicProfileComplete}
