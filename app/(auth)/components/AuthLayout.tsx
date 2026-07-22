@@ -1,4 +1,5 @@
 import Logo from '@/components/Logo';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 interface AuthLayoutProps {
   title: string;
@@ -21,6 +22,9 @@ export default function AuthPageLayout({ title, subtitle, children }: AuthLayout
 
         {/* Card */}
         <div className="w-full bg-white border border-border-color shadow-[0px_0px_8px_rgba(0,0,0,0.1)] rounded-2xl p-5 sm:p-6 transition-all">
+          <div className="flex justify-end mb-4">
+            <LanguageSwitcher />
+          </div>
           {children}
         </div>
       </div>

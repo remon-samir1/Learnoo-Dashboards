@@ -102,6 +102,8 @@
       "title": "Learnoo تسجيل الدخول",
       "subtitle": "سجل الدخول برقم هاتفك",
       "rememberMe": "تذكرني",
+      "password": "كلمة المرور",
+      "passwordPlaceholder": "أدخل كلمة المرور",
       "studentLink": "طالب؟ سجل الدخول برقم الهاتف فقط",
       "createAccountLink": "إنشاء حساب",
       "phone": "رقم الهاتف",
