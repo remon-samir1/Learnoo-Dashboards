@@ -50,7 +50,8 @@ export function CourseTreeSelect({
   required = false,
   label = 'Course',
   error,
-}: CourseTreeSelectProps) {
+  coursesData: outerCoursesData,
+}: CourseTreeSelectProps & { coursesData?: any[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
@@ -60,15 +61,17 @@ export function CourseTreeSelect({
   const { data: centersData, isLoading: isLoadingCenters } = useCenters();
   const { data: facultiesData, isLoading: isLoadingFacs } = useFaculties();
   const { data: departmentsData, isLoading: isLoadingDepts } = useDepartments();
-  const { data: coursesData, isLoading: isLoadingCourses } = useCourses();
+  const { data: internalCoursesData, isLoading: isLoadingCourses } = useCourses();
 
   const universities = useMemo(() => universitiesData ?? [], [universitiesData]);
   const centers = useMemo(() => centersData ?? [], [centersData]);
   const faculties = useMemo(() => facultiesData ?? [], [facultiesData]);
   const departments = useMemo(() => departmentsData ?? [], [departmentsData]);
-  const courses = useMemo(() => coursesData ?? [], [coursesData]);
 
-  const isLoading = isLoadingUnivs || isLoadingCenters || isLoadingFacs || isLoadingDepts || isLoadingCourses;
+  const coursesRawData = outerCoursesData !== undefined ? outerCoursesData : internalCoursesData;
+  const courses = useMemo(() => coursesRawData ?? [], [coursesRawData]);
+
+  const isLoading = isLoadingUnivs || isLoadingCenters || isLoadingFacs || isLoadingDepts || (outerCoursesData === undefined && isLoadingCourses);
 
   const selectedValues: string[] = useMemo(() => {
     if (multiple) {
@@ -390,7 +393,7 @@ export function CourseTreeSelect({
     }
   };
 
-const renderTreeItem = (node: TreeNode) => {
+  const renderTreeItem = (node: TreeNode) => {
     const isExpanded = !!expandedNodes[node.id];
     const isCourse = node.type === 'course';
     const courseId = node.originalId;
@@ -419,15 +422,14 @@ const renderTreeItem = (node: TreeNode) => {
             }
           }}
           style={{ paddingLeft: `${Math.max(node.level * 16, 8)}px` }}
-          className={`flex items-center gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer ${
-            isCourse
+          className={`flex items-center gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer ${isCourse
               ? multiple
                 ? 'hover:bg-slate-50 text-[#1E293B] font-medium'
                 : isSelected
                   ? 'bg-[#2137D6] text-white font-semibold hover:bg-[#1a2bb5]'
                   : 'hover:bg-slate-50 text-[#1E293B] font-medium'
               : 'hover:bg-slate-50 text-[#64748B]'
-          }`}
+            }`}
         >
           {!isCourse && hasChildren ? (
             <span
@@ -447,9 +449,8 @@ const renderTreeItem = (node: TreeNode) => {
           {isCourse && multiple ? (
             <div
               onClick={(e) => e.stopPropagation()}
-              className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${
-                isSelected ? 'bg-[#2137D6] border-[#2137D6]' : 'border-[#CBD5E1]'
-              }`}
+              className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? 'bg-[#2137D6] border-[#2137D6]' : 'border-[#CBD5E1]'
+                }`}
             >
               {isSelected && <Check className="w-3 h-3 text-white" />}
             </div>
@@ -557,9 +558,8 @@ const renderTreeItem = (node: TreeNode) => {
         type="button"
         disabled={isLoading}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between px-4 py-2.5 bg-[#F8FAFC] border rounded-xl text-sm focus:outline-none transition-all ${
-          isOpen ? 'border-[#2137D6] ring-2 ring-[#2137D6] ring-opacity-10 shadow-sm' : 'border-[#E2E8F0]'
-        } ${error ? 'border-red-500' : ''} disabled:opacity-50 text-left`}
+        className={`w-full flex items-center justify-between px-4 py-2.5 bg-[#F8FAFC] border rounded-xl text-sm focus:outline-none transition-all ${isOpen ? 'border-[#2137D6] ring-2 ring-[#2137D6] ring-opacity-10 shadow-sm' : 'border-[#E2E8F0]'
+          } ${error ? 'border-red-500' : ''} disabled:opacity-50 text-left`}
       >
         <div className="flex flex-col gap-0.5 truncate flex-1 pr-4">
           {isLoading ? (

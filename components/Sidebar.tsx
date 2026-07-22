@@ -330,7 +330,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
           >
 
-            <div className="shrink-0 mr-3">
+            <div className="shrink-0 mx-3">
 
               <Icon className="w-5 h-5 transition-transform duration-200" />
 
@@ -426,7 +426,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
         )}
 
-        <div className={`shrink-0 ${isCollapsed ? '' : 'mr-3'}`}>
+        <div className={`shrink-0 ${isCollapsed ? '' : 'mx-3'}`}>
 
           <Icon className={`w-5 h-5 transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
 

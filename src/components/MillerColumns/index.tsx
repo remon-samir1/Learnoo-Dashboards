@@ -86,15 +86,17 @@ export function MillerColumns({
   const { selectedNodes, path, selectNode, selectAt, setSelectedNodes } = stateHook || internalHook;
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
 
-  // Smooth scroll to the end when columns are added
+  // Smooth scroll to the newly opened column — works correctly in both LTR and RTL.
+  // inline: "end" is a logical (not physical) value: the browser resolves it from
+  // the document's dir attribute automatically, so no manual RTL check is needed.
   useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTo({
-        left: containerRef.current.scrollWidth,
-        behavior: "smooth",
-      });
-    }
+    endRef.current?.scrollIntoView({
+      behavior: "smooth",
+      inline: "end",    // logical end: right in LTR, left in RTL
+      block: "nearest", // prevent unwanted vertical page scroll
+    });
   }, [selectedNodes.length]);
 
   // Generate lists of items for each column level
@@ -209,6 +211,9 @@ export function MillerColumns({
             />
           </div>
         )}
+
+        {/* Sentinel: empty element used as the scroll target */}
+        <div ref={endRef} className="flex-shrink-0 w-px h-px" aria-hidden="true" />
       </div>
     </div>
   );

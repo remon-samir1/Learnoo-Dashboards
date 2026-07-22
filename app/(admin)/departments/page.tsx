@@ -2613,7 +2613,7 @@ export default function DepartmentsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[#1E293B]">
-              Content Manager
+              {t("departments.ContentManager")}
             </h1>
 
             <p className="text-sm text-[#64748B] mt-0.5">
@@ -2645,11 +2645,10 @@ export default function DepartmentsPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">Content Manager</h1>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t("departments.ContentManager")}</h1>
 
           <p className="text-sm text-[#64748B] mt-0.5">
-            Universities, Faculties, Centers, Departments, Courses, Lectures &
-            Lessons
+            {t("departments.pageDescription")}
           </p>
         </div>
 
@@ -2659,7 +2658,7 @@ export default function DepartmentsPage() {
             className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
           >
             <Plus className="w-4 h-4" />
-            Add University
+            {t("departments.AddUniversity")}
           </button>
         </> : null}
       </div>
@@ -2691,7 +2690,7 @@ export default function DepartmentsPage() {
           </svg>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <button
             onClick={expandAll}
             className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
@@ -2705,14 +2704,14 @@ export default function DepartmentsPage() {
           >
             {t("departments.tree.collapseAll") || "Collapse All"}
           </button>
-        </div>
+        </div> */}
       </div>
 
             {/* Miller Columns Navigation and Details Panel */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-gray-200 rounded-xl">
           <Loader2 className="w-8 h-8 text-[#2137D6] animate-spin" />
-          <p className="text-sm text-gray-500">Loading content...</p>
+          <p className="text-sm text-gray-500">{t("departments.LoadingContent")}</p>
         </div>
       ) : (
         <MillerColumns
@@ -2837,8 +2836,8 @@ export default function DepartmentsPage() {
           <div className="bg-white rounded-xl p-4 w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold">Lesson Viewers</h3>
-                <p className="text-sm text-gray-500 mt-0.5">List of users who viewed this lesson</p>
+                <h3 className="text-lg font-semibold">{t("departments.LessonViewers")}</h3>
+                <p className="text-sm text-gray-500 mt-0.5">{t("departments.listViewers")}</p>
               </div>
 
               <button

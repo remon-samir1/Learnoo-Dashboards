@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronRight } from "lucide-react";
 import type { SelectionPath } from "./useMillerState";
+import { useTranslations } from "next-intl";
 
 interface BreadcrumbProps {
   path: SelectionPath;
@@ -16,6 +17,8 @@ function getName(item: any): string {
 }
 
 export function Breadcrumb({ path, onJump }: BreadcrumbProps) {
+    const t = useTranslations("Breadcrumb");
+  
   const segments = Object.entries(path)
     .filter(([_, v]) => v != null)
     .map(([key, val]) => ({ key: key as keyof SelectionPath, label: getName(val) }));
@@ -26,7 +29,7 @@ export function Breadcrumb({ path, onJump }: BreadcrumbProps) {
         className="hover:text-blue-600 transition-colors"
         onClick={() => onJump(null)}
       >
-        Content manager
+        {t("ContentManager")}
       </button>
       {segments.map((seg, i) => (
         <React.Fragment key={seg.key}>

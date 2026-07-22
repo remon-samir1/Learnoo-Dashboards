@@ -2117,6 +2117,7 @@
     "pageTitle": "Discussions Management",
     "pageDescription": "View, reply to, and delete student discussions across all chapters.",
     "reply": "Reply",
+    "cancel":"Cancel",
     "delete": "Delete",
     "deleteConfirm": "Are you sure you want to delete this discussion?",
     "noDiscussions": "No discussions found.",
@@ -2127,6 +2128,7 @@
     "type": "Type",
     "allChapters": "All Chapters",
     "actions": "Actions",
+
     "badges": {
       "student": "Student",
       "doctor": "Doctor",
@@ -2206,9 +2208,15 @@
   },
   "departments": {
     "pageTitle": "Academic Structure",
+    "ContentManager": "Content Manager",
+    "LoadingContent":"Loading Content...",
     "pageDescription": "Manage universities, faculties, centers, departments, courses and content",
     "addDepartment": "Add Department",
     "editDepartment": "Edit Department",
+    "deleteDepartment": "Delete Department",
+    "listViewers":"List of users who viewed this lesson",
+"LessonViewers": "Lesson Viewers",
+  "AddUniversity": "Add University",
     "searchPlaceholder": "Search departments...",
     "allFaculties": "All Faculties",
     "columns": {
@@ -3125,6 +3133,15 @@
   "sidebar": {
     "mainMenu": "MAIN MENU",
     "dashboard": "Dashboard",
+    "instructors":"Instructors",
+    "students":"Students",
+    "notifications": "Notifications",
+    "downloads":"Downloads",
+    "profileSettings":"Profile & Settings",
+    "otaUpload":"OTA Upload",
+    "featureControl":"Feature Control",
+    "examsAndQA":"Exams & Q&A",
+
     "myCourses": "My Courses",
     "academicStructure": "Academic Structure",
     "liveSessions": "Live Sessions",
@@ -3135,5 +3152,8 @@
     "electronicLibrary": "Electronic Library",
     "support": "Support",
     "activation": "Activation"
+  },
+  "Breadcrumb" :{
+    "ContentManager":"Content Manager"
   }
 }

@@ -2708,7 +2708,7 @@ export default function DepartmentsPage() {
           </svg>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <button
             onClick={expandAll}
             className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
@@ -2722,7 +2722,7 @@ export default function DepartmentsPage() {
           >
             {t("departments.tree.collapseAll") || "Collapse All"}
           </button>
-        </div>
+        </div> */}
       </div>
 
             {/* Miller Columns Navigation and Details Panel */}
