@@ -164,7 +164,7 @@ function buildUrl(path: string): string {
 async function handleResponse<T>(response: Response, skipAuthRedirect: boolean = false): Promise<T> {
   if (!response.ok) {
     // Handle unauthorized errors - redirect to login (unless skipped)
-    if ((response.status === 401 ) && !skipAuthRedirect) {
+    if ((response.status === 401) && !skipAuthRedirect) {
       // Clear auth cookies
       Cookies.remove('token');
       Cookies.remove('user_role');
@@ -193,8 +193,11 @@ async function handleResponse<T>(response: Response, skipAuthRedirect: boolean =
 }
 
 function createHeaders(includeAuth: boolean = true, isMultipart: boolean = false): HeadersInit {
+  const currentLocale = Cookies.get('locale') || 'ar';
+
   const headers: Record<string, string> = {
     Accept: 'application/json',
+    lang: currentLocale,
   };
 
   if (!isMultipart) {
