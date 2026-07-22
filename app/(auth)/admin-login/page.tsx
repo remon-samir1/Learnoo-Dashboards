@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
         <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('phone_email')}</label>
           <input
-            type="tel"
+            type="text"
             className="w-full h-10 px-3 py-[9px] bg-white border border-border-color shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-sans text-sm leading-5 text-text-main outline-none focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)] transition-colors placeholder:text-text-placeholder"
             placeholder={t('phonePlaceholder')}
             value={phone}
