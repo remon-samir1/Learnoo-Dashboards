@@ -75,7 +75,7 @@ export function createQueryHook<T, P extends unknown[] = []>(
     const isMountedRef = useRef(true);
 
     const execute = useCallback(async () => {
-      if (mergedOptions.enabled === false) return;
+      // if (mergedOptions.enabled === false) return;
 
       setState((prev) => ({ ...prev, isLoading: true, error: null, isError: false }));
 
@@ -106,6 +106,7 @@ export function createQueryHook<T, P extends unknown[] = []>(
     useEffect(() => {
       isMountedRef.current = true;
       paramsRef.current = params;
+        if (mergedOptions.enabled === false) return;
       execute();
 
       return () => {

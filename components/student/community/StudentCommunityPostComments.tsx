@@ -96,8 +96,8 @@ export default function StudentCommunityPostComments({
           <MessageSquare className="size-[16px] shrink-0" aria-hidden />
           <span>
             {expanded
-              ? t('hideComments', { count: commentsCount })
-              : t('showComments', { count: commentsCount })}
+              ? t('hidecomments', { count: commentsCount })
+              : t('showcomments', { count: commentsCount })}
           </span>
         </button>
       )}

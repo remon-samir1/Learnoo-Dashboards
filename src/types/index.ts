@@ -1612,7 +1612,8 @@ export interface CreateCourseRequest {
 
 
   price: number;
-
+  
+  
 
 
   max_views_per_student?: number;
