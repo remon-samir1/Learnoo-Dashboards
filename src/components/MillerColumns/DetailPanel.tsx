@@ -205,11 +205,10 @@ export function DetailPanel({
               <div>
                 <label className="text-[10px] text-gray-400 block">Status</label>
                 <span
-                  className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${
-                    node.meta?.status === "active"
+                  className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${node.meta?.status === "active"
                       ? "bg-green-50 text-green-700 border border-green-200"
                       : "bg-gray-100 text-gray-700 border border-gray-200"
-                  }`}
+                    }`}
                 >
                   {node.meta?.status === "active" ? "Active" : "Draft"}
                 </span>
@@ -278,17 +277,15 @@ export function DetailPanel({
                 <div className="flex items-center gap-1 mb-3 bg-gray-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setActivationTab("code")}
-                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${
-                      activationTab === "code" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
-                    }`}
+                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "code" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
+                      }`}
                   >
                     By Code
                   </button>
                   <button
                     onClick={() => setActivationTab("preactivation")}
-                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${
-                      activationTab === "preactivation" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
-                    }`}
+                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "preactivation" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
+                      }`}
                   >
                     Preactivation
                   </button>
@@ -309,9 +306,8 @@ export function DetailPanel({
                             .map((code) => (
                               <label
                                 key={code.id}
-                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${
-                                  selectedCode === code.id ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
-                                }`}
+                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${selectedCode === code.id ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
+                                  }`}
                               >
                                 <input
                                   type="radio"
@@ -364,9 +360,8 @@ export function DetailPanel({
                             .map((student: any) => (
                               <label
                                 key={student.id}
-                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${
-                                  selectedStudent === student.id ? "bg-blue-50" : "hover:bg-gray-50"
-                                }`}
+                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${selectedStudent === student.id ? "bg-blue-50" : "hover:bg-gray-50"
+                                  }`}
                               >
                                 <input
                                   type="radio"
@@ -570,17 +565,15 @@ export function DetailPanel({
                 <div className="flex items-center gap-1 mb-3 bg-gray-100 rounded-lg p-0.5">
                   <button
                     onClick={() => setActivationTab("code")}
-                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${
-                      activationTab === "code" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
-                    }`}
+                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "code" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
+                      }`}
                   >
                     By Code
                   </button>
                   <button
                     onClick={() => setActivationTab("preactivation")}
-                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${
-                      activationTab === "preactivation" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
-                    }`}
+                    className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "preactivation" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
+                      }`}
                   >
                     Preactivation
                   </button>
@@ -601,9 +594,8 @@ export function DetailPanel({
                             .map((code) => (
                               <label
                                 key={code.id}
-                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${
-                                  selectedCode === code.id ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
-                                }`}
+                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${selectedCode === code.id ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
+                                  }`}
                               >
                                 <input
                                   type="radio"
@@ -655,9 +647,8 @@ export function DetailPanel({
                             .map((student: any) => (
                               <label
                                 key={student.id}
-                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${
-                                  selectedStudent === student.id ? "bg-blue-50" : "hover:bg-gray-50"
-                                }`}
+                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${selectedStudent === student.id ? "bg-blue-50" : "hover:bg-gray-50"
+                                  }`}
                               >
                                 <input
                                   type="radio"
@@ -817,11 +808,10 @@ export function DetailPanel({
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</label>
               <div className="mt-1">
                 <span
-                  className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${
-                    (node.data as Note).attributes.is_publish
+                  className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${(node.data as Note).attributes.is_publish
                       ? "bg-green-50 text-green-700 border border-green-200"
                       : "bg-gray-100 text-gray-700 border border-gray-200"
-                  }`}
+                    }`}
                 >
                   {(node.data as Note).attributes.is_publish ? "Published" : "Draft"}
                 </span>

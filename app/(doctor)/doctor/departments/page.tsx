@@ -1256,6 +1256,7 @@ export default function DepartmentsPage() {
   const openViewers = async (node: TreeNode | null) => {
     if (!node) return;
     try {
+      setViewNode(node);
       setViewersLoading(true);
       setViewersList(null);
 
@@ -2725,7 +2726,7 @@ export default function DepartmentsPage() {
         </div> */}
       </div>
 
-            {/* Miller Columns Navigation and Details Panel */}
+      {/* Miller Columns Navigation and Details Panel */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-gray-200 rounded-xl">
           <Loader2 className="w-8 h-8 text-[#2137D6] animate-spin" />
@@ -2733,43 +2734,43 @@ export default function DepartmentsPage() {
         </div>
       ) : (
         <MillerColumns
-        treeData={treeData}
-        searchQuery={searchQuery}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onAdd={handleAdd}
-        onCopyMove={handleCopyMove}
-        openViewers={openViewers}
-        isInstructor={isInstructor}
-        canUseActivations={canUseActivations}
-        codesLoading={codesLoading}
-        selectedCode={selectedCode}
-        setSelectedCode={setSelectedCode}
-        selectedStudent={selectedStudent}
-        setSelectedStudent={setSelectedStudent}
-        studentSearch={studentSearch}
-        setStudentSearch={setStudentSearch}
-        students={students}
-        activationTab={activationTab}
-        setActivationTab={setActivationTab}
-        preactivationNumbers={preactivationNumbers}
-        setPreactivationNumbers={setPreactivationNumbers}
-        copiedCode={copiedCode}
-        preactivationResults={preactivationResults}
-        preactivationFileRef={preactivationFileRef}
-        isActivating={isActivating}
-        isUploadingPreActivation={isUploadingPreActivation}
-        getCodesForItem={getCodesForItem}
-        handleCopyCode={handleCopyCode}
-        handleActivate={handleActivate}
-        handlePreactivationUpload={handlePreactivationUpload}
-        clearPreactivationNumbers={clearPreactivationNumbers}
-        onGenerateCodes={(type, id) => {
-          setGenerateCodeItemType(type);
-          setGenerateCodeItemId(id);
-          setGenerateCodeModalOpen(true);
-        }}
-      />
+          treeData={treeData}
+          searchQuery={searchQuery}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onAdd={handleAdd}
+          onCopyMove={handleCopyMove}
+          openViewers={openViewers}
+          isInstructor={isInstructor}
+          canUseActivations={canUseActivations}
+          codesLoading={codesLoading}
+          selectedCode={selectedCode}
+          setSelectedCode={setSelectedCode}
+          selectedStudent={selectedStudent}
+          setSelectedStudent={setSelectedStudent}
+          studentSearch={studentSearch}
+          setStudentSearch={setStudentSearch}
+          students={students}
+          activationTab={activationTab}
+          setActivationTab={setActivationTab}
+          preactivationNumbers={preactivationNumbers}
+          setPreactivationNumbers={setPreactivationNumbers}
+          copiedCode={copiedCode}
+          preactivationResults={preactivationResults}
+          preactivationFileRef={preactivationFileRef}
+          isActivating={isActivating}
+          isUploadingPreActivation={isUploadingPreActivation}
+          getCodesForItem={getCodesForItem}
+          handleCopyCode={handleCopyCode}
+          handleActivate={handleActivate}
+          handlePreactivationUpload={handlePreactivationUpload}
+          clearPreactivationNumbers={clearPreactivationNumbers}
+          onGenerateCodes={(type, id) => {
+            setGenerateCodeItemType(type);
+            setGenerateCodeItemId(id);
+            setGenerateCodeModalOpen(true);
+          }}
+        />
       )}
 
       {/* Edit Modal */}
@@ -3276,6 +3277,8 @@ function EditModal({
           objectives: course.attributes.objectives || "",
 
           status: course.attributes.status,
+
+          schedule: course.attributes.schedule || "",
 
           price: course.attributes.price?.toString() || "0",
 

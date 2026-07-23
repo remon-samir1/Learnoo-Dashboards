@@ -1244,6 +1244,7 @@ export default function DepartmentsPage() {
   const openViewers = async (node: TreeNode | null) => {
     if (!node) return;
     try {
+      setViewNode(node);
       setViewersLoading(true);
       setViewersList(null);
 
@@ -2707,7 +2708,7 @@ export default function DepartmentsPage() {
         </div> */}
       </div>
 
-            {/* Miller Columns Navigation and Details Panel */}
+      {/* Miller Columns Navigation and Details Panel */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-gray-200 rounded-xl">
           <Loader2 className="w-8 h-8 text-[#2137D6] animate-spin" />
@@ -3259,6 +3260,8 @@ function EditModal({
           objectives: course.attributes.objectives || "",
 
           status: course.attributes.status,
+
+          schedule: course.attributes.schedule || "",
 
           price: course.attributes.price?.toString() || "0",
 
@@ -3873,6 +3876,26 @@ function EditModal({
                       <option value={1}>Active</option>
                     </select>
                   </div>
+
+                  {formData.status === 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Schedule
+                      </label>
+
+                      <input
+                        type="datetime-local"
+                        value={formData.schedule || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            schedule: e.target.value,
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -5063,6 +5086,26 @@ function AddModal({
                   <option value={1}>Active</option>
                 </select>
               </div>
+
+              {formData.status === 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Schedule
+                  </label>
+
+                  <input
+                    type="datetime-local"
+                    value={formData.schedule || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        schedule: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
