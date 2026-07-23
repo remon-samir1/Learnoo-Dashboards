@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import Cookies from 'js-cookie';
+
 import {
   BookOpen,
   ChevronLeft,
@@ -12,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { activateCourseCode } from "@/src/services/student/activation.service";
 
@@ -64,19 +66,61 @@ export default function MySubjectSection({
   const [activationCode, setActivationCode] = useState("");
   const [activationLoading, setActivationLoading] = useState(false);
 
+  // 👇 جديد: هات بيانات اليوزر عشان تعرف الكلية بتاعته
+  const [facultyId, setFacultyId] = useState<string | null>(null);
+  const [meLoading, setMeLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+      const token = Cookies.get('token');
+
+        const res = await fetch(
+          "https://api.learnoo.app/v1/auth/me",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          },
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch /auth/me");
+        }
+
+        const json = await res.json();
+
+        const fId =
+          json?.data?.attributes?.faculty?.data?.id ?? null;
+
+        setFacultyId(fId ? String(fId) : null);
+      } catch (error) {
+        console.error("Fetch me error:", error);
+        setFacultyId(null);
+      } finally {
+        setMeLoading(false);
+      }
+    };
+
+    fetchMe();
+  }, []);
+
   const categoryMap = useMemo(() => {
     return new Map(categories.map((item) => [String(item.id), item]));
   }, [categories]);
 
+  // 👇 اتعدلت: بدل ما تجيب أي حاجة أبوها مش موجود في اللستة،
+  // بتجيب بس اللي parent_id بتاعها = facultyId بتاع اليوزر
   const rootCategories = useMemo(() => {
-    const ids = new Set(categories.map((item) => String(item.id)));
+    if (!facultyId) return [];
 
-    return categories.filter((item) => {
-      const parentId = item.attributes.parent_id;
-
-      return !parentId || !ids.has(String(parentId));
-    });
-  }, [categories]);
+    return categories.filter(
+      (item) =>
+        String(item.attributes.parent_id) === String(facultyId),
+    );
+  }, [categories, facultyId]);
 
   const selectedCategory = selectedId
     ? categoryMap.get(selectedId)
@@ -173,6 +217,8 @@ export default function MySubjectSection({
       setActivationLoading(false);
     }
   };
+
+  if (meLoading) return null;
 
   if (!categories.length) return null;
 

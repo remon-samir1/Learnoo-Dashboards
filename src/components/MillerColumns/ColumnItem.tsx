@@ -151,9 +151,9 @@ export function ColumnItem({
             <ActionBtn onClick={() => onAdd("center", item.id)} title="Add Center" className="text-teal-500 hover:bg-teal-50">
               <MapPin className="w-3 h-3" />
             </ActionBtn>
-            <ActionBtn onClick={() => onAdd("faculty", item.id)} title="Add Faculty" className="text-pink-500 hover:bg-pink-50">
+            {/* <ActionBtn onClick={() => onAdd("faculty", item.id)} title="Add Faculty" className="text-pink-500 hover:bg-pink-50">
               <Award className="w-3 h-3" />
-            </ActionBtn>
+            </ActionBtn> */}
           </>
         );
       case "center":

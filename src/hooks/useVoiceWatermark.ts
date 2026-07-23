@@ -96,7 +96,7 @@ export function useVoiceWatermark({
 
     intervalRef.current = setInterval(() => {
       speak();
-    }, interval * 1000); // Convert seconds to milliseconds
+    }, interval * 60000); // Convert seconds to milliseconds
   }, [enabled, text, interval, speak]);
 
   // Stop the interval timer
