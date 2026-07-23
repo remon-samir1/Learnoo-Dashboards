@@ -1311,7 +1311,7 @@ export interface CourseAttributes {
 
   chapter_attachments: any[];
 
-
+ schedule:any;
 
   chapter_discussions: any[];
 
