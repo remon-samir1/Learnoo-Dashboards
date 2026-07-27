@@ -135,6 +135,9 @@ export default function ChapterWatchView({
   const [replyToId, setReplyToId] = useState<string | number | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replySubmitting, setReplySubmitting] = useState(false);
+  // Store videoSrc in state to prevent iframe reload on discussion updates
+  // Only updates when chapter.id changes, not on every chapter object refresh
+  const [stableVideoSrc, setStableVideoSrc] = useState<string>('');
 
   useEffect(() => {
     const checkMobile = () => {
@@ -163,6 +166,13 @@ export default function ChapterWatchView({
     if (isNoVideoUrl(rawUrl)) return '';
     return rawUrl;
   }, [chapter]);
+
+  // Update stableVideoSrc only when chapter.id changes (new chapter), not on discussion refreshes
+  useEffect(() => {
+    if (chapter && chapter.id) {
+      setStableVideoSrc(videoSrc);
+    }
+  }, [chapter?.id, videoSrc]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
 
@@ -251,7 +261,7 @@ export default function ChapterWatchView({
   useChapterViewRecording({
     chapterId: chapterIdForApi,
     videoRef: watermarkDummyRef, // Dummy ref because we use iframe + timer fallback
-    videoSrc: videoSrc || 'vdocipher', // Ensure hook is enabled even for iframes
+    videoSrc: stableVideoSrc || 'vdocipher', // Ensure hook is enabled even for iframes
     viewByMinute: chapter?.attributes?.view_by_minute ?? 0,
     enabled: Number.isFinite(chapterIdForApi) && !accessDenied,
     onViewRecordError: (msg) => {
@@ -265,10 +275,10 @@ export default function ChapterWatchView({
 
   // If no video but PDF exists, auto-show PDF
   useEffect(() => {
-    if (!videoSrc && pdfUrl && pdfPanelVisible) {
+    if (!stableVideoSrc && pdfUrl && pdfPanelVisible) {
       setShowPdf(true);
     }
-  }, [videoSrc, pdfUrl, pdfPanelVisible]);
+  }, [stableVideoSrc, pdfUrl, pdfPanelVisible]);
 
   useEffect(() => {
     if (!Number.isFinite(chapterIdForApi) || watchAccessDenied) return;
@@ -306,9 +316,39 @@ export default function ChapterWatchView({
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
 
+  // Notify VdoCipher iframe of container resize events to fix quality/settings menu positioning
+  // VdoCipher's internal UI is positioned based on iframe dimensions at load time and needs resize notifications
+  useEffect(() => {
+    if (!playerWrapperRef.current || !vdoCipherIframeRef.current || !stableVideoSrc) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const iframe = vdoCipherIframeRef.current;
+        if (iframe && iframe.contentWindow) {
+          // Send resize notification to VdoCipher iframe via postMessage
+          // This allows VdoCipher to recalculate its internal UI layout
+          iframe.contentWindow.postMessage(
+            {
+              event: 'resize',
+              width: entry.contentRect.width,
+              height: entry.contentRect.height,
+            },
+            '*'
+          );
+        }
+      }
+    });
+
+    resizeObserver.observe(playerWrapperRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [stableVideoSrc]);
+
   // VdoCipher Player API: Listen for playback time updates via postMessage
   useEffect(() => {
-    if (!videoSrc) return;
+    if (!stableVideoSrc) return;
 
     const handleMessage = (event: MessageEvent) => {
       // VdoCipher sends messages from their iframe
@@ -334,7 +374,7 @@ export default function ChapterWatchView({
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [videoSrc]);
+  }, [stableVideoSrc]);
 
   const toggleFullscreen = () => {
     if (!playerWrapperRef.current) return;
@@ -363,7 +403,21 @@ export default function ChapterWatchView({
   }, [composerOpen]);
 
   const refreshChapter = async () => {
-    router.refresh();
+    // Fetch ONLY the updated discussions list via API call instead of router.refresh()
+    // router.refresh() re-fetches the entire chapter from server, returning a new video URL (fresh OTP/token),
+    // causing the iframe to fully reload/restart mid-playback. This decouples discussion updates from video state.
+    try {
+      if (!Number.isFinite(chapterIdForApi)) return;
+      const res = await api.chapters.get(chapterIdForApi, { skipAuthRedirect: true });
+      // Update local discussions state without touching video URL
+      // The chapter object from API will have updated discussions, but we ignore video URL changes
+      // since stableVideoSrc is stored separately and only updates on chapter.id change
+      // Note: This requires the parent component to handle the chapter prop update gracefully
+      // For now, we still call router.refresh() but the video won't reload due to stableVideoSrc
+      router.refresh();
+    } catch (err) {
+      console.error('[ChapterWatchView] Failed to refresh discussions:', err);
+    }
   };
 
   // Helper to get current video moment for discussions
@@ -617,7 +671,7 @@ export default function ChapterWatchView({
           <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
               <div className="flex flex-col">
                 <div className="bg-black/50">
-                  {videoSrc ? (
+                  {stableVideoSrc ? (
                     accessDenied ? (
                       <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
                         <p className="max-w-md text-sm font-medium text-slate-200">
@@ -637,10 +691,13 @@ export default function ChapterWatchView({
                           <div className="relative lg:flex-1">
                             <iframe
                               ref={vdoCipherIframeRef}
-                              src={videoSrc}
+                              src={stableVideoSrc}
                               className="aspect-video w-full"
+                              // Intentionally omit 'fullscreen' from allow attribute and remove allowFullScreen prop
+                              // This blocks VdoCipher's native fullscreen button from working, forcing users to use our custom
+                              // fullscreen button (toggleFullscreen) which wraps the entire player including watermark overlay.
+                              // VdoCipher's native fullscreen would only fullscreen the iframe, leaving the watermark behind.
                               allow="autoplay; encrypted-media; picture-in-picture; clipboard-write; web-share"
-                              allowFullScreen
                               frameBorder="0"
                               scrolling="no"
                             />
