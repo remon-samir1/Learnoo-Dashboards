@@ -93,6 +93,7 @@ import {
 } from "lucide-react";
 
 import { DeleteModal } from "@/src/components/ui/DeleteModal";
+import { CourseTreeSelect } from "@/src/components/admin/CourseTreeSelect";
 
 import toast, { Toaster } from "react-hot-toast";
 
@@ -109,6 +110,7 @@ import type {
   Note,
 } from "@/src/types";
 import { MillerColumns } from "@/src/components/MillerColumns";
+import { useMillerState } from "@/src/components/MillerColumns/useMillerState";
 
 type NodeType =
   | "university"
@@ -716,6 +718,17 @@ function filterTree(nodes: TreeNode[], query: string): TreeNode[] {
   }, []);
 }
 
+// Find the chain of ancestor nodes + the target node (for Miller Columns navigation)
+function findAncestorPath(nodes: TreeNode[], targetId: string, ancestors: TreeNode[] = []): TreeNode[] {
+  for (const node of nodes) {
+    const chain = [...ancestors, node];
+    if (node.id === targetId) return chain;
+    const found = findAncestorPath(node.children, targetId, chain);
+    if (found.length > 0) return found;
+  }
+  return [];
+}
+
 // Type icons and colors
 
 const typeIcons: Record<NodeType, React.ReactNode> = {
@@ -1239,6 +1252,9 @@ export default function DepartmentsPage() {
   const isInstructor = role === 'Instructor';
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const millerState = useMillerState();
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -1686,12 +1702,12 @@ export default function DepartmentsPage() {
 
   // Build unified tree
 
-  const treeData = useMemo(() => {
+  const rawTreeData = useMemo(() => {
     const effectiveCourses = myCourses || courses;
     if (!departments || !effectiveCourses || !universities || !faculties || !centers)
       return [];
 
-    const tree = buildUnifiedTree(
+    return buildUnifiedTree(
       universities,
       faculties,
       centers,
@@ -1701,9 +1717,6 @@ export default function DepartmentsPage() {
       chaptersByLecture,
       notes || [],
     );
-
-    const filtered = filterTree(tree, searchQuery);
-    return isInstructor ? pruneEmptyBranches(filtered) : filtered;
   }, [
     universities,
     faculties,
@@ -1714,9 +1727,42 @@ export default function DepartmentsPage() {
     lecturesByCourse,
     chaptersByLecture,
     notes,
-    searchQuery,
-    isInstructor,
   ]);
+
+  const treeData = useMemo(() => {
+    const filtered = filterTree(rawTreeData, searchQuery);
+    return isInstructor ? pruneEmptyBranches(filtered) : filtered;
+  }, [rawTreeData, searchQuery, isInstructor]);
+
+  // Flatten tree into suggestions with breadcrumb info
+  const searchSuggestions = useMemo(() => {
+    if (!searchQuery.trim() || searchQuery.length < 2) return [];
+    const q = searchQuery.toLowerCase();
+    const results: { node: TreeNode; breadcrumb: string[] }[] = [];
+
+    const walk = (nodes: TreeNode[], ancestors: string[]) => {
+      for (const node of nodes) {
+        if (node.name.toLowerCase().includes(q)) {
+          results.push({ node, breadcrumb: ancestors });
+        }
+        walk(node.children, [...ancestors, node.name]);
+      }
+    };
+
+    walk(rawTreeData, []);
+    return results.slice(0, 8);
+  }, [searchQuery, rawTreeData]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   // Auto-expand when searching
 
@@ -2685,13 +2731,14 @@ export default function DepartmentsPage() {
       {/* Search and Controls */}
 
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="relative w-full sm:w-96">
+        <div ref={searchContainerRef} className="relative w-full sm:w-96">
           <input
             type="text"
             placeholder={t("departments.searchPlaceholder")}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2.5 pl-10 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+            onFocus={() => setShowSuggestions(true)}
+            className="w-full px-4 py-2.5 pl-10 pr-8 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
 
           <svg
@@ -2707,6 +2754,54 @@ export default function DepartmentsPage() {
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
+
+          {searchQuery && (
+            <button
+              onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Suggestions Dropdown */}
+          {showSuggestions && searchSuggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-50">
+              {searchSuggestions.map(({ node, breadcrumb }) => (
+                <button
+                  key={node.id}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setSearchQuery("");
+                    setShowSuggestions(false);
+                    // Build the ancestor chain and navigate Miller Columns
+                    const path = findAncestorPath(rawTreeData, node.id);
+                    if (path.length > 0) millerState.setSelectedNodes(path);
+                  }}
+                  className="w-full text-left px-3 py-2.5 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+                >
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${node.type === 'chapter' ? 'bg-purple-100 text-purple-700' :
+                        node.type === 'lecture' ? 'bg-indigo-100 text-indigo-700' :
+                          node.type === 'course' ? 'bg-blue-100 text-blue-700' :
+                            node.type === 'department' ? 'bg-green-100 text-green-700' :
+                              node.type === 'faculty' ? 'bg-orange-100 text-orange-700' :
+                                node.type === 'university' ? 'bg-red-100 text-red-700' :
+                                  'bg-gray-100 text-gray-600'
+                        }`}
+                    >
+                      {node.type}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 truncate">{node.name}</span>
+                  </div>
+                  {breadcrumb.length > 0 && (
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{breadcrumb.join(' › ')}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* <div className="flex items-center gap-2">
@@ -2736,6 +2831,7 @@ export default function DepartmentsPage() {
         <MillerColumns
           treeData={treeData}
           searchQuery={searchQuery}
+          stateHook={millerState}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onAdd={handleAdd}
@@ -3886,9 +3982,10 @@ function EditModal({
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     >
+                      <option value="">Select Status</option>
+                      <option value={1}>Active</option>
                       <option value={0}>Draft</option>
 
-                      <option value={1}>Active</option>
                     </select>
                   </div>
 
@@ -4345,7 +4442,7 @@ function EditModal({
                   htmlFor="edit_is_free_preview"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Free Preview
+                  Video Free Preview
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer">
@@ -5680,23 +5777,23 @@ function CopyMoveModal({
 
   isLoading,
 }: CopyMoveModalProps) {
-  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(
-    new Set(),
-  );
-
   const chapter = node.data as Chapter;
 
-  const toggleCourse = (courseId: string) => {
-    const newExpanded = new Set(expandedCourses);
-
-    if (newExpanded.has(courseId)) {
-      newExpanded.delete(courseId);
-    } else {
-      newExpanded.add(courseId);
-    }
-
-    setExpandedCourses(newExpanded);
-  };
+  // Flatten lectures from all courses
+  const allLectures = useMemo(() => {
+    const lectures: any[] = [];
+    courses.forEach(course => {
+      const courseLectures = lecturesByCourse[course.id] || [];
+      courseLectures.forEach(lecture => {
+        lectures.push({
+          ...lecture,
+          course_id: course.id,
+          course_title: course.attributes.title
+        });
+      });
+    });
+    return lectures;
+  }, [courses, lecturesByCourse]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -5731,116 +5828,17 @@ function CopyMoveModal({
             Select Target Lecture
           </label>
 
-          <div className="space-y-2 border border-gray-200 rounded-lg p-2 max-h-64 overflow-y-auto">
-            {courses.map((course) => {
-              const courseLectures = lecturesByCourse[course.id] || [];
-
-              const isExpanded = expandedCourses.has(course.id);
-
-              return (
-                <div
-                  key={course.id}
-                  className="border border-gray-100 rounded-lg overflow-hidden"
-                >
-                  {/* Course Header */}
-
-                  <button
-                    onClick={() => toggleCourse(course.id)}
-                    className="w-full flex items-center justify-between p-2 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-green-600" />
-
-                      <span className="text-sm font-medium text-gray-700">
-                        {course.attributes.title}
-                      </span>
-                    </div>
-
-                    {courseLectures.length > 0 &&
-                      (isExpanded ? (
-                        <ChevronDown className="w-4 h-4 text-gray-400" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                      ))}
-                  </button>
-
-                  {/* Lectures List */}
-
-                  {isExpanded && courseLectures.length > 0 && (
-                    <div className="bg-white">
-                      {courseLectures.map((lecture) => {
-                        const isCurrentLecture =
-                          String(lecture.id) ===
-                          String(chapter.attributes.lecture_id);
-
-                        const isSelected = selectedTarget === lecture.id;
-
-                        return (
-                          <button
-                            key={lecture.id}
-                            onClick={() =>
-                              !isCurrentLecture && onSelectTarget(lecture.id)
-                            }
-                            disabled={isCurrentLecture}
-                            className={`w-full flex items-center gap-2 p-2 pl-8 text-left transition-colors ${isCurrentLecture
-                              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                              : isSelected
-                                ? "bg-orange-50 text-orange-700"
-                                : "hover:bg-gray-50 text-gray-700"
-                              }`}
-                          >
-                            <FolderOpen
-                              className={`w-4 h-4 ${isCurrentLecture
-                                ? "text-gray-400"
-                                : "text-purple-500"
-                                }`}
-                            />
-
-                            <span className="text-sm flex-1">
-                              {lecture.attributes.title}
-                            </span>
-
-                            {isCurrentLecture && (
-                              <span className="text-xs text-gray-400">
-                                (Current)
-                              </span>
-                            )}
-
-                            {isSelected && (
-                              <CheckCircle2 className="w-4 h-4 text-orange-600" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {selectedTarget && (
-            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <p className="text-sm text-orange-800">
-                <span className="font-medium">Target:</span>{" "}
-                {(() => {
-                  for (const course of courses) {
-                    const lectures = lecturesByCourse[course.id] || [];
-
-                    const lecture = lectures.find(
-                      (l) => l.id === selectedTarget,
-                    );
-
-                    if (lecture) {
-                      return `${course.attributes.title} > ${lecture.attributes.title}`;
-                    }
-                  }
-
-                  return "Selected Lecture";
-                })()}
-              </p>
-            </div>
-          )}
+          <CourseTreeSelect
+            value={selectedTarget}
+            onChange={onSelectTarget}
+            label="Target Lecture"
+            coursesData={courses}
+            lecturesData={allLectures}
+            selectLectures={true}
+            inline={true}
+            required={true}
+            excludeIds={[String(chapter.attributes.lecture_id)]}
+          />
         </div>
 
         {/* Footer */}

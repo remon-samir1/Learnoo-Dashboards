@@ -26,7 +26,9 @@ import { useCourse } from "@/src/hooks/useCourses";
 import {
   coerceCanWatchExplicitTrue,
   isStudentChapterPdfVisible,
+  isStudentChapterPdfRequiresActivation,
   isStudentChapterVideoPlayable,
+  isStudentChapterVideoRequiresActivation,
 } from "@/src/lib/student-chapter-access";
 import { courseIsLocked } from "@/src/lib/student-course-lock";
 import {
@@ -900,6 +902,8 @@ function ChapterRow({
   const needsPlaybackActivation = !chapterLocked && !canWatchOk;
   const videoPlayable = isStudentChapterVideoPlayable(chapter);
   const pdfVisible = isStudentChapterPdfVisible(chapter);
+  const videoRequiresActivation = isStudentChapterVideoRequiresActivation(chapter);
+  const pdfRequiresActivation = isStudentChapterPdfRequiresActivation(chapter);
 
   const pdfLinkActive = Boolean(pdfUrl && pdfVisible);
   const chapterTitleForModal = attrs.title?.trim() ?? "";
@@ -907,13 +911,15 @@ function ChapterRow({
     onRequestChapterActivation(String(chapter.id), chapterTitleForModal);
   const duration = attrs.duration ?? "—";
   const maxViews = attrs.max_views;
+  const currentViews = attrs.current_user_views ?? 0;
   const viewsLabel =
     maxViews != null && maxViews > 0
       ? t("viewsUsageBadge", {
-          current: attrs.current_user_views,
+          current: currentViews,
           max: maxViews,
         })
       : t("viewsUnlimited");
+  const viewsExhausted = maxViews != null && maxViews > 0 && currentViews >= maxViews;
 
   const watchHref = `/${locale}/student/courses/watch/${chapter.id}`;
 
@@ -932,6 +938,16 @@ function ChapterRow({
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12";
     iconColor = "#D97706";
     IconEl = Play;
+  } else if (videoRequiresActivation) {
+    iconWrap =
+      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12";
+    iconColor = "#D97706";
+    IconEl = Play;
+  } else if (viewsExhausted) {
+    iconWrap =
+      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FEF2F2] text-[#DC2626] sm:size-12";
+    iconColor = "#DC2626";
+    IconEl = Lock;
   } else if (!videoPlayable) {
     iconWrap =
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12";
@@ -947,7 +963,7 @@ function ChapterRow({
   return (
     <div className="flex flex-col gap-5 py-6 sm:flex-row sm:items-stretch sm:gap-8 sm:py-6 md:gap-10">
       <div className="flex min-w-0 flex-1 flex-row items-start gap-4 sm:items-center sm:gap-6">
-        {videoPlayable ? (
+        {videoPlayable && !videoRequiresActivation ? (
           <Link
             href={watchHref}
             prefetch
@@ -965,8 +981,8 @@ function ChapterRow({
         ) : (
           <div
             className={`${iconWrap} shrink-0`}
-            style={{ color: !videoPlayable ? undefined : iconColor }}
-            aria-hidden={!videoPlayable}
+            style={{ color: !videoPlayable || videoRequiresActivation ? undefined : iconColor }}
+            aria-hidden={!videoPlayable || videoRequiresActivation}
           >
             <IconEl
               className="size-[22px] sm:size-5"
@@ -1004,12 +1020,22 @@ function ChapterRow({
                 {t("watchAccessPending")}
               </span>
             ) : null}
+            {videoRequiresActivation ? (
+              <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-amber-50 text-amber-900">
+                {t("watchAccessPending")}
+              </span>
+            ) : null}
+            {viewsExhausted ? (
+              <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-red-50 text-red-900">
+                {t("viewsExhausted")}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
 
       <div className="flex w-full shrink-0 flex-col gap-2.5 sm:min-w-[10.5rem] sm:w-auto sm:justify-center sm:gap-3 md:min-w-[12rem]">
-        {videoPlayable ? (
+        {videoPlayable && !videoRequiresActivation ? (
           <Link
             href={watchHref}
             prefetch
@@ -1047,10 +1073,36 @@ function ChapterRow({
             />
             {t("activateChapter")}
           </button>
+        ) : videoRequiresActivation ? (
+          <button
+            type="button"
+            onClick={openChapterActivation}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+          >
+            <Power
+              className="size-4 shrink-0 opacity-95"
+              strokeWidth={2}
+              aria-hidden
+            />
+            {t("activateChapter")}
+          </button>
+        ) : viewsExhausted ? (
+          <button
+            type="button"
+            onClick={openChapterActivation}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#DC2626] bg-[#FEF2F2] px-4 py-3 text-sm font-semibold text-[#DC2626] transition hover:bg-[#FEE2E2] sm:min-h-10 sm:py-2.5"
+          >
+            <Power
+              className="size-4 shrink-0 opacity-95"
+              strokeWidth={2}
+              aria-hidden
+            />
+            {t("reactivate")}
+          </button>
         ) : null}
 
         {hasPdf && (
-          pdfVisible && pdfUrl ? (
+          pdfVisible && pdfUrl && !pdfRequiresActivation ? (
             <button
               type="button"
               onClick={() => setPdfPreviewOpen(true)}
@@ -1058,6 +1110,19 @@ function ChapterRow({
             >
               <FileText className="size-4 shrink-0" strokeWidth={2} />
               {t("hasPdf")}
+            </button>
+          ) : pdfRequiresActivation ? (
+            <button
+              type="button"
+              onClick={openChapterActivation}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+            >
+              <Power
+                className="size-4 shrink-0 opacity-95"
+                strokeWidth={2}
+                aria-hidden
+              />
+              {t("activateChapter")}
             </button>
           ) : (
             <button

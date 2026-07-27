@@ -149,6 +149,8 @@ export default function ChapterWatchView({
   const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
   const playerWrapperRef = useRef<HTMLDivElement | null>(null);
   const pdfPanelRef = useRef<HTMLDivElement | null>(null);
+  const vdoCipherIframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [currentVideoMoment, setCurrentVideoMoment] = useState<number>(0);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
@@ -304,6 +306,36 @@ export default function ChapterWatchView({
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
 
+  // VdoCipher Player API: Listen for playback time updates via postMessage
+  useEffect(() => {
+    if (!videoSrc) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      // VdoCipher sends messages from their iframe
+      // The event data structure varies, but typically includes event type and time
+      try {
+        const data = event.data;
+        if (typeof data === 'object' && data !== null) {
+          // VdoCipher may send time updates in various formats
+          // Common patterns: { event: 'currentTime', time: 12.4 } or { currentTime: 12.4 }
+          if (typeof data.currentTime === 'number' && Number.isFinite(data.currentTime)) {
+            setCurrentVideoMoment(data.currentTime);
+          } else if (typeof data.time === 'number' && Number.isFinite(data.time)) {
+            setCurrentVideoMoment(data.time);
+          } else if (data.event === 'currentTime' && typeof data.data === 'number') {
+            setCurrentVideoMoment(data.data);
+          }
+        }
+      } catch (err) {
+        // Ignore malformed messages
+        console.debug('[ChapterWatchView] VdoCipher message parse error', err);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [videoSrc]);
+
   const toggleFullscreen = () => {
     if (!playerWrapperRef.current) return;
     if (document.fullscreenElement) {
@@ -334,6 +366,27 @@ export default function ChapterWatchView({
     router.refresh();
   };
 
+  // Helper to get current video moment for discussions
+  const getCurrentVideoMoment = (): number => {
+    // If we have a tracked moment from VdoCipher messages, use it
+    if (Number.isFinite(currentVideoMoment) && currentVideoMoment >= 0) {
+      return currentVideoMoment;
+    }
+    // Fallback: try to query the iframe directly (may not work due to CORS)
+    try {
+      const iframe = vdoCipherIframeRef.current;
+      if (iframe && iframe.contentWindow) {
+        // Attempt to get current time via VdoCipher API
+        // This may fail due to same-origin policy
+        iframe.contentWindow.postMessage({ event: 'getCurrentTime' }, '*');
+      }
+    } catch (err) {
+      // Ignore CORS errors
+    }
+    // Final fallback to 0
+    return 0;
+  };
+
   const submitComposer = async () => {
     const text = composerText.trim();
     if (!text) {
@@ -348,7 +401,7 @@ export default function ChapterWatchView({
         chapter_id: chapterIdForApi,
         type: 'text',
         content: text,
-        moment: 0,
+        moment: getCurrentVideoMoment(),
         parent_id: null,
       });
       toast.success(t('discussionPosted'));
@@ -376,7 +429,7 @@ export default function ChapterWatchView({
         chapter_id: chapterIdForApi,
         type: 'text',
         content: text,
-        moment: momentSource ?? 0,
+        moment: momentSource ?? getCurrentVideoMoment(),
         parent_id: Number(parentId),
       });
       toast.success(t('discussionPosted'));
@@ -583,6 +636,7 @@ export default function ChapterWatchView({
                         <div ref={playerWrapperRef} className={`flex flex-col lg:flex-row ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
                           <div className="relative lg:flex-1">
                             <iframe
+                              ref={vdoCipherIframeRef}
                               src={videoSrc}
                               className="aspect-video w-full"
                               allow="autoplay; encrypted-media; picture-in-picture; clipboard-write; web-share"

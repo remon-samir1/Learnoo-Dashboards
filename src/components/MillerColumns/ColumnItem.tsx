@@ -222,7 +222,7 @@ export function ColumnItem({
                       { label: "Video and PDF", subType: "video-pdf" },
                       { label: "Video Only", subType: "video" },
                       { label: "PDF Only", subType: "pdf" },
-                      { label: "Rich Text", subType: "rich-text" },
+                      // { label: "Rich Text", subType: "rich-text" },
                     ].map(({ label, subType }) => (
                       <button
                         key={subType}

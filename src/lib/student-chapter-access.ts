@@ -5,7 +5,9 @@ import type { Chapter } from '@/src/types';
  *
  * - Do **not** compare `max_views` vs `current_user_views` for allow/deny; the API sets `can_watch`.
  * - **Video**: playable only when `can_watch` is explicitly true and the chapter is not `is_locked`.
+ *   Controlled by `is_free_preview` flag for free preview access.
  * - **PDF / attachments (student UI)**: **`is_free_preview_attachment` only** — `true` → show; otherwise hide.
+ *   Controlled by `is_free_preview_attachment` flag for free preview access.
  *   Independent of `can_watch`, activation, and view limits.
  */
 
@@ -33,10 +35,20 @@ export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
   if (attrs.is_locked === true) return false;
 
+  // free_preview controls video access only
   return (
     coercePreviewFlag(attrs.is_free_preview) ||
     coerceCanWatchExplicitTrue(attrs.can_watch)
   );
+}
+
+/** Whether video requires activation due to `is_free_preview` being false (even if `can_watch` is true). */
+export function isStudentChapterVideoRequiresActivation(chapter: Chapter): boolean {
+  const attrs = chapter.attributes;
+  if (attrs.is_locked === true) return false;
+  if (!coerceCanWatchExplicitTrue(attrs.can_watch)) return false;
+  // Video is playable via can_watch, but free_preview is false → requires activation
+  return !coercePreviewFlag(attrs.is_free_preview);
 }
 
 
@@ -44,7 +56,7 @@ export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
 export function isStudentChapterPdfVisible(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
 
-  // We still respect is_locked for general availability, but if it's a free preview attachment, we show it.
+  // is_free_preview_attachment controls PDF access only
   if (attrs.is_locked === true && !coercePreviewFlag(attrs.is_free_preview_attachment)) {
     return false;
   }
@@ -53,6 +65,15 @@ export function isStudentChapterPdfVisible(chapter: Chapter): boolean {
     coercePreviewFlag(attrs.is_free_preview_attachment) ||
     coerceCanWatchExplicitTrue(attrs.can_watch)
   );
+}
+
+/** Whether PDF requires activation due to `is_free_preview_attachment` being false (even if `can_watch` is true). */
+export function isStudentChapterPdfRequiresActivation(chapter: Chapter): boolean {
+  const attrs = chapter.attributes;
+  if (attrs.is_locked === true) return false;
+  if (!coerceCanWatchExplicitTrue(attrs.can_watch)) return false;
+  // PDF is visible via can_watch, but is_free_preview_attachment is false → requires activation
+  return !coercePreviewFlag(attrs.is_free_preview_attachment);
 }
 
 /**

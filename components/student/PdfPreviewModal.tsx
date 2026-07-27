@@ -49,6 +49,7 @@ function PdfPreviewContent({
   const [pageWidth, setPageWidth] = useState(720);
   const [totalPages, setTotalPages] = useState(0);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const pageRef = useRef<HTMLDivElement | null>(null);
 
   const effectiveScale = scale ?? 1.0;
 
@@ -74,6 +75,12 @@ function PdfPreviewContent({
     onPagesLoaded(pages);
   };
 
+  useEffect(() => {
+    if (pageRef.current) {
+      pageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentPage]);
+
   return (
     <div ref={contentRef} className="min-h-0 w-full">
       <Document
@@ -86,6 +93,7 @@ function PdfPreviewContent({
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
             <div
               key={pageNum}
+              ref={pageNum === currentPage ? pageRef : null}
               className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
               style={{ width: pageWidth }}
             >
@@ -211,10 +219,10 @@ export default function PdfPreviewModal({
     // Fall back to the static text configured in admin if no dynamic parts
     let text = parts.length > 0 ? parts.join(' · ') : config.text;
 
-    // Append user ID for traceability (matches server-side PDF watermark behavior)
-    const userId = user?.id != null ? String(user.id).trim() : '';
-    if (userId && !text.includes(userId)) {
-      text = text ? `${text} · ${userId}` : userId;
+    // Append student code for traceability (matches server-side PDF watermark behavior)
+    const studentCodeForTrace = attrs?.student_code != null ? String(attrs.student_code).trim() : '';
+    if (studentCodeForTrace && !text.includes(studentCodeForTrace)) {
+      text = text ? `${text} · ${studentCodeForTrace}` : studentCodeForTrace;
     }
 
     return text;

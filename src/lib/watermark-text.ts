@@ -7,15 +7,16 @@ type LooseUserAttrs = User['attributes'] & {
 
 /**
  * Watermark line for the student player — `config.text`, student code, phone (Admin toggles),
- * plus signed-in **user id** (`user.id`) for traceability. No email / full name unless backend adds keys.
+ * plus signed-in **student code** (`student_code`) for traceability. No email / full name unless backend adds keys.
  */
-function appendUserId(user: User | null, line: string): string {
-  const id = user?.id != null ? String(user.id).trim() : '';
-  if (!id) return line;
+function appendStudentCode(user: User | null, line: string): string {
+  const attrs = (user?.attributes ?? {}) as LooseUserAttrs;
+  const code = attrs.student_code != null ? String(attrs.student_code).trim() : '';
+  if (!code) return line;
   const trimmed = line.trim();
-  if (!trimmed) return id;
-  if (trimmed.includes(id)) return trimmed;
-  return `${trimmed} · ${id}`;
+  if (!trimmed) return code;
+  if (trimmed.includes(code)) return trimmed;
+  return `${trimmed} · ${code}`;
 }
 
 export function buildWatermarkText(user: User | null, config: WatermarkConfig): string {
@@ -34,8 +35,8 @@ export function buildWatermarkText(user: User | null, config: WatermarkConfig): 
     line = config.text?.trim() || DEFAULT_FALLBACK_TEXT;
   }
 
-  // Append user ID for traceability (matches PDF watermark behavior)
-  return appendUserId(user, line);
+  // Append student code for traceability (matches PDF watermark behavior)
+  return appendStudentCode(user, line);
 }
 
 const DEFAULT_FALLBACK_TEXT = 'Learnoo';

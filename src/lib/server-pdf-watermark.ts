@@ -38,10 +38,10 @@ export async function addWatermarkToPdf(
     // Fall back to the static text configured in admin if no dynamic parts
     let watermarkText = parts.length > 0 ? parts.join(' · ') : watermarkConfig.text;
 
-    // Append user ID for traceability (matches client-side PdfPreviewModal behavior)
-    const userId = user?.id != null ? String(user.id).trim() : '';
-    if (userId && !watermarkText.includes(userId)) {
-      watermarkText = watermarkText ? `${watermarkText} · ${userId}` : userId;
+    // Append student code for traceability (matches client-side PdfPreviewModal behavior)
+    const studentCodeForTrace = studentCode?.trim() || '';
+    if (studentCodeForTrace && !watermarkText.includes(studentCodeForTrace)) {
+      watermarkText = watermarkText ? `${watermarkText} · ${studentCodeForTrace}` : studentCodeForTrace;
     }
 
     const opacity = watermarkConfig.opacity / 100;

@@ -482,39 +482,90 @@ export function DetailPanel({
 
         {node.type === "chapter" && (
           <div className="space-y-4">
-            {/* Video preview iframe */}
-            {(node.data as Chapter).attributes.video && (
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                  Video Preview
-                </label>
-                <div className="aspect-video w-full rounded-lg overflow-hidden border border-gray-200 bg-black">
-                  <iframe
-                    src={(node.data as Chapter).attributes.video}
-                    className="w-full h-full"
-                    allowFullScreen
-                    allow="encrypted-media"
-                    frameBorder="0"
-                  />
-                </div>
-              </div>
-            )}
+            {/* Video / PDF / Thumbnail preview */}
+            {(() => {
+              const chapter = (node.data as Chapter).attributes;
+              const videoUrl = chapter.video_mp4_url || chapter.video_hls_url || chapter.video;
+              const pdfAttachment = chapter.attachments?.find(
+                (att) => att.attributes?.extension?.toLowerCase() === "pdf"
+              );
 
-            {/* Thumbnail */}
-            {(node.data as Chapter).attributes.thumbnail && !(node.data as Chapter).attributes.video && (
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                  Thumbnail
-                </label>
-                <div className="w-full h-32 rounded-lg overflow-hidden border border-gray-200">
-                  <img
-                    src={(node.data as Chapter).attributes.thumbnail}
-                    alt="Thumbnail"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            )}
+              if (videoUrl) {
+                const isEmbedUrl =
+                  videoUrl.includes("youtube.com/embed") ||
+                  videoUrl.includes("youtube.com/watch") ||
+                  videoUrl.includes("youtu.be") ||
+                  videoUrl.includes("player.vimeo.com") ||
+                  videoUrl.includes("vimeo.com") ||
+                  videoUrl.includes("facebook.com/plugins") ||
+                  videoUrl.includes("instagram.com/p") ||
+                  videoUrl.includes("drive.google.com");
+
+                return (
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                      Video Preview
+                    </label>
+                    <div className="aspect-video w-full rounded-lg overflow-hidden border border-gray-200 bg-black">
+                      {isEmbedUrl ? (
+                        <iframe
+                          src={videoUrl}
+                          className="w-full h-full"
+                          allowFullScreen
+                          allow="encrypted-media"
+                          frameBorder="0"
+                        />
+                      ) : (
+                        <video
+                          src={videoUrl}
+                          className="w-full h-full"
+                          controls
+                          preload="metadata"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (pdfAttachment) {
+                return (
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                      PDF Preview
+                    </label>
+                    <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
+                      <iframe
+                        src={pdfAttachment.attributes?.path}
+                        className="w-full h-full"
+                        title={pdfAttachment.attributes?.name || "PDF Preview"}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              if (chapter.thumbnail) {
+                return (
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                      Thumbnail
+                    </label>
+                    <div className="w-full h-32 rounded-lg overflow-hidden border border-gray-200">
+                      <img
+                        src={chapter.thumbnail}
+                        alt="Thumbnail"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              return null;
+            })()}
 
             {/* Attachments */}
             {((node.data as Chapter).attributes.attachments?.length ?? 0) > 0 && (

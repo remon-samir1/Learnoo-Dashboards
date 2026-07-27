@@ -180,12 +180,13 @@ const DiscussionNode = ({
                 {isRoot && (
                   <div className="flex items-center gap-1">
                     <span className="font-semibold text-[#64748B]">{t('chapter')}:</span>
-                    {discussion.attributes?.chapter_id}
+                    {discussion.attributes?.chapter?.data?.attributes?.title || discussion.attributes?.chapter_id}
                   </div>
                 )}
                 {discussion.attributes?.moment != null && (
                   <div className="flex items-center gap-1 text-[#2137D6]">
                     <PlayCircle className="h-3 w-3" />
+                    <span className="font-semibold text-[#64748B]">{t('at')}:</span>
                     {formatMoment(discussion.attributes.moment)}
                   </div>
                 )}

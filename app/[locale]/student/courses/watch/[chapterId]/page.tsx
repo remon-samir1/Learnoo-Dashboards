@@ -59,7 +59,7 @@ export default async function WatchChapterPage({ params }: WatchChapterPageProps
   const initialWatermarkResolution = resolveEnabledWatermarkBucket(platformFeatures, 'chapters');
 
   return (
-    <ChapterWatchView
+    <ChapterWatchView 
       chapterId={chapterId}
       chapter={chapter}
       loadError={loadError}
