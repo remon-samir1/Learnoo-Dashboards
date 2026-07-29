@@ -261,6 +261,10 @@ const DiscussionNode = ({
 }: any) => {
   const hasReplies = discussion.replies?.length > 0;
   const isReplyComposerOpen = replyingTo === discussion.id;
+  
+  // Detect voice discussions based on actual API structure
+  const isVoiceDiscussion = discussion.attributes?.type === 'voice';
+  const voiceUrl = isVoiceDiscussion ? discussion.attributes?.content : null;
 
   return (
     <div className={`${isRoot ? 'overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm' : 'mt-4'}`}>
@@ -275,7 +279,7 @@ const DiscussionNode = ({
                 <h3 className={`font-bold text-[#1E293B] ${isRoot ? 'text-base' : 'text-sm'}`}>
                   {discussion.attributes?.user?.data?.attributes?.full_name || t('badges.student')}
                 </h3>
-                {getDiscussionTypeBadge(discussion.attributes?.discussion_type)}
+                {getDiscussionTypeBadge(discussion.attributes?.type)}
                 <span className="rounded bg-[#E0E7FF] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#2137D6]">
                   {t(`badges.${discussion.attributes?.user?.data?.attributes?.role || 'student'}`)}
                 </span>
@@ -336,9 +340,11 @@ const DiscussionNode = ({
           </div>
         </div>
 
-        <p className={`mt-3 leading-relaxed text-[#475569] ${isRoot ? 'text-sm' : 'text-[13px]'}`}>
-          {discussion.attributes?.content}
-        </p>
+        {!isVoiceDiscussion && discussion.attributes?.content && (
+          <p className={`mt-3 leading-relaxed text-[#475569] ${isRoot ? 'text-sm' : 'text-[13px]'}`}>
+            {discussion.attributes.content}
+          </p>
+        )}
 
         {/* Image Preview */}
         {discussion.attributes?.image && (
@@ -360,7 +366,7 @@ const DiscussionNode = ({
         )}
 
         {/* Voice Note Player */}
-        {discussion.attributes?.voice && (
+        {isVoiceDiscussion && voiceUrl ? (
           <div className="mt-3 flex items-center gap-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-3">
             <button
               onClick={() => {
@@ -396,12 +402,12 @@ const DiscussionNode = ({
             </div>
             <audio
               id={`audio-${discussion.id}`}
-              src={discussion.attributes.voice}
+              src={voiceUrl}
               onEnded={() => setPlayingAudioId(null)}
               className="hidden"
             />
           </div>
-        )}
+        ) : null}
 
         {isReplyComposerOpen && (
           <div className={`mt-4 space-y-3 rounded-xl bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]`}>

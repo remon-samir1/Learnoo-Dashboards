@@ -105,7 +105,7 @@ interface DiscussionNodeProps {
   discussion: WatchDiscussionItem;
   isReply?: boolean;
   locale: string;
-  t: (key: string, params?: Record<string, unknown>) => string;
+  t: (key: string, params?: Record<string, string | number | Date>) => string;
   replyToId: string | number | null;
   setReplyToId: (id: string | number | null) => void;
   replyText: string;
@@ -137,11 +137,13 @@ function DiscussionNode({
   const typeTag = discussionTypeLabel(d);
   const isQuestion = typeTag === 'question';
   const replies = discussionReplies(d);
-  const discussionType = d.attributes?.discussion_type;
+  const discussionType = d.attributes?.type;
   const imageUrl = d.attributes?.image;
-  const voiceUrl = d.attributes?.voice;
   const _duration = d.attributes?.duration;
-  const isVoice = discussionType === 'voice' || Boolean(voiceUrl);
+  
+  // Detect voice discussions based on actual API structure
+  const isVoice = discussionType === 'voice';
+  const voiceUrl = isVoice ? content : null;
 
   return (
     <article
@@ -199,7 +201,7 @@ function DiscussionNode({
             className="h-9 w-full rounded-lg opacity-90"
           />
         </div>
-      ) : content ? (
+      ) : !isVoice && content ? (
         <p className={`mt-3 leading-relaxed text-slate-300 ${isReply ? 'text-[13px]' : 'text-sm'}`}>{content}</p>
       ) : null}
 
@@ -973,6 +975,7 @@ export default function ChapterWatchView({
           discussion_type: 'voice',
           duration: recordingSeconds,
           image: imagePath,
+          content: '',
         });
         toast.success(t('discussionPosted'));
         clearRecording();

@@ -922,8 +922,8 @@ function ChapterRow({
   const viewsExhausted = maxViews != null && maxViews > 0 && currentViews >= maxViews;
 
   // Free preview checks
-  const isFreePreview = attrs.is_free_preview === 1 || attrs.is_free_preview === true;
-  const isAttachmentFreePreview = attrs.is_free_preview_attachment === 1 || attrs.is_free_preview_attachment === true;
+  const isFreePreview = (attrs.is_free_preview as number | boolean) === 1 || (attrs.is_free_preview as number | boolean) === true;
+  const isAttachmentFreePreview = (attrs.is_free_preview_attachment as number | boolean) === 1 || (attrs.is_free_preview_attachment as number | boolean) === true;
   const bothFreePreviewDisabled = !isFreePreview && !isAttachmentFreePreview;
 
   const watchHref = `/${locale}/student/courses/watch/${chapter.id}`;
