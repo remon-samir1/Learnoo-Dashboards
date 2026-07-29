@@ -7,27 +7,41 @@ import {
   Trash2,
   Reply,
   Loader2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   User,
   Clock,
-  PlayCircle
+  PlayCircle,
+  Mic,
+  Image as ImageIcon,
+  X,
+  Play,
+  Pause
 } from 'lucide-react';
 import { useDiscussions, useDeleteDiscussion, useCreateDiscussion } from '@/src/hooks/useDiscussions';
+import type { Discussion } from '@/src/types';
 import toast from 'react-hot-toast';
 
-export default function DoctorDiscussionsPage() {
+export default function AdminDiscussionsPage() {
   const t = useTranslations('discussions');
+  const commonT = useTranslations('common');
   const locale = useLocale();
-  const { data: discussionsData, isLoading, refetch } = useDiscussions();
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const { data: discussionsData, isLoading, refetch } = useDiscussions({ page, per_page: perPage });
   const { mutate: deleteDiscussion, isLoading: isDeleting } = useDeleteDiscussion();
   const { mutate: createReply, isLoading: isReplying } = useCreateDiscussion();
 
   const [replyingTo, setReplyingTo] = useState<string | number | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [playingAudioId, setPlayingAudioId] = useState<string | number | null>(null);
 
   const discussionsTree = useMemo(() => {
     if (!discussionsData) return [];
 
-    const flat = discussionsData;
+    const flat = discussionsData.data;
     const map = new Map<string | number, any>();
     const roots: any[] = [];
 
@@ -46,13 +60,14 @@ export default function DoctorDiscussionsPage() {
     });
 
     return roots;
-  }, [discussionsData]);
+  }, [discussionsData?.data]);
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('deleteConfirm'))) return;
     try {
       await deleteDiscussion(id);
       toast.success(t('notifications.deleted'));
+      setPage(1);
       refetch();
     } catch (err: any) {
       toast.error(err.message || 'Error');
@@ -72,6 +87,7 @@ export default function DoctorDiscussionsPage() {
       toast.success(t('notifications.replied'));
       setReplyText('');
       setReplyingTo(null);
+      setPage(1);
       refetch();
     } catch (err: any) {
       toast.error(err.message || 'Error');
@@ -91,6 +107,29 @@ export default function DoctorDiscussionsPage() {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  const formatDuration = (sec: number | null) => {
+    if (sec == null) return null;
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  const getDiscussionTypeBadge = (type: string | null) => {
+    if (!type) return null;
+    const upperType = type.toUpperCase();
+    const colors: Record<string, string> = {
+      TEXT: 'bg-blue-100 text-blue-700',
+      VOICE: 'bg-purple-100 text-purple-700',
+      QUESTION: 'bg-amber-100 text-amber-700',
+      COMMENT: 'bg-green-100 text-green-700',
+    };
+    return (
+      <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold ${colors[upperType] || colors.TEXT}`}>
+        {upperType}
+      </span>
+    );
   };
 
   if (isLoading) {
@@ -115,25 +154,87 @@ export default function DoctorDiscussionsPage() {
             <p className="mt-2 text-[#64748B]">{t('noDiscussions')}</p>
           </div>
         ) : (
-          discussionsTree.map((discussion: any) => (
-            <DiscussionNode
-              key={discussion.id}
-              discussion={discussion}
-              isRoot={true}
-              replyingTo={replyingTo}
-              setReplyingTo={setReplyingTo}
-              replyText={replyText}
-              setReplyText={setReplyText}
-              handleReply={handleReply}
-              handleDelete={handleDelete}
-              isReplying={isReplying}
+          <>
+            {discussionsTree.map((discussion: any) => (
+              <DiscussionNode
+                key={discussion.id}
+                discussion={discussion}
+                isRoot={true}
+                replyingTo={replyingTo}
+                setReplyingTo={setReplyingTo}
+                replyText={replyText}
+                setReplyText={setReplyText}
+                handleReply={handleReply}
+                handleDelete={handleDelete}
+                isReplying={isReplying}
               t={t}
               formatTime={formatTime}
               formatMoment={formatMoment}
-            />
-          ))
+              formatDuration={formatDuration}
+              getDiscussionTypeBadge={getDiscussionTypeBadge}
+              previewImageUrl={previewImageUrl}
+              setPreviewImageUrl={setPreviewImageUrl}
+              playingAudioId={playingAudioId}
+              setPlayingAudioId={setPlayingAudioId}
+              />
+            ))}
+            
+            {/* Pagination */}
+            {discussionsData?.meta && (
+              <div className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-white px-4 py-3">
+                <div className="text-sm text-[#64748B]">
+                  Showing {discussionsData.meta.from} to {discussionsData.meta.to} of {discussionsData.meta.total} discussions
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {locale === 'ar' ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                  </button>
+                  <span className="text-sm font-medium text-[#1E293B]">
+                    {page} {commonT('of')} {discussionsData.meta.last_page}
+                  </span>
+                  <button
+                    onClick={() => setPage(p => p + 1)}
+                    disabled={page === discussionsData.meta.last_page}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#E2E8F0] text-[#64748B] hover:bg-[#F1F5F9] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {locale === 'ar' ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImageUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setPreviewImageUrl(null)}
+        >
+          <div className="relative max-h-[90vh] max-w-[90vw]">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewImageUrl(null);
+              }}
+              className="absolute -right-12 -top-12 flex h-10 w-10 items-center justify-center rounded-full bg-white text-black hover:bg-gray-200"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <img
+              src={previewImageUrl}
+              alt="Full size preview"
+              className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -150,7 +251,13 @@ const DiscussionNode = ({
   isReplying,
   t,
   formatTime,
-  formatMoment
+  formatMoment,
+  formatDuration,
+  getDiscussionTypeBadge,
+  previewImageUrl,
+  setPreviewImageUrl,
+  playingAudioId,
+  setPlayingAudioId
 }: any) => {
   const hasReplies = discussion.replies?.length > 0;
   const isReplyComposerOpen = replyingTo === discussion.id;
@@ -168,6 +275,7 @@ const DiscussionNode = ({
                 <h3 className={`font-bold text-[#1E293B] ${isRoot ? 'text-base' : 'text-sm'}`}>
                   {discussion.attributes?.user?.data?.attributes?.full_name || t('badges.student')}
                 </h3>
+                {getDiscussionTypeBadge(discussion.attributes?.discussion_type)}
                 <span className="rounded bg-[#E0E7FF] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#2137D6]">
                   {t(`badges.${discussion.attributes?.user?.data?.attributes?.role || 'student'}`)}
                 </span>
@@ -178,9 +286,23 @@ const DiscussionNode = ({
                   {formatTime(discussion.attributes?.created_at)}
                 </div>
                 {isRoot && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-1">
                     <span className="font-semibold text-[#64748B]">{t('chapter')}:</span>
-                    {discussion.attributes?.chapter?.data?.attributes?.title || discussion.attributes?.chapter_id}
+                    <span className="text-[#1E293B]">{discussion.attributes?.chapter?.data?.attributes?.title || discussion.attributes?.chapter_id}</span>
+                    {discussion.attributes?.chapter?.data?.attributes?.lecture?.title && (
+                      <>
+                        <span className="text-[#94A3B8]">•</span>
+                        <span className="font-semibold text-[#64748B]">{t('lecture')}:</span>
+                        <span className="text-[#1E293B]">{discussion.attributes.chapter.data.attributes.lecture.title}</span>
+                      </>
+                    )}
+                    {discussion.attributes?.chapter?.data?.attributes?.course?.title && (
+                      <>
+                        <span className="text-[#94A3B8]">•</span>
+                        <span className="font-semibold text-[#64748B]">{t('course')}:</span>
+                        <span className="text-[#1E293B]">{discussion.attributes.chapter.data.attributes.course.title}</span>
+                      </>
+                    )}
                   </div>
                 )}
                 {discussion.attributes?.moment != null && (
@@ -217,6 +339,69 @@ const DiscussionNode = ({
         <p className={`mt-3 leading-relaxed text-[#475569] ${isRoot ? 'text-sm' : 'text-[13px]'}`}>
           {discussion.attributes?.content}
         </p>
+
+        {/* Image Preview */}
+        {discussion.attributes?.image && (
+          <div className="mt-3">
+            <div
+              className="relative inline-block cursor-pointer overflow-hidden rounded-lg border border-[#E2E8F0]"
+              onClick={() => setPreviewImageUrl(discussion.attributes.image)}
+            >
+              <img
+                src={discussion.attributes.image}
+                alt="Discussion screenshot"
+                className="max-h-48 w-auto object-cover"
+              />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition-opacity hover:opacity-100">
+                <ImageIcon className="h-6 w-6 text-white" />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Voice Note Player */}
+        {discussion.attributes?.voice && (
+          <div className="mt-3 flex items-center gap-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-3">
+            <button
+              onClick={() => {
+                const audio = document.getElementById(`audio-${discussion.id}`) as HTMLAudioElement;
+                if (audio) {
+                  if (playingAudioId === discussion.id) {
+                    audio.pause();
+                    setPlayingAudioId(null);
+                  } else {
+                    audio.play();
+                    setPlayingAudioId(discussion.id);
+                  }
+                }
+              }}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2137D6] text-white hover:bg-[#1a2bb3]"
+            >
+              {playingAudioId === discussion.id ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4 ml-0.5" />
+              )}
+            </button>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <Mic className="h-4 w-4 text-[#64748B]" />
+                <span className="text-xs font-medium text-[#475569]">Voice Note</span>
+                {discussion.attributes.duration && (
+                  <span className="text-[11px] text-[#94A3B8]">
+                    {formatDuration(discussion.attributes.duration)}
+                  </span>
+                )}
+              </div>
+            </div>
+            <audio
+              id={`audio-${discussion.id}`}
+              src={discussion.attributes.voice}
+              onEnded={() => setPlayingAudioId(null)}
+              className="hidden"
+            />
+          </div>
+        )}
 
         {isReplyComposerOpen && (
           <div className={`mt-4 space-y-3 rounded-xl bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]`}>
@@ -262,6 +447,12 @@ const DiscussionNode = ({
                 t={t}
                 formatTime={formatTime}
                 formatMoment={formatMoment}
+                formatDuration={formatDuration}
+                getDiscussionTypeBadge={getDiscussionTypeBadge}
+                previewImageUrl={previewImageUrl}
+                setPreviewImageUrl={setPreviewImageUrl}
+                playingAudioId={playingAudioId}
+                setPlayingAudioId={setPlayingAudioId}
               />
             ))}
           </div>

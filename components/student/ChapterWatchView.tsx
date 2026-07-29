@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,6 +19,11 @@ import {
   Send,
   ZoomIn,
   ZoomOut,
+  Mic,
+  Square,
+  Pause,
+  Trash2,
+  Camera,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
@@ -96,6 +101,193 @@ function chapterQuizzes(chapter: Chapter): Quiz[] {
   return Array.isArray(raw) ? raw : [];
 }
 
+interface DiscussionNodeProps {
+  discussion: WatchDiscussionItem;
+  isReply?: boolean;
+  locale: string;
+  t: (key: string, params?: Record<string, unknown>) => string;
+  replyToId: string | number | null;
+  setReplyToId: (id: string | number | null) => void;
+  replyText: string;
+  setReplyText: (text: string) => void;
+  replySubmitting: boolean;
+  onSubmitReply: (parentId: string | number, moment?: number | null) => void;
+  onPreviewImage: (url: string) => void;
+}
+
+function DiscussionNode({
+  discussion,
+  isReply = false,
+  locale,
+  t,
+  replyToId,
+  setReplyToId,
+  replyText,
+  setReplyText,
+  replySubmitting,
+  onSubmitReply,
+  onPreviewImage,
+}: DiscussionNodeProps) {
+  const d = discussion;
+  const content = discussionContent(d);
+  const author = discussionAuthorName(d) ?? t('anonymousUser');
+  const created = formatDiscussionTime(discussionCreatedAt(d), locale);
+  const momentSec = discussionMoment(d);
+  const momentLabel = formatMomentSeconds(momentSec);
+  const typeTag = discussionTypeLabel(d);
+  const isQuestion = typeTag === 'question';
+  const replies = discussionReplies(d);
+  const discussionType = d.attributes?.discussion_type;
+  const imageUrl = d.attributes?.image;
+  const voiceUrl = d.attributes?.voice;
+  const _duration = d.attributes?.duration;
+  const isVoice = discussionType === 'voice' || Boolean(voiceUrl);
+
+  return (
+    <article
+      className={`${isReply
+        ? 'mt-3 rounded-xl bg-slate-800/30 p-3.5 ring-1 ring-white/5 shadow-sm transition-all hover:bg-slate-800/40'
+        : 'rounded-xl border border-slate-700/80 bg-slate-900/50 p-3.5 shadow-sm sm:p-4'
+        }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2D43D1] to-[#6b7fee] font-bold text-white shadow-inner ${isReply ? 'size-8 text-[10px]' : 'size-10 text-xs'
+              }`}
+          >
+            {author
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((p) => p[0]?.toUpperCase())
+              .join('') || '•'}
+          </div>
+          <div className="min-w-0">
+            <p className={`font-semibold text-slate-100 ${isReply ? 'text-[13px]' : 'text-sm'}`}>
+              {author}
+              {created ? <span className="font-normal text-slate-500"> • {created}</span> : null}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              {isVoice && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-violet-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violet-300">
+                  <Mic className="size-2.5" />
+                  Voice
+                </span>
+              )}
+              {!isVoice && !isReply && (
+                <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${isQuestion ? 'bg-orange-500/20 text-orange-300' : 'bg-[#2D43D1]/25 text-[#93B4FF]'}`}>
+                  {isQuestion ? t('badgeQuestion') : t('badgeComment')}
+                </span>
+              )}
+              {momentLabel && !isReply && (
+                <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-700/60 px-1.5 py-0.5 text-[9px] font-semibold text-slate-400">
+                  <Play className="size-2.5" fill="currentColor" />
+                  {momentLabel}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {isVoice && voiceUrl ? (
+        <div className="mt-3">
+          <audio
+            controls
+            src={voiceUrl}
+            className="h-9 w-full rounded-lg opacity-90"
+          />
+        </div>
+      ) : content ? (
+        <p className={`mt-3 leading-relaxed text-slate-300 ${isReply ? 'text-[13px]' : 'text-sm'}`}>{content}</p>
+      ) : null}
+
+      {imageUrl && !isVoice && (
+        <button
+          type="button"
+          onClick={() => onPreviewImage(imageUrl)}
+          className="mt-3 block overflow-hidden rounded-lg border border-slate-700 hover:border-[#2D43D1] transition-colors"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl}
+            alt="Discussion screenshot"
+            className="max-h-48 w-auto rounded-lg object-cover"
+          />
+        </button>
+      )}
+
+      <div className="mt-3 flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => {
+            setReplyToId(replyToId === d.id ? null : d.id ?? null);
+            setReplyText('');
+          }}
+          className="text-xs font-semibold text-slate-400 transition-colors hover:text-white"
+        >
+          {t('reply')}
+        </button>
+        {replies.length > 0 && (
+          <span className="text-xs text-slate-600">{replies.length} {replies.length === 1 ? 'reply' : 'replies'}</span>
+        )}
+      </div>
+
+      {replyToId === d.id && (
+        <div className="mt-4 space-y-3 rounded-lg bg-black/30 p-3 ring-1 ring-slate-800">
+          <textarea
+            rows={2}
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            disabled={replySubmitting}
+            placeholder={t('replyPlaceholder')}
+            className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setReplyToId(null)}
+              className="px-3 py-1 text-xs font-semibold text-slate-400 hover:text-white"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              type="button"
+              onClick={() => void onSubmitReply(d.id!, d.attributes?.moment)}
+              disabled={replySubmitting || !replyText.trim()}
+              className="rounded-md bg-[#2D43D1] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
+            >
+              {replySubmitting ? <Loader2 className="size-3 animate-spin" /> : t('postReply')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {replies.length > 0 && (
+        <div className="mt-4 border-s-2 border-slate-700/30 ps-3 sm:ps-5 ms-2 sm:ms-3">
+          {replies.map((r, ri) => (
+            <DiscussionNode
+              key={discussionKey(r, ri)}
+              discussion={r}
+              isReply={true}
+              locale={locale}
+              t={t}
+              replyToId={replyToId}
+              setReplyToId={setReplyToId}
+              replyText={replyText}
+              setReplyText={setReplyText}
+              replySubmitting={replySubmitting}
+              onSubmitReply={onSubmitReply}
+              onPreviewImage={onPreviewImage}
+            />
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
 export default function ChapterWatchView({
   chapterId,
   chapter,
@@ -138,6 +330,25 @@ export default function ChapterWatchView({
   // Store videoSrc in state to prevent iframe reload on discussion updates
   // Only updates when chapter.id changes, not on every chapter object refresh
   const [stableVideoSrc, setStableVideoSrc] = useState<string>('');
+  // Image preview modal
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>(undefined);
+  // Composer mode: 'text' | 'voice'
+  const [composerMode, setComposerMode] = useState<'text' | 'voice'>('text');
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const vdoPlayerRef = useRef<any>(null);
+  const vdoPlayerContainerRef = useRef<HTMLDivElement | null>(null);
+  const [useVdoPlayerApi, setUseVdoPlayerApi] = useState(false);
+  // Screen capture state
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  const [screenCaptureDenied, setScreenCaptureDenied] = useState(false);
+  const [screenCapturePrompted, setScreenCapturePrompted] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -147,6 +358,143 @@ export default function ChapterWatchView({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Load VdoCipher Player API script
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const scriptId = 'vdocipher-api-script';
+    const scriptUrl = 'https://player.vdocipher.com/v2/api.js';
+
+    // Check if script is already loaded
+    if (document.getElementById(scriptId)) return;
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.src = scriptUrl;
+    script.async = true;
+    script.onload = () => console.log('[ChapterWatchView] VdoCipher api.js loaded successfully');
+    script.onerror = () => console.error('[ChapterWatchView] VdoCipher api.js failed to load');
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove the script as it might be used by other components
+    };
+  }, []);
+
+  // Parse VdoCipher URL to extract OTP and playbackInfo
+  const parseVdoCipherParams = (url: string): { otp?: string; playbackInfo?: string } | null => {
+    try {
+      const urlObj = new URL(url);
+      const otp = urlObj.searchParams.get('otp');
+      const playbackInfo = urlObj.searchParams.get('playbackInfo');
+      if (otp && playbackInfo) {
+        return { otp, playbackInfo };
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Detect whether to use VdoCipher Player API based on URL format
+  useEffect(() => {
+    if (!stableVideoSrc) {
+      console.log('[ChapterWatchView] No stableVideoSrc, useVdoPlayerApi = false');
+      setUseVdoPlayerApi(false);
+      return;
+    }
+    const params = parseVdoCipherParams(stableVideoSrc);
+    console.log('[ChapterWatchView] VdoCipher URL detection:', { stableVideoSrc, params, willUseApi: Boolean(params) });
+    setUseVdoPlayerApi(Boolean(params));
+  }, [stableVideoSrc]);
+
+  // Initialize VdoCipher Player API (only when useVdoPlayerApi is true and container is mounted)
+  useEffect(() => {
+    if (!useVdoPlayerApi || !stableVideoSrc || !vdoPlayerContainerRef.current) return;
+
+    const params = parseVdoCipherParams(stableVideoSrc);
+    if (!params) return;
+
+    const MAX_RETRIES = 10; // ~5s total at 500ms each
+    let retryCount = 0;
+
+    const initializePlayer = () => {
+      if (typeof window !== 'undefined' && (window as any).VdoPlayer) {
+        try {
+          // Clean up existing player
+          if (vdoPlayerRef.current) {
+            try {
+              vdoPlayerRef.current.video.remove();
+            } catch (err) {
+              console.debug('[ChapterWatchView] Error removing existing player:', err);
+            }
+            vdoPlayerRef.current = null;
+          }
+
+          const { otp, playbackInfo } = params;
+          const VdoPlayer = (window as any).VdoPlayer;
+
+          console.log('[ChapterWatchView] Initializing VdoCipher Player API:', { otp, playbackInfo });
+
+          const player = VdoPlayer.initialize({
+            otp,
+            playbackInfo,
+            container: vdoPlayerContainerRef.current,
+          });
+
+          if (!player || !player.video) {
+            throw new Error('VdoPlayer.initialize returned no video element');
+          }
+
+          vdoPlayerRef.current = player;
+
+          // Subscribe to timeupdate events for accurate currentTime tracking
+          player.video.addEventListener('timeupdate', () => {
+            console.log('[ChapterWatchView] VdoPlayer timeupdate event fired');
+            player.api.currentTime.then((time: number) => {
+              console.log('[ChapterWatchView] VdoPlayer currentTime resolved:', time);
+              if (Number.isFinite(time)) {
+                setCurrentVideoMoment(time);
+              }
+            }).catch((err: unknown) => {
+              console.error('[ChapterWatchView] Error getting currentTime:', err);
+            });
+          });
+
+          // Handle player errors
+          player.video.addEventListener('error', (err: Event) => {
+            console.error('[ChapterWatchView] VdoCipher player error:', err);
+          });
+        } catch (err) {
+          console.error('[ChapterWatchView] VdoPlayer init failed, falling back to iframe:', err);
+          console.log('[ChapterWatchView] Setting useVdoPlayerApi = false (fallback triggered)');
+          setUseVdoPlayerApi(false); // fall back to the iframe that used to work
+        }
+      } else if (retryCount < MAX_RETRIES) {
+        retryCount += 1;
+        setTimeout(initializePlayer, 500);
+      } else {
+        console.error('[ChapterWatchView] VdoCipher api.js never loaded, falling back to iframe');
+        console.log('[ChapterWatchView] Setting useVdoPlayerApi = false (script never loaded)');
+        setUseVdoPlayerApi(false); // fall back to the iframe that used to work
+      }
+    };
+
+    initializePlayer();
+
+    return () => {
+      // Clean up player on unmount
+      if (vdoPlayerRef.current) {
+        try {
+          vdoPlayerRef.current.video.remove();
+        } catch (err) {
+          console.debug('[ChapterWatchView] Error cleaning up player:', err);
+        }
+        vdoPlayerRef.current = null;
+      }
+    };
+  }, [useVdoPlayerApi, stableVideoSrc]);
 
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
@@ -190,21 +538,28 @@ export default function ChapterWatchView({
   const discussions = useMemo(() => {
     if (!chapter) return [];
     const flat = normalizeDiscussions(chapter.attributes.discussions);
-    const map = new Map<string | number, WatchDiscussionItem>();
+    const map = new Map<string, WatchDiscussionItem>();
     const roots: WatchDiscussionItem[] = [];
 
     flat.forEach((d) => {
-      if (d.id != null) map.set(d.id, { ...d, replies: [] });
+      if (d.id == null) return;
+      map.set(String(d.id), { ...d, replies: [] });
     });
 
     flat.forEach((d) => {
+      if (d.id == null) return;
       const parentId = d.attributes?.parent_id;
-      if (parentId != null && map.has(parentId)) {
-        const parent = map.get(parentId)!;
-        parent.replies = parent.replies || [];
-        parent.replies.push(map.get(d.id!) || d);
+      if (parentId != null) {
+        const parent = map.get(String(parentId));
+        if (parent) {
+          parent.replies = parent.replies || [];
+          parent.replies.push(map.get(String(d.id)) || d);
+        } else {
+          // Parent not found (e.g., filtered/deleted), push to roots as fallback
+          roots.push(map.get(String(d.id)) || d);
+        }
       } else {
-        roots.push(map.get(d.id!) || d);
+        roots.push(map.get(String(d.id)) || d);
       }
     });
 
@@ -273,6 +628,14 @@ export default function ChapterWatchView({
     if (!pdfPanelVisible) setShowPdf(false);
   }, [pdfPanelVisible]);
 
+  // Clean up screen capture stream on unmount
+  useEffect(() => {
+    return () => {
+      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+    };
+  }, []);
+
   // If no video but PDF exists, auto-show PDF
   useEffect(() => {
     if (!stableVideoSrc && pdfUrl && pdfPanelVisible) {
@@ -316,17 +679,14 @@ export default function ChapterWatchView({
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
 
-  // Notify VdoCipher iframe of container resize events to fix quality/settings menu positioning
-  // VdoCipher's internal UI is positioned based on iframe dimensions at load time and needs resize notifications
+  // Notify VdoCipher iframe of container resize events (only for iframe fallback)
   useEffect(() => {
-    if (!playerWrapperRef.current || !vdoCipherIframeRef.current || !stableVideoSrc) return;
+    if (!playerWrapperRef.current || !vdoCipherIframeRef.current || !stableVideoSrc || useVdoPlayerApi) return;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const iframe = vdoCipherIframeRef.current;
         if (iframe && iframe.contentWindow) {
-          // Send resize notification to VdoCipher iframe via postMessage
-          // This allows VdoCipher to recalculate its internal UI layout
           iframe.contentWindow.postMessage(
             {
               event: 'resize',
@@ -344,37 +704,32 @@ export default function ChapterWatchView({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [stableVideoSrc]);
+  }, [stableVideoSrc, useVdoPlayerApi]);
 
-  // VdoCipher Player API: Listen for playback time updates via postMessage
+  // VdoCipher iframe postMessage handler (only for iframe fallback)
   useEffect(() => {
-    if (!stableVideoSrc) return;
+    if (!stableVideoSrc || useVdoPlayerApi) return;
 
     const handleMessage = (event: MessageEvent) => {
-      // VdoCipher sends messages from their iframe
-      // The event data structure varies, but typically includes event type and time
       try {
         const data = event.data;
         if (typeof data === 'object' && data !== null) {
-          // VdoCipher may send time updates in various formats
-          // Common patterns: { event: 'currentTime', time: 12.4 } or { currentTime: 12.4 }
           if (typeof data.currentTime === 'number' && Number.isFinite(data.currentTime)) {
             setCurrentVideoMoment(data.currentTime);
           } else if (typeof data.time === 'number' && Number.isFinite(data.time)) {
             setCurrentVideoMoment(data.time);
-          } else if (data.event === 'currentTime' && typeof data.data === 'number') {
-            setCurrentVideoMoment(data.data);
           }
         }
       } catch (err) {
-        // Ignore malformed messages
         console.debug('[ChapterWatchView] VdoCipher message parse error', err);
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [stableVideoSrc]);
+  }, [stableVideoSrc, useVdoPlayerApi]);
+
+
 
   const toggleFullscreen = () => {
     if (!playerWrapperRef.current) return;
@@ -422,44 +777,235 @@ export default function ChapterWatchView({
 
   // Helper to get current video moment for discussions
   const getCurrentVideoMoment = (): number => {
-    // If we have a tracked moment from VdoCipher messages, use it
+    // Return the tracked moment from VdoCipher Player API or iframe fallback
     if (Number.isFinite(currentVideoMoment) && currentVideoMoment >= 0) {
+      console.log('[ChapterWatchView] getCurrentVideoMoment returning tracked moment:', currentVideoMoment, 'useVdoPlayerApi:', useVdoPlayerApi);
       return currentVideoMoment;
     }
-    // Fallback: try to query the iframe directly (may not work due to CORS)
-    try {
-      const iframe = vdoCipherIframeRef.current;
-      if (iframe && iframe.contentWindow) {
-        // Attempt to get current time via VdoCipher API
-        // This may fail due to same-origin policy
-        iframe.contentWindow.postMessage({ event: 'getCurrentTime' }, '*');
+    console.log('[ChapterWatchView] getCurrentVideoMoment: currentVideoMoment not valid, returning 0. useVdoPlayerApi:', useVdoPlayerApi, 'currentVideoMoment:', currentVideoMoment);
+    // For iframe fallback, try to query directly
+    if (!useVdoPlayerApi) {
+      try {
+        const iframe = vdoCipherIframeRef.current;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ event: 'getCurrentTime' }, '*');
+        }
+      } catch (err) {
+        // Ignore CORS errors
       }
-    } catch (err) {
-      // Ignore CORS errors
     }
-    // Final fallback to 0
     return 0;
   };
 
-  const submitComposer = async () => {
-    const text = composerText.trim();
-    if (!text) {
-      toast.error(t('discussionContentRequired'));
-      return;
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mr = new MediaRecorder(stream);
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => s + 1);
+      }, 1000);
+    } catch {
+      toast.error('Microphone access denied');
     }
-    if (!Number.isFinite(chapterIdForApi)) return;
+  }, []);
 
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  }, []);
+
+  const clearRecording = useCallback(() => {
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioBlob(null);
+    setAudioUrl(null);
+    setRecordingSeconds(0);
+    setIsRecording(false);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  }, [audioUrl]);
+
+  const formatRecordingTime = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  // Request screen capture permission (fire-and-forget, non-blocking)
+  const requestScreenCapture = useCallback(async (): Promise<MediaStream | null> => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getDisplayMedia) {
+      console.debug('[ChapterWatchView] Screen capture not supported in this environment');
+      setScreenCapturePrompted(true);
+      return null;
+    }
+    if (screenStreamRef.current) return screenStreamRef.current;
+    if (screenCaptureDenied) return null;
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: { displaySurface: 'browser' } as any,
+      });
+      stream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        console.debug('[ChapterWatchView] Screen capture stream ended by user');
+        screenStreamRef.current = null;
+      });
+      screenStreamRef.current = stream;
+      console.log('[ChapterWatchView] Screen capture stream acquired successfully');
+      return stream;
+    } catch (err) {
+      console.debug('[ChapterWatchView] Screen capture denied/cancelled:', err);
+      setScreenCaptureDenied(true);
+      return null;
+    } finally {
+      setScreenCapturePrompted(true);
+    }
+  }, [screenCaptureDenied]);
+
+  // Capture a single frame from the screen capture stream
+  const captureScreenFrame = useCallback(async (): Promise<File | null> => {
+    const stream = screenStreamRef.current;
+    if (!stream) {
+      console.debug('[ChapterWatchView] No screen capture stream available for frame capture');
+      return null;
+    }
+    try {
+      const track = stream.getVideoTracks()[0];
+      if (!track) {
+        console.debug('[ChapterWatchView] No video track in screen capture stream');
+        return null;
+      }
+      if ('ImageCapture' in window) {
+        const imageCapture = new (window as any).ImageCapture(track);
+        const bitmap = await imageCapture.grabFrame();
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.drawImage(bitmap, 0, 0);
+        const blob: Blob | null = await new Promise((resolve) =>
+          canvas.toBlob(resolve, 'image/jpeg', 0.85)
+        );
+        return blob ? new File([blob], 'screenshot.jpg', { type: 'image/jpeg' }) : null;
+      }
+      // Fallback: draw video frame to canvas
+      const video = document.createElement('video');
+      video.srcObject = stream;
+      await video.play();
+      await new Promise((r) => setTimeout(r, 100));
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(video, 0, 0);
+      const blob: Blob | null = await new Promise((resolve) =>
+        canvas.toBlob(resolve, 'image/jpeg', 0.85)
+      );
+      return blob ? new File([blob], 'screenshot.jpg', { type: 'image/jpeg' }) : null;
+    } catch (err) {
+      console.debug('[ChapterWatchView] Frame capture failed:', err);
+      return null;
+    }
+  }, []);
+
+
+  const submitComposer = async () => {
+    if (!Number.isFinite(chapterIdForApi)) return;
     setComposerSubmitting(true);
     try {
-      await api.discussions.create({
-        chapter_id: chapterIdForApi,
-        type: 'text',
-        content: text,
-        moment: getCurrentVideoMoment(),
-        parent_id: null,
-      });
-      toast.success(t('discussionPosted'));
-      setComposerText('');
+      const moment = getCurrentVideoMoment();
+      console.log('[ChapterWatchView] submitComposer: moment value being sent:', moment, 'useVdoPlayerApi:', useVdoPlayerApi, 'currentVideoMoment:', currentVideoMoment);
+
+      if (composerMode === 'voice') {
+        if (!audioBlob) {
+          toast.error('Please record a voice note first');
+          return;
+        }
+        let imagePath: string | null = null;
+        const frameFile = await captureScreenFrame();
+        if (frameFile) {
+          try {
+            const uploadRes = await api.discussions.uploadMedia(frameFile);
+            imagePath = uploadRes.data?.path ?? null;
+            console.log('[ChapterWatchView] Screenshot uploaded successfully:', imagePath);
+          } catch (err) {
+            console.debug('[ChapterWatchView] Screenshot upload failed:', err);
+          }
+        }
+        const voiceFile = new File([audioBlob], 'voice-note.webm', { type: 'audio/webm' });
+        // Upload voice file first
+        const voiceUploadRes = await api.discussions.uploadMedia(voiceFile);
+        const voicePath = voiceUploadRes.data?.path ?? null;
+        if (!voicePath) {
+          toast.error('Voice upload failed');
+          return;
+        }
+        await api.discussions.create({
+          chapter_id: chapterIdForApi,
+          type: 'voice',
+          voice: voicePath,
+          moment,
+          parent_id: null,
+          discussion_type: 'voice',
+          duration: recordingSeconds,
+          image: imagePath,
+        });
+        toast.success(t('discussionPosted'));
+        clearRecording();
+        setComposerMode('text');
+      } else {
+        const text = composerText.trim();
+        if (!text) {
+          toast.error(t('discussionContentRequired'));
+          return;
+        }
+        let imagePath: string | null = null;
+        const frameFile = await captureScreenFrame();
+        if (frameFile) {
+          try {
+            const uploadRes = await api.discussions.uploadMedia(frameFile);
+            imagePath = uploadRes.data?.path ?? null;
+            console.log('[ChapterWatchView] Screenshot uploaded successfully:', imagePath);
+          } catch (err) {
+            console.debug('[ChapterWatchView] Screenshot upload failed:', err);
+          }
+        }
+        await api.discussions.create({
+          chapter_id: chapterIdForApi,
+          type: 'text',
+          content: text,
+          moment,
+          parent_id: null,
+          discussion_type: 'text',
+          image: imagePath,
+        });
+        toast.success(t('discussionPosted'));
+        setComposerText('');
+      }
       await refreshChapter();
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : t('discussionPostError');
@@ -485,6 +1031,7 @@ export default function ChapterWatchView({
         content: text,
         moment: momentSource ?? getCurrentVideoMoment(),
         parent_id: Number(parentId),
+        discussion_type: 'text',
       });
       toast.success(t('discussionPosted'));
       setReplyText('');
@@ -590,7 +1137,7 @@ export default function ChapterWatchView({
                 <RotateCcw className="size-3.5" />
               </button>
             </div>
-            
+
             {!isMobile && (
               <button
                 type="button"
@@ -628,7 +1175,9 @@ export default function ChapterWatchView({
       </div>
     ) : null;
 
+
   return (
+    <>
     <div
       className="min-h-screen overflow-x-clip bg-[#0b1426] pb-28 text-slate-100 [-webkit-tap-highlight-color:transparent] sm:pb-[max(2.5rem,env(safe-area-inset-bottom,0px))]"
       dir={dir}
@@ -669,90 +1218,95 @@ export default function ChapterWatchView({
       <div className="w-full max-w-full overflow-x-clip [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto w-full max-w-6xl px-0 sm:px-6 lg:px-8">
           <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
-              <div className="flex flex-col">
-                <div className="bg-black/50">
-                  {stableVideoSrc ? (
-                    accessDenied ? (
-                      <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
-                        <p className="max-w-md text-sm font-medium text-slate-200">
-                          {playbackBlockMessage ?? t('watchAccessDenied')}
-                        </p>
-                        <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
-                        <Link
-                          href={backHref}
-                          className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-                        >
-                          {tDetails('watchBack')}
-                        </Link>
-                      </div>
-                    ) : (
-                      <>
-                        <div ref={playerWrapperRef} className={`flex flex-col lg:flex-row ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
-                          <div className="relative lg:flex-1">
+            <div className="flex flex-col">
+              <div className="bg-black/50">
+                {stableVideoSrc ? (
+                  accessDenied ? (
+                    <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
+                      <p className="max-w-md text-sm font-medium text-slate-200">
+                        {playbackBlockMessage ?? t('watchAccessDenied')}
+                      </p>
+                      <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
+                      <Link
+                        href={backHref}
+                        className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                      >
+                        {tDetails('watchBack')}
+                      </Link>
+                    </div>
+                  ) : (
+                    <>
+                      <div ref={playerWrapperRef} className={`flex flex-col lg:flex-row ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
+                        <div className="relative lg:flex-1">
+                          {useVdoPlayerApi ? (
+                            // VdoCipher Player API container
+                            <div
+                              ref={vdoPlayerContainerRef}
+                              className="aspect-video w-full"
+                            />
+                          ) : (
+                            // Fallback to iframe for non-VdoCipher videos
                             <iframe
                               ref={vdoCipherIframeRef}
                               src={stableVideoSrc}
                               className="aspect-video w-full"
-                              // Intentionally omit 'fullscreen' from allow attribute and remove allowFullScreen prop
-                              // This blocks VdoCipher's native fullscreen button from working, forcing users to use our custom
-                              // fullscreen button (toggleFullscreen) which wraps the entire player including watermark overlay.
-                              // VdoCipher's native fullscreen would only fullscreen the iframe, leaving the watermark behind.
                               allow="autoplay; encrypted-media; picture-in-picture; clipboard-write; web-share"
                               frameBorder="0"
                               scrolling="no"
                             />
-                            {/* Overlays - ensured they don't block bottom interaction area on small screens */}
-                            <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                              <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
-                              <VideoWatermark
-                                videoRef={watermarkDummyRef}
-                                contentType="chapters"
-                                initialResolution={initialWatermarkResolution ?? null}
-                              />
-                            </div>
-                            
-                            {/* Fullscreen toggle - moved higher on mobile to avoid overlapping VdoCipher gear icon/controls */}
-                            <button
-                              type="button"
-                              onClick={toggleFullscreen}
-                              className="absolute bottom-12 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80 sm:bottom-2"
-                              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                            >
-                              {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-                            </button>
+                          )}
+                          {/* Overlays - ensured they don't block bottom interaction area on small screens */}
+                          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                            <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
+                            <VideoWatermark
+                              videoRef={watermarkDummyRef}
+                              contentType="chapters"
+                              initialResolution={initialWatermarkResolution ?? null}
+                            />
                           </div>
 
-                          {showPdf && pdfWatchPanel && (
-                            <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'h-64 sm:h-80 overflow-hidden'}`}>
-                              <div className="h-full w-full">{pdfWatchPanel}</div>
-                            </div>
-                          )}
+                          {/* Fullscreen toggle - moved higher on mobile to avoid overlapping VdoCipher gear icon/controls */}
+                          <button
+                            type="button"
+                            onClick={toggleFullscreen}
+                            className="absolute bottom-12 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80 sm:bottom-2"
+                            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                          >
+                            {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                          </button>
                         </div>
-                        
-                      </>
-                    )
-                  ) : (
-                    // NO VIDEO CASE
-                    pdfUrl && pdfPanelVisible ? (
-                      <div className="bg-slate-950">
-                        <div className="mx-auto max-w-5xl">
-                          <div className="aspect-[16/10] w-full sm:aspect-[16/9]">
-                            {pdfWatchPanel}
+
+                        {showPdf && pdfWatchPanel && (
+                          <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'h-64 sm:h-80 overflow-hidden'}`}>
+                            <div className="h-full w-full">{pdfWatchPanel}</div>
                           </div>
+                        )}
+                      </div>
+
+                    </>
+                  )
+                ) : (
+                  // NO VIDEO CASE
+                  pdfUrl && pdfPanelVisible ? (
+                    <div className="bg-slate-950">
+                      <div className="mx-auto max-w-5xl">
+                        <div className="aspect-[16/10] w-full sm:aspect-[16/9]">
+                          {pdfWatchPanel}
                         </div>
                       </div>
-                    ) : (
-                      <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
-                        <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
-                          <Play className="size-8 translate-x-0.5" fill="currentColor" />
-                        </div>
-                        <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
-                        <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
+                    </div>
+                  ) : (
+                    <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
+                      <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
+                        <Play className="size-8 translate-x-0.5" fill="currentColor" />
                       </div>
-                    )
-                  )}
-                </div>
+                      <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
+                      <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
+                    </div>
+                  )
+                )}
               </div>
+            </div>
 
             {/* Under video: stacked on small screens; desktop = one row like design (Ask | Lecture parts inline | Discussions). */}
             <div className="border-t border-slate-800/80 bg-[#050915] px-0 py-0 sm:px-6 sm:py-3.5">
@@ -761,7 +1315,10 @@ export default function ChapterWatchView({
                   {Number.isFinite(chapterIdForApi) ? (
                     <button
                       type="button"
-                      onClick={() => setComposerOpen((o) => !o)}
+                      onClick={() => {
+                        setComposerOpen((o) => !o);
+                        if (!screenCapturePrompted) void requestScreenCapture();
+                      }}
                       className={`inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] max-md:rounded-none max-md:px-12 sm:min-h-0 sm:w-auto sm:px-7 sm:py-2.5 md:shrink-0 ${composerOpen
                         ? 'bg-[#2436b0] sm:ring-2 sm:ring-white/20'
                         : 'bg-[#2D43D1] hover:bg-[#2436b0]'
@@ -775,7 +1332,7 @@ export default function ChapterWatchView({
                   )}
                 </div>
 
-                <div className="min-w-0 md:flex md:justify-center md:px-1">
+                {/* <div className="min-w-0 md:flex md:justify-center md:px-1">
                   <div className="flex flex-col items-center gap-2 md:flex-row md:items-center md:justify-center md:gap-2.5 md:overflow-x-auto md:py-0.5">
                     <span className="w-full text-center text-xs font-medium text-slate-400 sm:text-sm md:w-auto md:shrink-0 md:text-start">
                       {t('lecturePartsToolbar')}
@@ -817,7 +1374,7 @@ export default function ChapterWatchView({
                       })}
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 <div className="flex justify-stretch md:min-w-0 md:justify-end">
                   <div className="flex w-full gap-2 md:w-auto">
@@ -854,39 +1411,138 @@ export default function ChapterWatchView({
             </div>
 
             {Number.isFinite(chapterIdForApi) && composerOpen ? (
-              <div className="border-t border-slate-800/80 bg-[#050915] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-2 sm:px-6 sm:pb-5 sm:pt-1">
-                <div className="flex gap-3">
-                  <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
-                    <Image src={chapterThumb} alt="" fill className="object-cover" sizes="56px" />
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-2">
-                    <textarea
-                      ref={composerTextareaRef}
-                      rows={3}
-                      value={composerText}
-                      onChange={(e) => setComposerText(e.target.value)}
-                      disabled={composerSubmitting}
-                      placeholder={t('composerPlaceholder')}
-                      className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60 sm:text-sm"
-                    />
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span />
-                      <button
-                        type="button"
-                        onClick={() => void submitComposer()}
+              <div className="border-t border-slate-800/80 bg-[#050915] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:px-6 sm:pb-5">
+                {/* Mode tabs */}
+                <div className="mb-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setComposerMode('text'); clearRecording(); }}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${composerMode === 'text' ? 'bg-[#2D43D1] text-white' : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+                  >
+                    <MessageCircle className="size-3.5" />
+                    Text
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setComposerMode('voice')}
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${composerMode === 'voice' ? 'bg-[#2D43D1] text-white' : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+                  >
+                    <Mic className="size-3.5" />
+                    Voice
+                  </button>
+                </div>
+
+                {composerMode === 'text' ? (
+                  <div className="flex gap-3">
+                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
+                      <Image src={chapterThumb} alt="" fill className="object-cover" sizes="56px" />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <textarea
+                        ref={composerTextareaRef}
+                        rows={3}
+                        value={composerText}
+                        onChange={(e) => setComposerText(e.target.value)}
                         disabled={composerSubmitting}
-                        className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-[#2D43D1] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2436b0] active:scale-[0.99] disabled:opacity-50 sm:min-h-0 sm:px-4 sm:py-2"
-                      >
-                        {composerSubmitting ? (
-                          <Loader2 className="size-4 animate-spin" aria-hidden />
-                        ) : (
-                          <Send className="size-4 rtl:rotate-180" aria-hidden />
-                        )}
-                        {t('composerPost')}
-                      </button>
+                        placeholder={t('composerPlaceholder')}
+                        className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60 sm:text-sm"
+                      />
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                          <Camera className="size-3" />
+                          {screenStreamRef.current
+                            ? t('screenshotCaptured')
+                            : screenCaptureDenied
+                              ? t('screenshotDenied')
+                              : screenCapturePrompted
+                                ? t('screenshotUnsupported')
+                                : t('screenshotPending')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void submitComposer()}
+                          disabled={composerSubmitting || !composerText.trim()}
+                          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-[#2D43D1] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2436b0] active:scale-[0.99] disabled:opacity-50 sm:min-h-0 sm:px-4 sm:py-2"
+                        >
+                          {composerSubmitting ? (
+                            <Loader2 className="size-4 animate-spin" aria-hidden />
+                          ) : (
+                            <Send className="size-4 rtl:rotate-180" aria-hidden />
+                          )}
+                          {t('composerPost')}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-4">
+                    {!audioBlob ? (
+                      <div className="flex flex-col items-center gap-4 py-4">
+                        {isRecording ? (
+                          <>
+                            <div className="flex size-16 items-center justify-center rounded-full bg-red-500/20 ring-4 ring-red-500/30 animate-pulse">
+                              <div className="size-4 rounded-full bg-red-500" />
+                            </div>
+                            <span className="text-xl font-bold tabular-nums text-red-400">{formatRecordingTime(recordingSeconds)}</span>
+                            <p className="text-xs text-slate-500">Recording... tap Stop when done</p>
+                            <button
+                              type="button"
+                              onClick={stopRecording}
+                              className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700"
+                            >
+                              <Square className="size-4" />
+                              Stop Recording
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/20 ring-4 ring-[#2D43D1]/20">
+                              <Mic className="size-8 text-[#2D43D1]" />
+                            </div>
+                            <p className="text-sm text-slate-400">Tap the button to start recording your voice note</p>
+                            <button
+                              type="button"
+                              onClick={() => void startRecording()}
+                              className="flex items-center gap-2 rounded-xl bg-[#2D43D1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#2436b0]"
+                            >
+                              <Mic className="size-4" />
+                              Start Recording
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
+                          <Mic className="size-4" />
+                          Voice note recorded ({formatRecordingTime(recordingSeconds)})
+                        </div>
+                        {audioUrl && (
+                          <audio controls src={audioUrl} className="w-full rounded-lg [&::-webkit-media-controls-panel]:bg-slate-900 [&::-webkit-media-controls-current-time-display]:text-white [&::-webkit-media-controls-time-remaining-display]:text-white" />
+                        )}
+                        <div className="flex justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={clearRecording}
+                            className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-400 hover:border-slate-500 hover:text-red-400"
+                          >
+                            <Trash2 className="size-3.5" />
+                            Discard
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void submitComposer()}
+                            disabled={composerSubmitting}
+                            className="flex items-center gap-2 rounded-xl bg-[#2D43D1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#2436b0] disabled:opacity-50"
+                          >
+                            {composerSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                            Send Voice Note
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
@@ -906,7 +1562,21 @@ export default function ChapterWatchView({
             ) : (
               discussions
                 .filter((d) => Boolean(discussionContent(d)))
-                .map((d, i) => <DiscussionNode key={discussionKey(d, i)} discussion={d} />)
+                .map((d, i) => (
+                  <DiscussionNode
+                    key={discussionKey(d, i)}
+                    discussion={d}
+                    locale={locale}
+                    t={t}
+                    replyToId={replyToId}
+                    setReplyToId={setReplyToId}
+                    replyText={replyText}
+                    setReplyText={setReplyText}
+                    replySubmitting={replySubmitting}
+                    onSubmitReply={submitReply}
+                    onPreviewImage={setPreviewImageUrl}
+                  />
+                ))
             )}
           </section>
         ) : null}
@@ -941,115 +1611,29 @@ export default function ChapterWatchView({
         ) : null}
       </div>
     </div>
-  );
 
-  function DiscussionNode({ discussion, isReply = false }: { discussion: WatchDiscussionItem; isReply?: boolean }) {
-    const d = discussion;
-    const content = discussionContent(d);
-    const author = discussionAuthorName(d) ?? t('anonymousUser');
-    const created = formatDiscussionTime(discussionCreatedAt(d), locale);
-    const momentSec = discussionMoment(d);
-    const momentLabel = formatMomentSeconds(momentSec);
-    const typeTag = discussionTypeLabel(d);
-    const isQuestion = typeTag === 'question';
-    const replies = discussionReplies(d);
-
-    const jump = () => {
-      // jump logic
-    };
-
-    return (
-      <article
-        className={`${
-          isReply
-            ? 'mt-4 rounded-xl bg-slate-800/30 p-4 ring-1 ring-white/5 shadow-sm transition-all hover:bg-slate-800/40'
-            : 'rounded-xl border border-slate-700/80 bg-slate-900/50 p-3.5 shadow-sm sm:p-4'
-        }`}
+    {previewImageUrl && (
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
+        onClick={() => setPreviewImageUrl(undefined)}
       >
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <div
-              className={`flex shrink-0 items-center justify-center rounded-full bg-[#2D43D1] font-bold text-white shadow-inner ${
-                isReply ? 'size-9 text-[11px]' : 'size-10 text-xs'
-              }`}
-            >
-              {author
-                .split(/\s+/)
-                .filter(Boolean)
-                .slice(0, 2)
-                .map((p) => p[0]?.toUpperCase())
-                .join('') || '•'}
-            </div>
-            <div className="min-w-0">
-              <p className={`font-semibold text-slate-100 ${isReply ? 'text-[13px]' : 'text-sm'}`}>
-                {author}
-                {created ? <span className="font-normal text-slate-500"> • {created}</span> : null}
-              </p>
-              {!isReply && typeTag ? (
-                <span
-                  className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                    isQuestion ? 'bg-orange-500/20 text-orange-300' : 'bg-[#2D43D1]/25 text-[#93B4FF]'
-                  }`}
-                >
-                  {isQuestion ? t('badgeQuestion') : t('badgeComment')}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </div>
-        <p className={`mt-3 leading-relaxed text-slate-300 ${isReply ? 'text-[13px]' : 'text-sm'}`}>{content}</p>
-
-        <div className="mt-4 flex items-center gap-4">
+        <div
+          className="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-xl bg-slate-900 shadow-2xl ring-1 ring-white/10"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={previewImageUrl} alt="Preview" className="max-h-[85vh] max-w-[85vw] rounded-xl object-contain" />
           <button
             type="button"
-            onClick={() => {
-              setReplyToId(replyToId === d.id ? null : d.id ?? null);
-              setReplyText('');
-            }}
-            className="text-xs font-semibold text-slate-400 transition-colors hover:text-white"
+            onClick={() => setPreviewImageUrl(undefined)}
+            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 text-lg leading-none"
           >
-            {t('reply')}
+            &times;
           </button>
         </div>
-
-        {replyToId === d.id && (
-          <div className="mt-4 space-y-3 rounded-lg bg-black/30 p-3 ring-1 ring-slate-800">
-            <textarea
-              rows={2}
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              disabled={replySubmitting}
-              placeholder={t('replyPlaceholder')}
-              className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/50 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setReplyToId(null)}
-                className="px-3 py-1 text-xs font-semibold text-slate-400 hover:text-white"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={() => void submitReply(d.id!, d.attributes?.moment)}
-                disabled={replySubmitting || !replyText.trim()}
-                className="rounded-md bg-[#2D43D1] px-3 py-1 text-xs font-semibold text-white disabled:opacity-50"
-              >
-                {replySubmitting ? <Loader2 className="size-3 animate-spin" /> : t('postReply')}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {replies.length > 0 && (
-          <div className="mt-5 border-s-2 border-slate-700/30 ps-4 sm:ps-6 ml-2 sm:ml-4">
-            {replies.map((r, ri) => (
-              <DiscussionNode key={discussionKey(r, ri)} discussion={r} isReply={true} />
-            ))}
-          </div>
-        )}
-      </article>
-    );
-  }
+      </div>
+    )}
+  </>
+  );
 }
+

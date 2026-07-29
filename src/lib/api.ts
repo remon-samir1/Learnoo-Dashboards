@@ -682,7 +682,7 @@ export const departmentsApi = {
 // ============================================
 
 export const discussionsApi = {
-  list: (params?: any) => get<ApiListResponse<Discussion>>('/v1/discussion', { params }),
+  list: (params?: any) => get<ApiListResponse<Discussion>>(`/v1/discussion?page=${params.page}`),
 
   get: (id: number) => get<ApiResponse<Discussion>>(`/v1/discussion/${id}`),
 
@@ -693,6 +693,12 @@ export const discussionsApi = {
     put<ApiResponse<Discussion>>(`/v1/discussion/${id}`, data),
 
   delete: (id: number) => del<ApiResponse<Discussion>>(`/v1/discussion/${id}`),
+
+  uploadMedia: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return postMultipart<ApiResponse<{ path: string; url: string }>>('/v1/discussion/upload', formData);
+  },
 };
 
 // ============================================

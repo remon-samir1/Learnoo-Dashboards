@@ -9,6 +9,9 @@ import { isProfileComplete } from '@/src/lib/profile-completeness';
 // ============================================
 // Types
 // ============================================
+// ============================================
+  
+
 
 interface AuthState {
   // State

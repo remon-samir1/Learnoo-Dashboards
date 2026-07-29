@@ -7,7 +7,7 @@ import { createQueryHook, createMutationHook } from './index';
 // ============================================
 
 export const useDiscussions = createQueryHook(
-  (params?: any) => api.discussions.list(params).then(res => res.data),
+  (params?: any) => api.discussions.list(params),
   { enabled: true }
 );
 

@@ -921,6 +921,11 @@ function ChapterRow({
       : t("viewsUnlimited");
   const viewsExhausted = maxViews != null && maxViews > 0 && currentViews >= maxViews;
 
+  // Free preview checks
+  const isFreePreview = attrs.is_free_preview === 1 || attrs.is_free_preview === true;
+  const isAttachmentFreePreview = attrs.is_free_preview_attachment === 1 || attrs.is_free_preview_attachment === true;
+  const bothFreePreviewDisabled = !isFreePreview && !isAttachmentFreePreview;
+
   const watchHref = `/${locale}/student/courses/watch/${chapter.id}`;
 
   let iconWrap =
@@ -1035,58 +1040,7 @@ function ChapterRow({
       </div>
 
       <div className="flex w-full shrink-0 flex-col gap-2.5 sm:min-w-[10.5rem] sm:w-auto sm:justify-center sm:gap-3 md:min-w-[12rem]">
-        {videoPlayable && !videoRequiresActivation ? (
-          <Link
-            href={watchHref}
-            prefetch
-            className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-          >
-            {t("watch")}
-            <ChevronRight
-              className="size-4 shrink-0 rtl:rotate-180"
-              strokeWidth={2.5}
-            />
-          </Link>
-        ) : chapterLocked ? (
-          <button
-            type="button"
-            onClick={openChapterActivation}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
-          >
-            <Power
-              className="size-4 shrink-0 opacity-90"
-              strokeWidth={2}
-              aria-hidden
-            />
-            {t("activateChapter")}
-          </button>
-        ) : needsPlaybackActivation ? (
-          <button
-            type="button"
-            onClick={openChapterActivation}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
-          >
-            <Power
-              className="size-4 shrink-0 opacity-95"
-              strokeWidth={2}
-              aria-hidden
-            />
-            {t("activateChapter")}
-          </button>
-        ) : videoRequiresActivation ? (
-          <button
-            type="button"
-            onClick={openChapterActivation}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
-          >
-            <Power
-              className="size-4 shrink-0 opacity-95"
-              strokeWidth={2}
-              aria-hidden
-            />
-            {t("activateChapter")}
-          </button>
-        ) : viewsExhausted ? (
+        {viewsExhausted || bothFreePreviewDisabled ? (
           <button
             type="button"
             onClick={openChapterActivation}
@@ -1097,43 +1051,98 @@ function ChapterRow({
               strokeWidth={2}
               aria-hidden
             />
-            {t("reactivate")}
+            {viewsExhausted ? t("reactivate") : t("activateChapter")}
           </button>
-        ) : null}
+        ) : (
+          <>
+            {videoPlayable && !videoRequiresActivation ? (
+              <Link
+                href={watchHref}
+                prefetch
+                className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
+              >
+                {t("watch")}
+                <ChevronRight
+                  className="size-4 shrink-0 rtl:rotate-180"
+                  strokeWidth={2.5}
+                />
+              </Link>
+            ) : chapterLocked ? (
+              <button
+                type="button"
+                onClick={openChapterActivation}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
+              >
+                <Power
+                  className="size-4 shrink-0 opacity-90"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                {t("activateChapter")}
+              </button>
+            ) : needsPlaybackActivation ? (
+              <button
+                type="button"
+                onClick={openChapterActivation}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+              >
+                <Power
+                  className="size-4 shrink-0 opacity-95"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                {t("activateChapter")}
+              </button>
+            ) : videoRequiresActivation ? (
+              <button
+                type="button"
+                onClick={openChapterActivation}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+              >
+                <Power
+                  className="size-4 shrink-0 opacity-95"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                {t("activateChapter")}
+              </button>
+            ) : null}
 
-        {hasPdf && (
-          pdfVisible && pdfUrl && !pdfRequiresActivation ? (
-            <button
-              type="button"
-              onClick={() => setPdfPreviewOpen(true)}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-            >
-              <FileText className="size-4 shrink-0" strokeWidth={2} />
-              {t("hasPdf")}
-            </button>
-          ) : pdfRequiresActivation ? (
-            <button
-              type="button"
-              onClick={openChapterActivation}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
-            >
-              <Power
-                className="size-4 shrink-0 opacity-95"
-                strokeWidth={2}
-                aria-hidden
-              />
-              {t("activateChapter")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#94A3B8] opacity-70 sm:min-h-10 sm:py-2.5"
-            >
-              <FileText className="size-4 shrink-0" strokeWidth={2} />
-              {t("hasPdf")}
-            </button>
-          )
+            {hasPdf && (
+              pdfVisible && pdfUrl && !pdfRequiresActivation ? (
+                <button
+                  type="button"
+                  onClick={() => setPdfPreviewOpen(true)}
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
+                >
+                  <FileText className="size-4 shrink-0" strokeWidth={2} />
+                  {t("hasPdf")}
+                </button>
+              ) : pdfRequiresActivation ? (
+                <button
+                  type="button"
+                  onClick={openChapterActivation}
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+                >
+                  <Power
+                    className="size-4 shrink-0 opacity-95"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  {t("activateChapter")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#94A3B8] opacity-70 sm:min-h-10 sm:py-2.5"
+                >
+                  <FileText className="size-4 shrink-0" strokeWidth={2} />
+                  {t("hasPdf")}
+                </button>
+              )
+            )}
+          </>
         )}
       </div>
 

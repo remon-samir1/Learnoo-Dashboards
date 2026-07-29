@@ -946,6 +946,10 @@ export interface ChapterAttributes {
 
 
 
+  schedule?: string | null;
+
+
+
 }
 
 
@@ -1011,6 +1015,8 @@ export interface CreateChapterRequest {
 
   content?: string;
 
+  schedule?: string | null;
+
 }
 
 
@@ -1072,6 +1078,8 @@ export interface UpdateChapterRequest {
   note_type?: 'summary' | 'highlight' | 'key_point' | 'important_notice' | null;
 
   content?: string;
+
+  schedule?: string | null;
 
 }
 
@@ -1311,7 +1319,7 @@ export interface CourseAttributes {
 
   chapter_attachments: any[];
 
- schedule:any;
+  schedule: any;
 
   chapter_discussions: any[];
 
@@ -1612,8 +1620,8 @@ export interface CreateCourseRequest {
 
 
   price: number;
-  
-  
+
+
 
 
   max_views_per_student?: number;
@@ -1924,6 +1932,14 @@ export interface DiscussionAttributes {
 
   updated_at: string | null;
 
+  discussion_type?: string | null;
+
+  image?: string | null;
+
+  voice?: string | null;
+
+  duration?: number | null;
+
   user?: {
     data: {
       id: string;
@@ -1981,7 +1997,13 @@ export interface CreateDiscussionRequest {
 
   parent_id?: number | null;
 
+  discussion_type?: string;
 
+  image?: string | null;
+
+  voice?: string | null;
+
+  duration?: number | null;
 
 }
 
@@ -2271,6 +2293,10 @@ export interface LectureAttributes {
 
 
 
+  schedule?: string | null;
+
+
+
 }
 
 
@@ -2323,6 +2349,10 @@ export interface CreateLectureRequest {
 
 
   description: string;
+
+
+
+  schedule?: string | null;
 
 
 

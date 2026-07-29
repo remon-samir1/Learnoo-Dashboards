@@ -2455,6 +2455,8 @@ export default function DepartmentsPage() {
             video: formData.video,
 
             attachments: formData.attachments,
+
+            schedule: formData.schedule,
           };
 
           // Add attachments_to_delete if present
@@ -2620,6 +2622,8 @@ export default function DepartmentsPage() {
               note_type: formData.type === "note" ? formData.note_type : undefined,
 
               content: formData.type === "note" ? formData.content : undefined,
+
+              schedule: formData.schedule,
             },
             (progress) => setUploadProgress(progress),
           );
@@ -3393,6 +3397,8 @@ function EditModal({
           title: lecture.attributes.title,
 
           description: lecture.attributes.description || "",
+
+          schedule: lecture.attributes.schedule || "",
         };
 
       case "chapter":
@@ -3416,6 +3422,8 @@ function EditModal({
           note_type: chapter.attributes.note_type || "",
 
           content: chapter.attributes.content || "",
+
+          schedule: chapter.attributes.schedule || "",
 
           thumbnail: null,
         };
@@ -4092,6 +4100,24 @@ function EditModal({
                   rows={3}
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Schedule
+                </label>
+
+                <input
+                  type="datetime-local"
+                  value={formData.schedule || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      schedule: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
             </>
           )}
 
@@ -4288,6 +4314,24 @@ function EditModal({
                     placeholder="Auto-extracted from video"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Schedule
+                  </label>
+
+                  <input
+                    type="datetime-local"
+                    value={formData.schedule || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        schedule: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
               </div>
 
               {/* Attachments Upload */}
@@ -4437,69 +4481,75 @@ function EditModal({
                 </div>
               )}
 
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
-                <label
-                  htmlFor="edit_is_free_preview"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Video Free Preview
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div
-                    className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview ? "bg-orange-500" : "bg-gray-200"}`}
+              {/* Video Free Preview - show only if chapter has video or is video-only type */}
+              {(!formData.video || formData.type === 'note') ? null : (
+                <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
+                  <label
+                    htmlFor="edit_is_free_preview"
+                    className="text-sm font-medium text-gray-700"
                   >
-                    <input
-                      type="checkbox"
-                      id="edit_is_free_preview"
-                      checked={formData.is_free_preview}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_free_preview: e.target.checked,
-                        })
-                      }
-                      className="sr-only"
-                    />
+                    Video Free Preview
+                  </label>
 
-                    <span
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview ? "translate-x-5" : ""}`}
-                    />
-                  </div>
-                </label>
-              </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview ? "bg-orange-500" : "bg-gray-200"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        id="edit_is_free_preview"
+                        checked={formData.is_free_preview}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            is_free_preview: e.target.checked,
+                          })
+                        }
+                        className="sr-only"
+                      />
 
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
-                <label
-                  htmlFor="edit_is_free_preview_attachment"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Is Preview Attachment
-                </label>
+                      <span
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview ? "translate-x-5" : ""}`}
+                      />
+                    </div>
+                  </label>
+                </div>
+              )}
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div
-                    className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview_attachment ? "bg-orange-500" : "bg-gray-200"}`}
+              {/* Attachment Free Preview - show only if chapter has attachments or is pdf-only type */}
+              {((!formData.attachments || formData.attachments.length === 0) && formData.type !== 'note') ? null : (
+                <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
+                  <label
+                    htmlFor="edit_is_free_preview_attachment"
+                    className="text-sm font-medium text-gray-700"
                   >
-                    <input
-                      type="checkbox"
-                      id="edit_is_free_preview_attachment"
-                      checked={formData.is_free_preview_attachment}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_free_preview_attachment: e.target.checked,
-                        })
-                      }
-                      className="sr-only"
-                    />
+                    Is Preview Attachment
+                  </label>
 
-                    <span
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview_attachment ? "translate-x-5" : ""}`}
-                    />
-                  </div>
-                </label>
-              </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview_attachment ? "bg-orange-500" : "bg-gray-200"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        id="edit_is_free_preview_attachment"
+                        checked={formData.is_free_preview_attachment}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            is_free_preview_attachment: e.target.checked,
+                          })
+                        }
+                        className="sr-only"
+                      />
+
+                      <span
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview_attachment ? "translate-x-5" : ""}`}
+                      />
+                    </div>
+                  </label>
+                </div>
+              )}
 
               {/* View Detection Timestamp */}
 
@@ -5236,6 +5286,24 @@ function AddModal({
                   rows={3}
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Schedule
+                </label>
+
+                <input
+                  type="datetime-local"
+                  value={formData.schedule || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      schedule: e.target.value,
+                    })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
             </>
           )}
 
@@ -5432,6 +5500,24 @@ function AddModal({
                     placeholder="Auto-extracted from video"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Schedule
+                  </label>
+
+                  <input
+                    type="datetime-local"
+                    value={formData.schedule || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        schedule: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
               </div>
 
               {/* Attachments Upload */}
@@ -5573,69 +5659,75 @@ function AddModal({
                 </div>
               )}
 
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
-                <label
-                  htmlFor="add_is_free_preview"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Free Preview
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div
-                    className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview ? "bg-orange-500" : "bg-gray-200"}`}
+              {/* Video Free Preview - show only if lessonCreateType includes video */}
+              {(lessonCreateType === "video-pdf" || lessonCreateType === "video") && (
+                <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
+                  <label
+                    htmlFor="add_is_free_preview"
+                    className="text-sm font-medium text-gray-700"
                   >
-                    <input
-                      type="checkbox"
-                      id="add_is_free_preview"
-                      checked={formData.is_free_preview}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_free_preview: e.target.checked,
-                        })
-                      }
-                      className="sr-only"
-                    />
+                   video Free Preview
+                  </label>
 
-                    <span
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview ? "translate-x-5" : ""}`}
-                    />
-                  </div>
-                </label>
-              </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview ? "bg-orange-500" : "bg-gray-200"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        id="add_is_free_preview"
+                        checked={formData.is_free_preview}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            is_free_preview: e.target.checked,
+                          })
+                        }
+                        className="sr-only"
+                      />
 
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
-                <label
-                  htmlFor="add_is_free_preview_attachment"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Is Preview Attachment
-                </label>
+                      <span
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview ? "translate-x-5" : ""}`}
+                      />
+                    </div>
+                  </label>
+                </div>
+              )}
 
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <div
-                    className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview_attachment ? "bg-orange-500" : "bg-gray-200"}`}
+              {/* Attachment Free Preview - show only if lessonCreateType includes pdf */}
+              {(lessonCreateType === "video-pdf" || lessonCreateType === "pdf") && (
+                <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
+                  <label
+                    htmlFor="add_is_free_preview_attachment"
+                    className="text-sm font-medium text-gray-700"
                   >
-                    <input
-                      type="checkbox"
-                      id="add_is_free_preview_attachment"
-                      checked={formData.is_free_preview_attachment}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          is_free_preview_attachment: e.target.checked,
-                        })
-                      }
-                      className="sr-only"
-                    />
+                    Is Preview Attachment
+                  </label>
 
-                    <span
-                      className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview_attachment ? "translate-x-5" : ""}`}
-                    />
-                  </div>
-                </label>
-              </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <div
+                      className={`w-11 h-6 rounded-full transition-colors relative ${formData.is_free_preview_attachment ? "bg-orange-500" : "bg-gray-200"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        id="add_is_free_preview_attachment"
+                        checked={formData.is_free_preview_attachment}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            is_free_preview_attachment: e.target.checked,
+                          })
+                        }
+                        className="sr-only"
+                      />
+
+                      <span
+                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.is_free_preview_attachment ? "translate-x-5" : ""}`}
+                      />
+                    </div>
+                  </label>
+                </div>
+              )}
 
               {/* View Detection Timestamp */}
 

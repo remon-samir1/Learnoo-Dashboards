@@ -7,13 +7,18 @@ export type WatchDiscussionItem = {
     created_at?: string | null;
     moment?: number | null;
     type?: string | null;
+    discussion_type?: string | null;
     parent_id?: number | null;
+    image?: string | null;
+    voice?: string | null;
+    duration?: number | null;
     user?: {
       data?: {
         attributes?: {
           first_name?: string;
           last_name?: string;
           full_name?: string;
+          role?: string;
         };
       };
     };

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslations } from "next-intl";
 import {
   X,
   Plus,
@@ -87,6 +88,8 @@ export function DetailPanel({
   onDelete,
   onClose,
 }: DetailPanelProps) {
+  const t = useTranslations("courses.detailPanel");
+
   const handlePreactivationFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -110,7 +113,7 @@ export function DetailPanel({
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
         <h3 className="text-sm font-semibold text-gray-900 capitalize">
-          {node.type} Details
+          {node.type} {t("details")}
         </h3>
         <button
           onClick={onClose}
@@ -125,7 +128,7 @@ export function DetailPanel({
         {/* Name / Title */}
         <div>
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-            Name
+            {t("name")}
           </label>
           <p className="text-sm font-semibold text-gray-900 mt-1">
             {node.name}
@@ -138,7 +141,7 @@ export function DetailPanel({
             {node.meta?.code && (
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Code
+                  {t("code")}
                 </label>
                 <p className="text-xs text-gray-700 mt-1">{node.meta.code}</p>
               </div>
@@ -147,7 +150,7 @@ export function DetailPanel({
             <div className="flex gap-4">
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Courses
+                  {t("courses")}
                 </label>
                 <p className="text-base font-bold text-blue-600">
                   {node.stats?.courses || 0}
@@ -155,7 +158,7 @@ export function DetailPanel({
               </div>
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Students
+                  {t("students")}
                 </label>
                 <p className="text-base font-bold text-green-600">
                   {node.stats?.students || 0}
@@ -167,12 +170,12 @@ export function DetailPanel({
             {canUseActivations && (
               <div className="pt-3 border-t border-gray-200 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-700">Activation</span>
+                  <span className="text-xs font-bold text-gray-700">{t("activation")}</span>
                   {!isInstructor && (
                     <button
                       onClick={() => onGenerateCodes("department", node.data.id)}
                       className="p-1 hover:text-blue-600 transition-colors border rounded bg-gray-50"
-                      title="Generate Codes"
+                      title={t("generateCodes")}
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -181,7 +184,7 @@ export function DetailPanel({
                 {/* Department codes rendering */}
                 <div className="space-y-2">
                   <p className="text-xs text-gray-500">
-                    Department code activation is managed through courses. Pre-activate numbers under Course details instead.
+                    {t("departmentActivationMessage")}
                   </p>
                 </div>
               </div>
@@ -203,41 +206,41 @@ export function DetailPanel({
 
             <div className="grid grid-cols-2 gap-3 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
               <div>
-                <label className="text-[10px] text-gray-400 block">Status</label>
+                <label className="text-[10px] text-gray-400 block">{t("status")}</label>
                 <span
                   className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${node.meta?.status === "active"
                       ? "bg-green-50 text-green-700 border border-green-200"
                       : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                 >
-                  {node.meta?.status === "active" ? "Active" : "Draft"}
+                  {node.meta?.status === "active" ? t("active") : t("draft")}
                 </span>
               </div>
               <div>
-                <label className="text-[10px] text-gray-400 block">Instructor</label>
+                <label className="text-[10px] text-gray-400 block">{t("instructor")}</label>
                 <p className="text-xs text-gray-700 truncate">
-                  {(node.data as Course).attributes.instructor?.data?.attributes?.full_name || "N/A"}
+                  {(node.data as Course).attributes.instructor?.data?.attributes?.full_name || t("na", { ns: "common" })}
                 </p>
               </div>
               <div>
-                <label className="text-[10px] text-gray-400 block">Price</label>
+                <label className="text-[10px] text-gray-400 block">{t("price")}</label>
                 <p className="text-xs font-bold text-blue-600">
                   EGP {(node.data as Course).attributes.price}
                 </p>
               </div>
               <div>
-                <label className="text-[10px] text-gray-400 block font-normal">Max Views</label>
+                <label className="text-[10px] text-gray-400 block font-normal">{t("maxViews")}</label>
                 <p className="text-xs text-gray-700">
                   {(node.data as Course).attributes.max_views_per_student}
                 </p>
               </div>
               <div className="col-span-2 border-t border-gray-100 pt-2 flex justify-between">
                 <div>
-                  <label className="text-[10px] text-gray-400 block">Lectures</label>
+                  <label className="text-[10px] text-gray-400 block">{t("lectures")}</label>
                   <p className="text-xs font-bold text-purple-600">{node.stats?.lectures || 0}</p>
                 </div>
                 <div>
-                  <label className="text-[10px] text-gray-400 block">Students</label>
+                  <label className="text-[10px] text-gray-400 block">{t("students")}</label>
                   <p className="text-xs font-bold text-green-600">{node.stats?.students || 0}</p>
                 </div>
               </div>
@@ -246,7 +249,7 @@ export function DetailPanel({
             {(node.data as Course).attributes.description && (
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Description
+                  {t("description")}
                 </label>
                 <p className="text-xs text-gray-600 mt-1 max-h-24 overflow-y-auto bg-gray-50 p-2 rounded">
                   {(node.data as Course).attributes.description}
@@ -260,13 +263,13 @@ export function DetailPanel({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1">
                     <Power className="w-3.5 h-3.5 text-blue-600" />
-                    <span className="text-xs font-bold text-gray-800">Activate Course</span>
+                    <span className="text-xs font-bold text-gray-800">{t("activateCourse")}</span>
                   </div>
                   {!isInstructor && (
                     <button
                       onClick={() => onGenerateCodes("course", node.data.id)}
                       className="p-1 hover:text-blue-600 transition-colors border rounded bg-gray-50"
-                      title="Generate Codes"
+                      title={t("generateCodes")}
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -280,14 +283,14 @@ export function DetailPanel({
                     className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "code" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
                       }`}
                   >
-                    By Code
+                    {t("byCode")}
                   </button>
                   <button
                     onClick={() => setActivationTab("preactivation")}
                     className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "preactivation" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
                       }`}
                   >
-                    Preactivation
+                    {t("preactivation")}
                   </button>
                 </div>
 
@@ -295,7 +298,7 @@ export function DetailPanel({
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] text-gray-500 block mb-1">
-                        Available Codes ({getCodesForItem("course", itemId).filter((c) => !c.attributes.is_used).length})
+                        {t("availableCodes")} ({getCodesForItem("course", itemId).filter((c) => !c.attributes.is_used).length})
                       </label>
                       {codesLoading ? (
                         <div className="flex justify-center py-2"><Loader2 className="w-4 h-4 animate-spin text-blue-500" /></div>
@@ -331,7 +334,7 @@ export function DetailPanel({
                               </label>
                             ))}
                           {getCodesForItem("course", itemId).filter((c) => !c.attributes.is_used).length === 0 && (
-                            <p className="text-[10px] text-gray-400 italic text-center py-1">No codes available</p>
+                            <p className="text-[10px] text-gray-400 italic text-center py-1">{t("noCodesAvailable")}</p>
                           )}
                         </div>
                       )}
@@ -339,12 +342,12 @@ export function DetailPanel({
 
                     {/* Student list search */}
                     <div>
-                      <label className="text-[10px] text-gray-500 block mb-1">Select Student</label>
+                      <label className="text-[10px] text-gray-500 block mb-1">{t("selectStudent")}</label>
                       <div className="relative">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Search students"
+                          placeholder={t("searchStudents")}
                           value={studentSearch}
                           onChange={(e) => setStudentSearch(e.target.value)}
                           className="w-full pl-7 pr-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
@@ -386,7 +389,7 @@ export function DetailPanel({
                       disabled={isActivating || !selectedCode || !selectedStudent}
                       className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
                     >
-                      {isActivating ? "Activating..." : "Activate Student"}
+                      {isActivating ? t("activating") : t("activateStudent")}
                     </button>
                   </div>
                 ) : (
@@ -394,9 +397,9 @@ export function DetailPanel({
                     {/* Preactivation Phone Numbers input */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-500">Phone Numbers</span>
+                        <span className="text-[10px] text-gray-500">{t("phoneNumbers")}</span>
                         {preactivationNumbers.length > 0 && (
-                          <button onClick={clearPreactivationNumbers} className="text-[9px] text-red-500">Clear</button>
+                          <button onClick={clearPreactivationNumbers} className="text-[9px] text-red-500">{t("clear")}</button>
                         )}
                       </div>
                       <div className="space-y-1 max-h-24 overflow-y-auto">
@@ -425,19 +428,19 @@ export function DetailPanel({
                           onClick={() => setPreactivationNumbers([...preactivationNumbers, ""])}
                           className="w-full py-1 border border-dashed border-gray-300 rounded text-xs text-gray-500 text-center"
                         >
-                          + Add Number
+                          {t("addNumber")}
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 my-1.5"><div className="flex-grow h-px bg-gray-100" /> <span className="text-[9px] text-gray-400">OR FILE</span> <div className="flex-grow h-px bg-gray-100" /></div>
+                    <div className="flex items-center gap-1 my-1.5"><div className="flex-grow h-px bg-gray-100" /> <span className="text-[9px] text-gray-400">{t("orFile")}</span> <div className="flex-grow h-px bg-gray-100" /></div>
 
                     <input ref={preactivationFileRef} type="file" accept=".txt,.csv" onChange={handlePreactivationFileSelect} className="hidden" />
                     <button
                       onClick={() => preactivationFileRef.current?.click()}
                       className="w-full py-1 border border-gray-200 rounded bg-gray-50 text-xs text-gray-700 flex justify-center items-center gap-1"
                     >
-                      <Upload className="w-3.5 h-3.5 text-gray-500" /> Choose Text File
+                      <Upload className="w-3.5 h-3.5 text-gray-500" /> {t("chooseTextFile")}
                     </button>
 
                     <button
@@ -450,12 +453,12 @@ export function DetailPanel({
                       disabled={preactivationNumbers.filter(n => n.trim().length > 0).length === 0 || isUploadingPreActivation}
                       className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
                     >
-                      {isUploadingPreActivation ? "Uploading..." : "Upload Preactivations"}
+                      {isUploadingPreActivation ? t("uploading") : t("uploadPreactivations")}
                     </button>
 
                     {preactivationResults && (
                       <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded">
-                        Processed: {preactivationResults.success} success, {preactivationResults.failed} skipped.
+                        {t("processed", { success: preactivationResults.success, failed: preactivationResults.failed })}
                       </div>
                     )}
                   </div>
@@ -470,7 +473,7 @@ export function DetailPanel({
             {(node.data as Lecture).attributes.description && (
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Description
+                  {t("description")}
                 </label>
                 <p className="text-xs text-gray-700 mt-1 bg-gray-50 p-2 rounded">
                   {(node.data as Lecture).attributes.description}
@@ -504,7 +507,7 @@ export function DetailPanel({
                 return (
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                      Video Preview
+                      {t("videoPreview")}
                     </label>
                     <div className="aspect-video w-full rounded-lg overflow-hidden border border-gray-200 bg-black">
                       {isEmbedUrl ? (
@@ -522,7 +525,7 @@ export function DetailPanel({
                           controls
                           preload="metadata"
                         >
-                          Your browser does not support the video tag.
+                          {t("videoNotSupported")}
                         </video>
                       )}
                     </div>
@@ -534,13 +537,13 @@ export function DetailPanel({
                 return (
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                      PDF Preview
+                      {t("pdfPreview")}
                     </label>
                     <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
                       <iframe
                         src={pdfAttachment.attributes?.path}
                         className="w-full h-full"
-                        title={pdfAttachment.attributes?.name || "PDF Preview"}
+                        title={pdfAttachment.attributes?.name || t("pdfPreview")}
                       />
                     </div>
                   </div>
@@ -551,12 +554,12 @@ export function DetailPanel({
                 return (
                   <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                      Thumbnail
+                      {t("thumbnail")}
                     </label>
                     <div className="w-full h-32 rounded-lg overflow-hidden border border-gray-200">
                       <img
                         src={chapter.thumbnail}
-                        alt="Thumbnail"
+                        alt={t("thumbnail")}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -571,7 +574,7 @@ export function DetailPanel({
             {((node.data as Chapter).attributes.attachments?.length ?? 0) > 0 && (
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                  Attachments & Resources
+                  {t("attachmentsResources")}
                 </label>
                 <div className="space-y-1.5 max-h-32 overflow-y-auto">
                   {(node.data as Chapter).attributes.attachments?.map((att: any) => (
@@ -584,7 +587,7 @@ export function DetailPanel({
                     >
                       <div className="flex items-center gap-1.5 truncate">
                         <FileText className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
-                        <span className="truncate">{att.attributes?.name || "Unnamed"}</span>
+                        <span className="truncate">{att.attributes?.name || t("unnamed")}</span>
                       </div>
                       <ChevronRight className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                     </a>
@@ -599,13 +602,13 @@ export function DetailPanel({
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1">
                     <Power className="w-3.5 h-3.5 text-blue-600" />
-                    <span className="text-xs font-bold text-gray-800">Activate Lesson</span>
+                    <span className="text-xs font-bold text-gray-800">{t("activateLesson")}</span>
                   </div>
                   {!isInstructor && (
                     <button
                       onClick={() => onGenerateCodes("chapter", node.data.id)}
                       className="p-1 hover:text-blue-600 transition-colors border rounded bg-gray-50"
-                      title="Generate Codes"
+                      title={t("generateCodes")}
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
@@ -619,14 +622,14 @@ export function DetailPanel({
                     className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "code" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
                       }`}
                   >
-                    By Code
+                    {t("byCode")}
                   </button>
                   <button
                     onClick={() => setActivationTab("preactivation")}
                     className={`flex-1 py-1 text-[10px] font-semibold rounded-md transition-all ${activationTab === "preactivation" ? "bg-white text-blue-600 shadow-xs" : "text-gray-500"
                       }`}
                   >
-                    Preactivation
+                    {t("preactivation")}
                   </button>
                 </div>
 
@@ -634,7 +637,7 @@ export function DetailPanel({
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] text-gray-500 block mb-1">
-                        Available Codes ({getCodesForItem("chapter", itemId).filter((c) => !c.attributes.is_used).length})
+                        {t("availableCodes")} ({getCodesForItem("chapter", itemId).filter((c) => !c.attributes.is_used).length})
                       </label>
                       {codesLoading ? (
                         <div className="flex justify-center py-2"><Loader2 className="w-4 h-4 animate-spin text-blue-500" /></div>
@@ -670,19 +673,19 @@ export function DetailPanel({
                               </label>
                             ))}
                           {getCodesForItem("chapter", itemId).filter((c) => !c.attributes.is_used).length === 0 && (
-                            <p className="text-[10px] text-gray-400 italic text-center py-1">No codes available</p>
+                            <p className="text-[10px] text-gray-400 italic text-center py-1">{t("noCodesAvailable")}</p>
                           )}
                         </div>
                       )}
                     </div>
 
                     <div>
-                      <label className="text-[10px] text-gray-500 block mb-1">Select Student</label>
+                      <label className="text-[10px] text-gray-500 block mb-1">{t("selectStudent")}</label>
                       <div className="relative">
                         <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Search students"
+                          placeholder={t("searchStudents")}
                           value={studentSearch}
                           onChange={(e) => setStudentSearch(e.target.value)}
                           className="w-full pl-7 pr-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
@@ -724,16 +727,16 @@ export function DetailPanel({
                       disabled={isActivating || !selectedCode || !selectedStudent}
                       className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
                     >
-                      {isActivating ? "Activating..." : "Activate Student"}
+                      {isActivating ? t("activating") : t("activateStudent")}
                     </button>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-gray-500">Phone Numbers</span>
+                        <span className="text-[10px] text-gray-500">{t("phoneNumbers")}</span>
                         {preactivationNumbers.length > 0 && (
-                          <button onClick={clearPreactivationNumbers} className="text-[9px] text-red-500">Clear</button>
+                          <button onClick={clearPreactivationNumbers} className="text-[9px] text-red-500">{t("clear")}</button>
                         )}
                       </div>
                       <div className="space-y-1 max-h-24 overflow-y-auto">
@@ -762,19 +765,19 @@ export function DetailPanel({
                           onClick={() => setPreactivationNumbers([...preactivationNumbers, ""])}
                           className="w-full py-1 border border-dashed border-gray-300 rounded text-xs text-gray-500 text-center"
                         >
-                          + Add Number
+                          {t("addNumber")}
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 my-1.5"><div className="flex-grow h-px bg-gray-100" /> <span className="text-[9px] text-gray-400">OR FILE</span> <div className="flex-grow h-px bg-gray-100" /></div>
+                    <div className="flex items-center gap-1 my-1.5"><div className="flex-grow h-px bg-gray-100" /> <span className="text-[9px] text-gray-400">{t("orFile")}</span> <div className="flex-grow h-px bg-gray-100" /></div>
 
                     <input ref={preactivationFileRef} type="file" accept=".txt,.csv" onChange={handlePreactivationFileSelect} className="hidden" />
                     <button
                       onClick={() => preactivationFileRef.current?.click()}
                       className="w-full py-1 border border-gray-200 rounded bg-gray-50 text-xs text-gray-700 flex justify-center items-center gap-1"
                     >
-                      <Upload className="w-3.5 h-3.5 text-gray-500" /> Choose Text File
+                      <Upload className="w-3.5 h-3.5 text-gray-500" /> {t("chooseTextFile")}
                     </button>
 
                     <button
@@ -787,12 +790,12 @@ export function DetailPanel({
                       disabled={preactivationNumbers.filter(n => n.trim().length > 0).length === 0 || isUploadingPreActivation}
                       className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
                     >
-                      {isUploadingPreActivation ? "Uploading..." : "Upload Preactivations"}
+                      {isUploadingPreActivation ? t("uploading") : t("uploadPreactivations")}
                     </button>
 
                     {preactivationResults && (
                       <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded">
-                        Processed: {preactivationResults.success} success, {preactivationResults.failed} skipped.
+                        {t("processed", { success: preactivationResults.success, failed: preactivationResults.failed })}
                       </div>
                     )}
                   </div>
@@ -806,7 +809,7 @@ export function DetailPanel({
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Type
+                {t("type")}
               </label>
               <p className="text-xs text-gray-700 capitalize mt-1 border border-gray-100 bg-gray-50 px-2 py-1 rounded inline-block">
                 {(node.data as Note).attributes.type}
@@ -816,7 +819,7 @@ export function DetailPanel({
             {(node.data as Note).attributes.content && (
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Content
+                  {t("content")}
                 </label>
                 <p className="text-xs text-gray-600 mt-1 whitespace-pre-wrap bg-gray-50 p-2.5 rounded-xl border border-gray-100 leading-relaxed max-h-48 overflow-y-auto">
                   {(node.data as Note).attributes.content}
@@ -827,7 +830,7 @@ export function DetailPanel({
             {(node.data as Note).attributes.linked_lecture && (
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Linked Lecture
+                  {t("linkedLecture")}
                 </label>
                 <p className="text-xs text-gray-700 mt-1">
                   {(node.data as Note).attributes.linked_lecture}
@@ -838,7 +841,7 @@ export function DetailPanel({
             {(node.data as Note).attributes.attachment && (
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                  Attachment
+                  {t("attachment")}
                 </label>
                 <a
                   href={(node.data as Note).attributes.attachment?.url}
@@ -856,7 +859,7 @@ export function DetailPanel({
             )}
 
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Status</label>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t("status")}</label>
               <div className="mt-1">
                 <span
                   className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${(node.data as Note).attributes.is_publish
@@ -864,7 +867,7 @@ export function DetailPanel({
                       : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                 >
-                  {(node.data as Note).attributes.is_publish ? "Published" : "Draft"}
+                  {(node.data as Note).attributes.is_publish ? t("published") : t("draft")}
                 </span>
               </div>
             </div>
@@ -880,19 +883,19 @@ export function DetailPanel({
               onClick={() => onCopyMove(node, "copy")}
               className="px-2.5 py-1.5 bg-blue-50 text-blue-600 text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
             >
-              <Copy className="w-3.5 h-3.5" /> Copy
+              <Copy className="w-3.5 h-3.5" /> {t("copy")}
             </button>
             <button
               onClick={() => onCopyMove(node, "move")}
               className="px-2.5 py-1.5 bg-purple-50 text-purple-600 text-xs font-semibold rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-1"
             >
-              <ArrowRightLeft className="w-3.5 h-3.5" /> Move
+              <ArrowRightLeft className="w-3.5 h-3.5" /> {t("move")}
             </button>
             <button
               onClick={() => openViewers(node)}
               className="px-2.5 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
             >
-              <Users className="w-3.5 h-3.5 text-gray-500" /> Viewers
+              <Users className="w-3.5 h-3.5 text-gray-500" /> {t("viewers")}
             </button>
           </>
         )}
@@ -901,7 +904,7 @@ export function DetailPanel({
           onClick={() => onEdit(node)}
           className="flex-grow px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-lg transition-colors text-center"
         >
-          Edit {node.type.charAt(0).toUpperCase() + node.type.slice(1)}
+          {t("edit")} {node.type.charAt(0).toUpperCase() + node.type.slice(1)}
         </button>
 
         {!isInstructor && (
@@ -909,7 +912,7 @@ export function DetailPanel({
             onClick={() => onDelete(node)}
             className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold rounded-lg transition-colors"
           >
-            Delete
+            {t("delete")}
           </button>
         )}
       </div>
