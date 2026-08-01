@@ -485,7 +485,7 @@ export function DetailPanel({
         )}
 
         {node.type === "chapter" && (
-          <div className="space-y-4">
+          <div className="space-y-4 w-[300px]">
             {/* Video / PDF / Thumbnail preview */}
             <ChapterPreview chapter={(node.data as Chapter).attributes} />
 

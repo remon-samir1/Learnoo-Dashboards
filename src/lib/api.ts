@@ -686,19 +686,17 @@ export const discussionsApi = {
 
   get: (id: number) => get<ApiResponse<Discussion>>(`/v1/discussion/${id}`),
 
-  create: (data: CreateDiscussionRequest) =>
-    post<ApiResponse<Discussion>>('/v1/discussion', data),
+  create: (data: CreateDiscussionRequest | FormData) => {
+    if (data instanceof FormData) {
+      return postMultipart<ApiResponse<Discussion>>('/v1/discussion', data);
+    }
+    return post<ApiResponse<Discussion>>('/v1/discussion', data);
+  },
 
   update: (id: number, data: CreateDiscussionRequest) =>
     put<ApiResponse<Discussion>>(`/v1/discussion/${id}`, data),
 
   delete: (id: number) => del<ApiResponse<Discussion>>(`/v1/discussion/${id}`),
-
-  uploadMedia: (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    return postMultipart<ApiResponse<{ path: string; url: string }>>('/v1/discussion/upload', formData);
-  },
 };
 
 // ============================================

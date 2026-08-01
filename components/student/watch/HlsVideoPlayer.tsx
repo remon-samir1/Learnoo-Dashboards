@@ -966,7 +966,7 @@ const revealControls = useCallback(() => {
       className?.replace(/\bflex-1\b/g, '').trim() || 'aspect-video w-full max-w-full';
 
     const videoStageGrid = (
-      <div className="relative grid h-full min-h-0 min-w-0 grid-cols-1 grid-rows-1">
+      <div className="relative grid h-full min-h-0  min-w-0 grid-cols-1 grid-rows-1">
         <div
           className="col-start-1 row-start-1 relative z-0 flex min-h-0 min-w-0 max-h-full max-w-full items-center justify-center"
           onClick={showCustomControls ? onVideoSurfaceClick : undefined}
@@ -983,6 +983,7 @@ const revealControls = useCallback(() => {
             autoPlay={autoPlay}
             muted={muted}
             poster={poster}
+            crossOrigin="anonymous"
           >
             {children}
           </video>
@@ -1063,7 +1064,7 @@ const revealControls = useCallback(() => {
       <div ref={videoWrapperRef} className={wrapperClass}>
         {videoColumn}
         {watchPanel ? (
-          <div className="watch-pdf-shell relative z-40 flex h-full min-h-0 w-1/2 min-w-0 flex-[1_1_50%] basis-1/2 flex-col overflow-hidden border-s border-slate-600/90 bg-[#f1f5f9] [&:fullscreen]:h-full [&:fullscreen]:max-h-none [&:fullscreen]:min-h-0 [&:fullscreen]:min-w-0 [&:fullscreen]:w-1/2 [&:fullscreen]:flex-[1_1_50%] [&:fullscreen]:basis-1/2 [&:fullscreen]:border-t-0 [&:fullscreen]:border-s [&_.watch-pdf-scroll]:min-h-0 [&_.watch-pdf-scroll]:flex-1 [&_.watch-pdf-scroll]:overflow-y-auto">
+          <div className="watch-pdf-shell relative z-40 flex aspect-video min-h-0 w-1/2 min-w-0 flex-[1_1_50%] basis-1/2 flex-col overflow-hidden border-s border-slate-600/90 bg-[#f1f5f9] [&:fullscreen]:h-full [&:fullscreen]:max-h-none [&:fullscreen]:min-h-0 [&:fullscreen]:min-w-0 [&:fullscreen]:w-1/2 [&:fullscreen]:flex-[1_1_50%] [&:fullscreen]:basis-1/2 [&:fullscreen]:border-t-0 [&:fullscreen]:border-s [&_.watch-pdf-scroll]:min-h-0 [&_.watch-pdf-scroll]:flex-1 [&_.watch-pdf-scroll]:overflow-y-auto">
             {watchPanel}
           </div>
         ) : null}

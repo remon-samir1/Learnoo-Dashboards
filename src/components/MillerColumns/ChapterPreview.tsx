@@ -70,7 +70,7 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
 
     return (
       <div>
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+        <label className="text-[10px] font-bold text-gray-400 max-w-[300px] uppercase tracking-wider block mb-1">
           {t("videoPreview")}
         </label>
         <div className="aspect-video w-full rounded-lg overflow-hidden border border-gray-200 bg-black">
@@ -85,7 +85,7 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
           ) : (
             <video
               src={videoUrl}
-              className="w-full h-full"
+              className="w-[200px] h-[200px]"
               controls
               preload="metadata"
               onError={() => {

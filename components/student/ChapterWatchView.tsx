@@ -21,7 +21,6 @@ import {
   ZoomOut,
   Mic,
   Square,
-  Pause,
   Trash2,
   Camera,
 } from 'lucide-react';
@@ -50,8 +49,7 @@ import {
 } from '@/src/lib/student-chapter-access';
 import PdfPreviewModal from './PdfPreviewModal';
 import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
-import { VideoWatermark } from '@/components/student/watch/VideoWatermark';
-import { StudentVideoStaticOverlay } from '@/components/student/watch/StudentVideoStaticOverlay';
+import { HlsVideoPlayer } from '@/components/student/watch/HlsVideoPlayer';
 
 type ChapterAttachment = NonNullable<Chapter['attributes']['attachments']>[number];
 
@@ -344,13 +342,6 @@ export default function ChapterWatchView({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const vdoPlayerRef = useRef<any>(null);
-  const vdoPlayerContainerRef = useRef<HTMLDivElement | null>(null);
-  const [useVdoPlayerApi, setUseVdoPlayerApi] = useState(false);
-  // Screen capture state
-  const screenStreamRef = useRef<MediaStream | null>(null);
-  const [screenCaptureDenied, setScreenCaptureDenied] = useState(false);
-  const [screenCapturePrompted, setScreenCapturePrompted] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -361,148 +352,9 @@ export default function ChapterWatchView({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Load VdoCipher Player API script
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const scriptId = 'vdocipher-api-script';
-    const scriptUrl = 'https://player.vdocipher.com/v2/api.js';
-
-    // Check if script is already loaded
-    if (document.getElementById(scriptId)) return;
-
-    const script = document.createElement('script');
-    script.id = scriptId;
-    script.src = scriptUrl;
-    script.async = true;
-    script.onload = () => console.log('[ChapterWatchView] VdoCipher api.js loaded successfully');
-    script.onerror = () => console.error('[ChapterWatchView] VdoCipher api.js failed to load');
-    document.head.appendChild(script);
-
-    return () => {
-      // Don't remove the script as it might be used by other components
-    };
-  }, []);
-
-  // Parse VdoCipher URL to extract OTP and playbackInfo
-  const parseVdoCipherParams = (url: string): { otp?: string; playbackInfo?: string } | null => {
-    try {
-      const urlObj = new URL(url);
-      const otp = urlObj.searchParams.get('otp');
-      const playbackInfo = urlObj.searchParams.get('playbackInfo');
-      if (otp && playbackInfo) {
-        return { otp, playbackInfo };
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
-  // Detect whether to use VdoCipher Player API based on URL format
-  useEffect(() => {
-    if (!stableVideoSrc) {
-      console.log('[ChapterWatchView] No stableVideoSrc, useVdoPlayerApi = false');
-      setUseVdoPlayerApi(false);
-      return;
-    }
-    const params = parseVdoCipherParams(stableVideoSrc);
-    console.log('[ChapterWatchView] VdoCipher URL detection:', { stableVideoSrc, params, willUseApi: Boolean(params) });
-    setUseVdoPlayerApi(Boolean(params));
-  }, [stableVideoSrc]);
-
-  // Initialize VdoCipher Player API (only when useVdoPlayerApi is true and container is mounted)
-  useEffect(() => {
-    if (!useVdoPlayerApi || !stableVideoSrc || !vdoPlayerContainerRef.current) return;
-
-    const params = parseVdoCipherParams(stableVideoSrc);
-    if (!params) return;
-
-    const MAX_RETRIES = 10; // ~5s total at 500ms each
-    let retryCount = 0;
-
-    const initializePlayer = () => {
-      if (typeof window !== 'undefined' && (window as any).VdoPlayer) {
-        try {
-          // Clean up existing player
-          if (vdoPlayerRef.current) {
-            try {
-              vdoPlayerRef.current.video.remove();
-            } catch (err) {
-              console.debug('[ChapterWatchView] Error removing existing player:', err);
-            }
-            vdoPlayerRef.current = null;
-          }
-
-          const { otp, playbackInfo } = params;
-          const VdoPlayer = (window as any).VdoPlayer;
-
-          console.log('[ChapterWatchView] Initializing VdoCipher Player API:', { otp, playbackInfo });
-
-          const player = VdoPlayer.initialize({
-            otp,
-            playbackInfo,
-            container: vdoPlayerContainerRef.current,
-          });
-
-          if (!player || !player.video) {
-            throw new Error('VdoPlayer.initialize returned no video element');
-          }
-
-          vdoPlayerRef.current = player;
-
-          // Subscribe to timeupdate events for accurate currentTime tracking
-          player.video.addEventListener('timeupdate', () => {
-            console.log('[ChapterWatchView] VdoPlayer timeupdate event fired');
-            player.api.currentTime.then((time: number) => {
-              console.log('[ChapterWatchView] VdoPlayer currentTime resolved:', time);
-              if (Number.isFinite(time)) {
-                setCurrentVideoMoment(time);
-              }
-            }).catch((err: unknown) => {
-              console.error('[ChapterWatchView] Error getting currentTime:', err);
-            });
-          });
-
-          // Handle player errors
-          player.video.addEventListener('error', (err: Event) => {
-            console.error('[ChapterWatchView] VdoCipher player error:', err);
-          });
-        } catch (err) {
-          console.error('[ChapterWatchView] VdoPlayer init failed, falling back to iframe:', err);
-          console.log('[ChapterWatchView] Setting useVdoPlayerApi = false (fallback triggered)');
-          setUseVdoPlayerApi(false); // fall back to the iframe that used to work
-        }
-      } else if (retryCount < MAX_RETRIES) {
-        retryCount += 1;
-        setTimeout(initializePlayer, 500);
-      } else {
-        console.error('[ChapterWatchView] VdoCipher api.js never loaded, falling back to iframe');
-        console.log('[ChapterWatchView] Setting useVdoPlayerApi = false (script never loaded)');
-        setUseVdoPlayerApi(false); // fall back to the iframe that used to work
-      }
-    };
-
-    initializePlayer();
-
-    return () => {
-      // Clean up player on unmount
-      if (vdoPlayerRef.current) {
-        try {
-          vdoPlayerRef.current.video.remove();
-        } catch (err) {
-          console.debug('[ChapterWatchView] Error cleaning up player:', err);
-        }
-        vdoPlayerRef.current = null;
-      }
-    };
-  }, [useVdoPlayerApi, stableVideoSrc]);
-
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
-  const playerWrapperRef = useRef<HTMLDivElement | null>(null);
+  const hlsVideoRef = useRef<HTMLVideoElement | null>(null);
   const pdfPanelRef = useRef<HTMLDivElement | null>(null);
-  const vdoCipherIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [currentVideoMoment, setCurrentVideoMoment] = useState<number>(0);
 
   const chapterIdValid = chapterId.trim().length > 0;
@@ -617,8 +469,8 @@ export default function ChapterWatchView({
 
   useChapterViewRecording({
     chapterId: chapterIdForApi,
-    videoRef: watermarkDummyRef, // Dummy ref because we use iframe + timer fallback
-    videoSrc: stableVideoSrc || 'vdocipher', // Ensure hook is enabled even for iframes
+    videoRef: hlsVideoRef,
+    videoSrc: stableVideoSrc,
     viewByMinute: chapter?.attributes?.view_by_minute ?? 0,
     enabled: Number.isFinite(chapterIdForApi) && !accessDenied,
     onViewRecordError: (msg) => {
@@ -630,13 +482,6 @@ export default function ChapterWatchView({
     if (!pdfPanelVisible) setShowPdf(false);
   }, [pdfPanelVisible]);
 
-  // Clean up screen capture stream on unmount
-  useEffect(() => {
-    return () => {
-      screenStreamRef.current?.getTracks().forEach((t) => t.stop());
-      screenStreamRef.current = null;
-    };
-  }, []);
 
   // If no video but PDF exists, auto-show PDF
   useEffect(() => {
@@ -644,6 +489,19 @@ export default function ChapterWatchView({
       setShowPdf(true);
     }
   }, [stableVideoSrc, pdfUrl, pdfPanelVisible]);
+
+  // Track current video moment from native <video> element timeupdate
+  useEffect(() => {
+    const video = hlsVideoRef.current;
+    if (!video) return;
+    const onTimeUpdate = () => {
+      if (Number.isFinite(video.currentTime)) {
+        setCurrentVideoMoment(video.currentTime);
+      }
+    };
+    video.addEventListener('timeupdate', onTimeUpdate);
+    return () => video.removeEventListener('timeupdate', onTimeUpdate);
+  }, [stableVideoSrc]);
 
   useEffect(() => {
     if (!Number.isFinite(chapterIdForApi) || watchAccessDenied) return;
@@ -680,67 +538,6 @@ export default function ChapterWatchView({
     document.addEventListener('fullscreenchange', onFsChange);
     return () => document.removeEventListener('fullscreenchange', onFsChange);
   }, []);
-
-  // Notify VdoCipher iframe of container resize events (only for iframe fallback)
-  useEffect(() => {
-    if (!playerWrapperRef.current || !vdoCipherIframeRef.current || !stableVideoSrc || useVdoPlayerApi) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const iframe = vdoCipherIframeRef.current;
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage(
-            {
-              event: 'resize',
-              width: entry.contentRect.width,
-              height: entry.contentRect.height,
-            },
-            '*'
-          );
-        }
-      }
-    });
-
-    resizeObserver.observe(playerWrapperRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [stableVideoSrc, useVdoPlayerApi]);
-
-  // VdoCipher iframe postMessage handler (only for iframe fallback)
-  useEffect(() => {
-    if (!stableVideoSrc || useVdoPlayerApi) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        const data = event.data;
-        if (typeof data === 'object' && data !== null) {
-          if (typeof data.currentTime === 'number' && Number.isFinite(data.currentTime)) {
-            setCurrentVideoMoment(data.currentTime);
-          } else if (typeof data.time === 'number' && Number.isFinite(data.time)) {
-            setCurrentVideoMoment(data.time);
-          }
-        }
-      } catch (err) {
-        console.debug('[ChapterWatchView] VdoCipher message parse error', err);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [stableVideoSrc, useVdoPlayerApi]);
-
-
-
-  const toggleFullscreen = () => {
-    if (!playerWrapperRef.current) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-    } else {
-      void playerWrapperRef.current.requestFullscreen();
-    }
-  };
 
   const togglePdfFullscreen = () => {
     if (!pdfPanelRef.current) return;
@@ -779,24 +576,9 @@ export default function ChapterWatchView({
 
   // Helper to get current video moment for discussions
   const getCurrentVideoMoment = (): number => {
-    // Return the tracked moment from VdoCipher Player API or iframe fallback
-    if (Number.isFinite(currentVideoMoment) && currentVideoMoment >= 0) {
-      console.log('[ChapterWatchView] getCurrentVideoMoment returning tracked moment:', currentVideoMoment, 'useVdoPlayerApi:', useVdoPlayerApi);
-      return currentVideoMoment;
-    }
-    console.log('[ChapterWatchView] getCurrentVideoMoment: currentVideoMoment not valid, returning 0. useVdoPlayerApi:', useVdoPlayerApi, 'currentVideoMoment:', currentVideoMoment);
-    // For iframe fallback, try to query directly
-    if (!useVdoPlayerApi) {
-      try {
-        const iframe = vdoCipherIframeRef.current;
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ event: 'getCurrentTime' }, '*');
-        }
-      } catch (err) {
-        // Ignore CORS errors
-      }
-    }
-    return 0;
+    return Number.isFinite(currentVideoMoment) && currentVideoMoment >= 0
+      ? currentVideoMoment
+      : 0;
   };
 
   const startRecording = useCallback(async () => {
@@ -857,77 +639,36 @@ export default function ChapterWatchView({
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
-  // Request screen capture permission (fire-and-forget, non-blocking)
-  const requestScreenCapture = useCallback(async (): Promise<MediaStream | null> => {
-    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getDisplayMedia) {
-      console.debug('[ChapterWatchView] Screen capture not supported in this environment');
-      setScreenCapturePrompted(true);
-      return null;
-    }
-    if (screenStreamRef.current) return screenStreamRef.current;
-    if (screenCaptureDenied) return null;
-    try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { displaySurface: 'browser' } as any,
-      });
-      stream.getVideoTracks()[0]?.addEventListener('ended', () => {
-        console.debug('[ChapterWatchView] Screen capture stream ended by user');
-        screenStreamRef.current = null;
-      });
-      screenStreamRef.current = stream;
-      console.log('[ChapterWatchView] Screen capture stream acquired successfully');
-      return stream;
-    } catch (err) {
-      console.debug('[ChapterWatchView] Screen capture denied/cancelled:', err);
-      setScreenCaptureDenied(true);
-      return null;
-    } finally {
-      setScreenCapturePrompted(true);
-    }
-  }, [screenCaptureDenied]);
-
-  // Capture a single frame from the screen capture stream
-  const captureScreenFrame = useCallback(async (): Promise<File | null> => {
-    const stream = screenStreamRef.current;
-    if (!stream) {
-      console.debug('[ChapterWatchView] No screen capture stream available for frame capture');
+  // Capture a single frame directly from the video element
+  const captureVideoFrame = useCallback((): File | null => {
+    const video = hlsVideoRef.current;
+    if (!video || video.videoWidth === 0 || video.readyState < 2) {
+      console.debug('[ChapterWatchView] Video not ready for frame capture');
       return null;
     }
     try {
-      const track = stream.getVideoTracks()[0];
-      if (!track) {
-        console.debug('[ChapterWatchView] No video track in screen capture stream');
-        return null;
-      }
-      if ('ImageCapture' in window) {
-        const imageCapture = new (window as any).ImageCapture(track);
-        const bitmap = await imageCapture.grabFrame();
-        const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return null;
-        ctx.drawImage(bitmap, 0, 0);
-        const blob: Blob | null = await new Promise((resolve) =>
-          canvas.toBlob(resolve, 'image/jpeg', 0.85)
-        );
-        return blob ? new File([blob], 'screenshot.jpg', { type: 'image/jpeg' }) : null;
-      }
-      // Fallback: draw video frame to canvas
-      const video = document.createElement('video');
-      video.srcObject = stream;
-      await video.play();
-      await new Promise((r) => setTimeout(r, 100));
       const canvas = document.createElement('canvas');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) return null;
-      ctx.drawImage(video, 0, 0);
-      const blob: Blob | null = await new Promise((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', 0.85)
-      );
-      return blob ? new File([blob], 'screenshot.jpg', { type: 'image/jpeg' }) : null;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      let dataUrl: string;
+      try {
+        dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      } catch (err) {
+        // Still tainted for some reason (e.g. cross-origin without CORS headers
+        // on the HLS segments) — fail gracefully instead of throwing.
+        console.debug('[ChapterWatchView] Canvas tainted, cannot export frame:', err);
+        return null;
+      }
+      const arr = dataUrl.split(',');
+      const mimeMatch = arr[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      const bstr = atob(arr[1]);
+      const u8arr = new Uint8Array(bstr.length);
+      for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+      return new File([u8arr], 'screenshot.jpg', { type: mime });
     } catch (err) {
       console.debug('[ChapterWatchView] Frame capture failed:', err);
       return null;
@@ -940,43 +681,27 @@ export default function ChapterWatchView({
     setComposerSubmitting(true);
     try {
       const moment = getCurrentVideoMoment();
-      console.log('[ChapterWatchView] submitComposer: moment value being sent:', moment, 'useVdoPlayerApi:', useVdoPlayerApi, 'currentVideoMoment:', currentVideoMoment);
 
       if (composerMode === 'voice') {
         if (!audioBlob) {
           toast.error('Please record a voice note first');
           return;
         }
-        let imagePath: string | null = null;
-        const frameFile = await captureScreenFrame();
-        if (frameFile) {
-          try {
-            const uploadRes = await api.discussions.uploadMedia(frameFile);
-            imagePath = uploadRes.data?.path ?? null;
-            console.log('[ChapterWatchView] Screenshot uploaded successfully:', imagePath);
-          } catch (err) {
-            console.debug('[ChapterWatchView] Screenshot upload failed:', err);
-          }
-        }
+        const formData = new FormData();
+        formData.append('chapter_id', String(chapterIdForApi));
+        formData.append('type', 'voice');
+        formData.append('discussion_type', 'voice');
+        formData.append('moment', String(moment));
+        formData.append('parent_id', '');
+        formData.append('duration', String(recordingSeconds));
+        formData.append('content', '');
         const voiceFile = new File([audioBlob], 'voice-note.webm', { type: 'audio/webm' });
-        // Upload voice file first
-        const voiceUploadRes = await api.discussions.uploadMedia(voiceFile);
-        const voicePath = voiceUploadRes.data?.path ?? null;
-        if (!voicePath) {
-          toast.error('Voice upload failed');
-          return;
+        formData.append('voice', voiceFile);
+        const frameFile = captureVideoFrame();
+        if (frameFile) {
+          formData.append('image', frameFile);
         }
-        await api.discussions.create({
-          chapter_id: chapterIdForApi,
-          type: 'voice',
-          voice: voicePath,
-          moment,
-          parent_id: null,
-          discussion_type: 'voice',
-          duration: recordingSeconds,
-          image: imagePath,
-          content: '',
-        });
+        await api.discussions.create(formData);
         toast.success(t('discussionPosted'));
         clearRecording();
         setComposerMode('text');
@@ -986,26 +711,18 @@ export default function ChapterWatchView({
           toast.error(t('discussionContentRequired'));
           return;
         }
-        let imagePath: string | null = null;
-        const frameFile = await captureScreenFrame();
+        const formData = new FormData();
+        formData.append('chapter_id', String(chapterIdForApi));
+        formData.append('type', 'text');
+        formData.append('discussion_type', 'text');
+        formData.append('content', text);
+        formData.append('moment', String(moment));
+        formData.append('parent_id', '');
+        const frameFile = captureVideoFrame();
         if (frameFile) {
-          try {
-            const uploadRes = await api.discussions.uploadMedia(frameFile);
-            imagePath = uploadRes.data?.path ?? null;
-            console.log('[ChapterWatchView] Screenshot uploaded successfully:', imagePath);
-          } catch (err) {
-            console.debug('[ChapterWatchView] Screenshot upload failed:', err);
-          }
+          formData.append('image', frameFile);
         }
-        await api.discussions.create({
-          chapter_id: chapterIdForApi,
-          type: 'text',
-          content: text,
-          moment,
-          parent_id: null,
-          discussion_type: 'text',
-          image: imagePath,
-        });
+        await api.discussions.create(formData);
         toast.success(t('discussionPosted'));
         setComposerText('');
       }
@@ -1103,7 +820,7 @@ export default function ChapterWatchView({
 
   const pdfWatchPanel =
     showPdf && pdfUrl && pdfPanelVisible ? (
-      <div ref={pdfPanelRef} className={`flex min-h-0 flex-col bg-white ${isPdfFullscreen ? 'fixed inset-0 z-[9999] h-screen w-screen' : isFullscreen ? 'h-screen' : 'h-full'}`}>
+      <div ref={pdfPanelRef} className={`flex min-h-0 flex-col bg-white ${isPdfFullscreen ? 'fixed inset-0 z-[9999] h-screen w-screen' : ''}`}>
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 bg-[#f8fafc] px-3 py-2.5 sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
             <FileText className="size-4 shrink-0 text-[#2D43D1]" aria-hidden />
@@ -1160,7 +877,7 @@ export default function ChapterWatchView({
             </button>
           </div>
         </div>
-        <div className={`min-h-0 flex-1 overflow-y-auto overflow-x-auto overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-x touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none] ${isPdfFullscreen || isFullscreen ? 'h-[calc(100vh-44px)]' : ''}`}>
+        <div className={`watch-pdf-scroll min-h-0 flex-1 overflow-y-auto overflow-x-auto overscroll-y-contain bg-[#eef2f6] px-2 py-3 touch-pan-x touch-pan-y sm:px-3 [-webkit-overflow-scrolling:touch] [overflow-anchor:none] ${isPdfFullscreen ? 'h-[calc(100vh-44px)]' : ''}`}>
           <PdfPreviewModal
             variant="inline"
             expandToContainer
@@ -1218,7 +935,7 @@ export default function ChapterWatchView({
         </div>
       </div>
 
-      <div className="w-full max-w-full overflow-x-clip [-webkit-overflow-scrolling:touch]">
+      <div className="w-full max-w-full  overflow-x-clip [-webkit-overflow-scrolling:touch]">
         <div className="mx-auto w-full max-w-6xl px-0 sm:px-6 lg:px-8">
           <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
             <div className="flex flex-col">
@@ -1238,55 +955,40 @@ export default function ChapterWatchView({
                       </Link>
                     </div>
                   ) : (
-                    <>
-                      <div ref={playerWrapperRef} className={`flex flex-col lg:flex-row ${isFullscreen ? 'h-screen w-screen bg-black' : ''}`}>
-                        <div className="relative lg:flex-1">
-                          {useVdoPlayerApi ? (
-                            // VdoCipher Player API container
-                            <div
-                              ref={vdoPlayerContainerRef}
-                              className="aspect-video w-full"
-                            />
-                          ) : (
-                            // Fallback to iframe for non-VdoCipher videos
-                            <iframe
-                              ref={vdoCipherIframeRef}
-                              src={stableVideoSrc}
-                              className="aspect-video w-full"
-                              allow="autoplay; encrypted-media; picture-in-picture; clipboard-write; web-share"
-                              frameBorder="0"
-                              scrolling="no"
-                            />
-                          )}
-                          {/* Overlays - ensured they don't block bottom interaction area on small screens */}
-                          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                            <StudentVideoStaticOverlay subtitle={lectureTitle.trim() || attrs.title?.trim()} />
-                            <VideoWatermark
-                              videoRef={watermarkDummyRef}
-                              contentType="chapters"
-                              initialResolution={initialWatermarkResolution ?? null}
-                            />
-                          </div>
-
-                          {/* Fullscreen toggle - moved higher on mobile to avoid overlapping VdoCipher gear icon/controls */}
+                    <HlsVideoPlayer
+                      ref={hlsVideoRef}
+                      src={stableVideoSrc}
+                      mp4FallbackUrl={attrs.video_mp4_url ?? ''}
+                      showCustomControls
+                      showWatermark
+                      watermarkContentType="chapters"
+                      initialWatermarkResolution={initialWatermarkResolution ?? null}
+                      showStaticStudentOverlay
+                      staticOverlaySubtitle={lectureTitle.trim() || attrs.title?.trim()}
+                      watchOverlay={
+                        pdfToggleVisible ? (
                           <button
                             type="button"
-                            onClick={toggleFullscreen}
-                            className="absolute bottom-12 right-2 z-20 rounded-md bg-black/60 p-1.5 text-white transition hover:bg-black/80 sm:bottom-2"
-                            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                            onClick={() => setShowPdf((v) => !v)}
+                            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white transition active:scale-[0.99] sm:min-h-0 sm:px-4 sm:py-2.5 ${showPdf
+                              ? 'border-slate-500/90 bg-slate-800 hover:bg-slate-700'
+                              : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800'
+                              }`}
                           >
-                            {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            <FileText className="size-4 shrink-0" aria-hidden />
+                            <span className="max-w-[4.5rem] truncate sm:max-w-none">
+                              {showPdf ? t('hidePdf') : t('showPdf')}
+                            </span>
                           </button>
-                        </div>
-
-                        {showPdf && pdfWatchPanel && (
-                          <div className={`w-full lg:w-1/2 ${isFullscreen ? 'h-screen overflow-hidden' : 'h-64 sm:h-80 overflow-hidden'}`}>
-                            <div className="h-full w-full">{pdfWatchPanel}</div>
-                          </div>
-                        )}
-                      </div>
-
-                    </>
+                        ) : undefined
+                      }
+                      watchPanel={showPdf && pdfUrl && pdfPanelVisible ? pdfWatchPanel : undefined}
+                      switchingPlaybackLabel={t('switchingPlaybackMethod')}
+                      onFatalPlaybackError={({ reason }) => {
+                        console.error('[ChapterWatchView] Fatal HLS playback error:', reason);
+                        toast.error(t('hlsPlaybackError'));
+                      }}
+                    />
                   )
                 ) : (
                   // NO VIDEO CASE
@@ -1320,7 +1022,6 @@ export default function ChapterWatchView({
                       type="button"
                       onClick={() => {
                         setComposerOpen((o) => !o);
-                        if (!screenCapturePrompted) void requestScreenCapture();
                       }}
                       className={`inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] max-md:rounded-none max-md:px-12 sm:min-h-0 sm:w-auto sm:px-7 sm:py-2.5 md:shrink-0 ${composerOpen
                         ? 'bg-[#2436b0] sm:ring-2 sm:ring-white/20'
@@ -1380,35 +1081,18 @@ export default function ChapterWatchView({
                 </div> */}
 
                 <div className="flex justify-stretch md:min-w-0 md:justify-end">
-                  <div className="flex w-full gap-2 md:w-auto">
-                    {pdfToggleVisible && (
-                      <button
-                        type="button"
-                        onClick={() => setShowPdf((v) => !v)}
-                        className={`inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white transition active:scale-[0.99] sm:min-h-0 sm:px-4 sm:py-2.5 ${showPdf
-                          ? 'border-slate-500/90 bg-slate-800 hover:bg-slate-700'
-                          : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800'
-                          }`}
-                      >
-                        <FileText className="size-4 shrink-0" aria-hidden />
-                        <span className="max-w-[4.5rem] truncate sm:max-w-none">
-                          {showPdf ? t('hidePdf') : t('showPdf')}
-                        </span>
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setDiscussionsOpen((o) => !o)}
-                      className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:flex-1 md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
-                      aria-expanded={discussionsOpen}
-                    >
-                      {t('discussionsCount', { count: discussions.length })}
-                      <ChevronDown
-                        className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
-                        aria-hidden
-                      />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDiscussionsOpen((o) => !o)}
+                    className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:flex-1 md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
+                    aria-expanded={discussionsOpen}
+                  >
+                    {t('discussionsCount', { count: discussions.length })}
+                    <ChevronDown
+                      className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
+                      aria-hidden
+                    />
+                  </button>
                 </div>
               </div>
             </div>
@@ -1453,13 +1137,7 @@ export default function ChapterWatchView({
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="flex items-center gap-1 text-[11px] text-slate-500">
                           <Camera className="size-3" />
-                          {screenStreamRef.current
-                            ? t('screenshotCaptured')
-                            : screenCaptureDenied
-                              ? t('screenshotDenied')
-                              : screenCapturePrompted
-                                ? t('screenshotUnsupported')
-                                : t('screenshotPending')}
+                          {t('screenshotCaptured')}
                         </span>
                         <button
                           type="button"

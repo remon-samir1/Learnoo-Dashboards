@@ -196,34 +196,34 @@ export function HlsVideoCustomControls({
           className="h-1 w-full max-sm:my-0 cursor-pointer touch-pan-x accent-white disabled:cursor-not-allowed disabled:opacity-40 sm:h-1.5 sm:my-0"
           aria-label={t('videoControlsSeek')}
         />
-        <div className="flex items-center gap-0.5 text-white max-sm:min-h-8 sm:gap-2 sm:h-auto">
+        <div className="flex items-center gap-1 text-white max-sm:min-h-10 sm:gap-2 sm:h-auto">
           <button
             type="button"
             onClick={togglePlay}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
             aria-label={paused ? t('videoControlsPlay') : t('videoControlsPause')}
           >
             {paused ? (
-              <Play className="size-3.5 translate-x-px sm:size-5 sm:translate-x-0.5" fill="currentColor" />
+              <Play className="size-4 translate-x-px sm:size-5 sm:translate-x-0.5" fill="currentColor" />
             ) : (
-              <Pause className="size-3.5 sm:size-5" />
+              <Pause className="size-4 sm:size-5" />
             )}
           </button>
-          <span className="min-w-0 flex-1 max-sm:truncate tabular-nums text-[9px] leading-none text-white/90 sm:min-w-[6.5rem] sm:flex-none sm:text-sm sm:leading-normal">
+          <span className="min-w-0 flex-1 max-sm:truncate tabular-nums text-[11px] leading-none text-white/90 sm:min-w-[6.5rem] sm:flex-none sm:text-sm sm:leading-normal">
             {formatClock(current)} / {formatClock(duration)}
           </span>
           <button
             type="button"
             onClick={toggleMute}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
             aria-label={muted ? t('videoControlsUnmute') : t('videoControlsMute')}
           >
-            {muted ? <VolumeX className="size-3.5 sm:size-5" /> : <Volume2 className="size-3.5 sm:size-5" />}
+            {muted ? <VolumeX className="size-4 sm:size-5" /> : <Volume2 className="size-4 sm:size-5" />}
           </button>
 
           {onQualityChange ? (
-            <label className="inline-flex min-w-0 max-w-[38%] shrink items-center gap-1 rounded bg-white/10 px-1.5 py-1 text-white/90 transition hover:bg-white/15 sm:max-w-none sm:gap-2 sm:px-2.5 sm:py-1.5">
-              <span className="hidden text-[10px] uppercase tracking-[0.18em] text-white/70 sm:inline sm:text-xs">
+            <label className="inline-flex min-w-0 max-w-[38%] shrink items-center gap-1.5 rounded bg-white/10 px-2 py-1.5 text-white/90 transition hover:bg-white/15 sm:max-w-none sm:gap-2 sm:px-2.5 sm:py-1.5">
+              <span className="hidden text-[11px] uppercase tracking-[0.18em] text-white/70 sm:inline sm:text-xs">
                 {qualityLabel}
               </span>
               <select
@@ -233,7 +233,7 @@ export function HlsVideoCustomControls({
                   onQualityChange(value);
                 }}
                 disabled={qualityOptions.length === 0}
-                className="max-w-full truncate rounded bg-slate-950/80 px-1.5 py-0.5 text-[10px] text-white outline-none transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:px-2 sm:py-1 sm:text-sm"
+                className="max-w-full truncate rounded bg-slate-950/80 px-2 py-0.5 text-[11px] text-white outline-none transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:px-2 sm:py-1 sm:text-sm"
                 aria-label={t('videoControlsQuality')}
               >
                 <option value="auto">Auto</option>
@@ -246,17 +246,17 @@ export function HlsVideoCustomControls({
                   : null}
               </select>
               {qualityOptions.length === 0 ? (
-                <span className="hidden text-[10px] text-white/60 sm:inline sm:text-xs">{qualityLoadingLabel}</span>
+                <span className="hidden text-[11px] text-white/60 sm:inline sm:text-xs">{qualityLoadingLabel}</span>
               ) : null}
             </label>
           ) : null}
 
-          <label className="inline-flex min-w-0 shrink items-center gap-1 rounded bg-white/10 px-1.5 py-1 text-white/90 transition hover:bg-white/15 sm:gap-2 sm:px-2.5 sm:py-1.5">
-            <Gauge className="hidden size-3.5 text-white/70 sm:inline sm:size-4" />
+          <label className="inline-flex min-w-0 shrink items-center gap-1.5 rounded bg-white/10 px-2 py-1.5 text-white/90 transition hover:bg-white/15 sm:gap-2 sm:px-2.5 sm:py-1.5">
+            <Gauge className="hidden size-4 text-white/70 sm:inline sm:size-4" />
             <select
               value={playbackSpeed}
               onChange={(e) => setSpeed(Number(e.target.value) as SpeedValue)}
-              className="max-w-full truncate rounded bg-slate-950/80 px-1.5 py-0.5 text-[10px] text-white outline-none transition hover:bg-slate-900 sm:px-2 sm:py-1 sm:text-sm"
+              className="max-w-full truncate rounded bg-slate-950/80 px-2 py-0.5 text-[11px] text-white outline-none transition hover:bg-slate-900 sm:px-2 sm:py-1 sm:text-sm"
               aria-label={t('videoControlsSpeed')}
             >
               {SPEED_OPTIONS.map((speed) => (
@@ -272,10 +272,10 @@ export function HlsVideoCustomControls({
           <button
             type="button"
             onClick={toggleShellFullscreen}
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
             aria-label={isFullscreen ? t('videoControlsExitFullscreen') : t('videoControlsFullscreen')}
           >
-            {isFullscreen ? <Minimize2 className="size-3.5 sm:size-5" /> : <Maximize2 className="size-3.5 sm:size-5" />}
+            {isFullscreen ? <Minimize2 className="size-4 sm:size-5" /> : <Maximize2 className="size-4 sm:size-5" />}
           </button>
         </div>
       </div>
