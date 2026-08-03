@@ -92,7 +92,7 @@ export default function ExamsPage() {
           {item.attributes.title}
         </div>
       ),
-      width: '380px',
+      width: '200px',
     },
     {
       key: 'type',
@@ -113,6 +113,7 @@ export default function ExamsPage() {
         const names = getCourseNames(item);
         return Array.isArray(names) ? names.join(', ') : names;
       },
+        width: '300px',
     },
     {
       key: 'duration',

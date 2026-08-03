@@ -1602,7 +1602,7 @@ export default function DepartmentsPage() {
 
   const [copyMoveMode, setCopyMoveMode] = useState<"copy" | "move">("copy");
 
-  const [selectedTargetLecture, setSelectedTargetLecture] = useState("");
+  const [selectedTargetLectures, setSelectedTargetLectures] = useState<string[]>([]);
 
   // Notes modal state
 
@@ -2251,7 +2251,7 @@ export default function DepartmentsPage() {
 
     setCopyMoveMode(mode);
 
-    setSelectedTargetLecture("");
+    setSelectedTargetLectures([]);
 
     setCopyMoveModalOpen(true);
   };
@@ -2259,11 +2259,9 @@ export default function DepartmentsPage() {
   // Handle copy/move submit
 
   const handleCopyMoveSubmit = async () => {
-    if (!copyMoveNode || !selectedTargetLecture) return;
+    if (!copyMoveNode || selectedTargetLectures.length === 0) return;
 
     const chapterId = parseInt(copyMoveNode.data.id);
-
-    const targetLectureId = parseInt(selectedTargetLecture);
 
     try {
       // Get original chapter data to check for attachments
@@ -2271,61 +2269,70 @@ export default function DepartmentsPage() {
       const originalChapter = originalChapterResponse.data;
       const hasAttachments = originalChapter.attributes.attachments && originalChapter.attributes.attachments.length > 0;
 
-      // Copy the chapter
-      const newChapter = await copyChapter(chapterId, targetLectureId);
+      // Copy the chapter to each target lecture
+      for (const targetLectureIdStr of selectedTargetLectures) {
+        const targetLectureId = parseInt(targetLectureIdStr);
+        
+        // Copy the chapter
+        const newChapter = await copyChapter(chapterId, targetLectureId);
 
-      // If the original chapter had attachments, copy them to the new chapter
-      if (hasAttachments && originalChapter.attributes.attachments) {
-        const attachmentFiles: File[] = [];
+        // If the original chapter had attachments, copy them to the new chapter
+        if (hasAttachments && originalChapter.attributes.attachments) {
+          const attachmentFiles: File[] = [];
 
-        // Download each attachment and convert to File object
-        for (const attachment of originalChapter.attributes.attachments) {
-          try {
-            const attachmentPath = attachment.attributes.path;
-            if (attachmentPath) {
-              const response = await fetch(attachmentPath);
-              const blob = await response.blob();
-              const fileName = attachment.attributes.name || `attachment_${attachment.id}`;
-              const file = new File([blob], fileName, { type: blob.type });
-              attachmentFiles.push(file);
+          // Download each attachment and convert to File object
+          for (const attachment of originalChapter.attributes.attachments) {
+            try {
+              const attachmentPath = attachment.attributes.path;
+              if (attachmentPath) {
+                const response = await fetch(attachmentPath);
+                const blob = await response.blob();
+                const fileName = attachment.attributes.name || `attachment_${attachment.id}`;
+                const file = new File([blob], fileName, { type: blob.type });
+                attachmentFiles.push(file);
+              }
+            } catch (error) {
+              console.error(`Failed to download attachment ${attachment.id}:`, error);
             }
-          } catch (error) {
-            console.error(`Failed to download attachment ${attachment.id}:`, error);
           }
-        }
 
-        // Upload attachments to the new chapter
-        if (attachmentFiles.length > 0) {
-          await updateChapter(parseInt(newChapter.id), {
-            lecture_id: targetLectureId,
-            title: newChapter.attributes.title,
-            thumbnail: undefined,
-            video: undefined,
-            duration: newChapter.attributes.duration,
-            is_free_preview: newChapter.attributes.is_free_preview,
-            max_views: newChapter.attributes.max_views,
-            view_by_minute: newChapter.attributes.view_by_minute,
-            attachments: attachmentFiles,
-          });
+          // Upload attachments to the new chapter
+          if (attachmentFiles.length > 0) {
+            await updateChapter(parseInt(newChapter.id), {
+              lecture_id: targetLectureId,
+              title: newChapter.attributes.title,
+              thumbnail: undefined,
+              video: undefined,
+              duration: newChapter.attributes.duration,
+              is_free_preview: newChapter.attributes.is_free_preview,
+              is_free_preview_attachment: newChapter.attributes.is_free_preview_attachment,
+              max_views: newChapter.attributes.max_views,
+              view_by_minute: newChapter.attributes.view_by_minute,
+              type: newChapter.attributes.type,
+              note_type: newChapter.attributes.note_type,
+              content: newChapter.attributes.content,
+              attachments: attachmentFiles,
+            });
+          }
         }
       }
 
       if (copyMoveMode === "move") {
-        // Delete original after successful copy
+        // Delete original after successful copy to all targets
         await api.chapters.delete(chapterId);
       }
 
       toast.success(
         copyMoveMode === "copy"
-          ? "Lesson copied successfully"
-          : "Lesson moved successfully",
+          ? `Lesson copied to ${selectedTargetLectures.length} lecture(s) successfully`
+          : `Lesson moved to ${selectedTargetLectures.length} lecture(s) successfully`,
       );
 
       setCopyMoveModalOpen(false);
 
       setCopyMoveNode(null);
 
-      setSelectedTargetLecture("");
+      setSelectedTargetLectures([]);
 
       refetchAll();
     } catch {
@@ -2934,14 +2941,14 @@ export default function DepartmentsPage() {
           mode={copyMoveMode}
           courses={courses || []}
           lecturesByCourse={lecturesByCourse}
-          selectedTarget={selectedTargetLecture}
-          onSelectTarget={setSelectedTargetLecture}
+          selectedTargets={selectedTargetLectures}
+          onSelectTargets={setSelectedTargetLectures}
           onClose={() => {
             setCopyMoveModalOpen(false);
 
             setCopyMoveNode(null);
 
-            setSelectedTargetLecture("");
+            setSelectedTargetLectures([]);
           }}
           onConfirm={handleCopyMoveSubmit}
           isLoading={isCopyingChapter}
@@ -5835,9 +5842,9 @@ interface CopyMoveModalProps {
 
   lecturesByCourse: Record<string, Lecture[]>;
 
-  selectedTarget: string;
+  selectedTargets: string[];
 
-  onSelectTarget: (lectureId: string) => void;
+  onSelectTargets: (lectureIds: string[]) => void;
 
   onClose: () => void;
 
@@ -5855,9 +5862,9 @@ function CopyMoveModal({
 
   lecturesByCourse,
 
-  selectedTarget,
+  selectedTargets,
 
-  onSelectTarget,
+  onSelectTargets,
 
   onClose,
 
@@ -5896,8 +5903,8 @@ function CopyMoveModal({
 
             <p className="text-sm text-gray-500 mt-0.5">
               {mode === "copy"
-                ? `Copy "${chapter.attributes.title}" to another lecture`
-                : `Move "${chapter.attributes.title}" to another lecture`}
+                ? `Copy "${chapter.attributes.title}" to multiple lectures`
+                : `Move "${chapter.attributes.title}" to multiple lectures`}
             </p>
           </div>
 
@@ -5913,13 +5920,14 @@ function CopyMoveModal({
 
         <div className="flex-1 overflow-y-auto p-4">
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            Select Target Lecture
+            Select Target Lectures
           </label>
 
           <CourseTreeSelect
-            value={selectedTarget}
-            onChange={onSelectTarget}
-            label="Target Lecture"
+            value={selectedTargets}
+            onMultiChange={onSelectTargets}
+            multiple={true}
+            label="Target Lectures"
             coursesData={courses}
             lecturesData={allLectures}
             selectLectures={true}
@@ -5941,7 +5949,7 @@ function CopyMoveModal({
 
           <button
             onClick={onConfirm}
-            disabled={!selectedTarget || isLoading}
+            disabled={selectedTargets.length === 0 || isLoading}
             className={`flex-1 px-4 py-2 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${mode === "copy"
               ? "bg-blue-600 hover:bg-blue-700"
               : "bg-purple-600 hover:bg-purple-700"
