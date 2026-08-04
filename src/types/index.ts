@@ -1051,7 +1051,8 @@ export interface UpdateChapterRequest {
 
   is_free_preview?: 0 | 1;
 
-
+  /** Keep attachment free-preview visibility when updating an existing chapter. */
+  is_free_preview_attachment?: 0 | 1 | boolean;
 
   max_views?: number;
 
@@ -3650,11 +3651,11 @@ export interface CreateSocialLinkRequest {
 
 export type QuizType = 'exam' | 'homework';
 
-
-
-
-
-
+/** Query parameters currently used by the quiz list UI. */
+export interface QuizListParams {
+  page?: number;
+  title?: string;
+}
 
 export interface QuizAttributes {
 

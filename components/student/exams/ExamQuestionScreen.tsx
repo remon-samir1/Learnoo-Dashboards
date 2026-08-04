@@ -21,6 +21,10 @@ function answerReasonText(a: QuizQuestionAnswer): string | null {
   return s.length > 0 ? s : null;
 }
 
+function answerReasonImage(a: QuizQuestionAnswer): string | null {
+  return resolveStudentExamMediaUrl(a.attributes?.reason_image);
+}
+
 function reviewOptionContainerClass(args: {
   selected: boolean;
   isCorrect: boolean;
@@ -275,7 +279,8 @@ const watermarkText = useMemo(() => {
                   const selected = selectedIds.includes(aid);
                   const isCorrect = !!ans.attributes?.is_correct;
                   const reason = answerReasonText(ans);
-                  const showReason = reason != null && (isCorrect || selected);
+                  const reasonImageSrc = answerReasonImage(ans);
+                  const showFeedback = (reason != null || reasonImageSrc != null) && (isCorrect || selected);
                   const label = ans.attributes?.text?.trim() ?? '';
                   const imgSrc = resolveStudentExamMediaUrl(ans.attributes?.image);
                   return (
@@ -304,10 +309,27 @@ const watermarkText = useMemo(() => {
                           >
                             {label}
                           </p>
-                          {showReason ? (
-                            <p className="mt-2 border-s-2 border-slate-200 ps-3 text-xs leading-relaxed text-slate-600 sm:text-[13px]">
-                              {reason}
-                            </p>
+                          {showFeedback ? (
+                            <div className="mt-2 border-s-2 border-slate-200 ps-3">
+                              {reason ? (
+                                <p className="text-xs leading-relaxed text-slate-600 sm:text-[13px]">
+                                  {reason}
+                                </p>
+                              ) : null}
+                              {reasonImageSrc ? (
+                                <div className="relative mt-2 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50">
+                                  <Image
+                                    src={reasonImageSrc}
+                                    alt=""
+                                    width={640}
+                                    height={360}
+                                    className="max-h-[min(32vh,180px)] w-full object-contain sm:max-h-[min(34vh,200px)]"
+                                    sizes="(max-width: 768px) 100vw, 640px"
+                                    unoptimized
+                                  />
+                                </div>
+                              ) : null}
+                            </div>
                           ) : null}
                         </div>
                       </div>

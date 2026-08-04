@@ -1,4 +1,8 @@
 import type { QuizAttempt } from '@/src/types';
+import {
+  passingMarksPercentage,
+  readPercentageWithScoreFallback,
+} from '@/src/lib/student-exam-score';
 
 function asRecord(v: unknown): Record<string, unknown> | null {
   return v != null && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
@@ -69,19 +73,12 @@ export function readAttemptPassState(attempt: QuizAttempt): boolean | null {
   if (!attrs) return null;
   if (typeof attrs.passed === 'boolean') return attrs.passed;
 
-  const pct = Number(attrs.percentage);
   const q = nestedQuizAttributesFromAttempt(attempt);
   if (!q) return null;
-  const pm = Number(q.passing_marks);
-  const tm = Number(q.total_marks);
-  if (Number.isFinite(pct) && Number.isFinite(pm) && Number.isFinite(tm) && tm > 0) {
-    const threshold = (pm / tm) * 100;
-    return pct >= threshold - 1e-9;
-  }
-  if (Number.isFinite(pct) && Number.isFinite(pm)) {
-    return pct >= pm - 1e-9;
-  }
-  return null;
+  const percentage = readAttemptPercentage(attempt);
+  const threshold = passingMarksPercentage(q.passing_marks, q.total_marks);
+  if (percentage == null || threshold == null) return null;
+  return percentage >= threshold - 1e-9;
 }
 
 export function readAttemptScoreDisplay(attempt: QuizAttempt): { score: number | null; total: number | null } {
@@ -96,6 +93,9 @@ export function readAttemptScoreDisplay(attempt: QuizAttempt): { score: number |
 
 export function readAttemptPercentage(attempt: QuizAttempt): number | null {
   const attrs = attempt.attributes as unknown as Record<string, unknown> | undefined;
-  const p = attrs?.percentage != null ? Number(attrs.percentage) : NaN;
-  return Number.isFinite(p) ? p : null;
+  return readPercentageWithScoreFallback(
+    attrs?.percentage,
+    attrs?.score,
+    attrs?.total_score,
+  );
 }

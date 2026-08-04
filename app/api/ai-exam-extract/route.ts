@@ -1,90 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { parseGeneratedExamQuestions } from '@/src/lib/exam-ai';
 
 export const dynamic = 'force-dynamic';
 
+const MAX_PDF_SIZE_BYTES = 15 * 1024 * 1024;
+const REQUEST_TIMEOUT_MS = 60_000;
+
 export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '')
+    || request.cookies.get('token')?.value
+    || request.cookies.get('auth_token')?.value;
+
+  if (!token) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  const endpoint = process.env.AI_EXAM_EXTRACT_URL;
+  if (!endpoint) {
+    return NextResponse.json({ message: 'AI extraction is not configured' }, { status: 503 });
+  }
+
+  let endpointUrl: URL;
   try {
-    // Get authorization token 
-    const authHeader = request.headers.get('Authorization');
-    const token = authHeader?.replace('Bearer ', '') || 
-                 request.cookies.get('token')?.value ||
-                 request.cookies.get('auth_token')?.value;
+    endpointUrl = new URL(endpoint);
+  } catch {
+    return NextResponse.json({ message: 'AI extraction is not configured' }, { status: 503 });
+  }
 
-    if (!token) {
-      return NextResponse.json(
-        { message: 'Unauthorized - No token found' },
-        { status: 401 }
-      );
-    }
+  if (endpointUrl.protocol !== 'https:') {
+    return NextResponse.json({ message: 'AI extraction requires a secure endpoint' }, { status: 503 });
+  }
 
-    // Get the raw body as FormData
+  try {
     const formData = await request.formData();
-    
-    // We only need the file and count from this formdata
     const file = formData.get('file');
     const count = formData.get('count');
 
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json(
-        { message: 'No file provided' },
-        { status: 400 }
-      );
+    if (!(file instanceof File)) {
+      return NextResponse.json({ message: 'No file provided' }, { status: 400 });
     }
 
-    // Since we are proxying to the external web hook, it takes form-data with "file" and optionally "count"
-    const newFormData = new FormData();
-    const arrayBuffer = await file.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: file.type || 'application/pdf' });
-    newFormData.append('file', blob, file.name);
-    if (count) {
-      newFormData.append('count', String(count));
+    if (file.type !== 'application/pdf') {
+      return NextResponse.json({ message: 'Only PDF files are supported' }, { status: 415 });
     }
 
-    console.log(`🚀 Forwarding PDF to AI Webhook: http://31.97.36.130:5678/webhook/form`);
+    if (file.size <= 0 || file.size > MAX_PDF_SIZE_BYTES) {
+      return NextResponse.json({ message: 'PDF file size is invalid' }, { status: 413 });
+    }
 
-    // Forward FormData to AI webhook
-    const backendResponse = await fetch('http://31.97.36.130:5678/webhook/form', {
+    const parsedCount = count === null || count === '' ? null : Number(count);
+    if (parsedCount !== null && (!Number.isInteger(parsedCount) || parsedCount < 1)) {
+      return NextResponse.json({ message: 'Question count is invalid' }, { status: 422 });
+    }
+
+    const outboundFormData = new FormData();
+    outboundFormData.append('file', file, file.name);
+    if (parsedCount !== null) outboundFormData.append('count', String(parsedCount));
+
+    const backendResponse = await fetch(endpointUrl, {
       method: 'POST',
-      body: newFormData,
+      body: outboundFormData,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
-    console.log('AI Webhook response status:', backendResponse.status);
-
-    const responseText = await backendResponse.text();
-    
-    // Try to parse as JSON
-    let result;
-    try {
-      result = JSON.parse(responseText);
-    } catch {
-      console.error('❌ AI Webhook returned non-JSON response');
-      return NextResponse.json(
-        { 
-          message: 'AI API error',
-          details: responseText.substring(0, 500),
-          status: backendResponse.status
-        },
-        { status: backendResponse.status }
-      );
-    }
-
     if (!backendResponse.ok) {
-      console.error('❌ AI Webhook error:', result);
       return NextResponse.json(
-        result || { message: 'Failed to extract exam' },
-        { status: backendResponse.status }
+        { message: 'AI extraction service rejected the request' },
+        { status: backendResponse.status >= 400 && backendResponse.status < 600 ? backendResponse.status : 502 }
       );
     }
 
-    console.log('✅ AI extraction successful');
+    const result: unknown = await backendResponse.json().catch(() => null);
+    parseGeneratedExamQuestions(result);
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error('❌ AI extraction error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
-    
-    return NextResponse.json(
-      { message: errorMessage },
-      { status: 500 }
-    );
+    if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+      return NextResponse.json({ message: 'AI extraction timed out' }, { status: 504 });
+    }
+
+    if (error instanceof Error && error.message === 'INVALID_AI_RESPONSE') {
+      return NextResponse.json({ message: 'AI extraction returned an invalid response' }, { status: 502 });
+    }
+
+    return NextResponse.json({ message: 'AI extraction failed' }, { status: 500 });
   }
 }

@@ -65,6 +65,7 @@ import type {
   CreateCommentRequest,
   // Quiz types
   Quiz,
+  QuizListParams,
   CreateQuizRequest,
   QuizQuestion,
   CreateQuizQuestionRequest,
@@ -955,7 +956,9 @@ export const commentsApi = {
 // ============================================
 
 export const quizzesApi = {
-  list: () => get<ApiListResponse<Quiz>>('/v1/quiz'),
+  list: (params?: QuizListParams) => get<ApiListResponse<Quiz>>('/v1/quiz', params
+    ? { page: params.page, title: params.title }
+    : undefined),
 
   get: (id: number) => get<ApiResponse<Quiz>>(`/v1/quiz/${id}`),
 

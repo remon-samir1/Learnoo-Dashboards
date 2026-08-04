@@ -5,6 +5,7 @@ import Providers from "./providers";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://learnoo.app"),
   title: "Learnoo-Dashboard",
   description: "Learnoo-Dashboard",
   icons: {

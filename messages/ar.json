@@ -462,6 +462,7 @@
       "academicStructure": "الهيكل الأكاديمي",
       "contentManager": "مدير المحتوى",
       "community": "المجتمع",
+      "discussions": "النقاشات",
       "electronicLibrary": "المكتبة الإلكترونية",
       "notesSummaries": "الملاحظات والملخصات",
       "liveSessions": "الجلسات المباشرة",
@@ -1189,7 +1190,12 @@
       "toastReplyFailed": "تعذّر نشر التعليق. حاول مرة أخرى.",
       "like": "إعجاب",
       "tagsLabel": "وسوم (اختياري)",
-      "tagsPlaceholder": "مثال: رياضيات، تفاضل"
+      "tagsPlaceholder": "مثال: رياضيات، تفاضل",
+      "showComments": "{count, plural, one {تعليق واحد} other {# تعليقات}}",
+      "hideComments": "إخفاء {count, plural, one {التعليق} other {# تعليقات}}",
+      "unknownUser": "مجهول",
+      "instructorBadge": "مدرّس",
+      "deleteComment": "حذف التعليق"
     },
     "community": {
       "posts": {
@@ -1860,7 +1866,30 @@
     "pageTitle": "الاختبارات والأسئلة",
     "pageDescription": "إدارة التقييمات والاختبارات",
     "createExam": "إنشاء اختبار",
-    "searchPlaceholder": "البحث في الاختبارات...",
+    "searchPlaceholder": "البحث عن اختبار بالعنوان...",
+    "searchLabel": "البحث عن اختبار بالعنوان",
+    "loadErrorTitle": "تعذر تحميل الاختبارات",
+    "loadErrorDescription": "تحقق من الاتصال ثم حاول مرة أخرى.",
+    "retry": "إعادة المحاولة",
+    "noSearchResults": "لا توجد اختبارات مطابقة لبحثك.",
+    "clearSearch": "مسح البحث",
+    "results": "النتائج",
+    "updateSuccess": "تم تحديث الاختبار بنجاح!",
+    "updateError": "فشل تحديث الاختبار. يرجى المحاولة مرة أخرى.",
+    "deleteError": "فشل حذف الاختبار. يرجى المحاولة مرة أخرى.",
+    "deleteTitle": "حذف الاختبار",
+    "deleteDescription": "هل أنت متأكد من حذف {title}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "deleting": "جارٍ الحذف...",
+    "editExam": "تعديل {title}",
+    "deleteExam": "حذف {title}",
+    "durationValue": "{count} دقيقة",
+    "questionsValue": "{count} سؤال",
+    "paginationSummary": "عرض {from} إلى {to} من أصل {total} اختبار",
+    "pageSummary": "الصفحة {current} من {total}",
+    "types": {
+      "exam": "اختبار",
+      "homework": "واجب منزلي"
+    },
     "columns": {
       "title": "العنوان",
       "type": "النوع",
@@ -1869,7 +1898,8 @@
       "duration": "المدة",
       "questions": "الأسئلة",
       "status": "الحالة",
-      "visibility": "الرؤية"
+      "visibility": "الرؤية",
+      "results": "النتائج"
     },
     "status": {
       "label": "الحالة",
@@ -1885,6 +1915,25 @@
     "deleteSuccess": "تم حذف الاختبار بنجاح!",
     "minutes": "دقيقة",
     "questions": "سؤال",
+    "ai": {
+      "title": "استخراج الأسئلة",
+      "description": "ارفع ملف PDF لاستخراج الأسئلة باستخدام الذكاء الاصطناعي.",
+      "questionCount": "عدد الأسئلة",
+      "questionCountPlaceholder": "مثال: 5",
+      "pdfFile": "ملف PDF",
+      "extract": "استخراج",
+      "extracting": "جارٍ الاستخراج...",
+      "openButton": "استخراج بالذكاء الاصطناعي",
+      "selectFileError": "يرجى اختيار ملف PDF أولاً.",
+      "extractError": "فشل استخراج الأسئلة.",
+      "invalidResponse": "أعادت خدمة الذكاء الاصطناعي تنسيقًا غير صالح للأسئلة.",
+      "extractSuccess": "تم استخراج الأسئلة من ملف PDF بنجاح.",
+      "replaceTitle": "تم استخراج أسئلة جديدة",
+      "replaceDescription": "تم استخراج {count} سؤال من المستند. كيف تريد إضافتها؟",
+      "replaceCurrent": "استبدال الأسئلة الحالية",
+      "appendCurrent": "إضافة إلى الأسئلة الحالية",
+      "questionsUpdated": "تم تحديث الأسئلة من ملف PDF بنجاح."
+    },
     "create": {
       "pageTitle": "إنشاء اختبار جديد",
       "pageDescription": "تصميم وإعداد التقييم الخاص بك",
@@ -1930,6 +1979,22 @@
       "expectedAnswerPlaceholder": "أدخل الإجابة المتوقعة للمرجعية...",
       "markCorrectHint": "انقر على المربع لتحديد الإجابة الصحيحة",
       "multipleAllowed": "ات (متعددة مسموح بها)",
+      "trueAnswer": "صح",
+      "falseAnswer": "خطأ",
+      "insertHere": "هنا",
+      "addQuestionAtBeginning": "إضافة سؤال في البداية",
+      "autoCorrect": "التصحيح التلقائي",
+      "questionImage": "صورة السؤال",
+      "questionPreview": "معاينة السؤال",
+      "uploadImage": "رفع صورة",
+      "reasonForAnswer": "سبب الإجابة {number}",
+      "changeImage": "تغيير الصورة",
+      "addImage": "إضافة صورة",
+      "changeReasonImage": "تغيير صورة السبب",
+      "addReasonImage": "إضافة صورة السبب",
+      "answerPreview": "معاينة الإجابة {number}",
+      "reasonPreview": "معاينة السبب {number}",
+      "reasonLabel": "السبب",
       "cancel": "إلغاء",
       "createExam": "إنشاء الاختبار",
       "creating": "جارٍ الإنشاء...",
@@ -1956,7 +2021,19 @@
       "saveChanges": "حفظ التغييرات",
       "saving": "جارٍ الحفظ...",
       "success": "تم تحديث الاختبار بنجاح!",
-      "error": "فشل تحديث الاختبار"
+      "error": "فشل تحديث الاختبار",
+      "unauthorized": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى."
+    },
+    "resultsPage": {
+      "title": "نتائج الاختبار",
+      "examNumber": "الاختبار رقم {id}",
+      "loading": "جارٍ تحميل نتائج الاختبار...",
+      "backToExams": "العودة إلى الاختبارات",
+      "retry": "إعادة المحاولة",
+      "quizLoadErrorTitle": "تعذر تحميل بيانات الاختبار",
+      "quizLoadErrorDescription": "تحقق من الاتصال ثم حاول مرة أخرى.",
+      "unavailableTitle": "النتائج غير متاحة مؤقتًا",
+      "unavailableDescription": "واجهة API الحالية تعرض قائمة عامة لمحاولات الاختبارات فقط، ولا توثق عقدًا مخصصًا لنتائج اختبار واحد مع صلاحيات المدير أو المدرس. لحماية بيانات الطلاب، لم تعد هذه الصفحة تحمّل محاولات جميع المستخدمين ثم تصفيها داخل المتصفح. يجب أن يوفر فريق الخادم نقطة نهاية آمنة ومصرحًا بها لنتائج الاختبار قبل عرض النتائج هنا."
     }
   },
   "notesSummaries": {
@@ -2287,6 +2364,7 @@
     "listViewers":"قائمة الطلاب الذي شاهدوا الدورة",
     "LessonViewers":"مشاهدو الدرس",
     "editDepartment": "تعديل القسم",
+    "deleteDepartment": "حذف القسم",
     "searchPlaceholder": "البحث في الأقسام...",
     "allFaculties": "جميع الكليات",
     "columns": {

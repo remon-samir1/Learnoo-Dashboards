@@ -36,6 +36,10 @@ import {
   quizRequiresCourseActivationLock,
 } from "@/src/lib/student-quiz-activation-lock";
 import { buildStudentStartExamHref } from "@/src/lib/student-start-exam-href";
+import {
+  clampPercentage,
+  percentageFromScore,
+} from "@/src/lib/student-exam-score";
 import type { Chapter, Course, Lecture, Note } from "@/src/types";
 import StudentCourseNotesTab from "@/components/student/StudentCourseNotesTab";
 import StudentCommunityFeed from "@/components/student/community/StudentCommunityFeed";
@@ -416,22 +420,14 @@ function daysWholeFromNowTo(iso: string | null | undefined): number | null {
 }
 
 function getExamScorePercent(attrs: LooseExamAttrs): number | null {
-  for (const v of [attrs.result_percentage, attrs.percentage]) {
-    if (typeof v === "number" && Number.isFinite(v)) {
-      if (v > 0 && v <= 1) return Math.round(v * 100);
-      if (v <= 100) return Math.round(v);
-    }
+  for (const value of [attrs.result_percentage, attrs.percentage]) {
+    const percentage = clampPercentage(value);
+    if (percentage != null) return Math.round(percentage);
   }
-  const sc = attrs.score;
-  if (typeof sc === "number" && Number.isFinite(sc)) {
-    if (sc > 0 && sc <= 1) return Math.round(sc * 100);
-    if (sc <= 100) return Math.round(sc);
-  }
-  const ob = attrs.obtained_marks;
-  const tot = attrs.total_marks;
-  if (typeof ob === "number" && typeof tot === "number" && tot > 0) {
-    return Math.round((ob / tot) * 100);
-  }
+
+  const fromMarks = percentageFromScore(attrs.obtained_marks, attrs.total_marks);
+  if (fromMarks != null) return Math.round(fromMarks);
+
   return null;
 }
 
@@ -905,7 +901,6 @@ function ChapterRow({
   const videoRequiresActivation = isStudentChapterVideoRequiresActivation(chapter);
   const pdfRequiresActivation = isStudentChapterPdfRequiresActivation(chapter);
 
-  const pdfLinkActive = Boolean(pdfUrl && pdfVisible);
   const chapterTitleForModal = attrs.title?.trim() ?? "";
   const openChapterActivation = () =>
     onRequestChapterActivation(String(chapter.id), chapterTitleForModal);

@@ -56,6 +56,7 @@
     "login": {
       "title": "Learnoo Sign In",
       "parentLink": "Parent? Sign in with your phone number",
+      "parentLogin": "Parent Sign In",
       "subtitle": "Sign in with your phone number",
       "phone": "Phone Number",
       "phonePlaceholder": "Enter your phone number",
@@ -502,7 +503,8 @@
         "title": "Welcome back",
         "activeCourses": "Active Courses",
         "liveToday": "Live Today",
-        "upcomingExams": "In Progress"
+        "upcomingExams": "In Progress",
+        "universityFallBack": "Not available"
       },
       "library": {
         "title": "My Library",
@@ -1166,6 +1168,16 @@
       "instructorBadge": "Instructor",
       "deleteComment": "Delete comment"
     },
+    "community": {
+      "posts": {
+        "showComments": "{count, plural, one {# comment} other {# comments}}",
+      "hideComments": "Hide {count, plural, one {# comment} other {# comments}}",
+      "noCommentsYet": "No comments yet. Be the first to comment!",
+      "unknownUser": "Anonymous",
+      "instructorBadge": "Instructor",
+        "deleteComment": "Delete comment"
+      }
+    },
     "studentLibrary": {
       "pageTitle": "Electronic Library",
       "pageSubtitle": "Access your course materials and reference books.",
@@ -1825,7 +1837,30 @@
     "pageTitle": "Exams & Quizzes",
     "pageDescription": "Manage assessments and quizzes",
     "createExam": "Create Exam",
-    "searchPlaceholder": "Search exams...",
+    "searchPlaceholder": "Search exams by title...",
+    "searchLabel": "Search exams by title",
+    "loadErrorTitle": "Exams could not be loaded",
+    "loadErrorDescription": "Check your connection and try again.",
+    "retry": "Try again",
+    "noSearchResults": "No exams match your search.",
+    "clearSearch": "Clear search",
+    "results": "Results",
+    "updateSuccess": "Exam updated successfully!",
+    "updateError": "Failed to update the exam. Please try again.",
+    "deleteError": "Failed to delete the exam. Please try again.",
+    "deleteTitle": "Delete exam",
+    "deleteDescription": "Are you sure you want to delete {title}? This action cannot be undone.",
+    "deleting": "Deleting...",
+    "editExam": "Edit {title}",
+    "deleteExam": "Delete {title}",
+    "durationValue": "{count, plural, one {# min} other {# mins}}",
+    "questionsValue": "{count, plural, one {# question} other {# questions}}",
+    "paginationSummary": "Showing {from} to {to} of {total} exams",
+    "pageSummary": "Page {current} of {total}",
+    "types": {
+      "exam": "Exam",
+      "homework": "Homework"
+    },
     "columns": {
       "title": "Title",
       "type": "Type",
@@ -1834,7 +1869,8 @@
       "duration": "Duration",
       "questions": "Questions",
       "status": "Status",
-      "visibility": "Visibility"
+      "visibility": "Visibility",
+      "results": "Results"
     },
     "status": {
       "label": "Status",
@@ -1850,6 +1886,25 @@
     "deleteSuccess": "Exam deleted successfully!",
     "minutes": "mins",
     "questions": "Qs",
+    "ai": {
+      "title": "Extract Questions",
+      "description": "Upload a PDF to extract questions with AI.",
+      "questionCount": "Number of questions",
+      "questionCountPlaceholder": "e.g. 5",
+      "pdfFile": "PDF file",
+      "extract": "Extract",
+      "extracting": "Extracting...",
+      "openButton": "Extract with AI",
+      "selectFileError": "Please select a PDF file first.",
+      "extractError": "Failed to extract questions.",
+      "invalidResponse": "The AI service returned an invalid question format.",
+      "extractSuccess": "Questions extracted successfully from the PDF.",
+      "replaceTitle": "New Questions Extracted",
+      "replaceDescription": "We extracted {count} questions from the document. How would you like to add them?",
+      "replaceCurrent": "Replace Current Questions",
+      "appendCurrent": "Add to Current Questions",
+      "questionsUpdated": "Questions updated from the PDF successfully."
+    },
     "create": {
       "pageTitle": "Create New Exam",
       "pageDescription": "Design and configure your assessment",
@@ -1895,6 +1950,22 @@
       "expectedAnswerPlaceholder": "Enter the expected answer for reference...",
       "markCorrectHint": "Click the checkbox to mark the correct answer",
       "multipleAllowed": "s (multiple allowed)",
+      "trueAnswer": "True",
+      "falseAnswer": "False",
+      "insertHere": "here",
+      "addQuestionAtBeginning": "Add question at the beginning",
+      "autoCorrect": "Auto-correct",
+      "questionImage": "Question image",
+      "questionPreview": "Question preview",
+      "uploadImage": "Upload image",
+      "reasonForAnswer": "Reason for answer {number}",
+      "changeImage": "Change image",
+      "addImage": "Add image",
+      "changeReasonImage": "Change reason image",
+      "addReasonImage": "Add reason image",
+      "answerPreview": "Answer {number} preview",
+      "reasonPreview": "Reason {number} preview",
+      "reasonLabel": "Reason",
       "cancel": "Cancel",
       "createExam": "Create Exam",
       "creating": "Creating...",
@@ -1921,7 +1992,19 @@
       "saveChanges": "Save Changes",
       "saving": "Saving...",
       "success": "Exam updated successfully!",
-      "error": "Failed to update exam"
+      "error": "Failed to update exam",
+      "unauthorized": "Your session has expired. Please sign in again."
+    },
+    "resultsPage": {
+      "title": "Exam Results",
+      "examNumber": "Exam #{id}",
+      "loading": "Loading exam results...",
+      "backToExams": "Back to exams",
+      "retry": "Try again",
+      "quizLoadErrorTitle": "Exam details could not be loaded",
+      "quizLoadErrorDescription": "Check your connection and try again.",
+      "unavailableTitle": "Results are temporarily unavailable",
+      "unavailableDescription": "The current API only exposes the general quiz-attempt collection and does not document an exam-scoped, role-authorized results contract. To protect student data, this page no longer downloads every user's attempts and filters them in the browser. The backend must provide an authorized exam-results endpoint before results can be displayed here."
     }
   },
   "notesSummaries": {
@@ -2272,6 +2355,11 @@
     "LoadingContent":"Loading Content...",
     "pageDescription": "Manage universities, faculties, centers, departments, courses and content",
     "addDepartment": "Add Department",
+    "addFaculty": "Add Faculty",
+    "addCenter": "Add Center",
+    "addSubDepartment": "Add Subdepartment",
+    "addCourse": "Add Course",
+    "addContent": "Add Content",
     "editDepartment": "Edit Department",
     "deleteDepartment": "Delete Department",
     "listViewers":"List of users who viewed this lesson",
@@ -3197,6 +3285,7 @@
     "students":"Students",
     "notifications": "Notifications",
     "downloads":"Downloads",
+    "downloadableContent":"Downloadable Content",
     "profileSettings":"Profile & Settings",
     "otaUpload":"OTA Upload",
     "featureControl":"Feature Control",

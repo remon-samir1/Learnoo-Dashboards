@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';import { toast } from 'sonner';import {
+import React, { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useLocale, useTranslations } from 'next-intl';
+import { toast } from 'sonner';
+import {
   ArrowLeft,
+  ArrowRight,
   Plus,
   Trash2,
   ChevronDown,
@@ -14,53 +18,35 @@ import { useTranslations } from 'next-intl';import { toast } from 'sonner';impor
   Loader2,
   X,
   ImagePlus,
-  FileUp,
   Sparkles,
   AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation';
-import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
-import { useQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
+import { quizKeys, useQuiz } from '@/src/hooks/useQuizzes';
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
-
-interface Answer {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-  reason: string;
-  image?: File | null;
-  imagePreview?: string;
-  reason_image?: File | null;
-  reasonImagePreview?: string;
-}
-
-interface Question {
-  id: string;
-  text: string;
-  type: 'single_choice' | 'multiple_choice' | 'true_false' | 'short_answer';
-  score: number;
-  autoCorrect: boolean;
-  answers: Answer[];
-  image?: File | null;
-  imagePreview?: string;
-}
-
-interface ExamDetails {
-  title: string;
-  courses: string[];
-  chapter: string;
-  type: 'exam' | 'homework';
-  duration: string;
-  totalMarks: string;
-  passingMarks: string;
-  maxAttempts: string;
-  status: 'Draft' | 'Active';
-  startTime: string;
-  endTime: string;
-  is_public: boolean;
-}
+import { parseGeneratedExamQuestions } from '@/src/lib/exam-ai';
+import {
+  buildExamFormData,
+  createReplacementPreview,
+  getApiErrorMessages,
+  getQuizCourseIds,
+  isApiErrorPayload,
+  mapGeneratedQuestionsToForm,
+  revokeAnswerObjectUrls,
+  revokeQuestionObjectUrls,
+  revokeQuestionsObjectUrls,
+  type ExamFormAnswer as Answer,
+  type ExamFormDetails as ExamDetails,
+  type ExamFormQuestion as Question,
+} from '@/src/lib/exam-form';
+import {
+  readExamField,
+  type ExamDateField,
+  type ExamNumberField,
+} from '@/src/lib/exam-form-fields';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -75,55 +61,19 @@ function getTokenFromCookies(): string {
   return '';
 }
 
-/** Rebuild FormData so every File entry has the correct MIME type */
-async function rebuildFormData(source: FormData): Promise<FormData> {
-  const rebuilt = new FormData();
-  for (const [key, value] of source.entries()) {
-    if (value instanceof File) {
-      const buffer = await value.arrayBuffer();
-      const blob = new Blob([buffer], { type: value.type || 'image/jpeg' });
-      rebuilt.append(key, blob, value.name);
-    } else {
-      rebuilt.append(key, value);
-    }
-  }
-  return rebuilt;
-}
-
-/** Submit the quiz update directly to the backend */
+/** Submit the quiz update directly to the backend. */
 async function submitQuizUpdate(examId: string, formData: FormData): Promise<Response> {
   const token = getTokenFromCookies();
-
-  if (!token) {
-    throw new Error('Unauthorized - No token found. Please login again.');
-  }
+  if (!token) throw new Error('UNAUTHORIZED');
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
-
-  console.log('=== FormData Contents ===');
-  let fileCount = 0;
-  for (const [key, value] of formData.entries()) {
-    if (value instanceof File) {
-      console.log(`📁 ${key}: ${value.name} (${value.size} bytes)`);
-      fileCount++;
-    } else {
-      console.log(`📝 ${key}: ${String(value).substring(0, 50)}`);
-    }
-  }
-  console.log(`Total files: ${fileCount}`);
-
-  const newFormData = await rebuildFormData(formData);
-
-  console.log(`🚀 PUT ${apiUrl}/v1/quiz/${examId}`);
-
   return fetch(`${apiUrl}/v1/quiz/${examId}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${token}`,
       accept: 'application/json',
-      // DO NOT set Content-Type – let FormData set the boundary
     },
-    body: newFormData,
+    body: formData,
   });
 }
 
@@ -131,18 +81,17 @@ async function submitQuizUpdate(examId: string, formData: FormData): Promise<Res
 
 export default function EditExamPage() {
   const t = useTranslations('exams');
+  const locale = useLocale();
+  const BackIcon = locale === 'ar' ? ArrowRight : ArrowLeft;
   const router = useRouter();
   const params = useParams();
   const examId = params.id as string;
 
-  const { data: courses, isLoading: coursesLoading } = useCourses();
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const { data: quiz, isLoading: quizLoading } = useQuiz(parseInt(examId));
-  const { isLoading: isUpdating } = useUpdateQuiz();
-
+  const queryClient = useQueryClient();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDraftRestored, setIsDraftRestored] = useState(false);
 
   const [isExtractingAI, setIsExtractingAI] = useState(false);
   const [showReplaceModal, setShowReplaceModal] = useState(false);
@@ -159,6 +108,22 @@ export default function EditExamPage() {
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
+  const questionsRef = useRef(questions);
+  questionsRef.current = questions;
+
+  useEffect(() => () => revokeQuestionsObjectUrls(questionsRef.current), []);
+
+  const closeAIModal = () => {
+    if (isExtractingAI) return;
+    setShowAIModal(false);
+    setAiFile(null);
+    setAiQuestionCount('5');
+  };
+
+  const closeReplaceModal = () => {
+    setShowReplaceModal(false);
+    setPendingQuestions(null);
+  };
 
   // ── format helper ──
   const formatDateTimeForInput = (isoString: string | null): string => {
@@ -179,18 +144,11 @@ export default function EditExamPage() {
 
     setExamDetails({
       title: quiz.attributes.title || '',
-      courses: (() => {
-        if (Array.isArray(quiz.attributes.courses)) {
-          return quiz.attributes.courses.map((c: any) => String(c.id));
-        }
-        if (quiz.attributes.course_id) {
-          return [String(quiz.attributes.course_id)];
-        }
-        if (quiz.attributes.course_ids && Array.isArray(quiz.attributes.course_ids)) {
-          return quiz.attributes.course_ids.map(id => String(id));
-        }
-        return [];
-      })(),
+      courses: getQuizCourseIds(
+        quiz.attributes.courses,
+        quiz.attributes.course_id,
+        quiz.attributes.course_ids
+      ),
       chapter: quiz.attributes.chapter_id ? String(quiz.attributes.chapter_id) : '',
       type: quiz.attributes.type === 'exam' ? 'exam' : 'homework',
       duration: String(quiz.attributes.duration || 60),
@@ -228,46 +186,10 @@ export default function EditExamPage() {
     }
   }, [quiz]);
 
-  // Load draft from localStorage after quiz is loaded
+  // Edit state is hydrated only from the selected server entity.
   useEffect(() => {
-    if (!quiz || isDraftRestored) return;
-
-    const draftKey = `exam_edit_form_draft_${examId}`;
-    const savedDraft = localStorage.getItem(draftKey);
-    if (savedDraft) {
-      try {
-        const { examDetails: savedDetails, questions: savedQuestions } = JSON.parse(savedDraft);
-        if (savedDetails) setExamDetails(savedDetails);
-        if (savedQuestions) setQuestions(savedQuestions);
-      } catch (e) {
-        console.error('Failed to load exam draft', e);
-      }
-    }
-    setIsDraftRestored(true);
-  }, [quiz, examId, isDraftRestored]);
-
-  // Save draft to localStorage on changes
-  useEffect(() => {
-    if (!isDraftRestored) return;
-
-    const draftKey = `exam_edit_form_draft_${examId}`;
-    const draft = {
-      examDetails,
-      questions: questions.map(q => ({
-        ...q,
-        image: null, // Files cannot be saved in localStorage
-        imagePreview: q.imagePreview?.startsWith('blob:') ? '' : q.imagePreview,
-        answers: q.answers.map(a => ({
-          ...a,
-          image: null,
-          imagePreview: a.imagePreview?.startsWith('blob:') ? '' : a.imagePreview,
-          reason_image: null,
-          reasonImagePreview: a.reasonImagePreview?.startsWith('blob:') ? '' : a.reasonImagePreview
-        }))
-      }))
-    };
-    localStorage.setItem(draftKey, JSON.stringify(draft));
-  }, [examDetails, questions, isDraftRestored, examId]);
+    localStorage.removeItem(`exam_edit_form_draft_${examId}`);
+  }, [examId]);
 
   // ── question helpers ──
   const addQuestion = (atIndex?: number) => {
@@ -290,7 +212,11 @@ export default function EditExamPage() {
   };
 
   const removeQuestion = (id: string) => {
-    if (questions.length > 1) setQuestions((prev) => prev.filter(q => q.id !== id));
+    if (questions.length <= 1) return;
+
+    const removedQuestion = questions.find((question) => question.id === id);
+    if (removedQuestion) revokeQuestionObjectUrls(removedQuestion);
+    setQuestions((current) => current.filter((question) => question.id !== id));
   };
 
   const updateQuestion = (id: string, updates: Partial<Question>) =>
@@ -304,11 +230,16 @@ export default function EditExamPage() {
     ));
 
   const removeAnswer = (qId: string, answerId: string) =>
-    setQuestions((prev) => prev.map(q =>
-      q.id === qId && q.answers.length > 2
-        ? { ...q, answers: q.answers.filter(a => a.id !== answerId) }
-        : q
-    ));
+    setQuestions((current) => current.map((question) => {
+      if (question.id !== qId || question.answers.length <= 2) return question;
+
+      const removedAnswer = question.answers.find((answer) => answer.id === answerId);
+      if (removedAnswer) revokeAnswerObjectUrls(removedAnswer);
+      return {
+        ...question,
+        answers: question.answers.filter((answer) => answer.id !== answerId),
+      };
+    }));
 
   const updateAnswer = (qId: string, answerId: string, updates: Partial<Answer>) =>
     setQuestions((prev) => prev.map(q =>
@@ -327,36 +258,46 @@ export default function EditExamPage() {
     }));
 
   const handleQuestionImageChange = (qId: string, file: File | null) =>
-    setQuestions((prev) => prev.map(q =>
-      q.id === qId ? { ...q, image: file, imagePreview: file ? URL.createObjectURL(file) : '' } : q
-    ));
+    setQuestions((current) => current.map((question) => question.id === qId
+      ? {
+        ...question,
+        image: file,
+        imagePreview: createReplacementPreview(question.imagePreview, file),
+      }
+      : question));
 
   const handleAnswerImageChange = (qId: string, answerId: string, file: File | null) =>
-    setQuestions((prev) => prev.map(q =>
-      q.id === qId
-        ? {
-          ...q, answers: q.answers.map(a =>
-            a.id === answerId ? { ...a, image: file, imagePreview: file ? URL.createObjectURL(file) : '' } : a
-          )
-        }
-        : q
-    ));
+    setQuestions((current) => current.map((question) => question.id === qId
+      ? {
+        ...question,
+        answers: question.answers.map((answer) => answer.id === answerId
+          ? {
+            ...answer,
+            image: file,
+            imagePreview: createReplacementPreview(answer.imagePreview, file),
+          }
+          : answer),
+      }
+      : question));
 
   const handleAnswerReasonImageChange = (qId: string, answerId: string, file: File | null) =>
-    setQuestions((prev) => prev.map(q =>
-      q.id === qId
-        ? {
-          ...q, answers: q.answers.map(a =>
-            a.id === answerId ? { ...a, reason_image: file, reasonImagePreview: file ? URL.createObjectURL(file) : '' } : a
-          )
-        }
-        : q
-    ));
+    setQuestions((current) => current.map((question) => question.id === qId
+      ? {
+        ...question,
+        answers: question.answers.map((answer) => answer.id === answerId
+          ? {
+            ...answer,
+            reason_image: file,
+            reasonImagePreview: createReplacementPreview(answer.reasonImagePreview, file),
+          }
+          : answer),
+      }
+      : question));
 
-  const handleAIUpload = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleAIUpload = async (event?: React.FormEvent) => {
+    event?.preventDefault();
     if (!aiFile) {
-      toast.error('Please select a file first.');
+      toast.error(t('ai.selectFileError'));
       return;
     }
 
@@ -365,74 +306,44 @@ export default function EditExamPage() {
     try {
       const formData = new FormData();
       formData.append('file', aiFile);
-      if (aiQuestionCount) {
-        formData.append('count', aiQuestionCount);
-      }
+      if (aiQuestionCount) formData.append('count', aiQuestionCount);
 
-      const res = await fetch('/api/ai-exam-extract', {
+      const response = await fetch('/api/ai-exam-extract', {
         method: 'POST',
         body: formData,
       });
+      const data: unknown = await response.json().catch(() => null);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to extract questions');
+      if (!response.ok) {
+        throw new Error(isApiErrorPayload(data) && data.message ? data.message : t('ai.extractError'));
       }
 
-      if (Array.isArray(data) && data[0] && Array.isArray(data[0].output)) {
-        const extractedQuestions = data[0].output;
-        
-        const newQuestions: Question[] = extractedQuestions.map((q: any, i: number) => ({
-          id: `ai-q-${Date.now()}-${i}`,
-          quizId: '',
-          text: q.text || '',
-          type: q.type || 'single_choice',
-          score: q.score || 1,
-          autoCorrect: q.auto_correct === 1 || q.auto_correct === true,
-          image: null,
-          imagePreview: '',
-          answers: Array.isArray(q.answers) ? q.answers.map((a: any, j: number) => ({
-            id: `ai-a-${Date.now()}-${i}-${j}`,
-            text: a.text || '',
-            isCorrect: a.is_correct === 1 || a.is_correct === true,
-            reason: a.reason || '',
-            image: null,
-            imagePreview: '',
-            reason_image: null,
-            reasonImagePreview: ''
-          })) : [
-            { id: `ai-a-${Date.now()}-${i}-1`, text: 'Open-ended response', isCorrect: false, reason: '' }
-          ]
-        }));
-        
-        setPendingQuestions(newQuestions);
-        setShowReplaceModal(true);
-      } else {
-        throw new Error('Invalid format returned from AI');
-      }
+      setPendingQuestions(mapGeneratedQuestionsToForm(parseGeneratedExamQuestions(data)));
+      setShowReplaceModal(true);
     } catch (error) {
-      console.error('AI Extraction Error:', error);
-      toast.error(error instanceof Error ? error.message : 'Something went wrong during AI extraction');
+      toast.error(error instanceof Error && error.message !== 'INVALID_AI_RESPONSE'
+        ? error.message
+        : t('ai.invalidResponse'));
     } finally {
       setIsExtractingAI(false);
       setShowAIModal(false);
       setAiFile(null);
+      setAiQuestionCount('5');
     }
   };
 
   const confirmAIQuestions = (mode: 'replace' | 'append') => {
     if (!pendingQuestions) return;
-    
+
     if (mode === 'replace') {
+      revokeQuestionsObjectUrls(questionsRef.current);
       setQuestions(pendingQuestions);
     } else {
-      setQuestions(prev => [...prev, ...pendingQuestions]);
+      setQuestions((current) => [...current, ...pendingQuestions]);
     }
-    
-    setShowReplaceModal(false);
-    setPendingQuestions(null);
-    toast.success('Questions updated from PDF successfully');
+
+    closeReplaceModal();
+    toast.success(t('ai.questionsUpdated'));
   };
 
   // ── submit ──
@@ -442,79 +353,39 @@ export default function EditExamPage() {
 
     try {
       if (examDetails.courses.length === 0) {
-        toast.error('Please select at least one course');
+        toast.error(t('create.validation.courseRequired'));
         return;
       }
 
-      // Build FormData
-      const formData = new FormData();
+      const formData = buildExamFormData(examDetails, questions, 'edit');
 
-      // Send all selected course IDs to the API
-      examDetails.courses.forEach(cid => formData.append('course_ids[]', cid));
-      // Also send the primary course ID for compatibility
-      formData.append('course_id', examDetails.courses[0]);
-      if (examDetails.chapter) formData.append('chapter_id', examDetails.chapter);
-      formData.append('title', examDetails.title);
-      formData.append('type', examDetails.type);
-      formData.append('duration', examDetails.duration);
-      formData.append('total_marks', examDetails.totalMarks);
-      formData.append('passing_marks', examDetails.passingMarks);
-      formData.append('max_attempts', examDetails.maxAttempts);
-      formData.append('is_public', examDetails.is_public ? '1' : '0');   // ✅ boolean as 0/1
-      formData.append('status', examDetails.status.toLowerCase());
-      if (examDetails.startTime) formData.append('start_time', examDetails.startTime);
-      if (examDetails.endTime) formData.append('end_time', examDetails.endTime);
-
-      questions.forEach((q, qIndex) => {
-        // Always send ID, but blank if it is a new question
-        formData.append(`questions[${qIndex}][id]`, (q.id && !q.id.startsWith('new-')) ? q.id : '');
-        formData.append(`questions[${qIndex}][text]`, q.text);
-        formData.append(`questions[${qIndex}][type]`, q.type);
-        formData.append(`questions[${qIndex}][score]`, String(q.score));
-        formData.append(`questions[${qIndex}][auto_correct]`, q.autoCorrect ? '1' : '0'); // ✅
-        formData.append(`questions[${qIndex}][order]`, String(qIndex + 1));
-
-        if (q.image instanceof File) {
-          formData.append(`questions[${qIndex}][image]`, q.image);
-        }
-
-        if (q.type !== 'short_answer') {
-          q.answers.forEach((a, aIndex) => {
-            // Always send ID, but blank if it is a new answer
-            formData.append(`questions[${qIndex}][answers][${aIndex}][id]`, (a.id && !a.id.startsWith('a-')) ? a.id : '');
-            formData.append(`questions[${qIndex}][answers][${aIndex}][text]`, a.text);
-            formData.append(`questions[${qIndex}][answers][${aIndex}][is_correct]`, a.isCorrect ? '1' : '0'); // ✅
-            if (a.reason) formData.append(`questions[${qIndex}][answers][${aIndex}][reason]`, a.reason);
-            if (a.image instanceof File) formData.append(`questions[${qIndex}][answers][${aIndex}][image]`, a.image);
-            if (a.reason_image instanceof File) formData.append(`questions[${qIndex}][answers][${aIndex}][reason_image]`, a.reason_image);
-          });
-        }
-      });
-
-      // Submit directly using the helper (handles token + FormData rebuild)
+      // Submit directly using the helper.
       const response = await submitQuizUpdate(examId, formData);
 
-      const responseData = await response.json().catch(() => ({ message: 'Failed to parse response' }));
+      const responsePayload: unknown = await response.json().catch(() => null);
+      const responseData = isApiErrorPayload(responsePayload) ? responsePayload : {};
 
       if (!response.ok) {
-        console.error('❌ Update error:', responseData);
-        if (responseData.errors) {
-          Object.values(responseData.errors).flat().forEach((err: any) => {
-            toast.error(err);
-          });
+        const validationMessages = getApiErrorMessages(responseData.errors);
+        if (validationMessages.length > 0) {
+          validationMessages.forEach((message) => toast.error(message));
         } else {
-          toast.error(responseData.message || responseData.details || 'Failed to update exam');
+          toast.error(responseData.message || responseData.details || t('edit.error'));
         }
         return;
       }
 
-      console.log('✅ Quiz updated successfully:', responseData);
-      toast.success('Exam updated successfully!');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: quizKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: quizKeys.detail(Number(examId)) }),
+      ]);
+      toast.success(t('edit.success'));
       localStorage.removeItem(`exam_edit_form_draft_${examId}`);
       router.push('/exams');
     } catch (error) {
-      console.error('Error updating exam:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update exam');
+      toast.error(error instanceof Error && error.message !== 'UNAUTHORIZED'
+        ? error.message
+        : t('edit.unauthorized'));
     } finally {
       setIsSubmitting(false);
     }
@@ -532,8 +403,8 @@ export default function EditExamPage() {
   if (!quiz) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-[#64748B]">Exam not found</p>
-        <Link href="/exams" className="text-[#2137D6] hover:underline">Back to Exams</Link>
+        <p className="text-[#64748B]">{t('edit.notFound')}</p>
+        <Link href="/exams" className="text-[#2137D6] hover:underline">{t('edit.backToExams')}</Link>
       </div>
     );
   }
@@ -550,29 +421,29 @@ export default function EditExamPage() {
                 <Sparkles className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-800">Extract Questions</h3>
-                <p className="text-sm text-slate-500 mt-1">Upload a PDF to extract questions with AI.</p>
+                <h3 className="text-lg font-bold text-slate-800">{t('ai.title')}</h3>
+                <p className="text-sm text-slate-500 mt-1">{t('ai.description')}</p>
               </div>
             </div>
             <form onSubmit={handleAIUpload} className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">Number of questions</label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('ai.questionCount')}</label>
                 <input
                   type="number"
                   min="1"
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                   value={aiQuestionCount}
                   onChange={e => setAiQuestionCount(e.target.value)}
-                  placeholder="e.g. 5"
+                  placeholder={t('ai.questionCountPlaceholder')}
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">PDF File <span className="text-[#EF4444]">*</span></label>
+                <label className="text-[13px] font-bold text-[#475569]">{t('ai.pdfFile')} <span className="text-[#EF4444]">*</span></label>
                 <input
                   type="file"
                   accept=".pdf"
                   required
-                  className="w-full px-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
+                  className="w-full px-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm file:me-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200"
                   onChange={e => setAiFile(e.target.files?.[0] || null)}
                 />
               </div>
@@ -583,15 +454,15 @@ export default function EditExamPage() {
                   className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isExtractingAI ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  {isExtractingAI ? 'Extracting AI...' : 'Extract'}
+                  {isExtractingAI ? t('ai.extracting') : t('ai.extract')}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowAIModal(false)}
+                  onClick={closeAIModal}
                   disabled={isExtractingAI}
                   className="w-full px-4 py-3 text-slate-500 hover:text-slate-700 font-medium transition-colors disabled:opacity-50"
                 >
-                  Cancel
+                  {t('create.cancel')}
                 </button>
               </div>
             </form>
@@ -608,9 +479,9 @@ export default function EditExamPage() {
                 <AlertCircle className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-slate-800">New Questions Extracted</h3>
+                <h3 className="text-lg font-bold text-slate-800">{t('ai.replaceTitle')}</h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  We extracted <span className="font-bold text-slate-700">{pendingQuestions.length}</span> questions from the document. How would you like to add them?
+                  {t('ai.replaceDescription', { count: pendingQuestions.length })}
                 </p>
               </div>
             </div>
@@ -619,22 +490,19 @@ export default function EditExamPage() {
                 onClick={() => confirmAIQuestions('replace')}
                 className="w-full px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold rounded-xl transition-colors border border-red-200 shadow-sm"
               >
-                Replace Current Questions
+                {t('ai.replaceCurrent')}
               </button>
               <button 
                 onClick={() => confirmAIQuestions('append')}
                 className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-colors shadow-sm"
               >
-                Add to Current Questions
+                {t('ai.appendCurrent')}
               </button>
               <button 
-                onClick={() => {
-                  setShowReplaceModal(false);
-                  setPendingQuestions(null);
-                }}
+                onClick={closeReplaceModal}
                 className="w-full px-4 py-2 mt-2 text-slate-500 hover:text-slate-700 font-medium transition-colors"
               >
-                Cancel
+                {t('create.cancel')}
               </button>
             </div>
           </div>
@@ -648,7 +516,7 @@ export default function EditExamPage() {
             href="/exams"
             className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <BackIcon className="w-5 h-5" />
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-[#1E293B]">{t('edit.pageTitle')}</h1>
@@ -660,11 +528,15 @@ export default function EditExamPage() {
         <div>
           <button 
             type="button"
-            onClick={() => setShowAIModal(true)}
+            onClick={() => {
+              setAiFile(null);
+              setAiQuestionCount('5');
+              setShowAIModal(true);
+            }}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all shadow-purple-100 bg-purple-600 hover:bg-purple-700 text-white hover:shadow-md`}
           >
             <Sparkles className="w-4 h-4" />
-            Extract with AI
+            {t('ai.openButton')}
           </button>
         </div>
       </div>
@@ -714,7 +586,7 @@ export default function EditExamPage() {
                   <option value="exam">{t('create.exam')}</option>
                   <option value="homework">{t('create.homework')}</option>
                 </select>
-                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                <ChevronDown className="absolute end-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
               </div>
 
               <div className="flex flex-col gap-2 relative">
@@ -732,29 +604,29 @@ export default function EditExamPage() {
                     <option key={ch.id} value={ch.id}>{ch.attributes.title}</option>
                   ))}
                 </select>
-                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                <ChevronDown className="absolute end-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
                 {chaptersLoading && examDetails.courses.length > 0 && (
-                  <Loader2 className="absolute right-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />
+                  <Loader2 className="absolute end-10 top-[42px] w-4 h-4 text-[#2137D6] animate-spin" />
                 )}
               </div>
             </div>
 
             {/* Duration, Marks, Attempts */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[
+              {([
                 { label: t('create.duration'), icon: Clock, key: 'duration', min: 1 },
                 { label: t('create.totalMarks'), icon: Award, key: 'totalMarks', min: 1 },
                 { label: t('create.passingMarks'), icon: Award, key: 'passingMarks', min: 0 },
                 { label: t('create.maxAttempts'), icon: RotateCcw, key: 'maxAttempts', min: 1 },
-              ].map(({ label, icon: Icon, key, min }) => (
+              ] satisfies ExamNumberField[]).map(({ label, icon: Icon, key, min }) => (
                 <div key={key} className="flex flex-col gap-2">
                   <label className="text-[13px] font-bold text-[#475569]">{label} {(key === 'duration' || key === 'totalMarks') && <span className="text-[#EF4444]">*</span>}</label>
                   <div className="relative">
-                    <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <Icon className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                     <input
                       type="number" min={min}
-                      className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                      value={(examDetails as any)[key]}
+                      className="w-full ps-10 pe-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                      value={readExamField(examDetails, key)}
                       onChange={(e) => setExamDetails({ ...examDetails, [key]: e.target.value })}
                       required={key === 'duration' || key === 'totalMarks'}
                     />
@@ -765,18 +637,18 @@ export default function EditExamPage() {
 
             {/* Start / End Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
+              {([
                 { label: t('create.startTime'), key: 'startTime' },
                 { label: t('create.endTime'), key: 'endTime' },
-              ].map(({ label, key }) => (
+              ] satisfies ExamDateField[]).map(({ label, key }) => (
                 <div key={key} className="flex flex-col gap-2">
                   <label className="text-[13px] font-bold text-[#475569]">{label}</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
+                    <Calendar className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
                     <input
                       type="datetime-local"
-                      className="w-full pl-10 pr-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                      value={(examDetails as any)[key]}
+                      className="w-full ps-10 pe-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                      value={readExamField(examDetails, key)}
                       onChange={(e) => setExamDetails({ ...examDetails, [key]: e.target.value })}
                     />
                   </div>
@@ -797,7 +669,7 @@ export default function EditExamPage() {
                   <option value="Draft">{t('status.draft')}</option>
                   <option value="Active">{t('status.active')}</option>
                 </select>
-                <ChevronDown className="absolute right-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                <ChevronDown className="absolute end-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
               </div>
 
               <div className="flex flex-col gap-2">
@@ -826,10 +698,10 @@ export default function EditExamPage() {
               type="button"
               onClick={() => addQuestion(0)}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E8F0] rounded-full text-xs font-bold text-[#2137D6] hover:bg-[#F8FAFC] hover:shadow-md transition-all group shadow-sm"
-              title="Add question at the beginning"
+              title={t('create.addQuestionAtBeginning')}
             >
               <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
-              {t('create.addQuestion')} هنا
+              {t('create.addQuestion')} {t('create.insertHere')}
             </button>
           </div>
 
@@ -864,14 +736,16 @@ export default function EditExamPage() {
                       value={q.type}
                       onChange={(e) => {
                         const newType = e.target.value as Question['type'];
-                        let updates: Partial<Question> = { type: newType };
-
-                        if (newType === 'true_false') {
-                          updates.answers = [
-                            { id: `a-${Date.now()}-1`, text: 'صح (True)', isCorrect: false, reason: '', image: null, imagePreview: '' },
-                            { id: `a-${Date.now()}-2`, text: 'خطأ (False)', isCorrect: false, reason: '', image: null, imagePreview: '' }
-                          ];
-                        }
+                        const timestamp = Date.now();
+                        const updates: Partial<Question> = newType === 'true_false'
+                          ? {
+                            type: newType,
+                            answers: [
+                              { id: `a-${timestamp}-1`, text: t('create.trueAnswer'), isCorrect: false, reason: '', image: null, imagePreview: '' },
+                              { id: `a-${timestamp}-2`, text: t('create.falseAnswer'), isCorrect: false, reason: '', image: null, imagePreview: '' },
+                            ],
+                          }
+                          : { type: newType };
 
                         updateQuestion(q.id, updates);
                       }}
@@ -881,7 +755,7 @@ export default function EditExamPage() {
                       <option value="true_false">{t('create.trueFalse')}</option>
                       <option value="short_answer">{t('create.shortAnswer')}</option>
                     </select>
-                    <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                    <ChevronDown className="absolute end-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
                   </div>
 
                   <div className="flex flex-col gap-2">
@@ -895,7 +769,7 @@ export default function EditExamPage() {
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#475569]">Auto-correct</label>
+                    <label className="text-[13px] font-bold text-[#475569]">{t('create.autoCorrect')}</label>
                     <div className="flex items-center gap-3 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl h-[42px]">
                       <input
                         type="checkbox" id={`autoCorrect-${q.id}`}
@@ -924,13 +798,13 @@ export default function EditExamPage() {
 
                 {/* Question Image */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#475569]">Question Image</label>
+                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionImage')}</label>
                   {q.imagePreview ? (
                     <div className="relative w-fit">
-                      <img src={q.imagePreview} alt="Question preview"
+                      <Image src={q.imagePreview} alt={t('create.questionPreview')}
                         className="h-32 w-auto rounded-xl border border-[#E2E8F0] object-cover" />
                       <button type="button" onClick={() => handleQuestionImageChange(q.id, null)}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 hover:bg-white text-[#EF4444] rounded-full shadow-sm transition-all">
+                        className="absolute top-2 end-2 p-1.5 bg-white/90 hover:bg-white text-[#EF4444] rounded-full shadow-sm transition-all">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
@@ -941,7 +815,7 @@ export default function EditExamPage() {
                       <label htmlFor={`q-img-${q.id}`}
                         className="flex items-center gap-2 px-4 py-2.5 bg-white border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer">
                         <ImagePlus className="w-4 h-4" />
-                        Upload Image
+                        {t('create.uploadImage')}
                       </label>
                     </div>
                   )}
@@ -989,7 +863,7 @@ export default function EditExamPage() {
 
                             <input
                               type="text"
-                              placeholder={`Reason for answer ${ansIndex + 1}`}
+                              placeholder={t('create.reasonForAnswer', { number: ansIndex + 1 })}
                               className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                               value={answer.reason}
                               onChange={(e) => updateAnswer(q.id, answer.id, { reason: e.target.value })}
@@ -1002,7 +876,7 @@ export default function EditExamPage() {
                               <label htmlFor={`a-img-${q.id}-${answer.id}`}
                                 className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${answer.imagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
                                   }`}
-                                title={answer.imagePreview ? 'Change image' : 'Add image'}>
+                                title={answer.imagePreview ? t('create.changeImage') : t('create.addImage')}>
                                 <ImagePlus className="w-4 h-4" />
                               </label>
                             </div>
@@ -1015,7 +889,7 @@ export default function EditExamPage() {
                               <label htmlFor={`a-reason-img-${q.id}-${answer.id}`}
                                 className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${answer.reasonImagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
                                   }`}
-                                title={answer.reasonImagePreview ? 'Change reason image' : 'Add reason image'}>
+                                title={answer.reasonImagePreview ? t('create.changeReasonImage') : t('create.addReasonImage')}>
                                 <ImagePlus className="w-4 h-4 border border-[#2137D6] rounded-sm" />
                               </label>
                             </div>
@@ -1028,11 +902,11 @@ export default function EditExamPage() {
                             )}
                           </div>
 
-                          <div className="flex gap-4 ml-9">
+                          <div className="flex gap-4 ms-9">
                             {/* Answer image preview */}
                             {answer.imagePreview && (
                               <div className="flex items-center gap-2">
-                                <img src={answer.imagePreview} alt={`Answer ${ansIndex + 1} preview`}
+                                <Image src={answer.imagePreview} alt={t('create.answerPreview', { number: ansIndex + 1 })}
                                   className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover" />
                                 <button type="button" onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
                                   className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
@@ -1045,9 +919,9 @@ export default function EditExamPage() {
                             {answer.reasonImagePreview && (
                               <div className="flex items-center gap-2">
                                 <div className="relative">
-                                  <img src={answer.reasonImagePreview} alt={`Reason ${ansIndex + 1} preview`}
+                                  <Image src={answer.reasonImagePreview} alt={t('create.reasonPreview', { number: ansIndex + 1 })}
                                     className="h-16 w-auto rounded-lg border border-[#2137D6] object-cover" />
-                                  <span className="absolute -top-2 -left-2 bg-[#2137D6] text-white text-[10px] px-1 rounded">Reason</span>
+                                  <span className="absolute -top-2 -start-2 bg-[#2137D6] text-white text-[10px] px-1 rounded">{t('create.reasonLabel')}</span>
                                 </div>
                                 <button type="button" onClick={() => handleAnswerReasonImageChange(q.id, answer.id, null)}
                                   className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all">
@@ -1092,7 +966,7 @@ export default function EditExamPage() {
                 title={`Add question after question ${index + 1}`}
               >
                 <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
-                {t('create.addQuestion')} {index === questions.length - 1 ? '' : 'هنا'}
+                {t('create.addQuestion')} {index === questions.length - 1 ? '' : t('create.insertHere')}
               </button>
             </div>
           </React.Fragment>
@@ -1112,10 +986,10 @@ export default function EditExamPage() {
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed">
             {t('edit.cancel')}
           </button>
-          <button type="submit" disabled={isSubmitting || isUpdating}
+          <button type="submit" disabled={isSubmitting}
             className="px-10 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-            {(isSubmitting || isUpdating) && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isSubmitting || isUpdating ? t('edit.saving') : t('edit.saveChanges')}
+            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            {isSubmitting ? t('edit.saving') : t('edit.saveChanges')}
           </button>
         </div>
       </form>

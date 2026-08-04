@@ -14,6 +14,10 @@ import {
 } from '@/src/lib/student-quiz-cache';
 import { buildStudentStartExamHref, parseCourseIdFromCourseDetailsPath } from '@/src/lib/student-start-exam-href';
 import { formatTimeTakenForDisplay } from '@/src/lib/quiz-finish-result-fields';
+import {
+  passingMarksPercentage,
+  readPercentageWithScoreFallback,
+} from '@/src/lib/student-exam-score';
 
 const PRIMARY = '#2D46D9';
 
@@ -21,16 +25,6 @@ function formatPercent(value: number): string {
   if (!Number.isFinite(value)) return '—';
   const rounded = Math.round(value * 10) / 10;
   return `${rounded}%`;
-}
-
-function passingThresholdPercent(info: StudentQuizResultPayload['finishResponse']['quiz_info']): number | null {
-  const tm = Number(info.total_marks);
-  const pm = Number(info.passing_marks);
-  if (Number.isFinite(tm) && tm > 0 && Number.isFinite(pm)) {
-    return (pm / tm) * 100;
-  }
-  if (Number.isFinite(pm)) return pm;
-  return null;
 }
 
 function formatFinishedAt(raw: string | undefined, locale: string): string {
@@ -64,8 +58,18 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
   const quizInfo = finish?.quiz_info;
 
   const passed = results?.passed === true;
-  const yourPct = results != null && Number.isFinite(Number(results.percentage)) ? Number(results.percentage) : null;
-  const passPct = quizInfo != null ? passingThresholdPercent(quizInfo) : null;
+  const yourPct =
+    results != null
+      ? readPercentageWithScoreFallback(
+          results.percentage,
+          results.score,
+          results.total_score,
+        )
+      : null;
+  const passPct =
+    quizInfo != null
+      ? passingMarksPercentage(quizInfo.passing_marks, quizInfo.total_marks)
+      : null;
   const timeTakenVal = results != null ? formatTimeTakenForDisplay(results.time_taken) : null;
 
   const scoreMarksLine = useMemo(() => {
