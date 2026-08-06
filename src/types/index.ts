@@ -3696,7 +3696,7 @@ export interface QuizAttributes {
 
 
 
-  is_public: boolean;
+  is_public: boolean | 'true' | 'false' | 'included';
 
 
 
@@ -3789,7 +3789,7 @@ export interface CreateQuizRequest {
 
 
 
-  is_public?: boolean;
+  is_public?: boolean | 'true' | 'false' | 'included';
 
 
 

@@ -62,15 +62,17 @@ export function useChapterViewRecording({
           await api.chapters.recordView(chapterId);
           router.refresh();
         } catch (err) {
-          recordedRef.current = false;
+          // Do NOT pause the video here. If the failure is because the student
+          // just used their last allowed view (or any other reason), the user
+          // is still in the middle of watching — closing the player on them is
+          // jarring. The server-side `can_watch` gate blocks re-entry on the
+          // next attempt, so the limit is still enforced once they finish or
+          // reload. We surface the error as a toast and keep `recordedRef`
+          // truthy so we don't spam retries on every play event.
+          recordedRef.current = true;
           const msg =
             err instanceof ApiError ? err.message : 'Could not record chapter view.';
           onViewRecordErrorRef.current(msg);
-          try {
-            if (el) el.pause();
-          } catch {
-            /* ignore */
-          }
         }
       };
 

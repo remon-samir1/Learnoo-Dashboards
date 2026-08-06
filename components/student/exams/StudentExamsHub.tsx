@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { PaginationMeta } from '@/src/types';
 import { useTranslations } from 'next-intl';
 import {
   BookOpen,
   Calendar,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   FileText,
   ListOrdered,
@@ -89,19 +92,26 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
   const [quizActivationTarget, setQuizActivationTarget] = useState<{ id: string; title: string } | null>(
     null
   );
+  const [page, setPage] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
 
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (pageNum: number) => {
     setLoading(true);
     setLoadError(null);
     try {
-      const [quizRes, attemptRes] = await Promise.all([api.quizzes.list(), api.quizAttempts.list()]);
-      const qRaw = (quizRes as { data?: unknown }).data;
+      const [quizRes, attemptRes] = await Promise.all([
+        api.quizzes.list({ page: pageNum }),
+        api.quizAttempts.list(),
+      ]);
+      const qRaw = (quizRes as { data?: unknown; meta?: PaginationMeta }).data;
       const quizzes = Array.isArray(qRaw)
         ? (qRaw as unknown[]).map(normalizeQuizListRow).filter((x): x is HubQuizListRow => x != null)
         : [];
+      const meta = (quizRes as { meta?: PaginationMeta }).meta ?? null;
       const aRaw = (attemptRes as { data?: unknown }).data;
       const attempts = Array.isArray(aRaw) ? (aRaw as QuizAttempt[]) : [];
       setQuizList(quizzes);
+      setPaginationMeta(meta);
       setAttemptList(attempts);
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : null;
@@ -114,8 +124,8 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
   }, [t]);
 
   useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
+    void loadAll(page);
+  }, [loadAll, page]);
 
   const { available, upcoming, expired, locked } = useMemo(() => {
     const buckets: {
@@ -256,7 +266,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
           <p>{loadError}</p>
           <button
             type="button"
-            onClick={() => void loadAll()}
+            onClick={() => void loadAll(page)}
             className="mt-2 text-sm font-semibold text-red-900 underline underline-offset-2"
           >
             {t('retryLoad')}
@@ -614,6 +624,35 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
         </section>
       </div>
 
+      {/* Pagination controls for the quiz list */}
+      {paginationMeta && paginationMeta.last_page > 1 ? (
+        <div className="mt-10 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            disabled={page <= 1 || loading}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] shadow-sm transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ChevronLeft className={`size-4 shrink-0${dir === 'rtl' ? ' rotate-180' : ''}`} strokeWidth={2} aria-hidden />
+            {t('paginationPrev')}
+          </button>
+
+          <span className="text-sm text-[#64748B]">
+            {t('paginationOf', { current: paginationMeta.current_page, total: paginationMeta.last_page })}
+          </span>
+
+          <button
+            type="button"
+            disabled={page >= paginationMeta.last_page || loading}
+            onClick={() => setPage((p) => Math.min(paginationMeta.last_page, p + 1))}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] shadow-sm transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {t('paginationNext')}
+            <ChevronRight className={`size-4 shrink-0${dir === 'rtl' ? ' rotate-180' : ''}`} strokeWidth={2} aria-hidden />
+          </button>
+        </div>
+      ) : null}
+
       <StudentCourseActivationModal
         open={quizActivationTarget !== null}
         onClose={() => setQuizActivationTarget(null)}
@@ -621,7 +660,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
         courseTitle={quizActivationTarget?.title}
         activationItemType="quiz"
         onActivated={async () => {
-          await loadAll();
+          await loadAll(page);
         }}
       />
     </div>

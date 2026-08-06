@@ -65,7 +65,7 @@ export function useQuiz(id: number, options: QueryControl<Quiz> = {}) {
 export function useCreateQuiz() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (data: CreateQuizRequest) => api.quizzes.create(data).then((response) => response.data),
+    mutationFn: (data: CreateQuizRequest | FormData) => api.quizzes.create(data).then((response) => response.data),
     onSuccess: async (quiz) => {
       queryClient.setQueryData(quizKeys.detail(Number(quiz.id)), quiz);
       await queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
@@ -84,14 +84,14 @@ export function useCreateQuiz() {
 export function useUpdateQuiz() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<CreateQuizRequest> }) =>
+    mutationFn: ({ id, data }: { id: number; data: Partial<CreateQuizRequest> | FormData }) =>
       api.quizzes.update(id, data).then((response) => response.data),
     onSuccess: async (quiz, variables) => {
       queryClient.setQueryData(quizKeys.detail(variables.id), quiz);
       await queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
     },
   });
-  const mutateAsync = (id: number, data: Partial<CreateQuizRequest>) =>
+  const mutateAsync = (id: number, data: Partial<CreateQuizRequest> | FormData) =>
     mutation.mutateAsync({ id, data });
   return {
     ...mutation,

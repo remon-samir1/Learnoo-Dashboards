@@ -97,7 +97,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
     return ids.map((id) => courseNames.get(Number(id))).filter(Boolean).join(', ') || '—';
   };
 
-  const updateQuiz = async (quiz: Quiz, data: { status?: 'draft' | 'active'; is_public?: boolean }) => {
+  const updateQuiz = async (quiz: Quiz, data: { status?: 'draft' | 'active'; is_public?: boolean | 'true' | 'false' | 'included' }) => {
     setUpdatingQuizId(quiz.id);
     try {
       await updateMutation.mutateAsync(Number(quiz.id), data);
@@ -256,7 +256,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
                             className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${quiz.attributes.status === 'active'
                               ? 'bg-[#E1FCEF] text-[#047857]'
                               : 'bg-[#F1F5F9] text-[#64748B]'
-                            }`}
+                              }`}
                           >
                             {isUpdating && <Loader2 className="h-3 w-3 animate-spin" />}
                             {quiz.attributes.status === 'active' ? t('status.active') : t('status.draft')}
@@ -266,14 +266,24 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
                           <button
                             type="button"
                             disabled={isUpdating}
-                            onClick={() => void updateQuiz(quiz, { is_public: !quiz.attributes.is_public })}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${quiz.attributes.is_public
+                            onClick={() => {
+                              const currentVal = quiz.attributes.is_public;
+                              let nextVal: 'true' | 'false' | 'included' = 'false';
+                              if (currentVal === true || currentVal === 'true') nextVal = 'included';
+                              else if (currentVal === 'included') nextVal = 'false';
+                              else nextVal = 'true';
+
+                              void updateQuiz(quiz, { is_public: nextVal });
+                            }}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${(quiz.attributes.is_public === true || quiz.attributes.is_public === 'true')
                               ? 'bg-[#E0E7FF] text-[#2137D6]'
-                              : 'bg-[#F1F5F9] text-[#64748B]'
-                            }`}
+                              : (quiz.attributes.is_public === 'included' ? 'bg-[#FEF3C7] text-[#D97706]' : 'bg-[#F1F5F9] text-[#64748B]')
+                              }`}
                           >
                             {isUpdating && <Loader2 className="h-3 w-3 animate-spin" />}
-                            {quiz.attributes.is_public ? t('visibility.public') : t('visibility.private')}
+                            {(quiz.attributes.is_public === true || quiz.attributes.is_public === 'true')
+                              ? (t('visibility.public') || 'Public')
+                              : (quiz.attributes.is_public === 'included' ? (t('create.included') || 'Included') : (t('visibility.private') || 'Private'))}
                           </button>
                         </td>
                         <td className="px-4 py-4">

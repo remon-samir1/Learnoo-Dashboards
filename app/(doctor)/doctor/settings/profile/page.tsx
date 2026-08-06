@@ -128,6 +128,7 @@ export default function ProfileSettingsPage() {
                   src={previewImage}
                   alt="Profile"
                   fill
+                  unoptimized
                   className="object-cover"
                 />
               ) : (

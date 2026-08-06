@@ -21,11 +21,10 @@ import {
   Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 import { useChapters } from '@/src/hooks/useChapters';
-import { quizKeys } from '@/src/hooks/useQuizzes';
+import { quizKeys, useCreateQuiz } from '@/src/hooks/useQuizzes';
 import { parseGeneratedExamQuestions } from '@/src/lib/exam-ai';
 import {
   buildExamFormData,
@@ -51,6 +50,7 @@ export default function CreateExamPage() {
   const initialCourseId = searchParams.get('course_id');
   const { data: chapters, isLoading: chaptersLoading } = useChapters();
   const queryClient = useQueryClient();
+  const { mutateAsync: createQuiz } = useCreateQuiz();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [isExtractingAI, setIsExtractingAI] = useState(false);
@@ -70,7 +70,7 @@ export default function CreateExamPage() {
     status: 'Draft',
     startTime: '',
     endTime: '',
-    is_public: false
+    is_public: 'false' as 'true' | 'false' | 'included'
   });
 
   // Filter chapters based on selected courses
@@ -92,7 +92,7 @@ export default function CreateExamPage() {
       ]
     }
   ]);
-  
+
   const questionsRef = useRef(questions);
   questionsRef.current = questions;
 
@@ -312,41 +312,27 @@ export default function CreateExamPage() {
 
       const formData = buildExamFormData(examDetails, questions, 'create');
 
-      // Get token
-      const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') || localStorage.getItem('token') || '' : '';
+      // Get token not needed anymore since api.ts handles it automatically.
+      const responsePayload = await createQuiz(formData);
 
-      const quizResponse = await fetch('/api/quiz-upload', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-      });
-
-      const responsePayload: unknown = await quizResponse.json().catch(() => null);
-      const responseData = isApiErrorPayload(responsePayload) ? responsePayload : {};
-
-      if (!quizResponse.ok) {
-        const validationMessages = getApiErrorMessages(responseData.errors);
-        if (validationMessages.length > 0) {
-          validationMessages.forEach((message) => toast.error(message));
-        } else {
-          toast.error(responseData.message || responseData.details || t('create.error'));
-        }
-        return;
-      }
-
-      if (!responseData.data && !responseData.id) {
+      if (!responsePayload) {
         throw new Error(t('create.error'));
       }
 
-      // Refresh every cached exam list before returning to management.
-      await queryClient.invalidateQueries({ queryKey: quizKeys.lists() });
+      // Refresh handled by hook
       localStorage.removeItem('doctor_exam_create_form_draft');
       router.push('/doctor/exams');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating exam:', error);
-      toast.error(error instanceof Error ? error.message : t('create.error'));
+      if (error?.errors) {
+        const validationMessages = getApiErrorMessages(error.errors);
+        if (validationMessages.length > 0) {
+          validationMessages.forEach((message) => toast.error(message));
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      toast.error(error?.message || t('create.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -429,7 +415,7 @@ export default function CreateExamPage() {
 
         {/* AI Upload Button */}
         <div>
-          <button 
+          <button
             type="button"
             onClick={() => {
               setAiFile(null);
@@ -623,20 +609,19 @@ export default function CreateExamPage() {
                 <ChevronDown className="absolute end-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#475569]">{t('create.visibility')}</label>
-                <div className="flex items-center gap-3 px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
-                  <input
-                    type="checkbox"
-                    id="is_public"
-                    className="w-4 h-4 text-[#2137D6] rounded border-[#E2E8F0] focus:ring-[#2137D6]"
-                    checked={examDetails.is_public}
-                    onChange={(e) => setExamDetails({ ...examDetails, is_public: e.target.checked })}
-                  />
-                  <label htmlFor="is_public" className="text-sm text-[#475569] cursor-pointer">
-                    {t('create.public')}
-                  </label>
-                </div>
+              <div className="flex flex-col gap-2 relative">
+                <label className="text-[13px] font-bold text-[#475569]">{t('create.visibility')} <span className="text-[#EF4444]">*</span></label>
+                <select
+                  className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+                  value={examDetails.is_public}
+                  onChange={(e) => setExamDetails({ ...examDetails, is_public: e.target.value as 'true' | 'false' | 'included' })}
+                  required
+                >
+                  <option value="true">{t('create.public') || 'Public'}</option>
+                  <option value="false">{t('create.private') || 'Private'}</option>
+                  <option value="included">{t('create.included') || 'Included'}</option>
+                </select>
+                <ChevronDown className="absolute end-4 top-[42px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
               </div>
             </div>
           </div>
@@ -660,333 +645,332 @@ export default function CreateExamPage() {
           {questions.map((q, index) => (
             <React.Fragment key={q.id}>
               <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-[#1E293B]">{t('create.question')} {index + 1}</h3>
-                  <span className="text-xs px-2 py-1 bg-[#E0E7FF] text-[#2137D6] rounded-full">
-                    {q.type === 'single_choice' ? t('create.singleChoice') :
-                      q.type === 'multiple_choice' ? t('create.multipleChoice') :
-                        q.type === 'true_false' ? t('create.trueFalse') :
-                          t('create.shortAnswer')}
-                  </span>
-                </div>
-                {questions.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeQuestion(q.id)}
-                    className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <div className="p-6 flex flex-col gap-6">
-                {/* Question Type & Score & Auto-correct */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-2 relative">
-                    <label className="text-[13px] font-bold text-[#475569]">{t('create.questionType')}</label>
-                    <select
-                      className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
-                      value={q.type}
-                      onChange={(e) => {
-                        const newType = e.target.value as Question['type'];
-                        const updates: Partial<Question> = newType === 'true_false'
-                          ? {
-                            type: newType,
-                            answers: [
-                              { id: '1', text: t('create.trueAnswer'), isCorrect: false, reason: '' },
-                              { id: '2', text: t('create.falseAnswer'), isCorrect: false, reason: '' },
-                            ],
-                          }
-                          : { type: newType };
-                        
-                        updateQuestion(q.id, updates);
-                      }}
+                <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-[#1E293B]">{t('create.question')} {index + 1}</h3>
+                    <span className="text-xs px-2 py-1 bg-[#E0E7FF] text-[#2137D6] rounded-full">
+                      {q.type === 'single_choice' ? t('create.singleChoice') :
+                        q.type === 'multiple_choice' ? t('create.multipleChoice') :
+                          q.type === 'true_false' ? t('create.trueFalse') :
+                            t('create.shortAnswer')}
+                    </span>
+                  </div>
+                  {questions.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(q.id)}
+                      className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
                     >
-                      <option value="single_choice">{t('create.singleChoice')}</option>
-                      <option value="multiple_choice">{t('create.multipleChoice')}</option>
-                      <option value="true_false">{t('create.trueFalse')}</option>
-                      <option value="short_answer">{t('create.shortAnswer')}</option>
-                    </select>
-                    <ChevronDown className="absolute end-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="p-6 flex flex-col gap-6">
+                  {/* Question Type & Score & Auto-correct */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-2 relative">
+                      <label className="text-[13px] font-bold text-[#475569]">{t('create.questionType')}</label>
+                      <select
+                        className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
+                        value={q.type}
+                        onChange={(e) => {
+                          const newType = e.target.value as Question['type'];
+                          const updates: Partial<Question> = newType === 'true_false'
+                            ? {
+                              type: newType,
+                              answers: [
+                                { id: '1', text: t('create.trueAnswer'), isCorrect: false, reason: '' },
+                                { id: '2', text: t('create.falseAnswer'), isCorrect: false, reason: '' },
+                              ],
+                            }
+                            : { type: newType };
+
+                          updateQuestion(q.id, updates);
+                        }}
+                      >
+                        <option value="single_choice">{t('create.singleChoice')}</option>
+                        <option value="multiple_choice">{t('create.multipleChoice')}</option>
+                        <option value="true_false">{t('create.trueFalse')}</option>
+                        <option value="short_answer">{t('create.shortAnswer')}</option>
+                      </select>
+                      <ChevronDown className="absolute end-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[13px] font-bold text-[#475569]">{t('create.score')}</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                        value={q.score}
+                        onChange={(e) => updateQuestion(q.id, { score: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[13px] font-bold text-[#475569]">{t('create.autoCorrect')}</label>
+                      <div className="flex items-center gap-3 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl h-[42px]">
+                        <input
+                          type="checkbox"
+                          id={`autoCorrect-${q.id}`}
+                          className="w-4 h-4 text-[#2137D6] rounded border-[#E2E8F0] focus:ring-[#2137D6]"
+                          checked={q.autoCorrect}
+                          onChange={(e) => updateQuestion(q.id, { autoCorrect: e.target.checked })}
+                        />
+                        <label htmlFor={`autoCorrect-${q.id}`} className="text-sm text-[#475569] cursor-pointer">
+                          {t('create.enableAutoCorrection')}
+                        </label>
+                      </div>
+                    </div>
                   </div>
 
+                  {/* Question Text */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#475569]">{t('create.score')}</label>
+                    <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')}</label>
                     <input
-                      type="number"
-                      min="0"
-                      className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
-                      value={q.score}
-                      onChange={(e) => updateQuestion(q.id, { score: parseInt(e.target.value) || 0 })}
+                      type="text"
+                      placeholder={t('create.questionPlaceholder')}
+                      className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                      value={q.text}
+                      onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
                     />
                   </div>
 
+                  {/* Question Image */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#475569]">{t('create.autoCorrect')}</label>
-                    <div className="flex items-center gap-3 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl h-[42px]">
-                      <input
-                        type="checkbox"
-                        id={`autoCorrect-${q.id}`}
-                        className="w-4 h-4 text-[#2137D6] rounded border-[#E2E8F0] focus:ring-[#2137D6]"
-                        checked={q.autoCorrect}
-                        onChange={(e) => updateQuestion(q.id, { autoCorrect: e.target.checked })}
-                      />
-                      <label htmlFor={`autoCorrect-${q.id}`} className="text-sm text-[#475569] cursor-pointer">
-                        {t('create.enableAutoCorrection')}
-                      </label>
-                    </div>
+                    <label className="text-[13px] font-bold text-[#475569]">{t('create.questionImage')}</label>
+                    {q.imagePreview ? (
+                      <div className="relative w-fit">
+                        <img
+                          src={q.imagePreview}
+                          alt={t('create.questionPreview')}
+                          className="h-32 w-auto rounded-xl border border-[#E2E8F0] object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleQuestionImageChange(q.id, null)}
+                          className="absolute top-2 end-2 p-1.5 bg-white/90 hover:bg-white text-[#EF4444] rounded-full shadow-sm transition-all"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative w-fit">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id={`q-img-${q.id}`}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            handleQuestionImageChange(q.id, file);
+                          }}
+                        />
+                        <label
+                          htmlFor={`q-img-${q.id}`}
+                          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
+                        >
+                          <ImagePlus className="w-4 h-4" />
+                          {t('create.uploadImage')}
+                        </label>
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                {/* Question Text */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')}</label>
-                  <input
-                    type="text"
-                    placeholder={t('create.questionPlaceholder')}
-                    className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
-                    value={q.text}
-                    onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
-                  />
-                </div>
+                  {/* Answers Section */}
+                  {q.type !== 'short_answer' && (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[13px] font-bold text-[#475569]">{t('create.answers')}</label>
+                        {q.type !== 'true_false' && (
+                          <button
+                            type="button"
+                            onClick={() => addAnswer(q.id)}
+                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2137D6] bg-[#E0E7FF] rounded-lg hover:bg-[#C7D2FF] transition-all"
+                          >
+                            <Plus className="w-3 h-3" />
+                            {t('create.addAnswer')}
+                          </button>
+                        )}
+                      </div>
 
-                {/* Question Image */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[13px] font-bold text-[#475569]">{t('create.questionImage')}</label>
-                  {q.imagePreview ? (
-                    <div className="relative w-fit">
-                      <Image
-                        src={q.imagePreview}
-                        alt={t('create.questionPreview')}
-                        className="h-32 w-auto rounded-xl border border-[#E2E8F0] object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleQuestionImageChange(q.id, null)}
-                        className="absolute top-2 end-2 p-1.5 bg-white/90 hover:bg-white text-[#EF4444] rounded-full shadow-sm transition-all"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      <div className="grid grid-cols-1 gap-3">
+                        {q.answers.map((answer, ansIndex) => (
+                          <div key={answer.id} className="flex flex-col gap-2">
+                            <div className="flex items-center gap-3">
+                              <button
+                                type="button"
+                                onClick={() => toggleCorrectAnswer(q.id, answer.id)}
+                                className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${answer.isCorrect
+                                  ? 'bg-[#10B981] border-[#10B981] text-white'
+                                  : 'border-[#E2E8F0] hover:border-[#10B981]'
+                                  }`}
+                              >
+                                {answer.isCorrect && (
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </button>
+                              <input
+                                type="text"
+                                placeholder={`${t('create.answer')} ${ansIndex + 1}`}
+                                className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                                value={answer.text}
+                                onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
+                                required
+                              />
+                              {/* Answer reason */}
+                              <input
+                                type="text"
+                                placeholder={t('create.reasonForAnswer', { number: ansIndex + 1 })}
+                                className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] mt-2"
+                                value={answer.reason}
+                                onChange={(e) => updateAnswer(q.id, answer.id, { reason: e.target.value })}
+                              />
+                              {/* Answer image toggle */}
+                              <div className="relative">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  id={`a-img-${q.id}-${answer.id}`}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    handleAnswerImageChange(q.id, answer.id, file);
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`a-img-${q.id}-${answer.id}`}
+                                  className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${answer.imagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
+                                    }`}
+                                  title={answer.imagePreview ? t('create.changeImage') : t('create.addImage')}
+                                >
+                                  <ImagePlus className="w-4 h-4" />
+                                </label>
+                              </div>
+
+                              {/* Reason image toggle */}
+                              <div className="relative">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  id={`a-reason-img-${q.id}-${answer.id}`}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    handleAnswerReasonImageChange(q.id, answer.id, file);
+                                  }}
+                                />
+                                <label
+                                  htmlFor={`a-reason-img-${q.id}-${answer.id}`}
+                                  className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${answer.reasonImagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
+                                    }`}
+                                  title={answer.reasonImagePreview ? t('create.changeReasonImage') : t('create.addReasonImage')}
+                                >
+                                  <ImagePlus className="w-4 h-4 border border-[#2137D6] rounded-sm" />
+                                </label>
+                              </div>
+
+                              {q.answers.length > 2 && q.type !== 'true_false' && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeAnswer(q.id, answer.id)}
+                                  className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex gap-4 ms-9">
+                              {/* Answer image preview */}
+                              {answer.imagePreview && (
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={answer.imagePreview}
+                                    alt={t('create.answerPreview', { number: ansIndex + 1 })}
+                                    className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
+                                    className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Reason image preview */}
+                              {answer.reasonImagePreview && (
+                                <div className="flex items-center gap-2">
+                                  <div className="relative">
+                                    <img
+                                      src={answer.reasonImagePreview}
+                                      alt={t('create.reasonPreview', { number: ansIndex + 1 })}
+                                      className="h-16 w-auto rounded-lg border border-[#2137D6] object-cover"
+                                    />
+                                    <span className="absolute -top-2 -start-2 bg-[#2137D6] text-white text-[10px] px-1 rounded">{t('create.reasonLabel')}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAnswerReasonImageChange(q.id, answer.id, null)}
+                                    className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <p className="text-xs text-[#64748B]">
+                        {t('create.markCorrectHint')}
+                        {q.type === 'multiple_choice' && t('create.multipleAllowed')}
+                      </p>
                     </div>
-                  ) : (
-                    <div className="relative w-fit">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        id={`q-img-${q.id}`}
+                  )}
+
+                  {/* Short Answer Expected Response */}
+                  {q.type === 'short_answer' && (
+                    <div className="flex flex-col gap-2">
+                      <label className="text-[13px] font-bold text-[#475569]">{t('create.expectedAnswer')}</label>
+                      <textarea
+                        placeholder={t('create.expectedAnswerPlaceholder')}
+                        rows={3}
+                        className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
+                        value={q.answers[0]?.text || ''}
                         onChange={(e) => {
-                          const file = e.target.files?.[0] || null;
-                          handleQuestionImageChange(q.id, file);
+                          if (q.answers.length === 0) {
+                            updateAnswer(q.id, '1', { text: e.target.value });
+                          } else {
+                            updateAnswer(q.id, q.answers[0].id, { text: e.target.value });
+                          }
                         }}
                       />
-                      <label
-                        htmlFor={`q-img-${q.id}`}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
-                      >
-                        <ImagePlus className="w-4 h-4" />
-                        {t('create.uploadImage')}
-                      </label>
                     </div>
                   )}
                 </div>
+              </section>
 
-                {/* Answers Section */}
-                {q.type !== 'short_answer' && (
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[13px] font-bold text-[#475569]">{t('create.answers')}</label>
-                      {q.type !== 'true_false' && (
-                        <button
-                          type="button"
-                          onClick={() => addAnswer(q.id)}
-                          className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2137D6] bg-[#E0E7FF] rounded-lg hover:bg-[#C7D2FF] transition-all"
-                        >
-                          <Plus className="w-3 h-3" />
-                          {t('create.addAnswer')}
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-3">
-                      {q.answers.map((answer, ansIndex) => (
-                        <div key={answer.id} className="flex flex-col gap-2">
-                          <div className="flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() => toggleCorrectAnswer(q.id, answer.id)}
-                              className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${answer.isCorrect
-                                ? 'bg-[#10B981] border-[#10B981] text-white'
-                                : 'border-[#E2E8F0] hover:border-[#10B981]'
-                                }`}
-                            >
-                              {answer.isCorrect && (
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </button>
-                            <input
-                              type="text"
-                              placeholder={`${t('create.answer')} ${ansIndex + 1}`}
-                              className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
-                              value={answer.text}
-                              onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
-                              required
-                            />
-                            {/* Answer reason */}
-                            <input
-                              type="text"
-                              placeholder={t('create.reasonForAnswer', { number: ansIndex + 1 })}
-                              className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] mt-2"
-                              value={answer.reason}
-                              onChange={(e) => updateAnswer(q.id, answer.id, { reason: e.target.value })}
-                            />
-                            {/* Answer image toggle */}
-                            <div className="relative">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                id={`a-img-${q.id}-${answer.id}`}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] || null;
-                                  handleAnswerImageChange(q.id, answer.id, file);
-                                }}
-                              />
-                              <label
-                                htmlFor={`a-img-${q.id}-${answer.id}`}
-                                className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${answer.imagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
-                                  }`}
-                                title={answer.imagePreview ? t('create.changeImage') : t('create.addImage')}
-                              >
-                                <ImagePlus className="w-4 h-4" />
-                              </label>
-                            </div>
-
-                            {/* Reason image toggle */}
-                            <div className="relative">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                id={`a-reason-img-${q.id}-${answer.id}`}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] || null;
-                                  handleAnswerReasonImageChange(q.id, answer.id, file);
-                                }}
-                              />
-                              <label
-                                htmlFor={`a-reason-img-${q.id}-${answer.id}`}
-                                className={`flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer transition-all ${
-                                  answer.reasonImagePreview ? 'bg-[#E0E7FF] text-[#2137D6]' : 'bg-[#F8FAFC] text-[#94A3B8] hover:text-[#64748B]'
-                                }`}
-                                title={answer.reasonImagePreview ? t('create.changeReasonImage') : t('create.addReasonImage')}
-                              >
-                                <ImagePlus className="w-4 h-4 border border-[#2137D6] rounded-sm" />
-                              </label>
-                            </div>
-
-                            {q.answers.length > 2 && q.type !== 'true_false' && (
-                              <button
-                                type="button"
-                                onClick={() => removeAnswer(q.id, answer.id)}
-                                className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="flex gap-4 ms-9">
-                            {/* Answer image preview */}
-                            {answer.imagePreview && (
-                              <div className="flex items-center gap-2">
-                                <Image
-                                  src={answer.imagePreview}
-                                  alt={t('create.answerPreview', { number: ansIndex + 1 })}
-                                  className="h-16 w-auto rounded-lg border border-[#E2E8F0] object-cover"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleAnswerImageChange(q.id, answer.id, null)}
-                                  className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
-
-                            {/* Reason image preview */}
-                            {answer.reasonImagePreview && (
-                              <div className="flex items-center gap-2">
-                                <div className="relative">
-                                  <Image
-                                    src={answer.reasonImagePreview}
-                                    alt={t('create.reasonPreview', { number: ansIndex + 1 })}
-                                    className="h-16 w-auto rounded-lg border border-[#2137D6] object-cover"
-                                  />
-                                  <span className="absolute -top-2 -start-2 bg-[#2137D6] text-white text-[10px] px-1 rounded">{t('create.reasonLabel')}</span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleAnswerReasonImageChange(q.id, answer.id, null)}
-                                  className="p-1.5 text-[#EF4444] hover:bg-[#FEE2E2] rounded-lg transition-all"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <p className="text-xs text-[#64748B]">
-                      {t('create.markCorrectHint')}
-                      {q.type === 'multiple_choice' && t('create.multipleAllowed')}
-                    </p>
-                  </div>
-                )}
-
-                {/* Short Answer Expected Response */}
-                {q.type === 'short_answer' && (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#475569]">{t('create.expectedAnswer')}</label>
-                    <textarea
-                      placeholder={t('create.expectedAnswerPlaceholder')}
-                      rows={3}
-                      className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
-                      value={q.answers[0]?.text || ''}
-                      onChange={(e) => {
-                        if (q.answers.length === 0) {
-                          updateAnswer(q.id, '1', { text: e.target.value });
-                        } else {
-                          updateAnswer(q.id, q.answers[0].id, { text: e.target.value });
-                        }
-                      }}
-                    />
-                  </div>
-                )}
+              {/* Insert Question Button Between */}
+              <div className="flex justify-center -my-4 relative z-10">
+                <button
+                  type="button"
+                  onClick={() => addQuestion(index + 1)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E8F0] rounded-full text-xs font-bold text-[#2137D6] hover:bg-[#F8FAFC] hover:shadow-md transition-all group shadow-sm"
+                  title={`Add question after question ${index + 1}`}
+                >
+                  <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
+                  {t('create.addQuestion')} {index === questions.length - 1 ? '' : t('create.insertHere')}
+                </button>
               </div>
-            </section>
-
-            {/* Insert Question Button Between */}
-            <div className="flex justify-center -my-4 relative z-10">
-              <button
-                type="button"
-                onClick={() => addQuestion(index + 1)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E8F0] rounded-full text-xs font-bold text-[#2137D6] hover:bg-[#F8FAFC] hover:shadow-md transition-all group shadow-sm"
-                title={`Add question after question ${index + 1}`}
-              >
-                <Plus className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
-                {t('create.addQuestion')} {index === questions.length - 1 ? '' : t('create.insertHere')}
-              </button>
-            </div>
-          </React.Fragment>
-        ))}
-      </div>
+            </React.Fragment>
+          ))}
+        </div>
 
         {/* Add Question Button */}
         <button

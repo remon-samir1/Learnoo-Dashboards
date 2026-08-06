@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Navbar, { type NotificationItem } from "@/components/student/Navbar";
 import Sidebar from "@/components/student/Sidebar";
@@ -29,13 +29,25 @@ export default function StudentLayoutShell({
 
   const isCompleteProfilePage = pathname?.includes("/student/complete-profile");
 
+  // Defer client-only auth decisions until after hydration to keep the server /
+  // first client render identical. Zustand `persist` rehydrates from cookies on
+  // the client synchronously, which would otherwise produce a hydration mismatch
+  // (server has no token, client does) and tear down the whole subtree.
+  const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasMounted) return;
     if (isLoading || !isAuthenticated) return;
 
     if (!isAcademicProfileComplete && !isCompleteProfilePage) {
       router.replace(`/${locale}/student/complete-profile`);
     }
   }, [
+    hasMounted,
     isAcademicProfileComplete,
     isCompleteProfilePage,
     isAuthenticated,
@@ -44,7 +56,7 @@ export default function StudentLayoutShell({
     router,
   ]);
 
-  if (isLoading || !isAuthenticated) {
+  if (!hasMounted || isLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--primary)] border-t-transparent" />

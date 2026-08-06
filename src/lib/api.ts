@@ -956,19 +956,27 @@ export const commentsApi = {
 // ============================================
 
 export const quizzesApi = {
-  list: (params?: QuizListParams) => get<ApiListResponse<Quiz>>('/v1/quiz', params
+  list: (params?: QuizListParams) => get<ApiListResponse<Quiz>>('v1/quiz', params
     ? { page: params.page, title: params.title }
     : undefined),
 
-  get: (id: number) => get<ApiResponse<Quiz>>(`/v1/quiz/${id}`),
+  get: (id: number) => get<ApiResponse<Quiz>>(`v1/quiz/${id}`),
 
-  create: (data: CreateQuizRequest) =>
-    post<ApiResponse<Quiz>>('/v1/quiz', data),
+  create: (data: CreateQuizRequest | FormData) => {
+    if (data instanceof FormData) {
+      return postMultipart<ApiResponse<Quiz>>('/v1/quiz', data);
+    }
+    return post<ApiResponse<Quiz>>('/v1/quiz', data);
+  },
 
-  update: (id: number, data: Partial<CreateQuizRequest>) =>
-    put<ApiResponse<Quiz>>(`/v1/quiz/${id}`, data),
+  update: (id: number, data: Partial<CreateQuizRequest> | FormData) => {
+    if (data instanceof FormData) {
+      return putMultipart<ApiResponse<Quiz>>(`v1/quiz/${id}`, data);
+    }
+    return put<ApiResponse<Quiz>>(`v1/quiz/${id}`, data);
+  },
 
-  delete: (id: number) => del<ApiResponse<Quiz>>(`/v1/quiz/${id}`),
+  delete: (id: number) => del<ApiResponse<Quiz>>(`v1/quiz/${id}`),
 };
 
 // ============================================

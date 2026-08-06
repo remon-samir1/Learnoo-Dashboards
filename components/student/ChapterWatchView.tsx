@@ -327,6 +327,8 @@ export default function ChapterWatchView({
   const [replyToId, setReplyToId] = useState<string | number | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replySubmitting, setReplySubmitting] = useState(false);
+  // Theater mode (wider player). Persisted in localStorage so the user's preference is remembered.
+  const [theaterMode, setTheaterMode] = useState(false);
   // Store videoSrc in state to prevent iframe reload on discussion updates
   // Only updates when chapter.id changes, not on every chapter object refresh
   const [stableVideoSrc, setStableVideoSrc] = useState<string>('');
@@ -388,6 +390,52 @@ export default function ChapterWatchView({
     const idx = partChapters.findIndex((c) => String(c.id) === String(chapterId));
     return idx >= 0 ? idx : 0;
   }, [partChapters, chapterId]);
+
+  const prevChapter = useMemo(() => {
+    if (currentPartIndex <= 0) return null;
+    return partChapters[currentPartIndex - 1] ?? null;
+  }, [partChapters, currentPartIndex]);
+
+  const nextChapter = useMemo(() => {
+    if (currentPartIndex < 0) return null;
+    if (currentPartIndex >= partChapters.length - 1) return null;
+    return partChapters[currentPartIndex + 1] ?? null;
+  }, [partChapters, currentPartIndex]);
+
+  const canPrevChapter = prevChapter != null;
+  const canNextChapter = nextChapter != null;
+
+  const goPrevChapter = useCallback(() => {
+    if (!prevChapter?.id) return;
+    router.push(`/${locale}/student/courses/watch/${prevChapter.id}`);
+  }, [router, locale, prevChapter]);
+
+  const goNextChapter = useCallback(() => {
+    if (!nextChapter?.id) return;
+    router.push(`/${locale}/student/courses/watch/${nextChapter.id}`);
+  }, [router, locale, nextChapter]);
+
+  const toggleTheater = useCallback(() => {
+    setTheaterMode((v) => {
+      const next = !v;
+      try {
+        window.localStorage.setItem('student.watch.theaterMode', next ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  // Hydrate theater preference once from localStorage (client-only)
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem('student.watch.theaterMode');
+      if (stored === '1') setTheaterMode(true);
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const discussions = useMemo(() => {
     if (!chapter) return [];
@@ -902,7 +950,7 @@ export default function ChapterWatchView({
       className="min-h-screen overflow-x-clip bg-[#0b1426] pb-28 text-slate-100 [-webkit-tap-highlight-color:transparent] sm:pb-[max(2.5rem,env(safe-area-inset-bottom,0px))]"
       dir={dir}
     >
-      <div className="mx-auto w-full max-w-6xl px-4 pt-2 pb-1 sm:px-6 sm:pb-2 sm:pt-6 lg:px-8">
+      <div className={`mx-auto w-full px-4 pt-2 pb-1 sm:px-6 sm:pb-2 sm:pt-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
         <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0 flex-1">
             <Link
@@ -936,7 +984,7 @@ export default function ChapterWatchView({
       </div>
 
       <div className="w-full max-w-full  overflow-x-clip [-webkit-overflow-scrolling:touch]">
-        <div className="mx-auto w-full max-w-6xl px-0 sm:px-6 lg:px-8">
+        <div className={`mx-auto w-full px-0 sm:px-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
           <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
             <div className="flex flex-col">
               <div className="bg-black/50">
@@ -984,6 +1032,13 @@ export default function ChapterWatchView({
                       }
                       watchPanel={showPdf && pdfUrl && pdfPanelVisible ? pdfWatchPanel : undefined}
                       switchingPlaybackLabel={t('switchingPlaybackMethod')}
+                      onPrevChapter={canPrevChapter ? goPrevChapter : undefined}
+                      onNextChapter={canNextChapter ? goNextChapter : undefined}
+                      canPrevChapter={canPrevChapter}
+                      canNextChapter={canNextChapter}
+                      chapterInfoTitle={attrs.title?.trim() || undefined}
+                      theaterMode={theaterMode}
+                      onToggleTheater={toggleTheater}
                       onFatalPlaybackError={({ reason }) => {
                         console.error('[ChapterWatchView] Fatal HLS playback error:', reason);
                         toast.error(t('hlsPlaybackError'));
@@ -1230,7 +1285,7 @@ export default function ChapterWatchView({
         </div>
       </div>
 
-      <div className="mx-auto mt-[30px] w-full max-w-6xl space-y-6 px-5 pb-4 sm:space-y-8 sm:px-6 sm:pb-6 lg:px-8">
+      <div className={`mx-auto mt-[30px] w-full space-y-6 px-5 pb-4 sm:space-y-8 sm:px-6 sm:pb-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
         {discussionsOpen ? (
           <section className="space-y-3 sm:space-y-4">
             <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">

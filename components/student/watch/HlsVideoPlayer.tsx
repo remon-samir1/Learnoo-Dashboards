@@ -326,6 +326,20 @@ export type HlsVideoPlayerProps = {
   watchOverlay?: ReactNode;
   /** Rendered inside the fullscreen wrapper below the video stage (e.g. PDF panel). */
   watchPanel?: ReactNode;
+  /** Triggered when the user clicks the previous-chapter button. */
+  onPrevChapter?: () => void;
+  /** Triggered when the user clicks the next-chapter button. */
+  onNextChapter?: () => void;
+  /** Whether the previous-chapter action is currently enabled. */
+  canPrevChapter?: boolean;
+  /** Whether the next-chapter action is currently enabled. */
+  canNextChapter?: boolean;
+  /** Chapter title shown next to the info icon in the player controls. */
+  chapterInfoTitle?: string;
+  /** Whether the player is currently in theater (wider) mode. */
+  theaterMode?: boolean;
+  /** Toggle theater mode. */
+  onToggleTheater?: () => void;
 };
 
 export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
@@ -353,6 +367,13 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       staticOverlaySubtitle,
       watchOverlay,
       watchPanel,
+      onPrevChapter,
+      onNextChapter,
+      canPrevChapter,
+      canNextChapter,
+      chapterInfoTitle,
+      theaterMode,
+      onToggleTheater,
     },
     forwardedRef
   ) {
@@ -1053,6 +1074,13 @@ const revealControls = useCallback(() => {
             qualityValue={selectedQuality}
             onQualityChange={setQualityLevel}
             endAction={watchOverlay}
+            onPrevChapter={onPrevChapter}
+            onNextChapter={onNextChapter}
+            canPrevChapter={canPrevChapter}
+            canNextChapter={canNextChapter}
+            chapterInfoTitle={chapterInfoTitle}
+            theaterMode={theaterMode}
+            onToggleTheater={onToggleTheater}
           />
         ) : null}
         </div>

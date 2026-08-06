@@ -1,14 +1,34 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { useTranslations } from 'next-intl';
-import { Maximize2, Minimize2, Pause, Play, Volume2, VolumeX, Gauge } from 'lucide-react';
+import {
+  Captions,
+  ChevronLeft,
+  ChevronRight,
+  Gauge,
+  Info,
+  Maximize,
+  MessageSquare,
+  Minimize,
+  Moon,
+  Pause,
+  Play,
+  Settings as SettingsIcon,
+  SkipBack,
+  SkipForward,
+  SlidersHorizontal,
+  Tv2,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 
 function formatClock(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) return '0:00';
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
+  const total = Math.floor(sec);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
@@ -19,8 +39,12 @@ type QualityOption = {
   label: string;
 };
 
-const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
+const SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
 type SpeedValue = (typeof SPEED_OPTIONS)[number];
+
+const SLEEP_TIMER_OPTIONS = [0, 5, 10, 15, 30, 45, 60] as const;
+
+type SettingsSubMenu = null | 'sleep' | 'speed' | 'quality';
 
 export type HlsVideoCustomControlsProps = {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -32,6 +56,15 @@ export type HlsVideoCustomControlsProps = {
   onQualityChange?: (value: number | 'auto') => void;
   /** Trailing actions (e.g. PDF toggle) — shown in the control row on small screens. */
   endAction?: React.ReactNode;
+  onPrevChapter?: () => void;
+  onNextChapter?: () => void;
+  canPrevChapter?: boolean;
+  canNextChapter?: boolean;
+  /** Chapter title shown next to the info icon (top-right). */
+  chapterInfoTitle?: string;
+  /** Theater mode (wider player). When true the theater icon is "active". */
+  theaterMode?: boolean;
+  onToggleTheater?: () => void;
 };
 
 function isShellFullscreen(shell: HTMLDivElement | null): boolean {
@@ -49,23 +82,35 @@ export function HlsVideoCustomControls({
   onQualityChange,
   endAction,
   visible = true,
+  onPrevChapter,
+  onNextChapter,
+  canPrevChapter = false,
+  canNextChapter = false,
+  chapterInfoTitle,
+  theaterMode = false,
+  onToggleTheater,
 }: HlsVideoCustomControlsProps) {
   const t = useTranslations('courses.studentWatch');
-  const qualityLabel = (() => {
-    const translated = t('videoControlsQuality');
-    return translated === 'courses.studentWatch.videoControlsQuality' ? 'Quality' : translated;
-  })();
-  const qualityLoadingLabel = (() => {
-    const translated = t('videoControlsQualityLoading');
-    return translated === 'courses.studentWatch.videoControlsQualityLoading' ? 'Loading...' : translated;
-  })();
+
   const [paused, setPaused] = useState(true);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [bufferedEnd, setBufferedEnd] = useState(0);
   const [muted, setMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<SpeedValue>(1);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [subMenu, setSubMenu] = useState<SettingsSubMenu>(null);
+  const [annotationsEnabled, setAnnotationsEnabled] = useState(true);
+  const [captionsEnabled, setCaptionsEnabled] = useState(false);
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number>(0);
+  const [sleepRemaining, setSleepRemaining] = useState<number>(0);
+  const [infoOpen, setInfoOpen] = useState(false);
 
+  const sleepCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const settingsWrapRef = useRef<HTMLDivElement | null>(null);
+
+  // ────────── Sync playback state from <video> ──────────
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -75,21 +120,27 @@ export function HlsVideoCustomControls({
       const d = v.duration;
       setDuration(Number.isFinite(d) ? d : 0);
       setMuted(v.muted);
+      try {
+        if (v.buffered && v.buffered.length > 0) {
+          setBufferedEnd(v.buffered.end(v.buffered.length - 1));
+        }
+      } catch {
+        /* ignore */
+      }
     };
     sync();
-    v.addEventListener('timeupdate', sync);
-    v.addEventListener('loadedmetadata', sync);
-    v.addEventListener('play', sync);
-    v.addEventListener('pause', sync);
-    v.addEventListener('volumechange', sync);
-    v.addEventListener('durationchange', sync);
+    const events = [
+      'timeupdate',
+      'loadedmetadata',
+      'play',
+      'pause',
+      'volumechange',
+      'durationchange',
+      'progress',
+    ] as const;
+    events.forEach((e) => v.addEventListener(e, sync));
     return () => {
-      v.removeEventListener('timeupdate', sync);
-      v.removeEventListener('loadedmetadata', sync);
-      v.removeEventListener('play', sync);
-      v.removeEventListener('pause', sync);
-      v.removeEventListener('volumechange', sync);
-      v.removeEventListener('durationchange', sync);
+      events.forEach((e) => v.removeEventListener(e, sync));
     };
   }, [videoRef]);
 
@@ -100,6 +151,24 @@ export function HlsVideoCustomControls({
     return () => document.removeEventListener('fullscreenchange', sync);
   }, [shellRef]);
 
+  // Derived: settings panel is only open while controls are visible.
+  // (When `visible` flips false the panel is unmounted automatically.)
+
+  // Close settings on outside click
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const onDown = (e: MouseEvent) => {
+      const wrap = settingsWrapRef.current;
+      if (wrap && !wrap.contains(e.target as Node)) {
+        setSettingsOpen(false);
+        setSubMenu(null);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [settingsOpen]);
+
+  // ────────── Player controls ──────────
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -114,12 +183,26 @@ export function HlsVideoCustomControls({
     setMuted(v.muted);
   }, [videoRef]);
 
-  const setSpeed = useCallback((speed: SpeedValue) => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.playbackRate = speed;
-    setPlaybackSpeed(speed);
-  }, [videoRef]);
+  const setSpeed = useCallback(
+    (speed: SpeedValue) => {
+      const v = videoRef.current;
+      if (!v) return;
+      v.playbackRate = speed;
+      setPlaybackSpeed(speed);
+      setSubMenu(null);
+      setSettingsOpen(false);
+    },
+    [videoRef]
+  );
+
+  const onQualitySelect = useCallback(
+    (value: number | 'auto') => {
+      onQualityChange?.(value);
+      setSubMenu(null);
+      setSettingsOpen(false);
+    },
+    [onQualityChange]
+  );
 
   const toggleShellFullscreen = useCallback(() => {
     const shell = shellRef.current;
@@ -147,7 +230,7 @@ export function HlsVideoCustomControls({
     }
   }, [shellRef]);
 
-  const onSeek = useCallback(
+  const onSeekInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const v = videoRef.current;
       if (!v) return;
@@ -159,124 +242,478 @@ export function HlsVideoCustomControls({
     [videoRef]
   );
 
+  // ────────── Sleep timer ──────────
+  const applySleepTimer = useCallback(
+    (minutes: number) => {
+      // Clear existing
+      if (sleepCountdownRef.current) {
+        clearInterval(sleepCountdownRef.current);
+        sleepCountdownRef.current = null;
+      }
+      setSleepRemaining(0);
+      setSleepTimerMinutes(minutes);
+
+      if (minutes > 0) {
+        const totalSec = minutes * 60;
+        setSleepRemaining(totalSec);
+        sleepCountdownRef.current = setInterval(() => {
+          setSleepRemaining((prev) => {
+            const next = prev - 1;
+            if (next <= 0) {
+              if (sleepCountdownRef.current) {
+                clearInterval(sleepCountdownRef.current);
+                sleepCountdownRef.current = null;
+              }
+              const vid = videoRef.current;
+              if (vid && !vid.paused) vid.pause();
+              setSleepTimerMinutes(0);
+              return 0;
+            }
+            return next;
+          });
+        }, 1000);
+      }
+
+      setSubMenu(null);
+      setSettingsOpen(false);
+    },
+    [videoRef]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (sleepCountdownRef.current) {
+        clearInterval(sleepCountdownRef.current);
+        sleepCountdownRef.current = null;
+      }
+    };
+  }, []);
+
+  // ────────── Derived ──────────
   const max = Number.isFinite(duration) && duration > 0 ? duration : 0;
   const rangeMax = max > 0 ? max : 1;
   const rangeValue = max > 0 ? Math.min(current, max) : 0;
+  const playedPercent = max > 0 ? (current / max) * 100 : 0;
+  const bufferedPercent = max > 0 ? Math.min(100, (bufferedEnd / max) * 100) : 0;
+
+  const currentQualityOption = useMemo(() => {
+    if (qualityValue === 'auto') return null;
+    return qualityOptions.find((q) => q.index === qualityValue);
+  }, [qualityValue, qualityOptions]);
+
+  const qualityMenuLabel = useMemo(() => {
+    if (qualityValue === 'auto') {
+      const heights = qualityOptions
+        .map((q) => q.height)
+        .filter((h): h is number => typeof h === 'number' && h > 0);
+      const maxHeight = heights.length > 0 ? Math.max(...heights) : null;
+      return maxHeight ? `Auto (${maxHeight}p)` : 'Auto';
+    }
+    return currentQualityOption?.label ?? 'Auto';
+  }, [qualityValue, qualityOptions, currentQualityOption]);
+
+const speedMenuLabel =
+  playbackSpeed === 1
+    ? t('videoControlsPlaybackNormal')
+    : Number.isInteger(playbackSpeed)
+      ? `${playbackSpeed}x`
+      : `${playbackSpeed}x`;
+
+  const sleepMenuLabel =
+    sleepTimerMinutes === 0
+      ? t('videoControlsSleepTimerOff')
+      : sleepRemaining > 0
+        ? formatClock(sleepRemaining)
+        : t('videoControlsSleepTimerMinutes', { minutes: sleepTimerMinutes });
+
+  // Settings row components
+  const settingsBaseBtn =
+    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start text-sm text-white transition hover:bg-white/10';
+
+  const backRow = (
+    <button
+      type="button"
+      onClick={() => setSubMenu(null)}
+      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+    >
+      <ChevronLeft className="size-4 rtl:rotate-180" />
+      <span className="flex-1">{t('videoControlsBack')}</span>
+    </button>
+  );
 
   return (
-   <div
-  className={`
-    absolute left-0 right-0 bottom-0
-    z-[9999]
-    w-full shrink-0
-    border-t border-slate-800/80
-    bg-[#0a0f18]/95
-    px-2 py-2
-    transition-all duration-300
-    sm:px-3 sm:py-2.5
-
-    ${
-      visible
-        ? "translate-y-0 opacity-100"
-        : "pointer-events-none translate-y-full opacity-0"
-    }
-  `}
+    <div
+      className={`
+        absolute inset-0 z-[9999]
+        flex flex-col justify-end
+        transition-opacity duration-200
+        ${
+          visible
+            ? 'pointer-events-auto opacity-100'
+            : 'pointer-events-none opacity-0'
+        }
+      `}
       role="group"
       aria-label={t('videoControlsGroup')}
+      dir="ltr"
     >
-      <div className="pointer-events-auto mx-auto flex w-full max-w-4xl flex-col gap-1 rounded-md bg-black/70 px-2 py-1.5 shadow-md backdrop-blur-sm max-sm:leading-none sm:gap-1.5 sm:px-2.5 sm:py-2 sm:leading-normal">
-        <input
-          type="range"
-          min={0}
-          max={rangeMax}
-          step="any"
-          value={rangeValue}
-          onChange={onSeek}
-          disabled={max <= 0}
-          className="h-1 w-full max-sm:my-0 cursor-pointer touch-pan-x accent-white disabled:cursor-not-allowed disabled:opacity-40 sm:h-1.5 sm:my-0"
-          aria-label={t('videoControlsSeek')}
-        />
-        <div className="flex items-center gap-1 text-white max-sm:min-h-10 sm:gap-2 sm:h-auto">
-          <button
-            type="button"
-            onClick={togglePlay}
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
-            aria-label={paused ? t('videoControlsPlay') : t('videoControlsPause')}
-          >
-            {paused ? (
-              <Play className="size-4 translate-x-px sm:size-5 sm:translate-x-0.5" fill="currentColor" />
-            ) : (
-              <Pause className="size-4 sm:size-5" />
-            )}
-          </button>
-          <span className="min-w-0 flex-1 max-sm:truncate tabular-nums text-[11px] leading-none text-white/90 sm:min-w-[6.5rem] sm:flex-none sm:text-sm sm:leading-normal">
-            {formatClock(current)} / {formatClock(duration)}
-          </span>
-          <button
-            type="button"
-            onClick={toggleMute}
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
-            aria-label={muted ? t('videoControlsUnmute') : t('videoControlsMute')}
-          >
-            {muted ? <VolumeX className="size-4 sm:size-5" /> : <Volume2 className="size-4 sm:size-5" />}
-          </button>
+      {/* Top gradient for info icon visibility */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/55 to-transparent" />
+      {/* Bottom gradient for controls visibility */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/85 via-black/55 to-transparent" />
 
-          {onQualityChange ? (
-            <label className="inline-flex min-w-0 max-w-[38%] shrink items-center gap-1.5 rounded bg-white/10 px-2 py-1.5 text-white/90 transition hover:bg-white/15 sm:max-w-none sm:gap-2 sm:px-2.5 sm:py-1.5">
-              <span className="hidden text-[11px] uppercase tracking-[0.18em] text-white/70 sm:inline sm:text-xs">
-                {qualityLabel}
-              </span>
-              <select
-                value={qualityValue === 'auto' ? 'auto' : String(qualityValue)}
-                onChange={(e) => {
-                  const value = e.target.value === 'auto' ? 'auto' : Number(e.target.value);
-                  onQualityChange(value);
-                }}
-                disabled={qualityOptions.length === 0}
-                className="max-w-full truncate rounded bg-slate-950/80 px-2 py-0.5 text-[11px] text-white outline-none transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60 sm:px-2 sm:py-1 sm:text-sm"
-                aria-label={t('videoControlsQuality')}
+      {/* Info icon top-right */}
+      <div className="absolute right-3 top-3 z-10 flex items-center gap-2 sm:right-4 sm:top-4">
+        {infoOpen && chapterInfoTitle ? (
+          <div className="pointer-events-auto max-w-xs rounded-lg bg-black/80 px-3 py-2 text-xs text-white shadow-lg ring-1 ring-white/10 backdrop-blur">
+            {chapterInfoTitle}
+          </div>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => setInfoOpen((v) => !v)}
+          className="pointer-events-auto inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white/90 transition hover:bg-white/15 hover:text-white"
+          aria-label={t('videoControlsInfo')}
+          title={chapterInfoTitle ?? t('videoControlsInfo')}
+        >
+          <Info className="size-5" />
+        </button>
+      </div>
+
+      {/* Settings overlay panel */}
+      {visible && settingsOpen ? (
+      <div
+        ref={settingsWrapRef}
+        className={`
+          absolute bottom-16 right-3 z-20 sm:bottom-20 sm:right-4
+          pointer-events-auto min-w-[260px] max-w-[320px]
+          origin-bottom-right rounded-2xl bg-black/85 text-white shadow-2xl
+          ring-1 ring-white/10 backdrop-blur-md transition duration-150
+        `}
+        aria-hidden={!settingsOpen}
+      >
+        <div className="overflow-hidden rounded-2xl">
+          {subMenu === null && (
+            <div className="flex flex-col gap-0.5 p-2">
+              {/* Annotations row */}
+              <div className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm">
+                <MessageSquare className="size-4 shrink-0 text-white/80" />
+                <span className="flex-1">{t('videoControlsAnnotations')}</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={annotationsEnabled}
+                  onClick={() => setAnnotationsEnabled((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+                    annotationsEnabled ? 'bg-[#3ea6ff]' : 'bg-white/25'
+                  }`}
+                >
+                  <span
+                    className={`inline-block size-4 transform rounded-full bg-white transition ${
+                      annotationsEnabled ? 'translate-x-6 rtl:-translate-x-6' : 'translate-x-1 rtl:-translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Sleep timer row */}
+              <button
+                type="button"
+                onClick={() => setSubMenu('sleep')}
+                className={settingsBaseBtn}
               >
-                <option value="auto">Auto</option>
-                {qualityOptions.length > 0
-                  ? qualityOptions.map((option) => (
-                      <option key={option.index} value={option.index}>
-                        {option.label}
-                      </option>
-                    ))
-                  : null}
-              </select>
-              {qualityOptions.length === 0 ? (
-                <span className="hidden text-[11px] text-white/60 sm:inline sm:text-xs">{qualityLoadingLabel}</span>
+                <Moon className="size-4 shrink-0 text-white/80" />
+                <span className="flex-1">{t('videoControlsSleepTimer')}</span>
+                <span className="text-sm text-white/70">{sleepMenuLabel}</span>
+                <ChevronRight className="size-4 shrink-0 text-white/60 rtl:rotate-180" />
+              </button>
+
+              {/* Playback speed row */}
+              <button
+                type="button"
+                onClick={() => setSubMenu('speed')}
+                className={settingsBaseBtn}
+              >
+                <Gauge className="size-4 shrink-0 text-white/80" />
+                <span className="flex-1">{t('videoControlsPlaybackSpeed')}</span>
+                <span className="text-sm text-white/70">
+                  {speedMenuLabel}
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-white/60 rtl:rotate-180" />
+              </button>
+
+              {/* Quality row */}
+              {onQualityChange ? (
+                <button
+                  type="button"
+                  onClick={() => setSubMenu('quality')}
+                  className={settingsBaseBtn}
+                >
+                  <SlidersHorizontal className="size-4 shrink-0 text-white/80" />
+                  <span className="flex-1">{t('videoControlsQuality')}</span>
+                  <span className="text-sm text-white/70">{qualityMenuLabel}</span>
+                  <ChevronRight className="size-4 shrink-0 text-white/60 rtl:rotate-180" />
+                </button>
               ) : null}
-            </label>
-          ) : null}
+            </div>
+          )}
 
-          <label className="inline-flex min-w-0 shrink items-center gap-1.5 rounded bg-white/10 px-2 py-1.5 text-white/90 transition hover:bg-white/15 sm:gap-2 sm:px-2.5 sm:py-1.5">
-            <Gauge className="hidden size-4 text-white/70 sm:inline sm:size-4" />
-            <select
-              value={playbackSpeed}
-              onChange={(e) => setSpeed(Number(e.target.value) as SpeedValue)}
-              className="max-w-full truncate rounded bg-slate-950/80 px-2 py-0.5 text-[11px] text-white outline-none transition hover:bg-slate-900 sm:px-2 sm:py-1 sm:text-sm"
-              aria-label={t('videoControlsSpeed')}
+          {subMenu === 'sleep' && (
+            <div className="flex flex-col gap-0.5 p-2">
+              {backRow}
+              {SLEEP_TIMER_OPTIONS.map((m) => {
+                const active = sleepTimerMinutes === m;
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => applySleepTimer(m)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 ${
+                      active ? 'text-[#3ea6ff]' : 'text-white'
+                    }`}
+                  >
+                    <span className="flex-1">
+                      {m === 0
+                        ? t('videoControlsSleepTimerOff')
+                        : t('videoControlsSleepTimerMinutes', { minutes: m })}
+                    </span>
+                    {active ? (
+                      <span className="text-xs font-bold uppercase tracking-wide">✓</span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {subMenu === 'speed' && (
+            <div className="flex flex-col gap-0.5 p-2">
+              {backRow}
+              {SPEED_OPTIONS.map((s) => {
+                const active = playbackSpeed === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setSpeed(s)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 ${
+                      active ? 'text-[#3ea6ff]' : 'text-white'
+                    }`}
+                  >
+                    <span className="flex-1">
+                      {s === 1 ? t('videoControlsPlaybackNormal') : `${s}x`}
+                    </span>
+                    {active ? (
+                      <span className="text-xs font-bold uppercase tracking-wide">✓</span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {subMenu === 'quality' && onQualityChange && (
+            <div className="flex flex-col gap-0.5 p-2">
+              {backRow}
+              <button
+                type="button"
+                onClick={() => onQualitySelect('auto')}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 ${
+                  qualityValue === 'auto' ? 'text-[#3ea6ff]' : 'text-white'
+                }`}
+                disabled={qualityOptions.length === 0 && qualityValue !== 'auto'}
+              >
+                <span className="flex-1">{qualityMenuLabel}</span>
+                {qualityValue === 'auto' ? (
+                  <span className="text-xs font-bold uppercase tracking-wide">✓</span>
+                ) : null}
+              </button>
+              {qualityOptions.length > 0
+                ? qualityOptions.map((opt) => {
+                    const active = qualityValue === opt.index;
+                    return (
+                      <button
+                        key={opt.index}
+                        type="button"
+                        onClick={() => onQualitySelect(opt.index)}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 ${
+                          active ? 'text-[#3ea6ff]' : 'text-white'
+                        }`}
+                      >
+                        <span className="flex-1">{opt.label}</span>
+                        {active ? (
+                          <span className="text-xs font-bold uppercase tracking-wide">✓</span>
+                        ) : null}
+                      </button>
+                    );
+                  })
+                : (
+                    <div className="px-3 py-2.5 text-xs text-white/60">
+                      {t('videoControlsQualityLoading')}
+                    </div>
+                  )}
+            </div>
+          )}
+        </div>
+      </div>
+      ) : null}
+
+      {/* Bottom controls */}
+      <div className="relative z-10 px-3 pb-2 sm:px-5 sm:pb-4">
+        {/* Progress bar */}
+        <div className="group/seek relative h-3 w-full cursor-pointer">
+          {/* Buffered track */}
+          <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-white/25">
+            <div
+              className="h-full bg-white/50 transition-[width] duration-150"
+              style={{ width: `${bufferedPercent}%` }}
+            />
+          </div>
+          {/* Played track (red) */}
+          <div
+            className="absolute top-1/2 h-1 -translate-y-1/2 overflow-hidden rounded-full bg-[#ff0033]"
+            style={{ width: `${playedPercent}%` }}
+          />
+          {/* Playhead */}
+          <div
+            className="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#ff0033] shadow ring-2 ring-white/10 transition-transform group-hover/seek:scale-125"
+            style={{ left: `${playedPercent}%` }}
+          />
+          {/* Range input overlay (invisible but clickable / scrollable) */}
+          <input
+            type="range"
+            min={0}
+            max={rangeMax}
+            step="any"
+            value={rangeValue}
+            onChange={onSeekInput}
+            disabled={max <= 0}
+            aria-label={t('videoControlsSeek')}
+            className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent opacity-0 disabled:cursor-not-allowed"
+            style={{ direction: 'ltr' }}
+          />
+        </div>
+
+        {/* Bottom row */}
+        <div className="mt-1 flex items-center gap-1 text-white sm:gap-2">
+          {/* Left controls */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={togglePlay}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10"
+              aria-label={paused ? t('videoControlsPlay') : t('videoControlsPause')}
             >
-              {SPEED_OPTIONS.map((speed) => (
-                <option key={speed} value={speed}>
-                  {speed}x
-                </option>
-              ))}
-            </select>
-          </label>
+              {paused ? (
+                <Play className="size-5 translate-x-px fill-white sm:size-6" />
+              ) : (
+                <Pause className="size-5 sm:size-6" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onPrevChapter}
+              disabled={!canPrevChapter}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed sm:size-10"
+              aria-label={t('videoControlsPrevChapter')}
+              title={t('videoControlsPrevChapter')}
+            >
+              <SkipBack className="size-4 sm:size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={onNextChapter}
+              disabled={!canNextChapter}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed sm:size-10"
+              aria-label={t('videoControlsNextChapter')}
+              title={t('videoControlsNextChapter')}
+            >
+              <SkipForward className="size-4 sm:size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10"
+              aria-label={muted ? t('videoControlsUnmute') : t('videoControlsMute')}
+            >
+              {muted ? (
+                <VolumeX className="size-5 sm:size-6" />
+              ) : (
+                <Volume2 className="size-5 sm:size-6" />
+              )}
+            </button>
+            <span className="ms-1 select-none tabular-nums text-[12px] font-medium leading-none text-white sm:ms-2 sm:text-[13px]">
+              {formatClock(current)} / {formatClock(duration)}
+            </span>
+          </div>
 
-          {endAction ? <div className="ms-auto shrink-0 sm:hidden">{endAction}</div> : null}
+          {/* Spacer for centering on large screens */}
+          <div className="flex-1" />
 
-          <button
-            type="button"
-            onClick={toggleShellFullscreen}
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded bg-white/15 text-white transition hover:bg-white/25 active:bg-white/20 sm:size-9 sm:rounded-md"
-            aria-label={isFullscreen ? t('videoControlsExitFullscreen') : t('videoControlsFullscreen')}
-          >
-            {isFullscreen ? <Minimize2 className="size-4 sm:size-5" /> : <Maximize2 className="size-4 sm:size-5" />}
-          </button>
+          {/* Right controls */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {endAction ? <div className="hidden md:block">{endAction}</div> : null}
+
+            <button
+              type="button"
+              onClick={() => setCaptionsEnabled((v) => !v)}
+              className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tracking-tight transition hover:bg-white/15 active:bg-white/20 sm:size-10 sm:text-xs ${
+                captionsEnabled ? 'bg-white/15' : ''
+              }`}
+              aria-label={captionsEnabled ? t('videoControlsCaptionsTurnOff') : t('videoControlsCaptionsTurnOn')}
+              aria-pressed={captionsEnabled}
+              title={t('videoControlsCaptions')}
+            >
+              <Captions className="size-5 sm:size-6" strokeWidth={1.6} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setSettingsOpen((v) => !v);
+                setSubMenu(null);
+              }}
+              className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10 ${
+                settingsOpen ? 'bg-white/15' : ''
+              }`}
+              aria-label={t('videoControlsSettings')}
+              aria-expanded={settingsOpen}
+              title={t('videoControlsSettings')}
+            >
+              <SettingsIcon className="size-5 sm:size-6" />
+            </button>
+
+            {onToggleTheater ? (
+              <button
+                type="button"
+                onClick={onToggleTheater}
+                className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10 ${
+                  theaterMode ? 'bg-white/15' : ''
+                }`}
+                aria-label={
+                  theaterMode ? t('videoControlsTheaterExit') : t('videoControlsTheaterEnter')
+                }
+                aria-pressed={theaterMode}
+                title={t('videoControlsTheater')}
+              >
+                <Tv2 className="size-5 sm:size-6" />
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={toggleShellFullscreen}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10"
+              aria-label={isFullscreen ? t('videoControlsExitFullscreen') : t('videoControlsFullscreen')}
+              title={isFullscreen ? t('videoControlsExitFullscreen') : t('videoControlsFullscreen')}
+            >
+              {isFullscreen ? (
+                <Minimize className="size-5 sm:size-6" />
+              ) : (
+                <Maximize className="size-5 sm:size-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>

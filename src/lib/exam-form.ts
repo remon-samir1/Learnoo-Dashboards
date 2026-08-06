@@ -42,7 +42,7 @@ export interface ExamFormDetails {
   status: 'Draft' | 'Active';
   startTime: string;
   endTime: string;
-  is_public: boolean;
+  is_public: 'true' | 'false' | 'included';
 }
 
 export interface ApiErrorPayload {
@@ -143,7 +143,7 @@ function appendExamFields(formData: FormData, details: ExamFormDetails) {
   formData.append('total_marks', details.totalMarks);
   formData.append('passing_marks', details.passingMarks);
   formData.append('max_attempts', details.maxAttempts);
-  formData.append('is_public', details.is_public ? '1' : '0');
+  formData.append('is_public', details.is_public);
   formData.append('status', details.status.toLowerCase());
   if (details.startTime) formData.append('start_time', details.startTime);
   if (details.endTime) formData.append('end_time', details.endTime);
