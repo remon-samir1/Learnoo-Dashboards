@@ -321,6 +321,7 @@ export default function CreateExamPage() {
 
       // Refresh handled by hook
       localStorage.removeItem('doctor_exam_create_form_draft');
+      toast.success(t('create.success'));
       router.push('/doctor/exams');
     } catch (error: any) {
       console.error('Error creating exam:', error);
