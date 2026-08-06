@@ -599,6 +599,20 @@
         "fallbackTitle": "ملاحظة بدون عنوان",
         "fallbackLecture": "عام"
       },
+      "exams": {
+        "title": "أحدث الاختبارات",
+        "viewAll": "عرض الكل",
+        "empty": "لا توجد اختبارات متاحة حالياً.",
+        "fallbackTitle": "اختبار بدون عنوان",
+        "examType": "اختبار",
+        "homeworkType": "واجب",
+        "startExam": "ابدأ الاختبار",
+        "availableBadge": "متاح الآن",
+        "upcomingBadge": "قريباً",
+        "durationMinutes": "{count} دقيقة",
+        "questionsLabel": "{count} سؤال",
+        "courseFallback": "الكورس"
+      },
       "posts": {
         "title": "أحدث منشورات المجتمع",
         "viewAll": "عرض الكل",

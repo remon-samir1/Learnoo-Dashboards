@@ -331,7 +331,6 @@ export default function CreateExamPage() {
         }
       }
       toast.error(error?.message || t('create.error'));
-    } finally {
       setIsSubmitting(false);
     }
   };

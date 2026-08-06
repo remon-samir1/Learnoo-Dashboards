@@ -5,10 +5,12 @@ import LibrarySection from "@/src/components/student/home/LibrarySection";
 import UpcomingLiveClasses from "@/src/components/student/home/LiveSessions";
 import MyCoursesSection from "@/src/components/student/home/MyCoursesSection";
 import MySubjectSection from "@/src/components/student/home/MySubjectSection";
+import NewestExams from "@/src/components/student/home/NewestExams";
 import QuickActivationCard from "@/src/components/student/home/QuickActiviation";
 import WelcomeSection from "@/src/components/student/home/WelcomeSection";
 import { getCourseById } from "@/src/services/student/course.service";
 import { getCategories } from "@/src/services/student/department.service";
+import { getLatestStudentExams } from "@/src/services/student/exam.service";
 import { getLibrary } from "@/src/services/student/library.service";
 import { getLatestGeneralPosts } from "@/src/services/student/post.service";
 import { getStudentLiveRooms } from "@/src/services/student/live-room.service";
@@ -46,6 +48,9 @@ export default async function StudentPage() {
   const postsResult = await getLatestGeneralPosts(3);
   const latestPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
 
+  const examsResult = await getLatestStudentExams(4);
+  const latestExams = examsResult.success ? examsResult.data ?? [] : [];
+
   const coursesCount = courses?.length;
   const progressCount = progress?.length;
   const liveSessionsCount = liveSessions?.length;
@@ -64,6 +69,7 @@ export default async function StudentPage() {
       <MySubjectSection categories={category} />
       <MyCoursesSection />
       <LatestPostsSection posts={latestPosts} />
+      <NewestExams exams={latestExams} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
         <div className="min-w-0">
           <UpcomingLiveClasses sessions={liveSessions} />

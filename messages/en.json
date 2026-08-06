@@ -571,6 +571,20 @@
         "fallbackTitle": "Untitled Note",
         "fallbackLecture": "General"
       },
+      "exams": {
+        "title": "Newest Exams",
+        "viewAll": "View All",
+        "empty": "No exams available right now.",
+        "fallbackTitle": "Untitled Exam",
+        "examType": "Exam",
+        "homeworkType": "Homework",
+        "startExam": "Start Exam",
+        "availableBadge": "Available Now",
+        "upcomingBadge": "Upcoming",
+        "durationMinutes": "{count} min",
+        "questionsLabel": "{count} questions",
+        "courseFallback": "Course"
+      },
       "posts": {
         "title": "Latest Community Posts",
         "viewAll": "View All",

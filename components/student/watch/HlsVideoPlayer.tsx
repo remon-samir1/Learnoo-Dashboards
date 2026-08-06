@@ -389,17 +389,17 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
     const [showPlaybackSwitching, setShowPlaybackSwitching] = useState(false);
     const onFatalPlaybackErrorRef = useRef(onFatalPlaybackError);
     const hlsConfigRef = useRef(hlsConfig);
-const revealControls = useCallback(() => {
-  setShowControls(true);
+    const revealControls = useCallback(() => {
+      setShowControls(true);
 
-  if (controlsTimeoutRef.current) {
-    clearTimeout(controlsTimeoutRef.current);
-  }
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
 
-  controlsTimeoutRef.current = setTimeout(() => {
-    setShowControls(false);
-  }, 2000);
-}, []);
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 2000);
+    }, []);
     useEffect(() => {
       onFatalPlaybackErrorRef.current = onFatalPlaybackError;
       hlsConfigRef.current = hlsConfig;
@@ -1062,29 +1062,29 @@ const revealControls = useCallback(() => {
           '[&:fullscreen]:min-w-0 [&:fullscreen]:w-1/2 [&:fullscreen]:flex-[1_1_50%] [&:fullscreen]:basis-1/2',
         ].join(' ')}
       >
-        <div  className={`group  relative w-full shrink-0 overflow-visible bg-black ${viewportClass}`}  onMouseMove={revealControls}
-  onMouseEnter={revealControls}>
+        <div className={`group  relative w-full shrink-0 overflow-visible bg-black ${viewportClass}`} onMouseMove={revealControls}
+          onMouseEnter={revealControls}>
           {videoStageGrid}
-           {showCustomControls ? (
-          <HlsVideoCustomControls
-           visible={showControls}
-            videoRef={localRef}
-            shellRef={videoWrapperRef}
-            qualityOptions={qualityOptions}
-            qualityValue={selectedQuality}
-            onQualityChange={setQualityLevel}
-            endAction={watchOverlay}
-            onPrevChapter={onPrevChapter}
-            onNextChapter={onNextChapter}
-            canPrevChapter={canPrevChapter}
-            canNextChapter={canNextChapter}
-            chapterInfoTitle={chapterInfoTitle}
-            theaterMode={theaterMode}
-            onToggleTheater={onToggleTheater}
-          />
-        ) : null}
+          {showCustomControls ? (
+            <HlsVideoCustomControls
+              visible={showControls}
+              videoRef={localRef}
+              shellRef={videoWrapperRef}
+              qualityOptions={qualityOptions}
+              qualityValue={selectedQuality}
+              onQualityChange={setQualityLevel}
+              endAction={watchOverlay}
+              onPrevChapter={onPrevChapter}
+              onNextChapter={onNextChapter}
+              canPrevChapter={canPrevChapter}
+              canNextChapter={canNextChapter}
+              chapterInfoTitle={chapterInfoTitle}
+              theaterMode={theaterMode}
+              onToggleTheater={onToggleTheater}
+            />
+          ) : null}
         </div>
-       
+
       </div>
     );
 
