@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Clock,
   FileText,
+  GraduationCap,
   ListOrdered,
   Lock,
   Play,
@@ -42,15 +43,17 @@ import {
   hubQuizQuestionCount,
   hubQuizTitle,
   hubQuizTypeLabel,
+  readHubQuizCourseId,
   type HubQuizListRow,
 } from '@/src/lib/student-exam-hub-quiz';
 import {
   quizNeedsReactivationAfterExhaustedAttempts,
-  quizStudentMustActivateOrReactivate,
+  quizStudentMustActivateOrReactivateWithEnrolled,
 } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
+import { useCourses, STUDENT_COURSES_LIST_PARAMS } from '@/src/hooks/useCourses';
 
 function normalizeQuizListRow(raw: unknown): HubQuizListRow | null {
   if (raw == null || typeof raw !== 'object') return null;
@@ -95,6 +98,21 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
   const [page, setPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
 
+  // Student's enrolled courses (My Courses / courses the student has
+  // activated). Used to decide whether a private exam should be opened or
+  // shown as "activate the course first".
+  const { data: enrolledCourses } = useCourses(STUDENT_COURSES_LIST_PARAMS);
+  const enrolledCourseIds = useMemo<Set<string>>(() => {
+    const set = new Set<string>();
+    if (!enrolledCourses) return set;
+    for (const course of enrolledCourses) {
+      if (course?.id != null && String(course.id).trim() !== '') {
+        set.add(String(course.id).trim());
+      }
+    }
+    return set;
+  }, [enrolledCourses]);
+
   const loadAll = useCallback(async (pageNum: number) => {
     setLoading(true);
     setLoadError(null);
@@ -127,22 +145,24 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     void loadAll(page);
   }, [loadAll, page]);
 
-  const { available, upcoming, expired, locked } = useMemo(() => {
+  const { available, upcoming, expired, locked, courseNotEnrolled } = useMemo(() => {
     const buckets: {
       available: HubQuizListRow[];
       upcoming: HubQuizListRow[];
       expired: HubQuizListRow[];
       locked: HubQuizListRow[];
+      courseNotEnrolled: HubQuizListRow[];
     } = {
       available: [],
       upcoming: [],
       expired: [],
       locked: [],
+      courseNotEnrolled: [],
     };
     if (!quizList?.length) return buckets;
     const now = Date.now();
     for (const row of quizList) {
-      const b = classifyHubQuizRow(row, now);
+      const b = classifyHubQuizRow(row, now, enrolledCourseIds);
       switch (b) {
         case 'available':
           buckets.available.push(row);
@@ -156,12 +176,15 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
         case 'locked':
           buckets.locked.push(row);
           break;
+        case 'course_not_enrolled':
+          buckets.courseNotEnrolled.push(row);
+          break;
         default:
           break;
       }
     }
     return buckets;
-  }, [quizList]);
+  }, [quizList, enrolledCourseIds]);
 
   const completedAttempts = useMemo(() => {
     if (!attemptList?.length) return [];
@@ -298,6 +321,20 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                     : null;
                 const startHref = buildStudentStartExamHref(locale, row.id, courseForStart);
                 const title = hubQuizTitle(row);
+                const courseId = readHubQuizCourseId(row);
+                // For private exams (`is_public === false`) the user can only
+                // see them in the available bucket because their owning
+                // course is already enrolled. Surface a small "Course active"
+                // badge so the student knows why the exam is open.
+                const isPublic =
+                  (hubQuizAttrs(row).is_public ?? (row as Record<string, unknown>).is_public) === true ||
+                  String(
+                    hubQuizAttrs(row).is_public ?? (row as Record<string, unknown>).is_public ?? ''
+                  )
+                    .trim()
+                    .toLowerCase() === 'true';
+                const showCourseActiveBadge =
+                  !isPublic && courseId != null && enrolledCourseIds.has(courseId);
                 return (
                   <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} border-emerald-200`}>
                     <div className="flex items-start justify-between gap-3">
@@ -311,6 +348,12 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                         {tDetails('examsAvailableBadge')}
                       </span>
                     </div>
+                    {showCourseActiveBadge ? (
+                      <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+                        <GraduationCap className="size-3.5 shrink-0" strokeWidth={2.25} aria-hidden />
+                        <span>{tDetails('examsCourseEnrolledBadge')}</span>
+                      </div>
+                    ) : null}
                     {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
                     <Link
                       href={startHref}
@@ -561,7 +604,10 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                   max_attempts: attrs.max_attempts ?? top.max_attempts,
                   maxAttempts: attrs.maxAttempts ?? top.maxAttempts,
                 };
-                const needsActivation = quizStudentMustActivateOrReactivate(attrsForPolicy);
+                const needsActivation = quizStudentMustActivateOrReactivateWithEnrolled(
+                  attrsForPolicy,
+                  enrolledCourseIds
+                );
                 const reactivateOnly = quizNeedsReactivationAfterExhaustedAttempts(attrsForPolicy);
                 const coursesObj = attrs.courses as { data: Array<{ id: string | number }> } | undefined;
                 const cid = coursesObj?.data?.[0]?.id;
@@ -622,7 +668,68 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
             </ul>
           )}
         </section>
-      </div>
+
+        <section className="space-y-4 sm:space-y-5">
+      <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
+        {tDetails('examsCourseNotEnrolledTitle')}
+      </h2>
+      {loading ? (
+        <p className="rounded-xl border border-[#E5E7EB] bg-white px-5 py-10 text-center text-sm text-[#64748B]">
+          {t('loadingQuizzes')}
+        </p>
+      ) : courseNotEnrolled.length === 0 ? (
+        <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-5 py-8 text-center text-sm text-[#64748B]">
+          {t('emptyLocked')}
+        </p>
+      ) : (
+        <ul className={STUDENT_EXAM_GRID}>
+          {courseNotEnrolled.map((row) => {
+            const title = hubQuizTitle(row);
+            const cid = readHubQuizCourseId(row);
+            const coursesHref = `/${locale}/student/courses`;
+            const courseDetailsHref =
+              cid != null && /^\d+$/.test(cid)
+                ? `/${locale}/student/courses/course-details/${cid}`
+                : null;
+            return (
+              <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} text-[#64748B]`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold leading-snug text-[#475569] sm:text-lg">{title}</h3>
+                  </div>
+                  <Lock className="size-5 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+                </div>
+                <div className="mt-3 rounded-lg border border-orange-200/80 bg-orange-50/90 px-3 py-2.5">
+                  <p className="text-sm font-semibold text-orange-950">
+                    {tDetails('examsCourseNotEnrolledTitle')}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-orange-900/85">
+                    {tDetails('examsCourseNotEnrolledBody')}
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-orange-900/85">
+                    {tDetails('examsCourseNotEnlockedHint')}
+                  </p>
+                  {cid != null ? (
+                    <p className="mt-2 text-xs font-semibold text-orange-950">
+                      {tDetails('examsCourseIdLabel', { id: String(cid) })}
+                    </p>
+                  ) : null}
+                </div>
+                {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
+                <Link
+                  href={courseDetailsHref ?? coursesHref}
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2137D6] px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] sm:mt-6"
+                >
+                  <GraduationCap className="size-[18px] shrink-0 text-white" strokeWidth={2.25} aria-hidden />
+                  <span>{tDetails('examsActivateCourseFirstCta')}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  </div>
 
       {/* Pagination controls for the quiz list */}
       {paginationMeta && paginationMeta.last_page > 1 ? (

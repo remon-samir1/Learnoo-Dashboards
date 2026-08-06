@@ -3,7 +3,8 @@
  */
 
 import {
-  quizRequiresCourseActivationLock,
+  quizRequiresCourseActivationLockWithEnrolled,
+  readQuizOwningCourseId,
   readRemainingAttemptsFromQuizAttributes,
 } from '@/src/lib/student-quiz-activation-lock';
 
@@ -44,6 +45,15 @@ function coerceNonNegativeInt(value: unknown): number | null {
 export function hubQuizAttrs(row: HubQuizListRow): Record<string, unknown> {
   const a = row.attributes;
   return a != null && typeof a === 'object' && !Array.isArray(a) ? (a as Record<string, unknown>) : {};
+}
+
+/**
+ * Read the owning course id for a quiz row in a string-normalised form.
+ * Re-exports the helper from the lock module so the hub code only has to
+ * import this one file.
+ */
+export function readHubQuizCourseId(row: HubQuizListRow): string | null {
+  return readQuizOwningCourseId(hubQuizAttrs(row));
 }
 
 export function readHubQuizMaxAttempts(row: HubQuizListRow): number | null {
@@ -127,11 +137,29 @@ export function hubQuizTypeLabel(
   return t('examsTypeRaw', { type: String(raw).trim() });
 }
 
-export type HubQuizBucket = 'available' | 'upcoming' | 'locked' | 'expired' | 'hidden';
+export type HubQuizBucket =
+  | 'available'
+  | 'upcoming'
+  | 'locked'
+  | 'expired'
+  | 'hidden'
+  | /** Private exam whose owning course is not yet in the student's enrolled list. */
+  'course_not_enrolled';
 
-export function classifyHubQuizRow(row: HubQuizListRow, nowMs: number): HubQuizBucket {
+export function classifyHubQuizRow(
+  row: HubQuizListRow,
+  nowMs: number,
+  enrolledCourseIds?: ReadonlySet<string> | Iterable<string> | null
+): HubQuizBucket {
   const attrs = hubQuizAttrs(row);
-  if (quizRequiresCourseActivationLock(attrs)) return 'locked';
+  // The enrolled-aware helper returns `true` only when the strict activation
+  // gate is on AND the owning course is missing from the student's enrolled
+  // courses list. That is the "private exam, course not yet activated"
+  // case the user is asking us to surface with a separate "activate course
+  // first" message.
+  if (quizRequiresCourseActivationLockWithEnrolled(attrs, enrolledCourseIds)) {
+    return 'course_not_enrolled';
+  }
 
   const status = String(attrs.status ?? '')
     .trim()

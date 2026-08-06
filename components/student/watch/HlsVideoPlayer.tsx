@@ -238,7 +238,11 @@ function logHlsError(data: ErrorData, masterUrl: string): void {
     return;
   }
 
-  console.error(`${LOG_PREFIX} Hls.Events.ERROR ${summary}`);
+  if (data.fatal) {
+    console.error(`${LOG_PREFIX} Hls.Events.ERROR ${summary}`);
+  } else {
+    console.warn(`${LOG_PREFIX} Hls.Events.ERROR ${summary}`);
+  }
 }
 
 function canPlayNativeHls(video: HTMLVideoElement): boolean {

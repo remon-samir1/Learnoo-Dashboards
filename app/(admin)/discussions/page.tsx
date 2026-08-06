@@ -22,6 +22,7 @@ import {
 import { useDiscussions, useDeleteDiscussion, useCreateDiscussion } from '@/src/hooks/useDiscussions';
 import type { Discussion } from '@/src/types';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '@/src/lib/api';
 
 export default function AdminDiscussionsPage() {
   const t = useTranslations('discussions');
@@ -29,10 +30,10 @@ export default function AdminDiscussionsPage() {
   const locale = useLocale();
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
-  const { data: discussionsData, isLoading, refetch } = useDiscussions({ page:page});
+  const { data: discussionsData, isLoading, refetch } = useDiscussions({ page: page });
   const { mutate: deleteDiscussion, isLoading: isDeleting } = useDeleteDiscussion();
   const { mutate: createReply, isLoading: isReplying } = useCreateDiscussion();
-console.log(page)
+  console.log(page)
   const [replyingTo, setReplyingTo] = useState<string | number | null>(null);
   const [replyText, setReplyText] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
@@ -167,18 +168,18 @@ console.log(page)
                 handleReply={handleReply}
                 handleDelete={handleDelete}
                 isReplying={isReplying}
-              t={t}
-              formatTime={formatTime}
-              formatMoment={formatMoment}
-              formatDuration={formatDuration}
-              getDiscussionTypeBadge={getDiscussionTypeBadge}
-              previewImageUrl={previewImageUrl}
-              setPreviewImageUrl={setPreviewImageUrl}
-              playingAudioId={playingAudioId}
-              setPlayingAudioId={setPlayingAudioId}
+                t={t}
+                formatTime={formatTime}
+                formatMoment={formatMoment}
+                formatDuration={formatDuration}
+                getDiscussionTypeBadge={getDiscussionTypeBadge}
+                previewImageUrl={previewImageUrl}
+                setPreviewImageUrl={setPreviewImageUrl}
+                playingAudioId={playingAudioId}
+                setPlayingAudioId={setPlayingAudioId}
               />
             ))}
-            
+
             {/* Pagination */}
             {discussionsData?.meta && (
               <div className="flex items-center justify-between rounded-xl border border-[#E2E8F0] bg-white px-4 py-3">
@@ -227,7 +228,7 @@ console.log(page)
               <X className="h-6 w-6" />
             </button>
             <img
-              src={previewImageUrl}
+              src={API_BASE_URL + "/storage/" + previewImageUrl}
               alt="Full size preview"
               className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
               onClick={(e) => e.stopPropagation()}
@@ -261,7 +262,7 @@ const DiscussionNode = ({
 }: any) => {
   const hasReplies = discussion.replies?.length > 0;
   const isReplyComposerOpen = replyingTo === discussion.id;
-  
+
   // Detect voice discussions based on actual API structure
   const isVoiceDiscussion = discussion.attributes?.type === 'voice';
   const voiceUrl = isVoiceDiscussion ? discussion.attributes?.content : null;
@@ -354,7 +355,7 @@ const DiscussionNode = ({
               onClick={() => setPreviewImageUrl(discussion.attributes.image)}
             >
               <img
-                src={discussion.attributes.image}
+                src={API_BASE_URL + '/storage/' + discussion.attributes.image}
                 alt="Discussion screenshot"
                 className="max-h-48 w-auto object-cover"
               />

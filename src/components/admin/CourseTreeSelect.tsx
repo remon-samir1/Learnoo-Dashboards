@@ -77,11 +77,8 @@ export function CourseTreeSelect({
   const faculties = useMemo(() => facultiesData ?? [], [facultiesData]);
   const departments = useMemo(() => departmentsData ?? [], [departmentsData]);
 
-  const coursesRawData = outerCoursesData !== undefined ? outerCoursesData : internalCoursesData;
-  const courses = useMemo(() => coursesRawData ?? [], [coursesRawData]);
-
-  const lecturesRawData = outerLecturesData !== undefined ? outerLecturesData : [];
-  const lectures = useMemo(() => lecturesRawData ?? [], [lecturesRawData]);
+  const courses = useMemo(() => (outerCoursesData !== undefined ? outerCoursesData : internalCoursesData) ?? [], [outerCoursesData, internalCoursesData]);
+  const lectures = useMemo(() => outerLecturesData ?? [], [outerLecturesData]);
 
   const isLoading = isLoadingUnivs || isLoadingCenters || isLoadingFacs || isLoadingDepts || (outerCoursesData === undefined && isLoadingCourses);
 
@@ -473,14 +470,14 @@ export function CourseTreeSelect({
           }}
           style={{ paddingLeft: `${Math.max(node.level * 16, 8)}px` }}
           className={`flex items-center gap-2 py-2 px-3 rounded-lg text-sm transition-all cursor-pointer ${isExcluded
-              ? 'text-gray-400 cursor-not-allowed'
-              : isSelectable
-                ? multiple
-                  ? 'hover:bg-slate-50 text-[#1E293B] font-medium'
-                  : isSelected
-                    ? 'bg-[#2137D6] text-white font-semibold hover:bg-[#1a2bb5]'
-                    : 'hover:bg-slate-50 text-[#1E293B] font-medium'
-                : 'hover:bg-slate-50 text-[#64748B]'
+            ? 'text-gray-400 cursor-not-allowed'
+            : isSelectable
+              ? multiple
+                ? 'hover:bg-slate-50 text-[#1E293B] font-medium'
+                : isSelected
+                  ? 'bg-[#2137D6] text-white font-semibold hover:bg-[#1a2bb5]'
+                  : 'hover:bg-slate-50 text-[#1E293B] font-medium'
+              : 'hover:bg-slate-50 text-[#64748B]'
             }`}
         >
           {!isSelectable && hasChildren ? (
@@ -600,10 +597,10 @@ export function CourseTreeSelect({
 
   const selectedNames = multiple && selectedValues.length > 0
     ? selectedValues.map(id =>
-        selectLectures
-          ? lectures?.find(l => String(l.id) === id)?.attributes?.title
-          : courses?.find(c => String(c.id) === id)?.attributes?.title
-      ).filter(Boolean)
+      selectLectures
+        ? lectures?.find(l => String(l.id) === id)?.attributes?.title
+        : courses?.find(c => String(c.id) === id)?.attributes?.title
+    ).filter(Boolean)
     : [];
 
   return (

@@ -2,14 +2,16 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { StartExamIntro } from '@/components/student/exams/StartExamIntro';
 import {
+  quizCourseIsEnrolled,
   quizNeedsReactivationAfterExhaustedAttempts,
-  quizStudentMustActivateOrReactivate,
+  quizStudentMustActivateOrReactivateWithEnrolled,
 } from '@/src/lib/student-quiz-activation-lock';
 import {
   isLikelyQuizAccessDeniedError,
   sanitizeNumericCourseQueryParam,
 } from '@/src/lib/student-start-exam-href';
 import { getQuizById } from '@/src/services/student/quiz.service';
+import { getCourses } from '@/src/services/student/course.service';
 import type { Quiz } from '@/src/types';
 
 interface StartExamPageProps {
@@ -20,7 +22,11 @@ interface StartExamPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-type StartExamActivationReason = 'exam_first' | 'exam_reactivate' | 'exam_access_denied';
+type StartExamActivationReason =
+  | 'exam_first'
+  | 'exam_reactivate'
+  | 'exam_access_denied'
+  | 'course_not_enrolled';
 
 function quizAttrsForActivationPolicy(quiz: Quiz): Record<string, unknown> {
   const a = quiz.attributes as unknown as Record<string, unknown>;
@@ -55,13 +61,17 @@ function StartExamActivationPanel(props: {
       ? 'examReactivationRequiredTitle'
       : reason === 'exam_access_denied'
         ? 'examAccessDeniedTitle'
-        : 'examActivationRequiredTitle';
+        : reason === 'course_not_enrolled'
+          ? 'examCourseNotEnrolledTitle'
+          : 'examActivationRequiredTitle';
   const bodyKey =
     reason === 'exam_reactivate'
       ? 'examReactivationRequiredBody'
       : reason === 'exam_access_denied'
         ? 'examAccessDeniedBody'
-        : 'examActivationRequiredBody';
+        : reason === 'course_not_enrolled'
+          ? 'examCourseNotEnrolledBody'
+          : 'examActivationRequiredBody';
 
   return (
     <div className="w-full pb-10 pt-2" dir={dir}>
@@ -123,7 +133,18 @@ export default async function StartExamPage({ params, searchParams }: StartExamP
     );
   }
 
-  const result = await getQuizById(rawId);
+  const [result, enrolledCoursesResult] = await Promise.all([
+    getQuizById(rawId),
+    getCourses(),
+  ]);
+  const enrolledCourseIds = new Set<string>();
+  if (enrolledCoursesResult.success && enrolledCoursesResult.data?.data) {
+    for (const course of enrolledCoursesResult.data.data) {
+      if (course?.id != null && String(course.id).trim()) {
+        enrolledCourseIds.add(String(course.id).trim());
+      }
+    }
+  }
 
   if (!result.success || !result.data?.data) {
     const msg = result.message ?? t('error');
@@ -131,12 +152,14 @@ export default async function StartExamPage({ params, searchParams }: StartExamP
       const courseExamsHref = courseFromQuery
         ? `/${locale}/student/courses/course-details/${encodeURIComponent(courseFromQuery)}?tab=exams`
         : null;
+      const courseIsEnrolled =
+        courseFromQuery != null && enrolledCourseIds.has(courseFromQuery);
       return (
         <StartExamActivationPanel
           locale={locale}
           examsHref={examsHref}
           courseExamsHref={courseExamsHref}
-          reason="exam_access_denied"
+          reason={courseFromQuery != null && !courseIsEnrolled ? 'course_not_enrolled' : 'exam_access_denied'}
           t={t}
         />
       );
@@ -166,16 +189,19 @@ export default async function StartExamPage({ params, searchParams }: StartExamP
       : examsHref;
 
   const policyAttrs = quizAttrsForActivationPolicy(quiz);
-  if (quizStudentMustActivateOrReactivate(policyAttrs)) {
+  if (quizStudentMustActivateOrReactivateWithEnrolled(policyAttrs, enrolledCourseIds)) {
     const cid = quiz.attributes.course_id;
     const courseIdForLink =
       cid != null && String(cid).trim() !== '' ? String(cid) : courseFromQuery != null ? courseFromQuery : null;
     const courseExamsHref = courseIdForLink
       ? `/${locale}/student/courses/course-details/${encodeURIComponent(courseIdForLink)}?tab=exams`
       : null;
+    const courseEnrolled = quizCourseIsEnrolled(policyAttrs, enrolledCourseIds);
     const reason: StartExamActivationReason = quizNeedsReactivationAfterExhaustedAttempts(policyAttrs)
       ? 'exam_reactivate'
-      : 'exam_first';
+      : !courseEnrolled
+        ? 'course_not_enrolled'
+        : 'exam_first';
 
     return (
       <StartExamActivationPanel

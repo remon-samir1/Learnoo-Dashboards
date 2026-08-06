@@ -11,8 +11,16 @@ export const useDiscussions = createQueryHook(
   { enabled: true }
 );
 
+/**
+ * Create a discussion.
+ *
+ * The API endpoint accepts either a typed JSON body (`CreateDiscussionRequest`)
+ * or a multipart `FormData` (used by the chapter watch composer to attach a
+ * voice recording and/or screenshot). Mirror that union here so callers can
+ * submit either shape.
+ */
 export const useCreateDiscussion = createMutationHook(
-  (data: CreateDiscussionRequest) =>
+  (data: CreateDiscussionRequest | FormData) =>
     api.discussions.create(data).then(res => res.data)
 );
 

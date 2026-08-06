@@ -358,6 +358,19 @@ export default function ChapterWatchView({
   const hlsVideoRef = useRef<HTMLVideoElement | null>(null);
   const pdfPanelRef = useRef<HTMLDivElement | null>(null);
   const [currentVideoMoment, setCurrentVideoMoment] = useState<number>(0);
+  /**
+   * Snapshot of the video `moment` captured the moment the user clicks
+   * "Ask about this moment". Used at submit time so the comment is anchored
+   * to the moment the user wanted to ask about — not to whenever they
+   * finished typing.
+   */
+  const [composerMoment, setComposerMoment] = useState<number | null>(null);
+  /**
+   * Frame captured at the moment the user clicks "Ask about this moment".
+   * Sent on submit in the `image` FormData key. Null means no fresh frame
+   * could be extracted (e.g., video not ready or canvas tainted).
+   */
+  const [composerFrameFile, setComposerFrameFile] = useState<File | null>(null);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
@@ -623,11 +636,11 @@ export default function ChapterWatchView({
   };
 
   // Helper to get current video moment for discussions
-  const getCurrentVideoMoment = (): number => {
+  const getCurrentVideoMoment = useCallback((): number => {
     return Number.isFinite(currentVideoMoment) && currentVideoMoment >= 0
       ? currentVideoMoment
       : 0;
-  };
+  }, [currentVideoMoment]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -723,12 +736,37 @@ export default function ChapterWatchView({
     }
   }, []);
 
+  /**
+   * Toggle the composer open/closed. When opening, snapshot the current
+   * video `moment` and grab a screenshot of the frame at that exact moment
+   * so the comment stays anchored to what the user wanted to ask about
+   * (regardless of how long they take to type).
+   */
+  const handleAskMomentClick = useCallback(() => {
+    setComposerOpen((open) => {
+      if (open) {
+        // Closing — release the snapshot so a fresh one is taken next time.
+        setComposerMoment(null);
+        setComposerFrameFile(null);
+        return false;
+      }
+      setComposerMoment(getCurrentVideoMoment());
+      setComposerFrameFile(captureVideoFrame());
+      return true;
+    });
+  }, [captureVideoFrame, getCurrentVideoMoment]);
+
 
   const submitComposer = async () => {
     if (!Number.isFinite(chapterIdForApi)) return;
     setComposerSubmitting(true);
     try {
-      const moment = getCurrentVideoMoment();
+      // Use the moment + frame snapshotted when the user clicked
+      // "Ask about this moment" so the comment is anchored to that exact
+      // moment of the video. Fall back to a fresh capture only if none was
+      // taken (e.g. the user opened the composer through some other path).
+      const moment = composerMoment ?? getCurrentVideoMoment();
+      const frameFile = composerFrameFile ?? captureVideoFrame();
 
       if (composerMode === 'voice') {
         if (!audioBlob) {
@@ -742,10 +780,11 @@ export default function ChapterWatchView({
         formData.append('moment', String(moment));
         formData.append('parent_id', '');
         formData.append('duration', String(recordingSeconds));
-        formData.append('content', '');
         const voiceFile = new File([audioBlob], 'voice-note.webm', { type: 'audio/webm' });
-        formData.append('voice', voiceFile);
-        const frameFile = captureVideoFrame();
+        // Backend contract: the discussion endpoint does not expose a
+        // separate `voice` key — the audio travels in the `content` field,
+        // mirroring how text discussions use it.
+        formData.append('content', voiceFile, 'voice-note.webm');
         if (frameFile) {
           formData.append('image', frameFile);
         }
@@ -766,7 +805,6 @@ export default function ChapterWatchView({
         formData.append('content', text);
         formData.append('moment', String(moment));
         formData.append('parent_id', '');
-        const frameFile = captureVideoFrame();
         if (frameFile) {
           formData.append('image', frameFile);
         }
@@ -774,6 +812,10 @@ export default function ChapterWatchView({
         toast.success(t('discussionPosted'));
         setComposerText('');
       }
+      // Clear the snapshot — the next "Ask about this moment" will take
+      // a fresh one.
+      setComposerMoment(null);
+      setComposerFrameFile(null);
       await refreshChapter();
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : t('discussionPostError');
@@ -1073,19 +1115,17 @@ export default function ChapterWatchView({
               <div className="flex flex-col gap-3 px-4 pb-6 pt-5 sm:px-5 sm:pb-7 sm:pt-7 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
                 <div className="flex justify-stretch max-md:border-b max-md:border-slate-800/90 md:min-w-0 md:justify-start">
                   {Number.isFinite(chapterIdForApi) ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setComposerOpen((o) => !o);
-                      }}
-                      className={`inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] max-md:rounded-none max-md:px-12 sm:min-h-0 sm:w-auto sm:px-7 sm:py-2.5 md:shrink-0 ${composerOpen
-                        ? 'bg-[#2436b0] sm:ring-2 sm:ring-white/20'
-                        : 'bg-[#2D43D1] hover:bg-[#2436b0]'
-                        }`}
-                    >
-                      <MessageCircle className="size-4 shrink-0 stroke-[2]" aria-hidden />
-                      {t('askMoment')}
-                    </button>
+<button
+                    type="button"
+                    onClick={handleAskMomentClick}
+                    className={`inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] max-md:rounded-none max-md:px-12 sm:min-h-0 sm:w-auto sm:px-7 sm:py-2.5 md:shrink-0 ${composerOpen
+                      ? 'bg-[#2436b0] sm:ring-2 sm:ring-white/20'
+                      : 'bg-[#2D43D1] hover:bg-[#2436b0]'
+                      }`}
+                  >
+                    <MessageCircle className="size-4 shrink-0 stroke-[2]" aria-hidden />
+                    {t('askMoment')}
+                  </button>
                   ) : (
                     <span className="h-10" aria-hidden />
                   )}
@@ -1192,7 +1232,11 @@ export default function ChapterWatchView({
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <span className="flex items-center gap-1 text-[11px] text-slate-500">
                           <Camera className="size-3" />
-                          {t('screenshotCaptured')}
+                          {composerMoment != null
+                            ? t('composerMomentLabel', {
+                                time: formatMomentSeconds(composerMoment) ?? '—',
+                              })
+                            : t('screenshotCaptured')}
                         </span>
                         <button
                           type="button"
@@ -1214,6 +1258,14 @@ export default function ChapterWatchView({
                   <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-4">
                     {!audioBlob ? (
                       <div className="flex flex-col items-center gap-4 py-4">
+                        {composerMoment != null ? (
+                          <span className="flex items-center gap-1 self-start text-[11px] text-slate-500">
+                            <Camera className="size-3" />
+                            {t('composerMomentLabel', {
+                              time: formatMomentSeconds(composerMoment) ?? '—',
+                            })}
+                          </span>
+                        ) : null}
                         {isRecording ? (
                           <>
                             <div className="flex size-16 items-center justify-center rounded-full bg-red-500/20 ring-4 ring-red-500/30 animate-pulse">
