@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { 
-  ArrowLeft, 
-  Save, 
-  X, 
+import {
+  ArrowLeft,
+  Save,
+  X,
   ChevronDown,
   Info,
   GraduationCap,
@@ -16,30 +16,31 @@ import {
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { FileUpload } from '@/components/FileUpload';
-import { 
+import {
   useStudent,
-  useUpdateStudent, 
-  useUniversities, 
-  useFaculties, 
-  useCenters, 
-  useCourses 
+  useUpdateStudent,
+  useUniversities,
+  useFaculties,
+  useCenters,
+  useCourses
 } from '@/src/hooks';
 import type { CreateStudentRequest, StudentStatus } from '@/src/types';
 import { StudentStatusLabels, parseStudentStatus } from '@/src/types';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 
 export default function EditStudentPage() {
   const t = useTranslations();
   const router = useRouter();
   const params = useParams();
   const studentId = params.id as string;
-  
+
   // Queries
   const { data: studentResponse, isLoading: isStudentLoading } = useStudent(studentId);
   const { data: universities, isLoading: isUniversitiesLoading } = useUniversities();
   const { data: faculties, isLoading: isFacultiesLoading } = useFaculties();
   const { data: centersData, isLoading: isCentersLoading } = useCenters();
   const { data: coursesData, isLoading: isCoursesLoading } = useCourses();
-  
+
   // Mutation
   const { mutate: updateStudent, isLoading: isUpdating, error: updateError, progress } = useUpdateStudent();
 
@@ -56,10 +57,10 @@ export default function EditStudentPage() {
     status: 1 as StudentStatus,
     image: null as File | null,
     existingImage: null as string | null,
+    feedback: '',
   });
 
   const [selectedCenters, setSelectedCenters] = useState<any[]>([]);
-  const [selectedCourses, setSelectedCourses] = useState<any[]>([]);
 
   // Pre-fill form when student data is loaded
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function EditStudentPage() {
         status: parseStudentStatus(attrs.status),
         image: null,
         existingImage: attrs.image || null,
+        feedback: attrs.feedback || '',
       });
 
       // Set selected centers with proper name from attributes
@@ -88,22 +90,13 @@ export default function EditStudentPage() {
         })));
       }
 
-      // Set selected courses with proper title from attributes
-      if (attrs.enrolled_courses) {
-        setSelectedCourses(attrs.enrolled_courses.map((c: any) => ({
-          id: c.id,
-          attributes: {
-            title: c.attributes?.title || 'Untitled'
-          }
-        })));
-      }
     }
   }, [studentResponse]);
 
   const handleCenterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const centerId = parseInt(e.target.value);
     if (!centerId) return;
-    
+
     const center = centersData?.find(c => parseInt(c.id) === centerId);
     if (center && !formData.center_ids.includes(centerId)) {
       setFormData(prev => ({
@@ -122,31 +115,11 @@ export default function EditStudentPage() {
     setSelectedCenters(prev => prev.filter(c => parseInt(c.id) !== centerId));
   };
 
-  const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const courseId = parseInt(e.target.value);
-    if (!courseId) return;
-    
-    const course = coursesData?.find(c => parseInt(c.id) === courseId);
-    if (course && !formData.course_ids.includes(courseId)) {
-      setFormData(prev => ({
-        ...prev,
-        course_ids: [...prev.course_ids, courseId]
-      }));
-      setSelectedCourses(prev => [...prev, course]);
-    }
-  };
-
-  const removeCourse = (courseId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      course_ids: prev.course_ids.filter(id => id !== courseId)
-    }));
-    setSelectedCourses(prev => prev.filter(c => parseInt(c.id) !== courseId));
-  };
+  // handleCourseChange and removeCourse have been replaced by CourseTreeSelect logic
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const payload: Partial<CreateStudentRequest> = {
         ...formData,
@@ -175,7 +148,7 @@ export default function EditStudentPage() {
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link 
+        <Link
           href={`/students/${studentId}`}
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
@@ -203,23 +176,23 @@ export default function EditStudentPage() {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.firstName')}</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder={t('students.form.fields.placeholders.firstName')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.first_name}
-                onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                 required
               />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.lastName')}</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder={t('students.form.fields.placeholders.lastName')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.last_name}
-                onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                 required
               />
             </div>
@@ -230,29 +203,39 @@ export default function EditStudentPage() {
                 placeholder={t('students.form.fields.placeholders.phone')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 required
               />
             </div>
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.email')}</label>
-              <input 
-                type="email" 
+              <input
+                type="email"
                 placeholder={t('students.form.fields.placeholders.email')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
             </div>
             <div className="flex flex-col gap-2 md:col-span-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.passwordOptional')}</label>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 placeholder={t('students.form.fields.placeholders.password')}
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className="text-[13px] font-bold text-[#475569]">Feedback</label>
+              <textarea
+                placeholder="Enter feedback for this student..."
+                rows={3}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
+                value={formData.feedback}
+                onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
               />
             </div>
           </div>
@@ -267,10 +250,10 @@ export default function EditStudentPage() {
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2 relative">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.university')}</label>
-              <select 
+              <select
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 value={formData.university_id}
-                onChange={(e) => setFormData({...formData, university_id: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, university_id: e.target.value })}
                 required
               >
                 <option value="">{t('students.form.fields.selectUniversity')}</option>
@@ -286,10 +269,10 @@ export default function EditStudentPage() {
             </div>
             <div className="flex flex-col gap-2 relative">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.faculty')}</label>
-              <select 
+              <select
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 value={formData.faculty_id}
-                onChange={(e) => setFormData({...formData, faculty_id: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
                 required
               >
                 <option value="">{t('students.form.fields.selectFaculty')}</option>
@@ -307,15 +290,15 @@ export default function EditStudentPage() {
         </section>
 
         {/* Centers & Courses Section */}
-        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden">
+        <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm ">
           <div className="px-6 py-4 border-b border-[#F1F5F9] bg-[#F8FAFC]/50 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-[#4F46E5]" />
             <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.centers')}</h2>
           </div>
           <div className="p-6 flex flex-col gap-6">
-             <div className="flex flex-col gap-2 relative">
+            <div className="flex flex-col gap-2 relative">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.centers')}</label>
-              <select 
+              <select
                 className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                 onChange={handleCenterChange}
                 value=""
@@ -331,57 +314,62 @@ export default function EditStudentPage() {
                 <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
               )}
               <div className="mt-3 p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl min-h-[60px]">
-                 <div className="flex flex-wrap gap-2">
-                    {selectedCenters.map(center => (
-                      <div key={center.id} className="px-3 py-1 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] flex items-center gap-2 shadow-sm">
-                         {center.name}
-                         <button 
-                           type="button" 
-                           onClick={() => removeCenter(parseInt(center.id))}
-                           className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
-                         >
-                           <X className="w-3 h-3"/>
-                         </button>
-                      </div>
-                    ))}
-                    {selectedCenters.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCentersSelected')}</span>}
-                 </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedCenters.map(center => (
+                    <div key={center.id} className="px-3 py-1 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] flex items-center gap-2 shadow-sm">
+                      {center.name}
+                      <button
+                        type="button"
+                        onClick={() => removeCenter(parseInt(center.id))}
+                        className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {selectedCenters.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCentersSelected')}</span>}
+                </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-2 relative">
-              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.courses')}</label>
-              <select 
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
-                onChange={handleCourseChange}
-                value=""
-              >
-                <option value="">{t('students.form.fields.selectCourse')}</option>
-                {coursesData?.map((course: any) => (
-                  <option key={course.id} value={course.id}>{course.attributes.title}</option>
-                ))}
-              </select>
-              {isCoursesLoading ? (
-                <Loader2 className="absolute right-10 top-[38px] w-4 h-4 text-[#94A3B8] animate-spin" />
-              ) : (
-                <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
-              )}
+              <CourseTreeSelect
+                multiple
+                value={formData.course_ids.map(id => id.toString())}
+                onMultiChange={(values) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    course_ids: values.map(v => parseInt(v))
+                  }));
+                }}
+                coursesData={coursesData ?? undefined}
+                label={t('students.form.fields.courses')}
+              />
               <div className="mt-3 p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl min-h-[60px]">
-                 <div className="flex flex-wrap gap-2">
-                    {selectedCourses.map(course => (
-                      <div key={course.id} className="px-3 py-1 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] flex items-center gap-2 shadow-sm">
-                         {course.attributes.title}
-                         <button 
-                           type="button" 
-                           onClick={() => removeCourse(parseInt(course.id))}
-                           className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
-                         >
-                           <X className="w-3 h-3"/>
-                         </button>
+                <div className="flex flex-wrap gap-2">
+                  {formData.course_ids.map(courseId => {
+                    const course = coursesData?.find((c: any) => parseInt(c.id) === courseId);
+                    const title = course?.attributes?.title || `Course ${courseId}`;
+                    return (
+                      <div key={courseId} className="px-3 py-1 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] flex items-center gap-2 shadow-sm">
+                        {title}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              course_ids: prev.course_ids.filter(id => id !== courseId)
+                            }));
+                          }}
+                          className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
                       </div>
-                    ))}
-                    {selectedCourses.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCoursesSelected')}</span>}
-                 </div>
+                    );
+                  })}
+                  {formData.course_ids.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCoursesSelected')}</span>}
+                </div>
               </div>
             </div>
           </div>
@@ -395,9 +383,9 @@ export default function EditStudentPage() {
           <div className="p-6">
             <FileUpload
               label={t('students.form.fields.profileImage')}
-              onFileSelect={(file) => setFormData({...formData, image: file})}
+              onFileSelect={(file) => setFormData({ ...formData, image: file })}
               previewUrl={formData.image ? URL.createObjectURL(formData.image) : (formData.existingImage || undefined)}
-              onClear={() => setFormData({...formData, image: null, existingImage: null})}
+              onClear={() => setFormData({ ...formData, image: null, existingImage: null })}
               progress={isUpdating ? progress : undefined}
             />
           </div>
@@ -413,11 +401,10 @@ export default function EditStudentPage() {
             <div className="flex flex-col gap-2 relative max-w-md">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.status')}</label>
               <select
-                className={`w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer font-bold ${
-                  formData.status === 1 ? 'text-[#10B981]' : formData.status === 0 ? 'text-red-500' : 'text-orange-500'
-                }`}
+                className={`w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer font-bold ${formData.status === 1 ? 'text-[#10B981]' : formData.status === 0 ? 'text-red-500' : 'text-orange-500'
+                  }`}
                 value={formData.status}
-                onChange={(e) => setFormData({...formData, status: parseInt(e.target.value) as StudentStatus})}
+                onChange={(e) => setFormData({ ...formData, status: parseInt(e.target.value) as StudentStatus })}
               >
                 <option value={1}>{StudentStatusLabels[1]}</option>
                 <option value={0}>{StudentStatusLabels[0]}</option>
@@ -430,14 +417,14 @@ export default function EditStudentPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 mt-4">
-          <button 
+          <button
             type="button"
             onClick={() => router.push(`/students/${studentId}`)}
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all shadow-sm"
           >
             {t('students.form.buttons.cancel')}
           </button>
-          <button 
+          <button
             type="submit"
             disabled={isUpdating}
             className="px-8 py-3 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"

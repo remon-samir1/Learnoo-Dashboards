@@ -4621,6 +4621,41 @@ function EditModal({
             </>
           )}
 
+          {/* Enhanced Upload Progress for Edit Modal */}
+
+          {progress > 0 && (
+            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />
+                </div>
+
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {progress < 100 ? "Uploading files..." : "Upload complete!"}
+                  </p>
+
+                  <p className="text-xs text-gray-500">
+                    {progress < 100
+                      ? "Please wait while we upload your files"
+                      : "Your files have been uploaded successfully"}
+                  </p>
+                </div>
+
+                <span className="text-lg font-bold text-blue-600">
+                  {progress}%
+                </span>
+              </div>
+
+              <div className="w-full bg-blue-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Footer Buttons */}
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 mt-4">
@@ -4640,7 +4675,7 @@ function EditModal({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Saving...
+                  {progress > 0 ? `Updating... ${progress}%` : "Saving..."}
                 </>
               ) : (
                 "Save Changes"

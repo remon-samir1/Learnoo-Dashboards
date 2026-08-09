@@ -49,6 +49,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
   const locale = useLocale();
   const isRtl = locale === 'ar';
   const [page, setPage] = useState(1);
+  const [pageInputValue, setPageInputValue] = useState('1');
   const [searchValue, setSearchValue] = useState('');
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [updatingQuizId, setUpdatingQuizId] = useState<string | null>(null);
@@ -70,6 +71,10 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
   const totalItems = meta?.total ?? quizzes.length;
   const fromItem = totalItems === 0 ? 0 : (meta?.from ?? ((currentPage - 1) * (meta?.per_page ?? quizzes.length) + 1));
   const toItem = meta?.to ?? Math.min(fromItem + quizzes.length - 1, totalItems);
+
+  useEffect(() => {
+    setPageInputValue(currentPage.toString());
+  }, [currentPage]);
 
   const chapterNames = useMemo(
     () => new Map((chapters ?? []).map((chapter) => [Number(chapter.id), chapter.attributes.title])),
@@ -125,6 +130,20 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
     if (nextPage < 1 || nextPage > totalPages || nextPage === currentPage) return;
     setPage(nextPage);
   };
+
+  const handlePageSubmit = () => {
+    const newPage = parseInt(pageInputValue, 10);
+    if (!isNaN(newPage) && newPage >= 1 && newPage <= totalPages) {
+      if (newPage !== currentPage) {
+        changePage(newPage);
+      }
+    } else {
+      setPageInputValue(currentPage.toString());
+    }
+  };
+
+  const pageSummaryText = t('pageSummary', { current: '[[INPUT]]', total: totalPages });
+  const [summaryBefore, summaryAfter] = pageSummaryText.split('[[INPUT]]');
 
   return (
     <div className="flex flex-col gap-6 pb-12">
@@ -338,9 +357,23 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
                     {isRtl ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                     {commonT('previous')}
                   </button>
-                  <span className="px-2 text-sm text-[#64748B]">
-                    {t('pageSummary', { current: currentPage, total: totalPages })}
-                  </span>
+                  <div className="flex items-center gap-1.5 px-2 text-sm text-[#64748B]">
+                    <span>{summaryBefore}</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={totalPages}
+                      value={pageInputValue}
+                      onChange={(e) => setPageInputValue(e.target.value)}
+                      onBlur={handlePageSubmit}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handlePageSubmit();
+                      }}
+                      className="w-12 rounded border border-[#E2E8F0] px-1 py-0.5 text-center text-sm outline-none transition-colors focus:border-[#2137D6] focus:ring-1 focus:ring-[#2137D6] disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={quizzesQuery.isFetching}
+                    />
+                    <span>{summaryAfter}</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => changePage(currentPage + 1)}

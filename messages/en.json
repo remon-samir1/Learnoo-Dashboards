@@ -24,6 +24,12 @@
     "update": "Update",
     "submit": "Submit",
     "back": "Back to sign in",
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "showing": "Showing {from} to {to} of {total} results",
+      "pageInfo": "Page {current} of {total}"
+    },
     "next": "Next",
     "previous": "Previous",
     "soon": "Soon",
@@ -589,7 +595,7 @@
     "centers": "Centers",
     "status": "Status",
     "actions": "Actions",
-    "searchPlaceholder": "Search by name or email...",
+    "searchPlaceholder": "Search by name or email or phone number...",
     "allStatuses": "All Statuses",
     "noPhone": "No phone",
     "viewProfile": "View Profile",
@@ -774,7 +780,8 @@
     },
     "studentResultsCount": "{count, plural, one {# course} other {# courses}}",
     "studentCourseCard": {
-      "activateToAccess": "Activate to access"
+      "activateToAccess": "Activate to access",
+      "activateCourse": "Activate Course"
     },
     "detailPanel": {
       "details": "Details",
@@ -1501,7 +1508,8 @@
       "type": "Type",
       "item": "Item",
       "status": "Status",
-      "created": "Created"
+      "created": "Created",
+      "usedBy": "Used By"
     },
     "status": {
       "used": "Used",
@@ -3287,7 +3295,8 @@
     },
     "contentProgress": "Content Progress",
     "viewCourse": "View Course",
-    "deleteConfirm": "Are you sure you want to delete this course?"
+    "deleteConfirm": "Are you sure you want to delete this course?",
+    "noCoursesFound": "No courses found."
   },
   "settings": {
     "profile": {

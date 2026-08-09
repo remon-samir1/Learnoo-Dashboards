@@ -570,7 +570,14 @@ export const chaptersApi = {
 // ============================================
 
 export const codesApi = {
-  list: () => get<ApiListResponse<Code>>('/v1/code'),
+  list: (params?: {
+    search?: string;
+    codeable_type?: string;
+    codeable_id?: number | string;
+    is_used?: boolean | number;
+    per_page?: number;
+    page?: number;
+  }) => get<ApiListResponse<Code>>('/v1/code', params),
 
   get: (id: number) => get<ApiResponse<Code>>(`/v1/code/${id}`),
 

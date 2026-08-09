@@ -26,6 +26,7 @@ import {
 } from '@/src/hooks';
 import type { CreateStudentRequest, StudentStatus } from '@/src/types';
 import { StudentStatusLabels, parseStudentStatus } from '@/src/types';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 
 export default function EditStudentPage() {
   const t = useTranslations();
@@ -56,10 +57,10 @@ export default function EditStudentPage() {
     status: 1 as StudentStatus,
     image: null as File | null,
     existingImage: null as string | null,
+    feedback: '',
   });
 
   const [selectedCenters, setSelectedCenters] = useState<any[]>([]);
-  const [selectedCourses, setSelectedCourses] = useState<any[]>([]);
 
   // Pre-fill form when student data is loaded
   useEffect(() => {
@@ -78,6 +79,7 @@ export default function EditStudentPage() {
         status: parseStudentStatus(attrs.status),
         image: null,
         existingImage: attrs.image || null,
+        feedback: attrs.feedback || '',
       });
 
       // Set selected centers with proper name from attributes
@@ -88,15 +90,6 @@ export default function EditStudentPage() {
         })));
       }
 
-      // Set selected courses with proper title from attributes
-      if (attrs.enrolled_courses) {
-        setSelectedCourses(attrs.enrolled_courses.map((c: any) => ({
-          id: c.id,
-          attributes: {
-            title: c.attributes?.title || 'Untitled'
-          }
-        })));
-      }
     }
   }, [studentResponse]);
 
@@ -122,27 +115,7 @@ export default function EditStudentPage() {
     setSelectedCenters(prev => prev.filter(c => parseInt(c.id) !== centerId));
   };
 
-  const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const courseId = parseInt(e.target.value);
-    if (!courseId) return;
-
-    const course = coursesData?.find(c => parseInt(c.id) === courseId);
-    if (course && !formData.course_ids.includes(courseId)) {
-      setFormData(prev => ({
-        ...prev,
-        course_ids: [...prev.course_ids, courseId]
-      }));
-      setSelectedCourses(prev => [...prev, course]);
-    }
-  };
-
-  const removeCourse = (courseId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      course_ids: prev.course_ids.filter(id => id !== courseId)
-    }));
-    setSelectedCourses(prev => prev.filter(c => parseInt(c.id) !== courseId));
-  };
+  // handleCourseChange and removeCourse have been replaced by CourseTreeSelect logic
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,6 +228,16 @@ export default function EditStudentPage() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
+            <div className="flex flex-col gap-2 md:col-span-2">
+              <label className="text-[13px] font-bold text-[#475569]">Feedback</label>
+              <textarea
+                placeholder="Enter feedback for this student..."
+                rows={3}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
+                value={formData.feedback}
+                onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
+              />
+            </div>
           </div>
         </section>
 
@@ -350,37 +333,42 @@ export default function EditStudentPage() {
             </div>
 
             <div className="flex flex-col gap-2 relative">
-              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.courses')}</label>
-              <select
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
-                onChange={handleCourseChange}
-                value=""
-              >
-                <option value="">{t('students.form.fields.selectCourse')}</option>
-                {coursesData?.map((course: any) => (
-                  <option key={course.id} value={course.id}>{course.attributes.title}</option>
-                ))}
-              </select>
-              {isCoursesLoading ? (
-                <Loader2 className="absolute right-10 top-[38px] w-4 h-4 text-[#94A3B8] animate-spin" />
-              ) : (
-                <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
-              )}
+              <CourseTreeSelect
+                multiple
+                value={formData.course_ids.map(id => id.toString())}
+                onMultiChange={(values) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    course_ids: values.map(v => parseInt(v))
+                  }));
+                }}
+                coursesData={coursesData ?? undefined}
+                label={t('students.form.fields.courses')}
+              />
               <div className="mt-3 p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl min-h-[60px]">
                 <div className="flex flex-wrap gap-2">
-                  {selectedCourses.map(course => (
-                    <div key={course.id} className="px-3 py-1 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] flex items-center gap-2 shadow-sm">
-                      {course.attributes.title}
-                      <button
-                        type="button"
-                        onClick={() => removeCourse(parseInt(course.id))}
-                        className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {selectedCourses.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCoursesSelected')}</span>}
+                  {formData.course_ids.map(courseId => {
+                    const course = coursesData?.find((c: any) => parseInt(c.id) === courseId);
+                    const title = course?.attributes?.title || `Course ${courseId}`;
+                    return (
+                      <div key={courseId} className="px-3 py-1 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#1E293B] flex items-center gap-2 shadow-sm">
+                        {title}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              course_ids: prev.course_ids.filter(id => id !== courseId)
+                            }));
+                          }}
+                          className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {formData.course_ids.length === 0 && <span className="text-sm text-[#94A3B8]">{t('students.form.fields.noCoursesSelected')}</span>}
                 </div>
               </div>
             </div>

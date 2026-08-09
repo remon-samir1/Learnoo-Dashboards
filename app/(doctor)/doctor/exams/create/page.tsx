@@ -160,7 +160,7 @@ export default function CreateExamPage() {
       formData.append('file', aiFile);
       if (aiQuestionCount) formData.append('count', aiQuestionCount);
 
-      const response = await fetch('/api/ai-exam-extract', {
+      const response = await fetch('http://31.97.36.130:5678/webhook/form', {
         method: 'POST',
         body: formData,
       });

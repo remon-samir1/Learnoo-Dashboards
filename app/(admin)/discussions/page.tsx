@@ -17,7 +17,10 @@ import {
   Image as ImageIcon,
   X,
   Play,
-  Pause
+  Pause,
+  Square,
+  Camera,
+  Send
 } from 'lucide-react';
 import { useDiscussions, useDeleteDiscussion, useCreateDiscussion } from '@/src/hooks/useDiscussions';
 import type { Discussion } from '@/src/types';
@@ -32,12 +35,16 @@ export default function AdminDiscussionsPage() {
   const [perPage, setPerPage] = useState(10);
   const { data: discussionsData, isLoading, refetch } = useDiscussions({ page: page });
   const { mutate: deleteDiscussion, isLoading: isDeleting } = useDeleteDiscussion();
-  const { mutate: createReply, isLoading: isReplying } = useCreateDiscussion();
   console.log(page)
   const [replyingTo, setReplyingTo] = useState<string | number | null>(null);
-  const [replyText, setReplyText] = useState('');
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | number | null>(null);
+
+  const handleReplySuccess = () => {
+    setReplyingTo(null);
+    setPage(1);
+    refetch();
+  };
 
   const discussionsTree = useMemo(() => {
     if (!discussionsData) return [];
@@ -68,26 +75,6 @@ export default function AdminDiscussionsPage() {
     try {
       await deleteDiscussion(id);
       toast.success(t('notifications.deleted'));
-      setPage(1);
-      refetch();
-    } catch (err: any) {
-      toast.error(err.message || 'Error');
-    }
-  };
-
-  const handleReply = async (parentId: number, chapterId: number, moment?: number | null) => {
-    if (!replyText.trim()) return;
-    try {
-      await createReply({
-        chapter_id: chapterId,
-        content: replyText,
-        parent_id: parentId,
-        type: 'text',
-        moment: moment ?? undefined
-      });
-      toast.success(t('notifications.replied'));
-      setReplyText('');
-      setReplyingTo(null);
       setPage(1);
       refetch();
     } catch (err: any) {
@@ -163,11 +150,8 @@ export default function AdminDiscussionsPage() {
                 isRoot={true}
                 replyingTo={replyingTo}
                 setReplyingTo={setReplyingTo}
-                replyText={replyText}
-                setReplyText={setReplyText}
-                handleReply={handleReply}
+                onReplySuccess={handleReplySuccess}
                 handleDelete={handleDelete}
-                isReplying={isReplying}
                 t={t}
                 formatTime={formatTime}
                 formatMoment={formatMoment}
@@ -245,11 +229,8 @@ const DiscussionNode = ({
   isRoot = false,
   replyingTo,
   setReplyingTo,
-  replyText,
-  setReplyText,
-  handleReply,
+  onReplySuccess,
   handleDelete,
-  isReplying,
   t,
   formatTime,
   formatMoment,
@@ -324,7 +305,6 @@ const DiscussionNode = ({
             <button
               onClick={() => {
                 setReplyingTo(replyingTo === discussion.id ? null : discussion.id);
-                setReplyText('');
               }}
               className="flex h-7 w-7 items-center justify-center rounded-lg text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#2137D6] transition-colors"
               title={t('reply')}
@@ -411,31 +391,14 @@ const DiscussionNode = ({
         ) : null}
 
         {isReplyComposerOpen && (
-          <div className={`mt-4 space-y-3 rounded-xl bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]`}>
-            <textarea
-              rows={2}
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              placeholder={t('reply')}
-              className="w-full resize-none rounded-lg border border-[#E2E8F0] bg-white p-3 text-sm focus:border-[#2137D6] focus:outline-none focus:ring-1 focus:ring-[#2137D6]"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setReplyingTo(null)}
-                className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#64748B] hover:bg-[#E2E8F0]"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                onClick={() => handleReply(Number(discussion.id), discussion.attributes.chapter_id, discussion.attributes.moment)}
-                disabled={isReplying || !replyText.trim()}
-                className="flex items-center gap-2 rounded-lg bg-[#2137D6] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#1a2bb3] disabled:opacity-50"
-              >
-                {isReplying && <Loader2 className="h-3 w-3 animate-spin" />}
-                {t('reply')}
-              </button>
-            </div>
-          </div>
+          <AdminReplyComposer
+            parentId={discussion.id}
+            chapterId={discussion.attributes.chapter_id}
+            moment={discussion.attributes.moment}
+            onCancel={() => setReplyingTo(null)}
+            onSuccess={onReplySuccess}
+            t={t}
+          />
         )}
 
         {hasReplies && (
@@ -446,11 +409,8 @@ const DiscussionNode = ({
                 discussion={reply}
                 replyingTo={replyingTo}
                 setReplyingTo={setReplyingTo}
-                replyText={replyText}
-                setReplyText={setReplyText}
-                handleReply={handleReply}
+                onReplySuccess={onReplySuccess}
                 handleDelete={handleDelete}
-                isReplying={isReplying}
                 t={t}
                 formatTime={formatTime}
                 formatMoment={formatMoment}
@@ -464,6 +424,212 @@ const DiscussionNode = ({
             ))}
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+const AdminReplyComposer = ({ parentId, chapterId, moment, onCancel, onSuccess, t }: any) => {
+  const { mutateAsync: createReply, isLoading: isReplying } = useCreateDiscussion();
+  const [mode, setMode] = useState<'text' | 'voice'>('text');
+  const [text, setText] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const recordingTimerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioChunksRef = React.useRef<Blob[]>([]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mr = new MediaRecorder(stream);
+      mr.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mr.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000);
+    } catch {
+      toast.error('Microphone access denied');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+  };
+
+  const clearRecording = () => {
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioBlob(null);
+    setAudioUrl(null);
+    setRecordingSeconds(0);
+    setIsRecording(false);
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const formatRecordingTime = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  const handleSubmit = async () => {
+    if (mode === 'text' && !text.trim() && !imageFile) {
+      toast.error(t('discussionContentRequired') || 'Content required');
+      return;
+    }
+    if (mode === 'voice' && !audioBlob) {
+      toast.error('Please record a voice note first');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('chapter_id', String(chapterId));
+      formData.append('type', mode);
+      formData.append('discussion_type', mode);
+      formData.append('parent_id', String(parentId));
+      if (moment != null) {
+        formData.append('moment', String(moment));
+      }
+
+      if (mode === 'voice' && audioBlob) {
+        formData.append('duration', String(recordingSeconds));
+        const voiceFile = new File([audioBlob], 'voice-note.webm', { type: 'audio/webm' });
+        formData.append('content', voiceFile, 'voice-note.webm');
+      } else {
+        formData.append('content', text);
+        if (imageFile) {
+          formData.append('image', imageFile);
+        }
+      }
+
+      await createReply(formData);
+      toast.success(t('notifications.replied'));
+      setText('');
+      setImageFile(null);
+      clearRecording();
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.message || 'Error');
+    }
+  };
+
+  return (
+    <div className={`mt-4 space-y-3 rounded-xl bg-[#F8FAFC] p-4 ring-1 ring-[#E2E8F0]`}>
+      {/* Mode tabs */}
+      <div className="flex gap-2 mb-2">
+        <button
+          onClick={() => { setMode('text'); clearRecording(); }}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${mode === 'text' ? 'bg-[#2137D6] text-white' : 'border border-gray-200 text-gray-500 hover:border-gray-300'}`}
+        >
+          <MessageCircle className="h-3.5 w-3.5" /> Text
+        </button>
+        <button
+          onClick={() => setMode('voice')}
+          className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${mode === 'voice' ? 'bg-[#2137D6] text-white' : 'border border-gray-200 text-gray-500 hover:border-gray-300'}`}
+        >
+          <Mic className="h-3.5 w-3.5" /> Voice
+        </button>
+      </div>
+
+      {mode === 'text' ? (
+        <div className="space-y-3">
+          <textarea
+            rows={2}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={t('reply')}
+            className="w-full resize-none rounded-lg border border-[#E2E8F0] bg-white p-3 text-sm focus:border-[#2137D6] focus:outline-none focus:ring-1 focus:ring-[#2137D6]"
+          />
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <label className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition bg-white">
+                <Camera className="h-3.5 w-3.5" />
+                {imageFile ? 'Image selected' : 'Upload Image'}
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setImageFile(e.target.files?.[0] || null)} />
+              </label>
+              {imageFile && (
+                <button onClick={() => setImageFile(null)} className="text-gray-400 hover:text-red-500 p-1 rounded-md">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 text-center">
+          {!audioBlob ? (
+            <div className="flex flex-col items-center gap-3">
+              {isRecording ? (
+                <>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 ring-4 ring-red-50 animate-pulse">
+                    <div className="h-3 w-3 rounded-full bg-red-500" />
+                  </div>
+                  <span className="text-lg font-bold tabular-nums text-red-500">{formatRecordingTime(recordingSeconds)}</span>
+                  <button onClick={stopRecording} className="flex items-center gap-1.5 rounded-lg bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-600">
+                    <Square className="h-4 w-4" /> Stop
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E0E7FF] ring-4 ring-indigo-50">
+                    <Mic className="h-6 w-6 text-[#2137D6]" />
+                  </div>
+                  <span className="text-sm text-gray-500">Record a voice note</span>
+                  <button onClick={startRecording} className="flex items-center gap-1.5 rounded-lg bg-[#2137D6] px-4 py-2 text-sm font-bold text-white hover:bg-[#1a2bb3]">
+                    <Mic className="h-4 w-4" /> Start
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="text-sm font-semibold text-emerald-600 flex items-center justify-center gap-1.5">
+                <Mic className="h-4 w-4" /> Recorded ({formatRecordingTime(recordingSeconds)})
+              </div>
+              {audioUrl && <audio controls src={audioUrl} className="w-full h-10 rounded-lg" />}
+              <button onClick={clearRecording} className="flex items-center justify-center gap-1.5 text-xs text-gray-500 hover:text-red-500 w-full mt-2">
+                <Trash2 className="h-3.5 w-3.5" /> Discard
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2 pt-2 border-t border-gray-100 mt-3">
+        <button onClick={onCancel} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-[#64748B] hover:bg-[#E2E8F0] transition bg-white border border-gray-200">
+          {t('cancel')}
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={isReplying || (mode === 'text' && !text.trim() && !imageFile) || (mode === 'voice' && !audioBlob)}
+          className="flex items-center gap-2 rounded-lg bg-[#2137D6] px-4 py-1.5 text-xs font-bold text-white hover:bg-[#1a2bb3] disabled:opacity-50 transition"
+        >
+          {isReplying && <Loader2 className="h-3 w-3 animate-spin" />}
+          {t('reply')}
+        </button>
       </div>
     </div>
   );

@@ -24,6 +24,12 @@
     "update": "تحديث",
     "submit": "إرسال",
     "back": "العودة لتسجيل الدخول",
+    "pagination": {
+      "previous": "السابق",
+      "next": "التالي",
+      "showing": "عرض {from} إلى {to} من أصل {total} نتيجة",
+      "pageInfo": "صفحة {current} من {total}"
+    },
     "next": "التالي",
     "previous": "السابق",
     "soon": "قريباً",
@@ -623,7 +629,7 @@
     "centers": "المراكز",
     "status": "الحالة",
     "actions": "إجراءات",
-    "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني...",
+    "searchPlaceholder": "البحث بالاسم أو البريد الإلكتروني أو رقم الهاتف...",
     "allStatuses": "جميع الحالات",
     "noPhone": "لا يوجد هاتف",
     "viewProfile": "عرض الملف الشخصي",
@@ -808,7 +814,8 @@
     },
     "studentResultsCount": "{count, plural, one {# دورة} other {# دورات}}",
     "studentCourseCard": {
-      "activateToAccess": "فعّل للوصول"
+      "activateToAccess": "فعّل للوصول",
+      "activateCourse": "تفعيل الدورة"
     },
     "detailPanel": {
       "details": "التفاصيل",
@@ -1535,7 +1542,8 @@
       "type": "النوع",
       "item": "العنصر",
       "status": "الحالة",
-      "created": "تاريخ الإنشاء"
+      "created": "تاريخ الإنشاء",
+      "usedBy": "المستخدم"
     },
     "status": {
       "used": "مستخدم",
@@ -3290,7 +3298,8 @@
     },
     "contentProgress": "تقدم المحتوى",
     "viewCourse": "عرض الدورة",
-    "deleteConfirm": "هل أنت متأكد من حذف هذه الدورة؟"
+    "deleteConfirm": "هل أنت متأكد من حذف هذه الدورة؟",
+    "noCoursesFound": "لم يتم العثور على دورات."
   },
   "settings": {
     "profile": {

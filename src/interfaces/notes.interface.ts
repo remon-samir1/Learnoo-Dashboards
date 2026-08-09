@@ -10,6 +10,14 @@ export interface IStudentNote {
     lecture_title?: string | null;
     content?: string | null;
     is_publish?: boolean | null;
+    attachment?: {
+      id: number;
+      name: string;
+      url: string;
+      extension: string;
+      size: string;
+      downloadable: boolean;
+    } | null;
     createdAt?: string | null;
     updatedAt?: string | null;
     created_at?: string | null;

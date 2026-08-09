@@ -20,6 +20,7 @@ import { useCenters } from '@/src/hooks/useCenters';
 import { useFaculties } from '@/src/hooks/useFaculties';
 import { useDepartments } from '@/src/hooks/useDepartments';
 import { useCourses } from '@/src/hooks/useCourses';
+import { useChapters } from '@/src/hooks/useChapters';
 
 interface CourseTreeSelectProps {
   value: string | number | string[];
@@ -31,13 +32,15 @@ interface CourseTreeSelectProps {
   label?: string;
   error?: string;
   selectLectures?: boolean;
+  selectChapters?: boolean;
   lecturesData?: any[];
+  chaptersData?: any[];
   excludeIds?: string[];
 }
 
 interface TreeNode {
   id: string;
-  type: 'university' | 'center' | 'faculty' | 'department' | 'course' | 'lecture';
+  type: 'university' | 'center' | 'faculty' | 'department' | 'course' | 'lecture' | 'chapter';
   name: string;
   children: TreeNode[];
   level: number;
@@ -56,9 +59,11 @@ export function CourseTreeSelect({
   error,
   coursesData: outerCoursesData,
   selectLectures = false,
+  selectChapters = false,
   lecturesData: outerLecturesData,
+  chaptersData: outerChaptersData,
   excludeIds = [],
-}: CourseTreeSelectProps & { coursesData?: any[]; lecturesData?: any[] }) {
+}: CourseTreeSelectProps & { coursesData?: any[]; lecturesData?: any[]; chaptersData?: any[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
@@ -71,6 +76,7 @@ export function CourseTreeSelect({
   const { data: facultiesData, isLoading: isLoadingFacs } = useFaculties();
   const { data: departmentsData, isLoading: isLoadingDepts } = useDepartments();
   const { data: internalCoursesData, isLoading: isLoadingCourses } = useCourses();
+  const { data: internalChaptersData, isLoading: isLoadingChapters } = useChapters();
 
   const universities = useMemo(() => universitiesData ?? [], [universitiesData]);
   const centers = useMemo(() => centersData ?? [], [centersData]);
@@ -79,8 +85,9 @@ export function CourseTreeSelect({
 
   const courses = useMemo(() => (outerCoursesData !== undefined ? outerCoursesData : internalCoursesData) ?? [], [outerCoursesData, internalCoursesData]);
   const lectures = useMemo(() => outerLecturesData ?? [], [outerLecturesData]);
+  const chapters = useMemo(() => (outerChaptersData !== undefined ? outerChaptersData : internalChaptersData) ?? [], [outerChaptersData, internalChaptersData]);
 
-  const isLoading = isLoadingUnivs || isLoadingCenters || isLoadingFacs || isLoadingDepts || (outerCoursesData === undefined && isLoadingCourses);
+  const isLoading = isLoadingUnivs || isLoadingCenters || isLoadingFacs || isLoadingDepts || (outerCoursesData === undefined && isLoadingCourses) || (outerChaptersData === undefined && isLoadingChapters);
 
   const selectedValues: string[] = useMemo(() => {
     if (multiple) {
@@ -92,9 +99,9 @@ export function CourseTreeSelect({
     return [String(value)];
   }, [value, multiple]);
 
-  const { tree, flatCourses, flatLectures } = useMemo(() => {
+  const { tree, flatCourses, flatLectures, flatChapters } = useMemo(() => {
     if (isLoading && !universities.length && !centers.length && !faculties.length && !departments.length && !courses.length) {
-      return { tree: [], flatCourses: new Map<string, TreeNode>(), flatLectures: new Map<string, TreeNode>() };
+      return { tree: [], flatCourses: new Map<string, TreeNode>(), flatLectures: new Map<string, TreeNode>(), flatChapters: new Map<string, TreeNode>() };
     }
 
     const universityMap = new Map<string, TreeNode>();
@@ -103,6 +110,7 @@ export function CourseTreeSelect({
     const departmentMap = new Map<string, TreeNode>();
     const courseMap = new Map<string, TreeNode>();
     const lectureMap = new Map<string, TreeNode>();
+    const chapterMap = new Map<string, TreeNode>();
 
     universities.forEach((univ: any) => {
       const name = univ.attributes?.name || univ.name || 'University';
@@ -323,9 +331,10 @@ export function CourseTreeSelect({
     return {
       tree: cleanTree(rootNodes),
       flatCourses: courseMap,
-      flatLectures: lectureMap || new Map(),
+      flatLectures: lectureMap,
+      flatChapters: chapterMap,
     };
-  }, [isLoading, universities, centers, faculties, departments, courses, lectures, selectLectures]);
+  }, [isLoading, universities, centers, faculties, departments, courses, lectures, chapters, selectLectures, selectChapters]);
 
   useEffect(() => {
     if (!searchQuery) return;
@@ -384,8 +393,11 @@ export function CourseTreeSelect({
     if (selectLectures) {
       return flatLectures?.get(selectedValues[0]) || null;
     }
+    if (selectChapters) {
+      return flatChapters?.get(selectedValues[0]) || null;
+    }
     return flatCourses.get(selectedValues[0]);
-  }, [selectedValues, flatCourses, flatLectures, multiple, selectLectures]);
+  }, [selectedValues, flatCourses, flatLectures, flatChapters, multiple, selectLectures, selectChapters]);
 
   const isAllExpandedDefault = inline && !searchQuery;
 
@@ -440,7 +452,11 @@ export function CourseTreeSelect({
 
   const renderTreeItem = (node: TreeNode) => {
     const isExpanded = !!expandedNodes[node.id];
-    const isSelectable = selectLectures ? (node.type === 'lecture') : (node.type === 'course');
+    const isSelectable = selectLectures
+      ? (node.type === 'lecture')
+      : selectChapters
+        ? (node.type === 'chapter')
+        : (node.type === 'course');
     const itemId = node.originalId;
     const isExcluded = excludeIds.includes(itemId);
     const isSelected = isSelectable && selectedValues.includes(itemId);
@@ -526,7 +542,7 @@ export function CourseTreeSelect({
     <div className="flex flex-col gap-1">
       {filteredTree.length === 0 ? (
         <div className="py-8 text-center text-sm text-[#64748B]">
-          {searchQuery ? `No matching ${selectLectures ? 'lectures' : 'courses'} found` : `No ${selectLectures ? 'lectures' : 'courses'} available`}
+          {searchQuery ? `No matching ${selectLectures ? 'lectures' : selectChapters ? 'chapters' : 'courses'} found` : `No ${selectLectures ? 'lectures' : selectChapters ? 'chapters' : 'courses'} available`}
         </div>
       ) : (
         filteredTree.map(node => renderTreeItem(node))
@@ -539,7 +555,7 @@ export function CourseTreeSelect({
       <Search className="w-4 h-4 text-[#94A3B8] flex-shrink-0" />
       <input
         type="text"
-        placeholder={`Search ${selectLectures ? 'lectures' : 'courses'}...`}
+        placeholder={`Search ${selectLectures ? 'lectures' : selectChapters ? 'chapters' : 'courses'}...`}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         className="w-full bg-transparent text-sm text-[#1E293B] border-none focus:outline-none placeholder:text-[#94A3B8]"
@@ -584,7 +600,9 @@ export function CourseTreeSelect({
               Selected ({selectedValues.length}): {selectedValues.map(id =>
                 selectLectures
                   ? lectures?.find(l => String(l.id) === id)?.attributes?.title
-                  : courses?.find(c => String(c.id) === id)?.attributes?.title
+                  : selectChapters
+                    ? chapters?.find(c => String(c.id) === id)?.attributes?.title
+                    : courses?.find(c => String(c.id) === id)?.attributes?.title
               ).filter(Boolean).join(', ')}
             </p>
           </div>
@@ -599,7 +617,9 @@ export function CourseTreeSelect({
     ? selectedValues.map(id =>
       selectLectures
         ? lectures?.find(l => String(l.id) === id)?.attributes?.title
-        : courses?.find(c => String(c.id) === id)?.attributes?.title
+        : selectChapters
+          ? chapters?.find(c => String(c.id) === id)?.attributes?.title
+          : courses?.find(c => String(c.id) === id)?.attributes?.title
     ).filter(Boolean)
     : [];
 

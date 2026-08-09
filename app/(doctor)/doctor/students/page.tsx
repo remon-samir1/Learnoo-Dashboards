@@ -45,7 +45,8 @@ export default function StudentsPage() {
     status: statusFilter === 'all' ? undefined : statusFilter,
     page,
     role: 0,
-  }), [statusFilter, page]);
+    search: debouncedSearch || undefined,
+  }), [statusFilter, page, debouncedSearch]);
 
   const { data: studentsResponse, isLoading, error, refetch } = useStudents(filter, {});
   const { mutate: deleteStudent, isLoading: isDeleting } = useDeleteStudent();
@@ -53,21 +54,6 @@ export default function StudentsPage() {
 
   const students = studentsResponse?.data || [];
   const meta = studentsResponse?.meta as any;
-
-  // Local filtering by search term (student code, phone, name, email)
-  const filteredStudents = useMemo(() => {
-    if (!debouncedSearch) return students;
-
-    const search = debouncedSearch.toLowerCase();
-    return students.filter((student: Student) => {
-      const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
-      const email = student.attributes.email?.toLowerCase() || '';
-      const phone = String(student.attributes.phone || '').toLowerCase();
-      const studentCode = String(student.attributes.student_code || '').toLowerCase();
-
-      return fullName.includes(search) || email.includes(search) || phone.includes(search) || studentCode.includes(search);
-    });
-  }, [students, debouncedSearch]);
 
   const handleDelete = async (id: string) => {
     if (confirm(t('deleteConfirm'))) {
@@ -181,7 +167,7 @@ export default function StudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F1F5F9]">
-                  {filteredStudents.map((student: Student) => {
+                  {students.map((student: Student) => {
                     const { first_name, last_name, full_name, email, phone, status, university, centers, student_code } = student.attributes;
                     const displayName = full_name || `${first_name || ''} ${last_name || ''}`.trim() || 'Unknown';
                     const universityName = university?.data?.attributes?.name || tc('na');

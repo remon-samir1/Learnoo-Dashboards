@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   ArrowRight,
@@ -165,6 +166,17 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
             </div>
           ) : (
             <article className="max-w-none text-base leading-7 text-[#475569] sm:text-sm sm:leading-7">
+              {note.attributes?.attachment?.url && (
+                <div className="mb-6 max-h-[500px] overflow-hidden rounded-xl border border-gray-100 bg-gray-50 flex items-center justify-center">
+                  <Image
+                    src={note.attributes.attachment.url}
+                    alt={note.attributes.title || "Note image"}
+                    width={800}
+                    height={500}
+                    className="h-auto w-full max-h-[500px] object-contain"
+                  />
+                </div>
+              )}
               <p className="whitespace-pre-line break-words">
                 {note.attributes?.content || "No content available."}
               </p>

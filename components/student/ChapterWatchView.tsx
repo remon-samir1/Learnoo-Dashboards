@@ -27,7 +27,7 @@ import {
 import toast from 'react-hot-toast';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import type { Chapter, Quiz } from '@/src/types';
-import { api, ApiError } from '@/src/lib/api';
+import { api, ApiError, API_BASE_URL } from '@/src/lib/api';
 import { quizStudentMustActivateOrReactivate } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import {
@@ -138,7 +138,7 @@ function DiscussionNode({
   const discussionType = d.attributes?.type;
   const imageUrl = d.attributes?.image;
   const _duration = d.attributes?.duration;
-  
+
   // Detect voice discussions based on actual API structure
   const isVoice = discussionType === 'voice';
   const voiceUrl = isVoice ? content : null;
@@ -211,7 +211,7 @@ function DiscussionNode({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl}
+            src={imageUrl.startsWith('http') ? imageUrl : `${API_BASE_URL}/storage/${imageUrl}`}
             alt="Discussion screenshot"
             className="max-h-48 w-auto rounded-lg object-cover"
           />
@@ -371,6 +371,17 @@ export default function ChapterWatchView({
    * could be extracted (e.g., video not ready or canvas tainted).
    */
   const [composerFrameFile, setComposerFrameFile] = useState<File | null>(null);
+
+  const [framePreviewUrl, setFramePreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (composerFrameFile) {
+      const url = URL.createObjectURL(composerFrameFile);
+      setFramePreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setFramePreviewUrl(null);
+    }
+  }, [composerFrameFile]);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
@@ -988,150 +999,150 @@ export default function ChapterWatchView({
 
   return (
     <>
-    <div
-      className="min-h-screen overflow-x-clip bg-[#0b1426] pb-28 text-slate-100 [-webkit-tap-highlight-color:transparent] sm:pb-[max(2.5rem,env(safe-area-inset-bottom,0px))]"
-      dir={dir}
-    >
-      <div className={`mx-auto w-full px-4 pt-2 pb-1 sm:px-6 sm:pb-2 sm:pt-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
-        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1">
-            <Link
-              href={backHref}
-              className="mb-2 inline-flex min-h-[44px] items-center gap-2 py-1 text-sm font-medium text-slate-400 transition hover:text-white sm:mb-3"
-            >
-              <ArrowLeft className="size-4 shrink-0 rtl:rotate-180" />
-              {tDetails('watchBack')}
-            </Link>
-            <h1 className="text-xl font-bold leading-snug text-white sm:text-2xl sm:leading-tight lg:text-3xl">
-              {attrs.title}
-            </h1>
-            <p className="mt-1.5 text-xs leading-relaxed text-slate-400 sm:mt-2 sm:text-sm">
-              {lectureTitle ? (
-                <>
-                  <span className="text-slate-300">{lectureTitle}</span>
-                  <span className="mx-1.5 text-slate-600 sm:mx-2">•</span>
-                </>
+      <div
+        className="min-h-screen overflow-x-clip bg-[#0b1426] pb-28 text-slate-100 [-webkit-tap-highlight-color:transparent] sm:pb-[max(2.5rem,env(safe-area-inset-bottom,0px))]"
+        dir={dir}
+      >
+        <div className={`mx-auto w-full px-4 pt-2 pb-1 sm:px-6 sm:pb-2 sm:pt-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
+          <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <Link
+                href={backHref}
+                className="mb-2 inline-flex min-h-[44px] items-center gap-2 py-1 text-sm font-medium text-slate-400 transition hover:text-white sm:mb-3"
+              >
+                <ArrowLeft className="size-4 shrink-0 rtl:rotate-180" />
+                {tDetails('watchBack')}
+              </Link>
+              <h1 className="text-xl font-bold leading-snug text-white sm:text-2xl sm:leading-tight lg:text-3xl">
+                {attrs.title}
+              </h1>
+              <p className="mt-1.5 text-xs leading-relaxed text-slate-400 sm:mt-2 sm:text-sm">
+                {lectureTitle ? (
+                  <>
+                    <span className="text-slate-300">{lectureTitle}</span>
+                    <span className="mx-1.5 text-slate-600 sm:mx-2">•</span>
+                  </>
+                ) : null}
+                <span>{t('subtitleChapter', { number: currentPartIndex + 1 })}</span>
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 lg:justify-end">
+              {viewsBadge ? (
+                <span className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-600 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-slate-200 sm:min-h-0 sm:py-1.5">
+                  {viewsBadge}
+                </span>
               ) : null}
-              <span>{t('subtitleChapter', { number: currentPartIndex + 1 })}</span>
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3 lg:justify-end">
-            {viewsBadge ? (
-              <span className="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-600 bg-slate-900/80 px-3 py-2 text-xs font-semibold text-slate-200 sm:min-h-0 sm:py-1.5">
-                {viewsBadge}
-              </span>
-            ) : null}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="w-full max-w-full  overflow-x-clip [-webkit-overflow-scrolling:touch]">
-        <div className={`mx-auto w-full px-0 sm:px-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
-          <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
-            <div className="flex flex-col">
-              <div className="bg-black/50">
-                {stableVideoSrc ? (
-                  accessDenied ? (
-                    <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
-                      <p className="max-w-md text-sm font-medium text-slate-200">
-                        {playbackBlockMessage ?? t('watchAccessDenied')}
-                      </p>
-                      <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
-                      <Link
-                        href={backHref}
-                        className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-                      >
-                        {tDetails('watchBack')}
-                      </Link>
-                    </div>
+        <div className="w-full max-w-full  overflow-x-clip [-webkit-overflow-scrolling:touch]">
+          <div className={`mx-auto w-full px-0 sm:px-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
+            <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
+              <div className="flex flex-col">
+                <div className="bg-black/50">
+                  {stableVideoSrc ? (
+                    accessDenied ? (
+                      <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
+                        <p className="max-w-md text-sm font-medium text-slate-200">
+                          {playbackBlockMessage ?? t('watchAccessDenied')}
+                        </p>
+                        <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
+                        <Link
+                          href={backHref}
+                          className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                        >
+                          {tDetails('watchBack')}
+                        </Link>
+                      </div>
+                    ) : (
+                      <HlsVideoPlayer
+                        ref={hlsVideoRef}
+                        src={stableVideoSrc}
+                        mp4FallbackUrl={attrs.video_mp4_url ?? ''}
+                        showCustomControls
+                        showWatermark
+                        watermarkContentType="chapters"
+                        initialWatermarkResolution={initialWatermarkResolution ?? null}
+                        showStaticStudentOverlay
+                        staticOverlaySubtitle={lectureTitle.trim() || attrs.title?.trim()}
+                        watchOverlay={
+                          pdfToggleVisible ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowPdf((v) => !v)}
+                              className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white transition active:scale-[0.99] sm:min-h-0 sm:px-4 sm:py-2.5 ${showPdf
+                                ? 'border-slate-500/90 bg-slate-800 hover:bg-slate-700'
+                                : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800'
+                                }`}
+                            >
+                              <FileText className="size-4 shrink-0" aria-hidden />
+                              <span className="max-w-[4.5rem] truncate sm:max-w-none">
+                                {showPdf ? t('hidePdf') : t('showPdf')}
+                              </span>
+                            </button>
+                          ) : undefined
+                        }
+                        watchPanel={showPdf && pdfUrl && pdfPanelVisible ? pdfWatchPanel : undefined}
+                        switchingPlaybackLabel={t('switchingPlaybackMethod')}
+                        onPrevChapter={canPrevChapter ? goPrevChapter : undefined}
+                        onNextChapter={canNextChapter ? goNextChapter : undefined}
+                        canPrevChapter={canPrevChapter}
+                        canNextChapter={canNextChapter}
+                        chapterInfoTitle={attrs.title?.trim() || undefined}
+                        theaterMode={theaterMode}
+                        onToggleTheater={toggleTheater}
+                        onFatalPlaybackError={({ reason }) => {
+                          console.error('[ChapterWatchView] Fatal HLS playback error:', reason);
+                          toast.error(t('hlsPlaybackError'));
+                        }}
+                      />
+                    )
                   ) : (
-                    <HlsVideoPlayer
-                      ref={hlsVideoRef}
-                      src={stableVideoSrc}
-                      mp4FallbackUrl={attrs.video_mp4_url ?? ''}
-                      showCustomControls
-                      showWatermark
-                      watermarkContentType="chapters"
-                      initialWatermarkResolution={initialWatermarkResolution ?? null}
-                      showStaticStudentOverlay
-                      staticOverlaySubtitle={lectureTitle.trim() || attrs.title?.trim()}
-                      watchOverlay={
-                        pdfToggleVisible ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowPdf((v) => !v)}
-                            className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white transition active:scale-[0.99] sm:min-h-0 sm:px-4 sm:py-2.5 ${showPdf
-                              ? 'border-slate-500/90 bg-slate-800 hover:bg-slate-700'
-                              : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800'
-                              }`}
-                          >
-                            <FileText className="size-4 shrink-0" aria-hidden />
-                            <span className="max-w-[4.5rem] truncate sm:max-w-none">
-                              {showPdf ? t('hidePdf') : t('showPdf')}
-                            </span>
-                          </button>
-                        ) : undefined
-                      }
-                      watchPanel={showPdf && pdfUrl && pdfPanelVisible ? pdfWatchPanel : undefined}
-                      switchingPlaybackLabel={t('switchingPlaybackMethod')}
-                      onPrevChapter={canPrevChapter ? goPrevChapter : undefined}
-                      onNextChapter={canNextChapter ? goNextChapter : undefined}
-                      canPrevChapter={canPrevChapter}
-                      canNextChapter={canNextChapter}
-                      chapterInfoTitle={attrs.title?.trim() || undefined}
-                      theaterMode={theaterMode}
-                      onToggleTheater={toggleTheater}
-                      onFatalPlaybackError={({ reason }) => {
-                        console.error('[ChapterWatchView] Fatal HLS playback error:', reason);
-                        toast.error(t('hlsPlaybackError'));
-                      }}
-                    />
-                  )
-                ) : (
-                  // NO VIDEO CASE
-                  pdfUrl && pdfPanelVisible ? (
-                    <div className="bg-slate-950">
-                      <div className="mx-auto max-w-5xl">
-                        <div className="aspect-[16/10] w-full sm:aspect-[16/9]">
-                          {pdfWatchPanel}
+                    // NO VIDEO CASE
+                    pdfUrl && pdfPanelVisible ? (
+                      <div className="bg-slate-950">
+                        <div className="mx-auto max-w-5xl">
+                          <div className="aspect-[16/10] w-full sm:aspect-[16/9]">
+                            {pdfWatchPanel}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
-                      <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
-                        <Play className="size-8 translate-x-0.5" fill="currentColor" />
+                    ) : (
+                      <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
+                        <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/90 text-white">
+                          <Play className="size-8 translate-x-0.5" fill="currentColor" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
+                        <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
                       </div>
-                      <p className="text-sm font-medium text-slate-300">{attrs.title}</p>
-                      <p className="text-xs text-slate-500">{tDetails('watchNoVideo')}</p>
-                    </div>
-                  )
-                )}
-              </div>
-            </div>
-
-            {/* Under video: stacked on small screens; desktop = one row like design (Ask | Lecture parts inline | Discussions). */}
-            <div className="border-t border-slate-800/80 bg-[#050915] px-0 py-0 sm:px-6 sm:py-3.5">
-              <div className="flex flex-col gap-3 px-4 pb-6 pt-5 sm:px-5 sm:pb-7 sm:pt-7 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
-                <div className="flex justify-stretch max-md:border-b max-md:border-slate-800/90 md:min-w-0 md:justify-start">
-                  {Number.isFinite(chapterIdForApi) ? (
-<button
-                    type="button"
-                    onClick={handleAskMomentClick}
-                    className={`inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] max-md:rounded-none max-md:px-12 sm:min-h-0 sm:w-auto sm:px-7 sm:py-2.5 md:shrink-0 ${composerOpen
-                      ? 'bg-[#2436b0] sm:ring-2 sm:ring-white/20'
-                      : 'bg-[#2D43D1] hover:bg-[#2436b0]'
-                      }`}
-                  >
-                    <MessageCircle className="size-4 shrink-0 stroke-[2]" aria-hidden />
-                    {t('askMoment')}
-                  </button>
-                  ) : (
-                    <span className="h-10" aria-hidden />
+                    )
                   )}
                 </div>
+              </div>
 
-                {/* <div className="min-w-0 md:flex md:justify-center md:px-1">
+              {/* Under video: stacked on small screens; desktop = one row like design (Ask | Lecture parts inline | Discussions). */}
+              <div className="border-t border-slate-800/80 bg-[#050915] px-0 py-0 sm:px-6 sm:py-3.5">
+                <div className="flex flex-col gap-3 px-4 pb-6 pt-5 sm:px-5 sm:pb-7 sm:pt-7 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
+                  <div className="flex justify-stretch max-md:border-b max-md:border-slate-800/90 md:min-w-0 md:justify-start">
+                    {Number.isFinite(chapterIdForApi) ? (
+                      <button
+                        type="button"
+                        onClick={handleAskMomentClick}
+                        className={`inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl px-8 py-3 text-sm font-semibold text-white shadow-sm transition active:scale-[0.99] max-md:rounded-none max-md:px-12 sm:min-h-0 sm:w-auto sm:px-7 sm:py-2.5 md:shrink-0 ${composerOpen
+                          ? 'bg-[#2436b0] sm:ring-2 sm:ring-white/20'
+                          : 'bg-[#2D43D1] hover:bg-[#2436b0]'
+                          }`}
+                      >
+                        <MessageCircle className="size-4 shrink-0 stroke-[2]" aria-hidden />
+                        {t('askMoment')}
+                      </button>
+                    ) : (
+                      <span className="h-10" aria-hidden />
+                    )}
+                  </div>
+
+                  {/* <div className="min-w-0 md:flex md:justify-center md:px-1">
                   <div className="flex flex-col items-center gap-2 md:flex-row md:items-center md:justify-center md:gap-2.5 md:overflow-x-auto md:py-0.5">
                     <span className="w-full text-center text-xs font-medium text-slate-400 sm:text-sm md:w-auto md:shrink-0 md:text-start">
                       {t('lecturePartsToolbar')}
@@ -1175,253 +1186,258 @@ export default function ChapterWatchView({
                   </div>
                 </div> */}
 
-                <div className="flex justify-stretch md:min-w-0 md:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setDiscussionsOpen((o) => !o)}
-                    className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:flex-1 md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
-                    aria-expanded={discussionsOpen}
-                  >
-                    {t('discussionsCount', { count: discussions.length })}
-                    <ChevronDown
-                      className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
-                      aria-hidden
-                    />
-                  </button>
+                  <div className="flex justify-stretch md:min-w-0 md:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setDiscussionsOpen((o) => !o)}
+                      className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:flex-1 md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
+                      aria-expanded={discussionsOpen}
+                    >
+                      {t('discussionsCount', { count: discussions.length })}
+                      <ChevronDown
+                        className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
+                        aria-hidden
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {Number.isFinite(chapterIdForApi) && composerOpen ? (
-              <div className="border-t border-slate-800/80 bg-[#050915] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:px-6 sm:pb-5">
-                {/* Mode tabs */}
-                <div className="mb-4 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setComposerMode('text'); clearRecording(); }}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${composerMode === 'text' ? 'bg-[#2D43D1] text-white' : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}
-                  >
-                    <MessageCircle className="size-3.5" />
-                    Text
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setComposerMode('voice')}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${composerMode === 'voice' ? 'bg-[#2D43D1] text-white' : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}
-                  >
-                    <Mic className="size-3.5" />
-                    Voice
-                  </button>
-                </div>
-
-                {composerMode === 'text' ? (
-                  <div className="flex gap-3">
-                    <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
-                      <Image src={chapterThumb} alt="" fill className="object-cover" sizes="56px" />
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col gap-2">
-                      <textarea
-                        ref={composerTextareaRef}
-                        rows={3}
-                        value={composerText}
-                        onChange={(e) => setComposerText(e.target.value)}
-                        disabled={composerSubmitting}
-                        placeholder={t('composerPlaceholder')}
-                        className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60 sm:text-sm"
-                      />
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="flex items-center gap-1 text-[11px] text-slate-500">
-                          <Camera className="size-3" />
-                          {composerMoment != null
-                            ? t('composerMomentLabel', {
-                                time: formatMomentSeconds(composerMoment) ?? '—',
-                              })
-                            : t('screenshotCaptured')}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => void submitComposer()}
-                          disabled={composerSubmitting || !composerText.trim()}
-                          className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-[#2D43D1] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2436b0] active:scale-[0.99] disabled:opacity-50 sm:min-h-0 sm:px-4 sm:py-2"
-                        >
-                          {composerSubmitting ? (
-                            <Loader2 className="size-4 animate-spin" aria-hidden />
-                          ) : (
-                            <Send className="size-4 rtl:rotate-180" aria-hidden />
-                          )}
-                          {t('composerPost')}
-                        </button>
-                      </div>
-                    </div>
+              {Number.isFinite(chapterIdForApi) && composerOpen ? (
+                <div className="border-t border-slate-800/80 bg-[#050915] px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-4 sm:px-6 sm:pb-5">
+                  {/* Mode tabs */}
+                  <div className="mb-4 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setComposerMode('text'); clearRecording(); }}
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${composerMode === 'text' ? 'bg-[#2D43D1] text-white' : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+                    >
+                      <MessageCircle className="size-3.5" />
+                      Text
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setComposerMode('voice')}
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${composerMode === 'voice' ? 'bg-[#2D43D1] text-white' : 'border border-slate-700 text-slate-400 hover:border-slate-500 hover:text-white'}`}
+                    >
+                      <Mic className="size-3.5" />
+                      Voice
+                    </button>
                   </div>
-                ) : (
-                  <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-4">
-                    {!audioBlob ? (
-                      <div className="flex flex-col items-center gap-4 py-4">
-                        {composerMoment != null ? (
-                          <span className="flex items-center gap-1 self-start text-[11px] text-slate-500">
-                            <Camera className="size-3" />
-                            {t('composerMomentLabel', {
-                              time: formatMomentSeconds(composerMoment) ?? '—',
-                            })}
-                          </span>
-                        ) : null}
-                        {isRecording ? (
-                          <>
-                            <div className="flex size-16 items-center justify-center rounded-full bg-red-500/20 ring-4 ring-red-500/30 animate-pulse">
-                              <div className="size-4 rounded-full bg-red-500" />
-                            </div>
-                            <span className="text-xl font-bold tabular-nums text-red-400">{formatRecordingTime(recordingSeconds)}</span>
-                            <p className="text-xs text-slate-500">Recording... tap Stop when done</p>
-                            <button
-                              type="button"
-                              onClick={stopRecording}
-                              className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700"
-                            >
-                              <Square className="size-4" />
-                              Stop Recording
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/20 ring-4 ring-[#2D43D1]/20">
-                              <Mic className="size-8 text-[#2D43D1]" />
-                            </div>
-                            <p className="text-sm text-slate-400">Tap the button to start recording your voice note</p>
-                            <button
-                              type="button"
-                              onClick={() => void startRecording()}
-                              className="flex items-center gap-2 rounded-xl bg-[#2D43D1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#2436b0]"
-                            >
-                              <Mic className="size-4" />
-                              Start Recording
-                            </button>
-                          </>
-                        )}
+
+                  {composerMode === 'text' ? (
+                    <div className="flex gap-3">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
+                        <Image src={chapterThumb} alt="" fill className="object-cover" sizes="56px" />
                       </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
-                          <Mic className="size-4" />
-                          Voice note recorded ({formatRecordingTime(recordingSeconds)})
-                        </div>
-                        {audioUrl && (
-                          <audio controls src={audioUrl} className="w-full rounded-lg [&::-webkit-media-controls-panel]:bg-slate-900 [&::-webkit-media-controls-current-time-display]:text-white [&::-webkit-media-controls-time-remaining-display]:text-white" />
-                        )}
-                        <div className="flex justify-between gap-2">
-                          <button
-                            type="button"
-                            onClick={clearRecording}
-                            className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-400 hover:border-slate-500 hover:text-red-400"
-                          >
-                            <Trash2 className="size-3.5" />
-                            Discard
-                          </button>
+                      <div className="flex min-w-0 flex-1 flex-col gap-2">
+                        <textarea
+                          ref={composerTextareaRef}
+                          rows={3}
+                          value={composerText}
+                          onChange={(e) => setComposerText(e.target.value)}
+                          disabled={composerSubmitting}
+                          placeholder={t('composerPlaceholder')}
+                          className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60 sm:text-sm"
+                        />
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                              <Camera className="size-3" />
+                              {composerMoment != null
+                                ? t('composerMomentLabel', {
+                                  time: formatMomentSeconds(composerMoment) ?? '—',
+                                })
+                                : t('screenshotCaptured')}
+                            </span>
+                            {framePreviewUrl && (
+                              <img src={framePreviewUrl} alt="Screenshot preview" className="h-[48px] w-auto rounded border border-slate-700 shadow-sm opacity-80" />
+                            )}
+                          </div>
                           <button
                             type="button"
                             onClick={() => void submitComposer()}
-                            disabled={composerSubmitting}
-                            className="flex items-center gap-2 rounded-xl bg-[#2D43D1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#2436b0] disabled:opacity-50"
+                            disabled={composerSubmitting || !composerText.trim()}
+                            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-[#2D43D1] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#2436b0] active:scale-[0.99] disabled:opacity-50 sm:min-h-0 sm:px-4 sm:py-2"
                           >
-                            {composerSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                            Send Voice Note
+                            {composerSubmitting ? (
+                              <Loader2 className="size-4 animate-spin" aria-hidden />
+                            ) : (
+                              <Send className="size-4 rtl:rotate-180" aria-hidden />
+                            )}
+                            {t('composerPost')}
                           </button>
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      <div className={`mx-auto mt-[30px] w-full space-y-6 px-5 pb-4 sm:space-y-8 sm:px-6 sm:pb-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
-        {discussionsOpen ? (
-          <section className="space-y-3 sm:space-y-4">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-              {t('discussionsHeading')}
-            </h2>
-            {discussions.length === 0 ? (
-              <p className="rounded-xl border border-slate-700 bg-slate-900/40 px-3 py-10 text-center text-sm text-slate-400 sm:px-4">
-                {t('noDiscussions')}
-              </p>
-            ) : (
-              discussions
-                .filter((d) => Boolean(discussionContent(d)))
-                .map((d, i) => (
-                  <DiscussionNode
-                    key={discussionKey(d, i)}
-                    discussion={d}
-                    locale={locale}
-                    t={t}
-                    replyToId={replyToId}
-                    setReplyToId={setReplyToId}
-                    replyText={replyText}
-                    setReplyText={setReplyText}
-                    replySubmitting={replySubmitting}
-                    onSubmitReply={submitReply}
-                    onPreviewImage={setPreviewImageUrl}
-                  />
-                ))
-            )}
-          </section>
-        ) : null}
-
-        {examQuiz && (startExamHref || examLockedByActivation) ? (
-          <div className="flex flex-col items-stretch justify-between gap-3 overflow-hidden rounded-2xl border border-[#5c3d28]/80 bg-[#3d2818] px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
-            <div className="flex min-w-0 items-center gap-3 text-sm font-semibold text-[#f5e6d6]">
-              <FileText className="size-5 shrink-0 text-[#f59e0b]" aria-hidden />
-              {t('examBannerText')}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-4">
+                      {!audioBlob ? (
+                        <div className="flex flex-col items-center gap-4 py-4">
+                          {composerMoment != null ? (
+                            <span className="flex items-center gap-1 self-start text-[11px] text-slate-500">
+                              <Camera className="size-3" />
+                              {t('composerMomentLabel', {
+                                time: formatMomentSeconds(composerMoment) ?? '—',
+                              })}
+                            </span>
+                          ) : null}
+                          {isRecording ? (
+                            <>
+                              <div className="flex size-16 items-center justify-center rounded-full bg-red-500/20 ring-4 ring-red-500/30 animate-pulse">
+                                <div className="size-4 rounded-full bg-red-500" />
+                              </div>
+                              <span className="text-xl font-bold tabular-nums text-red-400">{formatRecordingTime(recordingSeconds)}</span>
+                              <p className="text-xs text-slate-500">Recording... tap Stop when done</p>
+                              <button
+                                type="button"
+                                onClick={stopRecording}
+                                className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-700"
+                              >
+                                <Square className="size-4" />
+                                Stop Recording
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <div className="flex size-16 items-center justify-center rounded-full bg-[#2D43D1]/20 ring-4 ring-[#2D43D1]/20">
+                                <Mic className="size-8 text-[#2D43D1]" />
+                              </div>
+                              <p className="text-sm text-slate-400">Tap the button to start recording your voice note</p>
+                              <button
+                                type="button"
+                                onClick={() => void startRecording()}
+                                className="flex items-center gap-2 rounded-xl bg-[#2D43D1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#2436b0]"
+                              >
+                                <Mic className="size-4" />
+                                Start Recording
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
+                            <Mic className="size-4" />
+                            Voice note recorded ({formatRecordingTime(recordingSeconds)})
+                          </div>
+                          {audioUrl && (
+                            <audio controls src={audioUrl} className="w-full rounded-lg [&::-webkit-media-controls-panel]:bg-slate-900 [&::-webkit-media-controls-current-time-display]:text-white [&::-webkit-media-controls-time-remaining-display]:text-white" />
+                          )}
+                          <div className="flex justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={clearRecording}
+                              className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-2 text-xs font-semibold text-slate-400 hover:border-slate-500 hover:text-red-400"
+                            >
+                              <Trash2 className="size-3.5" />
+                              Discard
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void submitComposer()}
+                              disabled={composerSubmitting}
+                              className="flex items-center gap-2 rounded-xl bg-[#2D43D1] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#2436b0] disabled:opacity-50"
+                            >
+                              {composerSubmitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                              Send Voice Note
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
-            {examLockedByActivation ? (
-              <div className="flex min-w-0 flex-col items-stretch gap-2 sm:max-w-xs sm:items-end">
-                <p className="text-xs font-medium leading-snug text-[#fde68a]/95">
-                  {tDetails('examsActivationRequired')}
-                </p>
-                <Link
-                  href={backHref}
-                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/35 bg-white/10 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-white/15"
-                >
-                  {tDetails('examsActivateCourseForExam')}
-                </Link>
-              </div>
-            ) : startExamHref ? (
-              <Link
-                href={startExamHref}
-                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[#f97316] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#ea580c]"
-              >
-                {t('takeExam')}
-              </Link>
-            ) : null}
           </div>
-        ) : null}
-      </div>
-    </div>
+        </div>
 
-    {previewImageUrl && (
-      <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
-        onClick={() => setPreviewImageUrl(undefined)}
-      >
-        <div
-          className="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-xl bg-slate-900 shadow-2xl ring-1 ring-white/10"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previewImageUrl} alt="Preview" className="max-h-[85vh] max-w-[85vw] rounded-xl object-contain" />
-          <button
-            type="button"
-            onClick={() => setPreviewImageUrl(undefined)}
-            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 text-lg leading-none"
-          >
-            &times;
-          </button>
+        <div className={`mx-auto mt-[30px] w-full space-y-6 px-5 pb-4 sm:space-y-8 sm:px-6 sm:pb-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
+          {discussionsOpen ? (
+            <section className="space-y-3 sm:space-y-4">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+                {t('discussionsHeading')}
+              </h2>
+              {discussions.length === 0 ? (
+                <p className="rounded-xl border border-slate-700 bg-slate-900/40 px-3 py-10 text-center text-sm text-slate-400 sm:px-4">
+                  {t('noDiscussions')}
+                </p>
+              ) : (
+                discussions
+                  .filter((d) => Boolean(discussionContent(d)))
+                  .map((d, i) => (
+                    <DiscussionNode
+                      key={discussionKey(d, i)}
+                      discussion={d}
+                      locale={locale}
+                      t={t}
+                      replyToId={replyToId}
+                      setReplyToId={setReplyToId}
+                      replyText={replyText}
+                      setReplyText={setReplyText}
+                      replySubmitting={replySubmitting}
+                      onSubmitReply={submitReply}
+                      onPreviewImage={setPreviewImageUrl}
+                    />
+                  ))
+              )}
+            </section>
+          ) : null}
+
+          {examQuiz && (startExamHref || examLockedByActivation) ? (
+            <div className="flex flex-col items-stretch justify-between gap-3 overflow-hidden rounded-2xl border border-[#5c3d28]/80 bg-[#3d2818] px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
+              <div className="flex min-w-0 items-center gap-3 text-sm font-semibold text-[#f5e6d6]">
+                <FileText className="size-5 shrink-0 text-[#f59e0b]" aria-hidden />
+                {t('examBannerText')}
+              </div>
+              {examLockedByActivation ? (
+                <div className="flex min-w-0 flex-col items-stretch gap-2 sm:max-w-xs sm:items-end">
+                  <p className="text-xs font-medium leading-snug text-[#fde68a]/95">
+                    {tDetails('examsActivationRequired')}
+                  </p>
+                  <Link
+                    href={backHref}
+                    className="inline-flex shrink-0 items-center justify-center rounded-lg border border-white/35 bg-white/10 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-white/15"
+                  >
+                    {tDetails('examsActivateCourseForExam')}
+                  </Link>
+                </div>
+              ) : startExamHref ? (
+                <Link
+                  href={startExamHref}
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[#f97316] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#ea580c]"
+                >
+                  {t('takeExam')}
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
-    )}
-  </>
+
+      {previewImageUrl && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setPreviewImageUrl(undefined)}
+        >
+          <div
+            className="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-xl bg-slate-900 shadow-2xl ring-1 ring-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewImageUrl} alt="Preview" className="max-h-[85vh] max-w-[85vw] rounded-xl object-contain" />
+            <button
+              type="button"
+              onClick={() => setPreviewImageUrl(undefined)}
+              className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 text-lg leading-none"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

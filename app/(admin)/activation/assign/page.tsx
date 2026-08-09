@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ArrowLeft, UserPlus, Loader2, CheckCircle, Search } from 'lucide-react';
+import { ArrowLeft, UserPlus, Loader2, CheckCircle, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { useDebounce } from 'use-debounce';
 import { useActivateCode, useCodes } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
 import type { Student } from '@/src/types';
@@ -12,13 +13,20 @@ import toast from 'react-hot-toast';
 export default function AssignCodePage() {
   const t = useTranslations();
   const { mutate: activateCode, isLoading: isActivating } = useActivateCode();
-  const { data: students, isLoading: isLoadingStudents } = useStudents();
   const { data: codes, isLoading: isLoadingCodes } = useCodes();
 
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedCode, setSelectedCode] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
+  const [debouncedSearch] = useDebounce(studentSearch, 500);
+  const [page, setPage] = useState(1);
   const [successMessage, setSuccessMessage] = useState('');
+
+  const { data: students, isLoading: isLoadingStudents } = useStudents({
+    page,
+    search: debouncedSearch,
+    per_page: 5,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +46,8 @@ export default function AssignCodePage() {
         code.attributes.codeable_type === 'App\\Models\\Course'
           ? 'course'
           : code.attributes.codeable_type === 'App\\Models\\Chapter'
-          ? 'chapter'
-          : 'library';
+            ? 'chapter'
+            : 'library';
       await activateCode({
         code: code.attributes.code,
         item_id: code.attributes.codeable_id,
@@ -56,13 +64,7 @@ export default function AssignCodePage() {
     }
   };
 
-  const studentsList = students?.data || [];
-  const filteredStudents = studentsList.filter((student: Student) => {
-    const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
-    const email = student.attributes.email?.toLowerCase() || '';
-    const search = studentSearch.toLowerCase();
-    return fullName.includes(search) || email.includes(search);
-  });
+  const filteredStudents = students?.data || [];
 
   const availableCodes = codes?.filter((code) => {
     // You may want to filter out already used codes here
@@ -116,24 +118,26 @@ export default function AssignCodePage() {
                 placeholder={t('activation.sections.searchStudents')}
                 className="w-full pl-11 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                 value={studentSearch}
-                onChange={(e) => setStudentSearch(e.target.value)}
+                onChange={(e) => {
+                  setStudentSearch(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
 
             {/* Student List */}
-            <div className="max-h-64 overflow-y-auto border border-[#E2E8F0] rounded-xl">
+            <div className="max-h-64 overflow-y-auto border border-[#E2E8F0] rounded-xl flex flex-col">
               {isLoadingStudents ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-[#2137D6]" />
                 </div>
               ) : filteredStudents && filteredStudents.length > 0 ? (
-                <div className="divide-y divide-[#E2E8F0]">
+                <div className="divide-y divide-[#E2E8F0] flex-1">
                   {filteredStudents.map((student: Student) => (
                     <label
                       key={student.id}
-                      className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-[#F8FAFC] transition-colors ${
-                        selectedStudent === student.id ? 'bg-[#EEF2FF]' : ''
-                      }`}
+                      className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-[#F8FAFC] transition-colors ${selectedStudent === student.id ? 'bg-[#EEF2FF]' : ''
+                        }`}
                     >
                       <input
                         type="radio"
@@ -158,6 +162,40 @@ export default function AssignCodePage() {
                 </div>
               )}
             </div>
+
+            {/* Pagination Footer */}
+            {students?.meta && (
+              <div className="px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between">
+                <p className="text-[13px] text-[#64748B]">
+                  {students.meta.from || 0} - {students.meta.to || 0} of {students.meta.total || 0}
+                </p>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="p-1.5 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-white hover:text-[#2137D6] hover:border-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled={page <= 1}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(page - 1);
+                    }}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <span className="text-[13px] font-medium text-[#1E293B] px-2">{page}</span>
+                  <button
+                    type="button"
+                    className="p-1.5 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-white hover:text-[#2137D6] hover:border-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled={page >= (students.meta.last_page || 1)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(page + 1);
+                    }}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -176,11 +214,10 @@ export default function AssignCodePage() {
                 {availableCodes.map((code) => (
                   <label
                     key={code.id}
-                    className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
-                      selectedCode === code.id
-                        ? 'border-[#2137D6] bg-[#EEF2FF]'
-                        : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
-                    }`}
+                    className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${selectedCode === code.id
+                      ? 'border-[#2137D6] bg-[#EEF2FF]'
+                      : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
+                      }`}
                   >
                     <input
                       type="radio"
@@ -193,13 +230,12 @@ export default function AssignCodePage() {
                     <div className="flex-1">
                       <p className="font-mono font-medium text-[#1E293B]">{code.attributes.code}</p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                          code.attributes.codeable_type === 'App\\Models\\Course'
-                            ? 'bg-blue-100 text-blue-700'
-                            : code.attributes.codeable_type === 'App\\Models\\Chapter'
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${code.attributes.codeable_type === 'App\\Models\\Course'
+                          ? 'bg-blue-100 text-blue-700'
+                          : code.attributes.codeable_type === 'App\\Models\\Chapter'
                             ? 'bg-green-100 text-green-700'
                             : 'bg-purple-100 text-purple-700'
-                        }`}>
+                          }`}>
                           {getTypeLabel(code.attributes.codeable_type)}
                         </span>
                         <span className="text-xs text-[#64748B]">ID: {code.attributes.codeable_id}</span>

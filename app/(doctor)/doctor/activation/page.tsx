@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Power, Search, Plus, ChevronDown, Loader2, Trash2, Copy, CheckCircle, List, UserPlus, History, RefreshCw } from 'lucide-react';
+import { Power, Search, Plus, ChevronDown, Loader2, Trash2, Copy, CheckCircle, List, UserPlus, History, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { useDebounce } from 'use-debounce';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
 import { SearchFilter } from '@/src/components/admin/SearchFilter';
-import { DataTable, Column } from '@/src/components/ui/DataTable';
+import { DataTable, Column, Pagination } from '@/src/components/ui/DataTable';
 import { DeleteModal } from '@/src/components/ui/DeleteModal';
-import { useCodes, useDeleteCode, useActivateCode } from '@/src/hooks';
+import { useCodes, usePaginatedCodes, useDeleteCode, useActivateCode } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
@@ -31,22 +32,59 @@ export default function ActivationPage() {
   const [selectedCode, setSelectedCode] = useState<Code | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   // Assign tab states
   const [selectedStudent, setSelectedStudent] = useState('');
   const [selectedCodeId, setSelectedCodeId] = useState('');
   const [studentSearch, setStudentSearch] = useState('');
+  const [debouncedAssignSearch] = useDebounce(studentSearch, 500);
+  const [assignPage, setAssignPage] = useState(1);
   const [codeSearch, setCodeSearch] = useState('');
   const [assignSuccessMessage, setAssignSuccessMessage] = useState('');
 
   // History tab states
   const [historyStudentSearch, setHistoryStudentSearch] = useState('');
+  const [debouncedHistorySearch] = useDebounce(historyStudentSearch, 500);
+  const [historyPage, setHistoryPage] = useState(1);
   const [selectedHistoryStudent, setSelectedHistoryStudent] = useState<Student | null>(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, typeFilter, statusFilter, itemFilter]);
+
+  const codeableTypeMap: Record<string, string> = {
+    'Course': 'App\\Models\\Course',
+    'Chapter': 'App\\Models\\Chapter',
+    'Library': 'App\\Models\\Library',
+    'Live Room': 'App\\Models\\LiveRoom',
+    'Quiz': 'App\\Models\\Quiz',
+  };
+
+  const mappedTypeFilter = typeFilter !== 'All Types' ? codeableTypeMap[typeFilter] : undefined;
+
+  const { data: paginatedResponse, isLoading: isLoadingPaginated, refetch: refetchPaginated } = usePaginatedCodes({
+    page: currentPage,
+    per_page: itemsPerPage,
+    search: searchQuery || undefined,
+    codeable_type: mappedTypeFilter,
+    codeable_id: itemFilter !== 'All Items' ? itemFilter : undefined,
+    is_used: statusFilter === 'Used' ? 1 : statusFilter === 'Available' ? 0 : undefined,
+  });
 
   const { data: codes, isLoading, error, refetch } = useCodes();
   const { mutate: deleteCode, isLoading: isDeleting } = useDeleteCode();
   const { mutate: activateCode, isLoading: isAssigning } = useActivateCode();
-  const { data: students, isLoading: isLoadingStudents } = useStudents();
+  const { data: assignStudentsRes, isLoading: isLoadingAssignStudents } = useStudents(
+    { page: assignPage, search: debouncedAssignSearch, per_page: 5 },
+    { enabled: activeTab === 'assign' }
+  );
+
+  const { data: historyStudentsRes, isLoading: isLoadingHistoryStudents } = useStudents(
+    { page: historyPage, search: debouncedHistorySearch, per_page: 5 },
+    { enabled: activeTab === 'history' }
+  );
   const { data: courses } = useCourses();
   const { data: chapters } = useChapters();
   const { data: libraries } = useLibraries();
@@ -65,6 +103,7 @@ export default function ActivationPage() {
       await deleteCode(parseInt(selectedCode.id));
       setDeleteModalOpen(false);
       setSelectedCode(null);
+      refetchPaginated();
       refetch();
     } catch {
       // Error handled by hook
@@ -133,15 +172,15 @@ export default function ActivationPage() {
         code.attributes.codeable_type === 'App\\Models\\Course'
           ? 'course'
           : code.attributes.codeable_type === 'App\\Models\\Chapter'
-          ? 'chapter'
-          : 'library';
+            ? 'chapter'
+            : 'library';
       await activateCode({
         code: code.attributes.code,
         item_id: code.attributes.codeable_id,
         item_type: itemType,
         user_id: selectedStudent,
       });
-      const student = students?.data?.find((s: Student) => s.id === selectedStudent);
+      const student = assignStudentsRes?.data?.find((s: Student) => s.id === selectedStudent);
       setAssignSuccessMessage(`Code "${code.attributes.code}" successfully assigned to ${student?.attributes.first_name || ''} ${student?.attributes.last_name || 'student'}!`);
       toast.success(t('activation.messages.codeAssigned'));
       setSelectedStudent('');
@@ -276,14 +315,21 @@ export default function ActivationPage() {
       key: 'is_used',
       header: t('activation.columns.status'),
       render: (item) => (
-        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-          item.attributes.is_used
-            ? 'bg-red-100 text-red-700'
-            : 'bg-green-100 text-green-700'
-        }`}>
+        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${item.attributes.is_used
+          ? 'bg-red-100 text-red-700'
+          : 'bg-green-100 text-green-700'
+          }`}>
           {item.attributes.is_used ? t('activation.status.used') : t('activation.status.available')}
         </span>
       ),
+    },
+    {
+      key: 'used_by',
+      header: t('activation.columns.usedBy'),
+      render: (item) => {
+        if (!item.attributes.is_used || !item.attributes.used_by) return '-';
+        return `${item.attributes.used_by.first_name || ''} ${item.attributes.used_by.last_name || ''}`.trim() || '-';
+      },
     },
     {
       key: 'created_at',
@@ -317,20 +363,8 @@ export default function ActivationPage() {
     );
   }
 
-  const studentsList = students?.data || [];
-  const filteredStudents = studentsList.filter((student: Student) => {
-    const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
-    const email = student.attributes.email?.toLowerCase() || '';
-    const search = studentSearch.toLowerCase();
-    return fullName.includes(search) || email.includes(search);
-  });
-
-  const filteredHistoryStudents = studentsList.filter((student: Student) => {
-    const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
-    const email = student.attributes.email?.toLowerCase() || '';
-    const search = historyStudentSearch.toLowerCase();
-    return fullName.includes(search) || email.includes(search);
-  });
+  const filteredStudents = assignStudentsRes?.data || [];
+  const filteredHistoryStudents = historyStudentsRes?.data || [];
 
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -338,40 +372,37 @@ export default function ActivationPage() {
         title={t('activation.pageTitle')}
         description={t('activation.pageDescription')}
         actionLabel={t('activation.generateCodes')}
-          actionHref="/doctor/activation/generate"
+        actionHref="/doctor/activation/generate"
       />
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-[#E2E8F0]">
         <button
           onClick={() => setActiveTab('codes')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${
-            activeTab === 'codes'
-              ? 'border-[#2137D6] text-[#2137D6]'
-              : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
-          }`}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'codes'
+            ? 'border-[#2137D6] text-[#2137D6]'
+            : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+            }`}
         >
           <List className="w-4 h-4" />
           {t('activation.tabs.allCodes')}
         </button>
         <button
           onClick={() => setActiveTab('assign')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${
-            activeTab === 'assign'
-              ? 'border-[#2137D6] text-[#2137D6]'
-              : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
-          }`}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'assign'
+            ? 'border-[#2137D6] text-[#2137D6]'
+            : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+            }`}
         >
           <UserPlus className="w-4 h-4" />
           {t('activation.tabs.assignToUser')}
         </button>
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${
-            activeTab === 'history'
-              ? 'border-[#2137D6] text-[#2137D6]'
-              : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
-          }`}
+          className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 ${activeTab === 'history'
+            ? 'border-[#2137D6] text-[#2137D6]'
+            : 'border-transparent text-[#64748B] hover:text-[#1E293B]'
+            }`}
         >
           <History className="w-4 h-4" />
           {t('activation.tabs.studentHistory')}
@@ -383,43 +414,43 @@ export default function ActivationPage() {
         <>
           <div className="flex items-center justify-between">
             <SearchFilter
-            searchPlaceholder={t('activation.filters.searchPlaceholder')}
-            searchValue={searchQuery}
-            onSearchChange={setSearchQuery}
-            filters={[
-              {
-                key: 'type',
-                label: t('activation.types.allTypes'),
-                options: [
-                  { value: 'Course', label: t('activation.types.course') },
-                  { value: 'Chapter', label: t('activation.types.chapter') },
-                  { value: 'Library', label: t('activation.types.library') },
-                ],
-                value: typeFilter === 'All Types' ? '' : typeFilter,
-                onChange: (val) => {
-                  setTypeFilter(val || 'All Types');
-                  setItemFilter('All Items');
+              searchPlaceholder={t('activation.filters.searchPlaceholder')}
+              searchValue={searchQuery}
+              onSearchChange={setSearchQuery}
+              filters={[
+                {
+                  key: 'type',
+                  label: t('activation.types.allTypes'),
+                  options: [
+                    { value: 'Course', label: t('activation.types.course') },
+                    { value: 'Chapter', label: t('activation.types.chapter') },
+                    { value: 'Library', label: t('activation.types.library') },
+                  ],
+                  value: typeFilter === 'All Types' ? '' : typeFilter,
+                  onChange: (val) => {
+                    setTypeFilter(val || 'All Types');
+                    setItemFilter('All Items');
+                  },
                 },
-              },
-              ...(typeFilter !== 'All Types' && getItemOptions().length > 0 ? [{
-                key: 'item',
-                label: t('activation.filters.allItems'),
-                options: getItemOptions(),
-                value: itemFilter === 'All Items' ? '' : itemFilter,
-                onChange: (val: string) => setItemFilter(val || 'All Items'),
-              }] : []),
-              {
-                key: 'status',
-                label: t('activation.status.allStatus'),
-                options: [
-                  { value: 'Used', label: t('activation.status.used') },
-                  { value: 'Available', label: t('activation.status.available') },
-                ],
-                value: statusFilter === 'All' ? '' : statusFilter,
-                onChange: (val) => setStatusFilter(val || 'All'),
-              },
-            ]}
-          />
+                ...(typeFilter !== 'All Types' && getItemOptions().length > 0 ? [{
+                  key: 'item',
+                  label: t('activation.filters.allItems'),
+                  options: getItemOptions(),
+                  value: itemFilter === 'All Items' ? '' : itemFilter,
+                  onChange: (val: string) => setItemFilter(val || 'All Items'),
+                }] : []),
+                {
+                  key: 'status',
+                  label: t('activation.status.allStatus'),
+                  options: [
+                    { value: 'Used', label: t('activation.status.used') },
+                    { value: 'Available', label: t('activation.status.available') },
+                  ],
+                  value: statusFilter === 'All' ? '' : statusFilter,
+                  onChange: (val) => setStatusFilter(val || 'All'),
+                },
+              ]}
+            />
             <button
               onClick={handleRefresh}
               disabled={isRefreshing || isLoading}
@@ -441,14 +472,25 @@ export default function ActivationPage() {
           </div>
 
           <DataTable
-            data={filteredCodes}
+            data={paginatedResponse?.data || []}
             columns={columns}
-            isLoading={isLoading}
+            isLoading={isLoadingPaginated}
             keyExtractor={(item) => item.id}
             onDelete={handleDelete}
             editHref={(item) => `/doctor/activation/${item.id}/edit`}
             emptyMessage={t('activation.messages.noCodesFound')}
           />
+          {paginatedResponse?.meta && paginatedResponse.meta.last_page > 1 && (
+            <div className="mt-4">
+              <Pagination
+                currentPage={paginatedResponse.meta.current_page}
+                totalPages={paginatedResponse.meta.last_page}
+                onPageChange={(page: number) => setCurrentPage(page)}
+                totalItems={paginatedResponse.meta.total}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </>
       )}
 
@@ -468,23 +510,25 @@ export default function ActivationPage() {
                   placeholder={t('activation.sections.searchStudents')}
                   className="w-full pl-11 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                   value={studentSearch}
-                  onChange={(e) => setStudentSearch(e.target.value)}
+                  onChange={(e) => {
+                    setStudentSearch(e.target.value);
+                    setAssignPage(1);
+                  }}
                 />
               </div>
 
-              <div className="max-h-64 overflow-y-auto border border-[#E2E8F0] rounded-xl">
-                {isLoadingStudents ? (
+              <div className="max-h-64 overflow-y-auto border border-[#E2E8F0] rounded-xl flex flex-col">
+                {isLoadingAssignStudents ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 text-[#2137D6] animate-spin" />
                   </div>
                 ) : filteredStudents && filteredStudents.length > 0 ? (
-                  <div className="divide-y divide-[#E2E8F0]">
+                  <div className="divide-y divide-[#E2E8F0] flex-1">
                     {filteredStudents.map((student: Student) => (
                       <label
                         key={student.id}
-                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-[#F8FAFC] transition-colors ${
-                          selectedStudent === student.id ? 'bg-[#EEF2FF]' : ''
-                        }`}
+                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-[#F8FAFC] transition-colors ${selectedStudent === student.id ? 'bg-[#EEF2FF]' : ''
+                          }`}
                       >
                         <input
                           type="radio"
@@ -509,6 +553,40 @@ export default function ActivationPage() {
                   </div>
                 )}
               </div>
+
+              {/* Pagination Footer */}
+              {assignStudentsRes?.meta && (
+                <div className="px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between">
+                  <p className="text-[13px] text-[#64748B]">
+                    {assignStudentsRes.meta.from || 0} - {assignStudentsRes.meta.to || 0} of {assignStudentsRes.meta.total || 0}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="p-1.5 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-white hover:text-[#2137D6] hover:border-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={assignPage <= 1}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setAssignPage(assignPage - 1);
+                      }}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-[13px] font-medium text-[#1E293B] px-2">{assignPage}</span>
+                    <button
+                      type="button"
+                      className="p-1.5 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-white hover:text-[#2137D6] hover:border-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={assignPage >= (assignStudentsRes.meta.last_page || 1)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setAssignPage(assignPage + 1);
+                      }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
@@ -547,11 +625,10 @@ export default function ActivationPage() {
                       {filteredCodes.map((code) => (
                         <label
                           key={code.id}
-                          className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${
-                            selectedCodeId === code.id
-                              ? 'border-[#2137D6] bg-[#EEF2FF]'
-                              : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
-                          }`}
+                          className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-all ${selectedCodeId === code.id
+                            ? 'border-[#2137D6] bg-[#EEF2FF]'
+                            : 'border-[#E2E8F0] hover:border-[#CBD5E1]'
+                            }`}
                         >
                           <input
                             type="radio"
@@ -564,13 +641,12 @@ export default function ActivationPage() {
                           <div className="flex-1">
                             <p className="font-mono font-medium text-[#1E293B]">{code.attributes.code}</p>
                             <div className="flex items-center gap-2 mt-1">
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                                code.attributes.codeable_type === 'App\\Models\\Course'
-                                  ? 'bg-blue-100 text-blue-700'
-                                  : code.attributes.codeable_type === 'App\\Models\\Chapter'
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${code.attributes.codeable_type === 'App\\Models\\Course'
+                                ? 'bg-blue-100 text-blue-700'
+                                : code.attributes.codeable_type === 'App\\Models\\Chapter'
                                   ? 'bg-green-100 text-green-700'
                                   : 'bg-purple-100 text-purple-700'
-                              }`}>
+                                }`}>
                                 {getTypeLabel(code.attributes.codeable_type)}
                               </span>
                               <span className="text-xs text-[#64748B] truncate max-w-[150px]">
@@ -652,24 +728,26 @@ export default function ActivationPage() {
                   placeholder={t('activation.sections.searchStudents')}
                   className="w-full pl-11 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
                   value={historyStudentSearch}
-                  onChange={(e) => setHistoryStudentSearch(e.target.value)}
+                  onChange={(e) => {
+                    setHistoryStudentSearch(e.target.value);
+                    setHistoryPage(1);
+                  }}
                 />
               </div>
 
-              <div className="max-h-48 overflow-y-auto border border-[#E2E8F0] rounded-xl">
-                {isLoadingStudents ? (
+              <div className="max-h-48 overflow-y-auto border border-[#E2E8F0] rounded-xl flex flex-col">
+                {isLoadingHistoryStudents ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-[#2137D6]" />
                   </div>
                 ) : filteredHistoryStudents && filteredHistoryStudents.length > 0 ? (
-                  <div className="divide-y divide-[#E2E8F0]">
+                  <div className="divide-y divide-[#E2E8F0] flex-1">
                     {filteredHistoryStudents.map((student: Student) => (
                       <button
                         key={student.id}
                         onClick={() => setSelectedHistoryStudent(student)}
-                        className={`flex items-center gap-3 p-3 w-full text-left hover:bg-[#F8FAFC] transition-colors ${
-                          selectedHistoryStudent?.id === student.id ? 'bg-[#EEF2FF]' : ''
-                        }`}
+                        className={`flex items-center gap-3 p-3 w-full text-left hover:bg-[#F8FAFC] transition-colors ${selectedHistoryStudent?.id === student.id ? 'bg-[#EEF2FF]' : ''
+                          }`}
                       >
                         <div className={`w-2 h-2 rounded-full ${selectedHistoryStudent?.id === student.id ? 'bg-[#2137D6]' : 'bg-[#CBD5E1]'}`} />
                         <div className="flex-1">
@@ -692,6 +770,40 @@ export default function ActivationPage() {
                   </div>
                 )}
               </div>
+
+              {/* Pagination Footer */}
+              {historyStudentsRes?.meta && (
+                <div className="px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between">
+                  <p className="text-[13px] text-[#64748B]">
+                    {historyStudentsRes.meta.from || 0} - {historyStudentsRes.meta.to || 0} of {historyStudentsRes.meta.total || 0}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="p-1.5 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-white hover:text-[#2137D6] hover:border-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={historyPage <= 1}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setHistoryPage(historyPage - 1);
+                      }}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <span className="text-[13px] font-medium text-[#1E293B] px-2">{historyPage}</span>
+                    <button
+                      type="button"
+                      className="p-1.5 border border-[#E2E8F0] rounded-lg text-[#64748B] hover:bg-white hover:text-[#2137D6] hover:border-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      disabled={historyPage >= (historyStudentsRes.meta.last_page || 1)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setHistoryPage(historyPage + 1);
+                      }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
@@ -725,13 +837,12 @@ export default function ActivationPage() {
                         <div className="flex-1">
                           <p className="font-mono font-medium text-[#1E293B]">{code.attributes.code}</p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                              code.attributes.codeable_type === 'App\Models\Course'
-                                ? 'bg-blue-100 text-blue-700'
-                                : code.attributes.codeable_type === 'App\Models\Chapter'
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${code.attributes.codeable_type === 'App\Models\Course'
+                              ? 'bg-blue-100 text-blue-700'
+                              : code.attributes.codeable_type === 'App\Models\Chapter'
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-purple-100 text-purple-700'
-                            }`}>
+                              }`}>
                               {getTypeLabel(code.attributes.codeable_type)}
                             </span>
                             <span className="text-xs text-[#64748B] truncate max-w-[150px]">

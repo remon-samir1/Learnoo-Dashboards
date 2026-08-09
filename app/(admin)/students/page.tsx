@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { 
-  Search, 
-  Plus, 
-  Eye, 
-  Key, 
-  Edit2, 
+import {
+  Search,
+  Plus,
+  Eye,
+  Key,
+  Edit2,
   Trash2,
   Loader2,
 } from 'lucide-react';
@@ -45,7 +45,8 @@ export default function StudentsPage() {
     status: statusFilter === 'all' ? undefined : statusFilter,
     page,
     role: 0,
-  }), [statusFilter, page]);
+    search: debouncedSearch || undefined,
+  }), [statusFilter, page, debouncedSearch]);
 
   const { data: studentsResponse, isLoading, error, refetch } = useStudents(filter, {});
   const { mutate: deleteStudent, isLoading: isDeleting } = useDeleteStudent();
@@ -53,21 +54,6 @@ export default function StudentsPage() {
 
   const students = studentsResponse?.data || [];
   const meta = studentsResponse?.meta as any;
-
-  // Local filtering by search term (student code, phone, name, email)
-  const filteredStudents = useMemo(() => {
-    if (!debouncedSearch) return students;
-
-    const search = debouncedSearch.toLowerCase();
-    return students.filter((student: Student) => {
-      const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
-      const email = student.attributes.email?.toLowerCase() || '';
-      const phone = String(student.attributes.phone || '').toLowerCase();
-      const studentCode = String(student.attributes.student_code || '').toLowerCase();
-
-      return fullName.includes(search) || email.includes(search) || phone.includes(search) || studentCode.includes(search);
-    });
-  }, [students, debouncedSearch]);
 
   const handleDelete = async (id: string) => {
     if (confirm(t('deleteConfirm'))) {
@@ -93,7 +79,7 @@ export default function StudentsPage() {
   // Step 2: Confirm and call API
   const handleConfirmReset = async () => {
     if (!selectedStudent) return;
-    
+
     try {
       const newPassword = Math.random().toString(36).slice(-10).toUpperCase();
       await resetPassword({ studentId: selectedStudent.id, password: newPassword });
@@ -119,7 +105,7 @@ export default function StudentsPage() {
           <h1 className="text-2xl font-bold text-[#1E293B]">{t('pageTitle')}</h1>
           <p className="text-sm text-[#64748B] mt-1">{t('pageDescription')}</p>
         </div>
-        <Link 
+        <Link
           href="/students/add"
           className="bg-[#2137D6] hover:bg-[#1a2bb3] text-white px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm font-semibold transition-all shadow-sm shadow-blue-100"
         >
@@ -132,8 +118,8 @@ export default function StudentsPage() {
       <div className="bg-white p-4 rounded-2xl border border-[#F1F5F9] shadow-sm flex flex-col md:flex-row items-center gap-4">
         <div className="relative flex-1 w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder={t('searchPlaceholder')}
             className="w-full pl-10 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
             value={searchTerm}
@@ -181,7 +167,7 @@ export default function StudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#F1F5F9]">
-                  {filteredStudents.map((student: Student) => {
+                  {students.map((student: Student) => {
                     const { first_name, last_name, full_name, email, phone, status, university, centers, student_code } = student.attributes;
                     const displayName = full_name || `${first_name || ''} ${last_name || ''}`.trim() || 'Unknown';
                     const universityName = university?.data?.attributes?.name || tc('na');
@@ -219,19 +205,18 @@ export default function StudentsPage() {
                           <span className="text-sm text-[#475569]">{centersNames}</span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold border ${
-                            status === 1
+                          <span className={`inline-flex px-3 py-1 rounded-full text-[11px] font-bold border ${status === 1
                               ? 'bg-[#EBFDF5] text-[#10B981] border-[#10B981]/20'
                               : status === 0
                                 ? 'bg-red-50 text-red-600 border-red-600/20'
                                 : 'bg-orange-50 text-orange-600 border-orange-600/20'
-                          }`}>
+                            }`}>
                             {StudentStatusLabels[status ?? 1]}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            <Link 
+                            <Link
                               href={`/students/${student.id}`}
                               className="p-2 text-[#64748B] hover:text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-all"
                               title={t('viewProfile')}
@@ -250,14 +235,14 @@ export default function StudentsPage() {
                                 <Key className="w-4 h-4" />
                               )}
                             </button>
-                            <Link 
+                            <Link
                               href={`/students/${student.id}/edit`}
                               className="p-2 text-[#64748B] hover:text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-all"
                               title={t('editStudent')}
                             >
                               <Edit2 className="w-4 h-4" />
                             </Link>
-                            <button 
+                            <button
                               className="p-2 text-[#64748B] hover:text-[#EF4444] hover:bg-red-50 rounded-lg transition-all"
                               title={t('deleteStudent')}
                               onClick={() => handleDelete(student.id)}
@@ -314,11 +299,10 @@ export default function StudentsPage() {
                       <button
                         key={p}
                         onClick={() => setPage(p as number)}
-                        className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                          currentPage === p
+                        className={`min-w-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-all ${currentPage === p
                             ? 'bg-[#2137D6] text-white shadow-md'
                             : 'border border-[#E2E8F0] text-[#64748B] hover:bg-white hover:border-[#2137D6] hover:text-[#2137D6]'
-                        }`}
+                          }`}
                       >
                         {p}
                       </button>

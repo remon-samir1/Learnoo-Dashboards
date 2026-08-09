@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -56,13 +56,19 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
     // { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
   ];
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const menuItems = React.useMemo(() => {
     const items = [...allMenuItems];
-    if (canUseActivations) {
+    if (isMounted && canUseActivations) {
       items.push({ name: t('activation'), icon: Power, path: '/doctor/activation' });
     }
     return items;
-  }, [canUseActivations, t]);
+  }, [isMounted, canUseActivations, t]);
+
 
   // Initialize auth store from cookies on mount
   useEffect(() => {
@@ -82,7 +88,7 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
 
   // Get user initials
   const getInitials = () => {
-    if (!user) return '??';
+    if (!isMounted || !user) return '??';
     const first = user.attributes.first_name?.charAt(0) || '';
     const last = user.attributes.last_name?.charAt(0) || '';
     return `${first}${last}`.toUpperCase() || '??';
@@ -90,6 +96,7 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
 
   // Get display name
   const getDisplayName = () => {
+    if (!isMounted) return 'User';
     if (fullName) return fullName;
     if (user) return `${user.attributes.first_name} ${user.attributes.last_name}`;
     return 'User';

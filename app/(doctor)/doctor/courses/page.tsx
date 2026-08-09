@@ -46,11 +46,10 @@ function CourseCard({
       {/* Header with status and menu */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-            course.status === 'active'
+          <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${course.status === 'active'
               ? 'bg-green-100 text-green-700'
               : 'bg-gray-100 text-gray-600'
-          }`}>
+            }`}>
             {course.status}
           </span>
           <span className="text-xs text-gray-400">{course.subject}</span>
@@ -172,12 +171,11 @@ function CourseListView({ courses, t, onDelete }: { courses: CourseDisplay[]; t:
                 <td className="py-4 px-4 text-sm text-gray-600">{course.exams}</td>
                 <td className="py-4 px-4 text-sm text-gray-600">{course.notes}</td>
                 <td className="py-4 px-4">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    course.status === 'active'
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${course.status === 'active'
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {course.status === 'active' ? t('status.active') : t('status.draft')}
+                    }`}>
+                    {course.status === 'active' ? t('active') : t('draft')}
                   </span>
                 </td>
                 <td className="py-4 px-4">
@@ -360,8 +358,8 @@ export default function MyCoursesPage() {
                 className="appearance-none px-4 py-2 pr-10 bg-gray-50 border border-gray-200 rounded-lg text-sm text-blue-600 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="all">{t('allStatus')}</option>
-                <option value="active">{t('status.active')}</option>
-                <option value="draft">{t('status.draft')}</option>
+                <option value="active">{t('active')}</option>
+                <option value="draft">{t('draft')}</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none" />
             </div>
@@ -370,21 +368,19 @@ export default function MyCoursesPage() {
             <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 transition-colors ${
-                  viewMode === 'grid'
+                className={`p-2 transition-colors ${viewMode === 'grid'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 transition-colors ${
-                  viewMode === 'list'
+                className={`p-2 transition-colors ${viewMode === 'list'
                     ? 'bg-blue-600 text-white'
                     : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
+                  }`}
               >
                 <List className="w-4 h-4" />
               </button>

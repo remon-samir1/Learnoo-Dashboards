@@ -17,6 +17,11 @@ export const useCodes = createQueryHook(
   { enabled: true }
 );
 
+export const usePaginatedCodes = createQueryHook(
+  (params?: Parameters<typeof api.codes.list>[0]) => api.codes.list(params),
+  { enabled: true }
+);
+
 export const useCode = createQueryHook(
   (id: number) => api.codes.get(id).then(res => res.data),
   { enabled: true }
@@ -27,7 +32,7 @@ export const useCreateCode = createMutationHook(
 );
 
 export const useUpdateCode = createMutationHook(
-  (id: number, data: Partial<UpdateCodeRequest>) => 
+  (id: number, data: Partial<UpdateCodeRequest>) =>
     api.codes.update(id, data).then(res => res.data)
 );
 

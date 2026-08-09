@@ -1126,6 +1126,10 @@ export interface CodeAttributes {
 
 
 
+  used_by?: UserAttributes & { id: string };
+
+
+
   created_at: string | null;
 
 
@@ -4812,6 +4816,8 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
   /** When set, instructor may use course activation flows (API-dependent). */
   can_use_activations?: boolean;
 
+  feedback?: string;
+
 
 
   used_codes?: Code[];
@@ -4891,7 +4897,7 @@ export interface CreateStudentRequest {
 
   image?: File;
 
-
+  feedback?: string;
 
 }
 

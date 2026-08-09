@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Edit, Trash2, Eye, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 export interface Column<T> {
@@ -121,8 +122,8 @@ export function DataTable<T>({
             {data.map((item) => (
               <tr key={keyExtractor(item)} className="hover:bg-[#F8FAFC]/50 transition-colors">
                 {columns.map((col) => (
-                  <td 
-                    key={col.key} 
+                  <td
+                    key={col.key}
                     className="px-6 py-4 text-sm text-[#1E293B]"
                     style={{ width: col.width, minWidth: col.width }}
                   >
@@ -216,13 +217,14 @@ export function Pagination({
   totalItems,
   itemsPerPage,
 }: PaginationProps) {
+  const t = useTranslations('common.pagination');
   const from = (currentPage - 1) * itemsPerPage + 1;
   const to = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
     <div className="px-6 py-4 bg-[#F8FAFC] border-t border-[#F1F5F9] flex items-center justify-between">
       <p className="text-sm text-[#64748B]">
-        Showing {from} to {to} of {totalItems} results
+        {t('showing', { from, to, total: totalItems })}
       </p>
       <div className="flex items-center gap-2">
         <button
@@ -230,19 +232,19 @@ export function Pagination({
           disabled={currentPage <= 1}
           className="px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
         >
-          <ChevronLeft className="w-4 h-4" />
-          Previous
+          <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+          {t('previous')}
         </button>
         <span className="px-3 py-2 text-sm text-[#64748B]">
-          Page {currentPage} of {totalPages}
+          {t('pageInfo', { current: currentPage, total: totalPages })}
         </span>
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
           className="px-3 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#475569] hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1"
         >
-          Next
-          <ChevronRight className="w-4 h-4" />
+          {t('next')}
+          <ChevronRight className="w-4 h-4 rtl:rotate-180" />
         </button>
       </div>
     </div>

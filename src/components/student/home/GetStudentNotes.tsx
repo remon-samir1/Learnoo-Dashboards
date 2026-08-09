@@ -3,10 +3,10 @@
 
 // const GetStudentNotes = ({notes}:{notes:IStudentNote[]}) => {
 //     const t = useTranslations("students.home.notes");
-    
+
 //   return (
 //     <section className="rounded-2xl border border-[var(--border-color)] bg-white px-6 py-4 shadow-sm">
-      
+
 //     </section>
 //   )
 // }
@@ -57,7 +57,7 @@
 //         <div className="space-y-3">
 //           {visibleNotes.map((note, index) => {
 //            const studentNote = note.attributes;
-            
+
 //             return (
 //               <article
 //                 key={`${studentNote?.course_id}-${index}`}
@@ -89,6 +89,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowRight,
@@ -136,13 +137,24 @@ export default function GetStudentNotes({
             return (
               <Link
                 key={note.id}
-                href={`/${locale}/student/courses/${studentNote?.course_id}`}
+                href={`/${locale}/student/notes/${note.id}`}
                 className="group block overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white transition duration-300 hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-lg"
               >
                 <div className="flex gap-4 p-4">
-                  <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[var(--primary)] transition group-hover:bg-[var(--primary)] group-hover:text-white">
-                    <NotebookPen size={28} />
-                  </div>
+                  {studentNote?.attachment?.url ? (
+                    <div className="relative size-14 shrink-0 overflow-hidden rounded-2xl">
+                      <Image
+                        src={studentNote.attachment.url}
+                        alt={studentNote.title ?? "Note image"}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[var(--primary)] transition group-hover:bg-[var(--primary)] group-hover:text-white">
+                      <NotebookPen size={28} />
+                    </div>
+                  )}
 
                   <div className="min-w-0 flex-1">
                     <div className="mb-2 flex items-start justify-between gap-3">
@@ -159,9 +171,9 @@ export default function GetStudentNotes({
 
                           <span className="flex items-center gap-1">
                             <CalendarDays size={13} />
-                           {studentNote?.created_at
-  ? new Date(studentNote.created_at).toLocaleDateString(locale)
-  : ""}
+                            {studentNote?.created_at
+                              ? new Date(studentNote.created_at).toLocaleDateString(locale)
+                              : ""}
                           </span>
                         </div>
                       </div>
