@@ -82,7 +82,8 @@
       "admin": "مشرف",
       "Student": "طالب",
       "Admin": "مشرف",
-      "Doctor": "طبيب"
+      "Doctor": "طبيب",
+      "Super Admin": "مشرف عام"
     },
     "notifications": {
       "deleted": "تم حذف النقاش بنجاح",
@@ -2318,6 +2319,8 @@
       "deleteSocialLink": "هل أنت متأكد من أنك تريد حذف هذا الرابط الاجتماعي؟"
     },
     "notifications": {
+      "postCreated": "تم إنشاء المنشور بنجاح!",
+      "postCreateFailed": "فشل إنشاء المنشور. حاول مرة أخرى.",
       "postDeleted": "تم حذف المنشور بنجاح!",
       "postPublished": "تم نشر المنشور بنجاح!",
       "postUnpublished": "تم إلغاء نشر المنشور بنجاح!",

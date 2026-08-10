@@ -2284,6 +2284,8 @@
       "deleteSocialLink": "Are you sure you want to delete this social link?"
     },
     "notifications": {
+      "postCreated": "Post created successfully!",
+      "postCreateFailed": "Failed to create post. Try again.",
       "postDeleted": "Post deleted successfully!",
       "postPublished": "Post published successfully!",
       "postUnpublished": "Post unpublished successfully!",
@@ -2317,7 +2319,8 @@
       "admin": "Admin",
       "Student": "Student",
       "Admin": "Admin",
-      "Doctor": "Doctor"
+      "Doctor": "Doctor",
+      "Super Admin": "Super Admin"
     },
     "notifications": {
       "deleted": "Discussion deleted successfully",

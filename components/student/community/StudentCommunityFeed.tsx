@@ -363,6 +363,7 @@ export default function StudentCommunityFeed({
             const user = post.attributes.user?.data.attributes;
             const userInitial = user?.first_name?.[0] || user?.full_name?.[0] || '?';
             const userName = user?.full_name || user?.first_name || t('community.posts.unknownUser');
+            const userRole = user?.role || 'student';
             const instructor = isLikelyInstructorRole(user?.role);
             const typeKey = post.attributes.type;
             const typeLabel = t(`community.posts.type.${typeKey}`);
@@ -385,15 +386,12 @@ export default function StudentCommunityFeed({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2 gap-y-1">
                       <span className="text-[15px] font-bold text-[#1E293B]">{userName}</span>
-                      {instructor ? (
-                        <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-bold text-violet-700">
-                          {tPage('badgeInstructor')}
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">
-                          {tPage('badgeStudent')}
-                        </span>
-                      )}
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${userRole.toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                          (userRole.toLowerCase() === 'doctor' || userRole.toLowerCase() === 'instructor') ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                            'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                        {userRole}
+                      </span>
                       <span className="text-xs font-semibold text-[#94A3B8]">
                         · {timeLabel(post.attributes.created_at || '')}
                       </span>

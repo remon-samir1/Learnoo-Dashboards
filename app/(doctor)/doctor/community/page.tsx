@@ -325,10 +325,9 @@ function CourseTreeItem({ node, expanded, onToggle, onSelect, selectedCourseIds 
   return (
     <div className="select-none">
       <div
-        className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${
-          isSelected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
-        }`}
-        style={{ 
+        className={`flex items-center gap-2 py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors ${isSelected ? 'bg-indigo-50 text-indigo-700' : 'text-gray-700'
+          }`}
+        style={{
           paddingLeft: `${node.level * 32 + 20 + (node.type === 'faculty' ? 12 : 0)}px`,
         }}
         onClick={() => {
@@ -423,7 +422,7 @@ export default function CommunityModerationPage() {
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
   const { mutate: updatePost } = useUpdatePost();
   const { mutate: createPost, isLoading: isCreating } = useCreatePost();
-  
+
   // Social Links hooks
   const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks(null);
   const { mutate: createSocialLink, isLoading: isCreatingSocial } = useCreateSocialLink();
@@ -445,7 +444,7 @@ export default function CommunityModerationPage() {
   const { data: centers } = useCenters();
   const { data: faculties } = useFaculties();
   const { data: departments } = useDepartments();
-  
+
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [editingSocialLink, setEditingSocialLink] = useState<SocialLink | null>(null);
   const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('all');
@@ -499,14 +498,13 @@ export default function CommunityModerationPage() {
   };
   const [posts, setPosts] = useState<Post[]>([]);
   const [filter, setFilter] = useState('all');
-  
+
   // Filter social links by course
-  const filteredSocialLinks = selectedCourseFilter === 'all' 
-    ? socialLinks 
+  const filteredSocialLinks = selectedCourseFilter === 'all'
+    ? socialLinks
     : socialLinks?.filter(link => String(link.attributes.course_id) === selectedCourseFilter);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
-  const [editForm, setEditForm] = useState({ title: '', content: '', type: 'post' as 'post' | 'question' | 'summary' });
-  
+
   // Create Post Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -581,27 +579,31 @@ export default function CommunityModerationPage() {
     }
 
     try {
-      await createPost({
-        title: createForm.title,
-        content: createForm.content,
-        type: createForm.type,
-        status: createForm.status,
-        image: createForm.image || undefined,
-        course_id: createForm.course_id ? parseInt(createForm.course_id) : undefined
-      });
-      setIsCreateModalOpen(false);
-      setCreateForm({
-        title: '',
-        content: '',
-        type: 'post',
-        status: 'published',
-        image: null,
-        course_id: ''
-      });
+      if (editingPost) {
+        await updatePost(parseInt(editingPost.id), {
+          title: createForm.title,
+          content: createForm.content,
+          type: createForm.type,
+          status: createForm.status,
+          image: createForm.image || undefined,
+          course_id: createForm.course_id ? parseInt(createForm.course_id) : undefined
+        });
+        alert(t('community.notifications.postUpdated'));
+      } else {
+        await createPost({
+          title: createForm.title,
+          content: createForm.content,
+          type: createForm.type,
+          status: createForm.status,
+          image: createForm.image || undefined,
+          course_id: createForm.course_id ? parseInt(createForm.course_id) : undefined
+        });
+        alert(t('community.notifications.postCreated'));
+      }
+      cancelEdit();
       await refetch();
-      alert(t('community.notifications.postCreated'));
     } catch {
-      alert(t('community.notifications.postCreateFailed'));
+      alert(editingPost ? 'Failed to update post' : t('community.notifications.postCreateFailed'));
     }
   };
 
@@ -724,33 +726,28 @@ export default function CommunityModerationPage() {
 
   const startEdit = (post: Post) => {
     setEditingPost(post);
-    setEditForm({
+    setCreateForm({
       title: post.attributes.title,
       content: post.attributes.content,
-      type: post.attributes.type
+      type: post.attributes.type as 'post' | 'question' | 'summary',
+      status: post.attributes.status as 'draft' | 'published',
+      image: null,
+      course_id: String(post.attributes.course_id || '')
     });
+    setIsCreateModalOpen(true);
   };
 
   const cancelEdit = () => {
     setEditingPost(null);
-    setEditForm({ title: '', content: '', type: 'post' as 'post' | 'question' | 'summary' });
-  };
-
-  const handleUpdate = async () => {
-    if (!editingPost) return;
-
-    try {
-      await updatePost(parseInt(editingPost.id), {
-        title: editForm.title,
-        content: editForm.content,
-        type: editForm.type
-      });
-      await refetch();
-      setEditingPost(null);
-      alert(t('community.notifications.postUpdated'));
-    } catch {
-      await refetch();
-    }
+    setCreateForm({
+      title: '',
+      content: '',
+      type: 'post',
+      status: 'published',
+      image: null,
+      course_id: ''
+    });
+    setIsCreateModalOpen(false);
   };
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -808,7 +805,7 @@ export default function CommunityModerationPage() {
             <Loader2 className="w-6 h-6 animate-spin text-[#2137D6]" />
           </div>
         )}
-        
+
         {!socialLinksLoading && filteredSocialLinks?.map((link) => (
           <div key={link.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col shadow-sm">
             <div className="flex justify-between items-start mb-6">
@@ -819,18 +816,17 @@ export default function CommunityModerationPage() {
                   <Globe className="w-5 h-5 text-white" />
                 )}
               </div>
-              <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase ${
-                link.attributes.status
-                  ? 'bg-[#DCFCE7] text-[#16A34A]'
-                  : 'bg-[#F1F5F9] text-[#64748B]'
-              }`}>
+              <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase ${link.attributes.status
+                ? 'bg-[#DCFCE7] text-[#16A34A]'
+                : 'bg-[#F1F5F9] text-[#64748B]'
+                }`}>
                 {link.attributes.status ? t('community.socialLinks.status.active') : t('community.socialLinks.status.inactive')}
               </span>
             </div>
-            
+
             <h3 className="text-[15px] font-bold text-[#475569] mb-1">{link.attributes.title}</h3>
             <p className="text-[13px] text-[#94A3B8] mb-2">{link.attributes.subtitle}</p>
-            
+
             {/* Display selected courses */}
             {link.attributes.courses && link.attributes.courses.length > 0 && (
               <div className="mb-3">
@@ -844,15 +840,15 @@ export default function CommunityModerationPage() {
                 </div>
               </div>
             )}
-            
+
             <div className="mt-auto pt-4 border-t border-[#F1F5F9] flex items-center gap-4">
-              <button 
+              <button
                 onClick={() => openSocialModal(link)}
                 className="text-[#94A3B8] hover:text-[#475569] transition-colors"
               >
                 <Edit2 className="w-[18px] h-[18px]" />
               </button>
-              <button 
+              <button
                 onClick={() => handleDeleteSocialLink(link.id)}
                 className="text-[#94A3B8] hover:text-[#EF4444] transition-colors"
               >
@@ -861,7 +857,7 @@ export default function CommunityModerationPage() {
             </div>
           </div>
         ))}
-        
+
         {!socialLinksLoading && (!filteredSocialLinks || filteredSocialLinks.length === 0) && (
           <div className="text-center py-8 text-[#64748B] col-span-3">
             {t('community.socialLinks.noLinks')}
@@ -888,18 +884,19 @@ export default function CommunityModerationPage() {
             <Loader2 className="w-8 h-8 animate-spin text-[#2137D6]" />
           </div>
         )}
-        
+
         {!isLoading && filteredPosts.length === 0 && (
           <div className="text-center py-12 text-[#64748B]">
             {t('community.posts.noPosts')}
           </div>
         )}
-        
+
         {filteredPosts.map((post) => {
           const user = post.attributes.user?.data.attributes;
           const userInitial = user?.first_name?.[0] || user?.full_name?.[0] || '?';
           const userName = user?.full_name || user?.first_name || t('community.posts.unknownUser');
-          
+          const userRole = user?.role || 'student';
+
           return (
             <div key={post.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
               <div className="flex items-start justify-between">
@@ -907,10 +904,16 @@ export default function CommunityModerationPage() {
                   <div className="w-10 h-10 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center font-bold text-[15px] shrink-0">
                     {userInitial}
                   </div>
-                  
+
                   <div className="flex flex-col flex-1">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-[15px] font-bold text-[#1E293B]">{userName}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${userRole.toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                          userRole.toLowerCase() === 'doctor' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                            'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                        {userRole}
+                      </span>
                       <span className="text-xs font-semibold text-[#94A3B8]">
                         {getTimeAgo(post.attributes.created_at || '', t)}
                       </span>
@@ -926,41 +929,22 @@ export default function CommunityModerationPage() {
                         </span>
                       ))}
                     </div>
-                    
-                    {editingPost?.id === post.id ? (
-                      <div className="mt-3 space-y-3">
-                        <input
-                          type="text"
-                          value={editForm.title}
-                          onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                          className="w-full px-4 py-2 border border-[#E2E8F0] rounded-lg text-[15px] font-medium text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
-                          placeholder={t('community.posts.editForm.titlePlaceholder')}
-                        />
-                        <textarea
-                          value={editForm.content}
-                          onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
-                          rows={3}
-                          className="w-full px-4 py-2 border border-[#E2E8F0] rounded-lg text-sm text-[#475569] focus:outline-none focus:ring-2 focus:ring-[#2137D6] resize-none"
-                          placeholder={t('community.posts.editForm.contentPlaceholder')}
-                        />
-                        <select
-                          value={editForm.type}
-                          onChange={(e) => setEditForm({ ...editForm, type: e.target.value as 'post' | 'question' | 'summary' })}
-                          className="px-4 py-2 border border-[#E2E8F0] rounded-lg text-sm text-[#475569] focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
-                        >
-                          <option value="post">{t('community.posts.type.post')}</option>
-                          <option value="question">{t('community.posts.type.question')}</option>
-                          <option value="summary">{t('community.posts.type.summary')}</option>
-                        </select>
-                      </div>
-                    ) : (
-                      <>
-                        <h3 className="block mt-3 text-[15px] font-medium text-[#1E293B]">
-                          {post.attributes.title}
-                        </h3>
-                        <p className="mt-2 text-sm text-[#64748B]">{post.attributes.content}</p>
-                      </>
-                    )}
+
+                    <>
+                      <h3 className="block mt-3 text-[15px] font-medium text-[#1E293B]">
+                        {post.attributes.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-[#64748B]">{post.attributes.content}</p>
+                      {(post.attributes.image || post.attributes.image_url) && (
+                        <div className="mt-3">
+                          <img
+                            src={post.attributes.image_url || post.attributes.image || ''}
+                            alt={post.attributes.title}
+                            className="w-full max-h-96 object-cover rounded-xl"
+                          />
+                        </div>
+                      )}
+                    </>
 
                     <div className="flex items-center gap-6 mt-5">
                       <Link
@@ -983,66 +967,47 @@ export default function CommunityModerationPage() {
                 </div>
 
                 <div className="flex items-center gap-3 ml-6 pt-1">
-                  {editingPost?.id === post.id ? (
-                    <>
+                  <>
+                    <Link
+                      href={`/community/${post.id}`}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#2137D6] hover:bg-[#EEF2FF] rounded-xl text-sm font-bold transition-all"
+                    >
+                      <Eye className="w-4 h-4" />
+                      {t('community.posts.actions.view')}
+                    </Link>
+                    <button
+                      onClick={() => startEdit(post)}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#475569] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      {t('community.posts.actions.edit')}
+                    </button>
+                    {post.attributes.status === 'draft' ? (
                       <button
-                        onClick={handleUpdate}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-xl text-sm font-bold transition-all"
+                        onClick={() => handlePublish(post)}
+                        className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#1E293B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
                       >
                         <Check className="w-4 h-4" />
-                        {t('community.posts.editForm.save')}
+                        {t('community.posts.actions.publish')}
                       </button>
+                    ) : (
                       <button
-                        onClick={cancelEdit}
+                        onClick={() => handleUnpublish(post)}
                         className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
                       >
                         <X className="w-4 h-4" />
-                        {t('community.posts.editForm.cancel')}
+                        {t('community.posts.actions.unpublish')}
                       </button>
-                    </>
-                  ) : (
-                    <>
-                      <Link
-                        href={`/community/${post.id}`}
-                        className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#2137D6] hover:bg-[#EEF2FF] rounded-xl text-sm font-bold transition-all"
-                      >
-                        <Eye className="w-4 h-4" />
-                        {t('community.posts.actions.view')}
-                      </Link>
-                      <button
-                        onClick={() => startEdit(post)}
-                        className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#475569] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        {t('community.posts.actions.edit')}
-                      </button>
-                      {post.attributes.status === 'draft' ? (
-                        <button
-                          onClick={() => handlePublish(post)}
-                          className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#1E293B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
-                        >
-                          <Check className="w-4 h-4" />
-                          {t('community.posts.actions.publish')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleUnpublish(post)}
-                          className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
-                        >
-                          <X className="w-4 h-4" />
-                          {t('community.posts.actions.unpublish')}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        disabled={isDeleting}
-                        className="flex items-center gap-1.5 px-4 py-2 bg-[#E11D48] hover:bg-[#BE123C] text-white rounded-xl text-sm font-bold transition-all shadow-sm shadow-rose-200 disabled:opacity-50"
-                      >
-                        <Trash className="w-4 h-4" />
-                        {t('community.posts.actions.delete')}
-                      </button>
-                    </>
-                  )}
+                    )}
+                    <button
+                      onClick={() => handleDelete(post.id)}
+                      disabled={isDeleting}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[#E11D48] hover:bg-[#BE123C] text-white rounded-xl text-sm font-bold transition-all shadow-sm shadow-rose-200 disabled:opacity-50"
+                    >
+                      <Trash className="w-4 h-4" />
+                      {t('community.posts.actions.delete')}
+                    </button>
+                  </>
                 </div>
               </div>
             </div>
@@ -1085,7 +1050,7 @@ export default function CommunityModerationPage() {
                   )}
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.icon')}</label>
                 <div className="flex items-center gap-3">
@@ -1100,10 +1065,10 @@ export default function CommunityModerationPage() {
                       if (file) {
                         const reader = new FileReader();
                         reader.onloadend = () => {
-                          setSocialForm({ 
-                            ...socialForm, 
-                            icon: file, 
-                            iconPreview: reader.result as string 
+                          setSocialForm({
+                            ...socialForm,
+                            icon: file,
+                            iconPreview: reader.result as string
                           });
                         };
                         reader.readAsDataURL(file);
@@ -1113,7 +1078,7 @@ export default function CommunityModerationPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.linkUrl')}</label>
                 <input
@@ -1165,7 +1130,7 @@ export default function CommunityModerationPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.status')}</label>
                 <select
@@ -1218,16 +1183,16 @@ export default function CommunityModerationPage() {
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-[#E2E8F0]">
               <h3 className="text-lg font-bold text-[#1E293B]">
-                {t('community.createPost.title')}
+                {editingPost ? t('community.posts.actions.edit') : t('community.createPost.title')}
               </h3>
               <button
-                onClick={() => setIsCreateModalOpen(false)}
+                onClick={cancelEdit}
                 className="p-2 hover:bg-[#F8FAFC] rounded-xl transition-colors"
               >
                 <X className="w-5 h-5 text-[#64748B]" />
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
@@ -1241,7 +1206,7 @@ export default function CommunityModerationPage() {
                   placeholder={t('community.createPost.titlePlaceholder')}
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.contentLabel')}
@@ -1254,7 +1219,7 @@ export default function CommunityModerationPage() {
                   placeholder={t('community.createPost.contentPlaceholder')}
                 />
               </div>
-              
+
               <CourseTreeSelect
                 value={createForm.course_id}
                 onChange={(val) => setCreateForm({ ...createForm, course_id: val })}
@@ -1274,7 +1239,7 @@ export default function CommunityModerationPage() {
                   <option value="summary">{t('community.postTypes.summary')}</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.statusLabel')}
@@ -1288,7 +1253,7 @@ export default function CommunityModerationPage() {
                   <option value="published">{t('community.statuses.published')}</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.imageLabel')}
@@ -1300,7 +1265,7 @@ export default function CommunityModerationPage() {
                   className="w-full text-sm text-[#475569] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-[#EEF2FF] file:text-[#2137D6] hover:file:bg-[#DBEAFE]"
                 />
               </div>
-              
+
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={handleCreatePost}
@@ -1308,10 +1273,10 @@ export default function CommunityModerationPage() {
                   className="flex-1 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {t('community.createPost.submit')}
+                  {editingPost ? t('community.posts.editForm.save') : t('community.createPost.submit')}
                 </button>
                 <button
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={cancelEdit}
                   className="flex-1 px-4 py-2 border border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
                 >
                   {t('community.createPost.cancel')}
