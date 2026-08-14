@@ -13,21 +13,42 @@ import {
 } from '@/src/lib/student-exam-question-utils';
 import { useExamCopyGuard } from '@/src/hooks/useExamCopyGuard';
 
+import type { QuizAttemptResultResponse } from '@/src/types';
+
 export function ExamAnswersReview({
-  quiz,
-  selections,
+  payload,
+  fallbackQuiz,
+  fallbackSelections,
   locale,
   onExitReview,
 }: {
-  quiz: Quiz;
-  selections: Record<string, string[]>;
+  payload: QuizAttemptResultResponse;
+  fallbackQuiz?: Quiz;
+  fallbackSelections?: Record<string, string[]>;
   locale: string;
   onExitReview: () => void;
 }) {
   const tResult = useTranslations('courses.studentExamResult');
   const tTake = useTranslations('courses.studentTakeExam');
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
-  const questions = useMemo(() => normalizeQuestions(quiz), [quiz]);
+  const quizObj = useMemo(() => {
+    const pQuiz = (payload?.data?.quiz ?? payload?.quiz) as any;
+    const hasQs = pQuiz?.attributes?.questions || pQuiz?.questions;
+    return hasQs ? pQuiz : (fallbackQuiz ?? pQuiz);
+  }, [payload, fallbackQuiz]);
+
+  const questions = useMemo(() => {
+    if (!quizObj) return [];
+    // Ensure we safely have an attributes wrapper before passing to normalizeQuestions
+    if (quizObj.attributes?.questions) {
+      return normalizeQuestions(quizObj);
+    }
+    // Handle flat JSON layout gracefully if it happens to have questions array
+    if (Array.isArray(quizObj.questions)) {
+      return quizObj.questions.filter((q: any) => q?.attributes?.text?.trim());
+    }
+    return [];
+  }, [quizObj]);
   const total = questions.length;
   useExamCopyGuard(total > 0);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -37,10 +58,38 @@ export function ExamAnswersReview({
   const isFirst = currentIndex <= 0;
   const isLast = total > 0 && currentIndex >= total - 1;
 
-  const title = quiz.attributes.title?.trim() ?? tTake('defaultExamTitle');
+  const title = (quizObj?.title ?? quizObj?.attributes?.title)?.trim() ?? tTake('defaultExamTitle');
   const answers = current ? questionAnswers(current) : [];
-  const selectedForCurrent = current ? selections[String(current.id)] ?? [] : [];
-  const questionCorrect = current ? isQuestionCorrect(current, selectedForCurrent) : false;
+
+  const userAnswers = (payload?.data?.answers ?? payload?.answers) || [];
+
+  const currentUserAns = useMemo(() => {
+    if (!current) return null;
+    return userAnswers.find(ua => String((ua as any).attributes?.quiz_question_id ?? (ua as any).quiz_question_id) === String(current.id));
+  }, [current, userAnswers]);
+
+  const userAnsText = (currentUserAns as any)?.attributes?.answer_text ?? (currentUserAns as any)?.answer_text ?? '';
+
+  const selectedForCurrent = useMemo(() => {
+    if (!current) return [];
+
+    // First try fallbackSelections if it has data
+    if (fallbackSelections && fallbackSelections[String(current.id)]) {
+      return fallbackSelections[String(current.id)];
+    }
+
+    if (!userAnsText || (current.attributes ?? (current as any)).type === 'short_answer') return [];
+    const texts = userAnsText.split(',').map((t: string) => t.trim());
+    return answers
+      .filter((ans) => texts.includes((ans.attributes?.text ?? (ans as any).text)?.trim()))
+      .map((ans) => String(ans.id));
+  }, [current, userAnsText, answers, fallbackSelections]);
+
+  const shortTextValue = current && (current.attributes ?? (current as any)).type === 'short_answer' ? userAnsText : '';
+  const isCorrectBackend = (currentUserAns as any)?.attributes?.is_correct ?? (currentUserAns as any)?.is_correct;
+
+  const questionCorrect = isCorrectBackend != null ? Boolean(isCorrectBackend) : isQuestionCorrect(current, selectedForCurrent);
+  const reviewCorrectProp: boolean = questionCorrect === true;
 
   const goPrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
   const goNext = () => setCurrentIndex((i) => Math.min(total - 1, i + 1));
@@ -62,7 +111,8 @@ export function ExamAnswersReview({
       headerBleed={false}
       mode="review"
       selectedIds={selectedForCurrent}
-      reviewQuestionCorrect={questionCorrect}
+      shortText={shortTextValue}
+      reviewQuestionCorrect={reviewCorrectProp}
       noAnswerOptionsText={tResult('reviewNoAnswerOptions')}
       articleFooter={
         <>

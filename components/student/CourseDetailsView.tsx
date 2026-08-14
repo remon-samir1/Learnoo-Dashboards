@@ -34,6 +34,7 @@ import { courseIsLocked } from "@/src/lib/student-course-lock";
 import {
   quizNeedsReactivationAfterExhaustedAttempts,
   quizRequiresCourseActivationLock,
+  readIsPublicMode,
 } from "@/src/lib/student-quiz-activation-lock";
 import { buildStudentStartExamHref } from "@/src/lib/student-start-exam-href";
 import {
@@ -134,8 +135,13 @@ function normalizeExamStatusToken(status: unknown): string {
 /** CASE 1: exam locked until course is activated (overrides status, including `active`). */
 function examRequiresCourseActivation(
   exam: NonNullable<Course["attributes"]["exams"]>[number],
+  lockedCourse: boolean,
 ): boolean {
   const attrs = exam?.attributes as Record<string, unknown> | undefined;
+  if (!lockedCourse) {
+    const mode = readIsPublicMode(attrs);
+    if (mode === 'included') return false;
+  }
   return quizRequiresCourseActivationLock(attrs);
 }
 
@@ -149,10 +155,11 @@ type StudentExamBucket =
 
 function classifyExamBucket(
   exam: NonNullable<Course["attributes"]["exams"]>[number],
+  lockedCourse: boolean,
 ): StudentExamBucket | null {
   const s = normalizeExamStatusToken(exam?.attributes?.status);
 
-  if (examRequiresCourseActivation(exam)) return "locked";
+  if (examRequiresCourseActivation(exam, lockedCourse)) return "locked";
 
   const rawAttrs = (exam?.attributes ?? {}) as Record<string, unknown>;
   const startRaw = rawAttrs.start_time;
@@ -683,11 +690,10 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
                   key={item.key}
                   type="button"
                   onClick={() => selectTab(item.key)}
-                  className={`whitespace-nowrap border-b-[3px] py-3.5 px-4 text-sm font-medium transition sm:px-8 sm:py-4 sm:text-[15px] ${
-                    tab === item.key
-                      ? "border-[#2D43D1] text-[#2D43D1]"
-                      : "border-transparent text-[#64748B] hover:text-[#0F172A]"
-                  }`}
+                  className={`whitespace-nowrap border-b-[3px] py-3.5 px-4 text-sm font-medium transition sm:px-8 sm:py-4 sm:text-[15px] ${tab === item.key
+                    ? "border-[#2D43D1] text-[#2D43D1]"
+                    : "border-transparent text-[#64748B] hover:text-[#0F172A]"
+                    }`}
                 >
                   {item.label}
                 </button>
@@ -733,6 +739,7 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
                 exams={course.attributes.exams}
                 courseTitle={course.attributes.title}
                 courseId={courseId}
+                lockedCourse={lockedCourse}
                 locale={locale}
                 lectures={lectures}
                 t={t}
@@ -910,9 +917,9 @@ function ChapterRow({
   const viewsLabel =
     maxViews != null && maxViews > 0
       ? t("viewsUsageBadge", {
-          current: currentViews,
-          max: maxViews,
-        })
+        current: currentViews,
+        max: maxViews,
+      })
       : t("viewsUnlimited");
   const viewsExhausted = maxViews != null && maxViews > 0 && currentViews >= maxViews;
 
@@ -1163,6 +1170,7 @@ function ExamsTab({
   exams,
   courseTitle,
   courseId,
+  lockedCourse,
   locale,
   lectures,
   t,
@@ -1171,6 +1179,7 @@ function ExamsTab({
   exams: Course["attributes"]["exams"] | undefined;
   courseTitle: string;
   courseId: string;
+  lockedCourse: boolean;
   locale: string;
   lectures: Lecture[];
   t: StudentDetailsT;
@@ -1186,7 +1195,7 @@ function ExamsTab({
     };
     if (!exams?.length) return buckets;
     for (const exam of exams) {
-      const b = classifyExamBucket(exam);
+      const b = classifyExamBucket(exam, lockedCourse);
       if (b) buckets[b].push(exam);
     }
     return buckets;
@@ -1216,12 +1225,12 @@ function ExamsTab({
     const qCount = showQuestions ? examQuestionCount(exam) : 0;
     const totalMarks =
       typeof attrs.total_marks === "number" &&
-      Number.isFinite(attrs.total_marks)
+        Number.isFinite(attrs.total_marks)
         ? attrs.total_marks
         : null;
     const passingMarks =
       typeof attrs.passing_marks === "number" &&
-      Number.isFinite(attrs.passing_marks)
+        Number.isFinite(attrs.passing_marks)
         ? attrs.passing_marks
         : null;
     const deadlineStr = formatExamDate(attrs.end_time ?? null, locale);
@@ -1403,7 +1412,7 @@ function ExamsTab({
               const chapterLine = chapterLineForExam(exam, lectures, t);
               const durationMin =
                 typeof attrs.duration === "number" &&
-                Number.isFinite(attrs.duration)
+                  Number.isFinite(attrs.duration)
                   ? attrs.duration
                   : 0;
               const showQuestions = examQuestionsReturned(exam);
@@ -1414,12 +1423,12 @@ function ExamsTab({
               const attemptsLines = attemptsSummaryLinesForCourseExam(exam, t);
               const totalMarksNum =
                 typeof attrs.total_marks === "number" &&
-                Number.isFinite(attrs.total_marks)
+                  Number.isFinite(attrs.total_marks)
                   ? attrs.total_marks
                   : null;
               const passingMarksNum =
                 typeof attrs.passing_marks === "number" &&
-                Number.isFinite(attrs.passing_marks)
+                  Number.isFinite(attrs.passing_marks)
                   ? attrs.passing_marks
                   : null;
               const showPassMarks =
@@ -1563,7 +1572,7 @@ function ExamsTab({
               const chapterLine = chapterLineForExam(exam, lectures, t);
               const durationMin =
                 typeof attrs.duration === "number" &&
-                Number.isFinite(attrs.duration)
+                  Number.isFinite(attrs.duration)
                   ? attrs.duration
                   : 0;
               const showQuestions = examQuestionsReturned(exam);
@@ -1581,12 +1590,12 @@ function ExamsTab({
               const attemptsLines = attemptsSummaryLinesForCourseExam(exam, t);
               const totalMarksNum =
                 typeof attrs.total_marks === "number" &&
-                Number.isFinite(attrs.total_marks)
+                  Number.isFinite(attrs.total_marks)
                   ? attrs.total_marks
                   : null;
               const passingMarksNum =
                 typeof attrs.passing_marks === "number" &&
-                Number.isFinite(attrs.passing_marks)
+                  Number.isFinite(attrs.passing_marks)
                   ? attrs.passing_marks
                   : null;
               const showPassMarks =
@@ -1738,17 +1747,17 @@ function ExamsTab({
               const attemptsLines = attemptsSummaryLinesForCourseExam(exam, t);
               const durationMin =
                 typeof attrs.duration === "number" &&
-                Number.isFinite(attrs.duration)
+                  Number.isFinite(attrs.duration)
                   ? attrs.duration
                   : 0;
               const totalMarksNum =
                 typeof attrs.total_marks === "number" &&
-                Number.isFinite(attrs.total_marks)
+                  Number.isFinite(attrs.total_marks)
                   ? attrs.total_marks
                   : null;
               const passingMarksNum =
                 typeof attrs.passing_marks === "number" &&
-                Number.isFinite(attrs.passing_marks)
+                  Number.isFinite(attrs.passing_marks)
                   ? attrs.passing_marks
                   : null;
               const showPassMarks =
@@ -1881,22 +1890,22 @@ function ExamsTab({
               const attemptsLines = attemptsSummaryLinesForCourseExam(exam, t);
               const durationMin =
                 typeof attrs.duration === "number" &&
-                Number.isFinite(attrs.duration)
+                  Number.isFinite(attrs.duration)
                   ? attrs.duration
                   : 0;
               const totalMarksNum =
                 typeof attrs.total_marks === "number" &&
-                Number.isFinite(attrs.total_marks)
+                  Number.isFinite(attrs.total_marks)
                   ? attrs.total_marks
                   : null;
               const passingMarksNum =
                 typeof attrs.passing_marks === "number" &&
-                Number.isFinite(attrs.passing_marks)
+                  Number.isFinite(attrs.passing_marks)
                   ? attrs.passing_marks
                   : null;
               const showPassMarks =
                 totalMarksNum != null && passingMarksNum != null;
-              const needsActivation = examRequiresCourseActivation(exam);
+              const needsActivation = examRequiresCourseActivation(exam, lockedCourse);
 
               return (
                 <li

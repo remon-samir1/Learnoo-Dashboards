@@ -49,6 +49,7 @@ import {
 import {
   quizNeedsReactivationAfterExhaustedAttempts,
   quizStudentMustActivateOrReactivateWithEnrolled,
+  readIsPublicMode,
 } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
@@ -322,19 +323,13 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                 const startHref = buildStudentStartExamHref(locale, row.id, courseForStart);
                 const title = hubQuizTitle(row);
                 const courseId = readHubQuizCourseId(row);
-                // For private exams (`is_public === false`) the user can only
-                // see them in the available bucket because their owning
-                // course is already enrolled. Surface a small "Course active"
-                // badge so the student knows why the exam is open.
-                const isPublic =
-                  (hubQuizAttrs(row).is_public ?? (row as Record<string, unknown>).is_public) === true ||
-                  String(
-                    hubQuizAttrs(row).is_public ?? (row as Record<string, unknown>).is_public ?? ''
-                  )
-                    .trim()
-                    .toLowerCase() === 'true';
+                // For 'included' exams the user can see them in the available 
+                // bucket because their owning course is already enrolled. 
+                // Surface a small "Course active" badge so the student knows 
+                // why the exam is open.
+                const mode = readIsPublicMode(hubQuizAttrs(row));
                 const showCourseActiveBadge =
-                  !isPublic && courseId != null && enrolledCourseIds.has(courseId);
+                  mode === 'included' && courseId != null && enrolledCourseIds.has(courseId);
                 return (
                   <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} border-emerald-200`}>
                     <div className="flex items-start justify-between gap-3">
@@ -670,66 +665,66 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
         </section>
 
         <section className="space-y-4 sm:space-y-5">
-      <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
-        {tDetails('examsCourseNotEnrolledTitle')}
-      </h2>
-      {loading ? (
-        <p className="rounded-xl border border-[#E5E7EB] bg-white px-5 py-10 text-center text-sm text-[#64748B]">
-          {t('loadingQuizzes')}
-        </p>
-      ) : courseNotEnrolled.length === 0 ? (
-        <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-5 py-8 text-center text-sm text-[#64748B]">
-          {t('emptyLocked')}
-        </p>
-      ) : (
-        <ul className={STUDENT_EXAM_GRID}>
-          {courseNotEnrolled.map((row) => {
-            const title = hubQuizTitle(row);
-            const cid = readHubQuizCourseId(row);
-            const coursesHref = `/${locale}/student/courses`;
-            const courseDetailsHref =
-              cid != null && /^\d+$/.test(cid)
-                ? `/${locale}/student/courses/course-details/${cid}`
-                : null;
-            return (
-              <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} text-[#64748B]`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-bold leading-snug text-[#475569] sm:text-lg">{title}</h3>
-                  </div>
-                  <Lock className="size-5 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
-                </div>
-                <div className="mt-3 rounded-lg border border-orange-200/80 bg-orange-50/90 px-3 py-2.5">
-                  <p className="text-sm font-semibold text-orange-950">
-                    {tDetails('examsCourseNotEnrolledTitle')}
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-orange-900/85">
-                    {tDetails('examsCourseNotEnrolledBody')}
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-orange-900/85">
-                    {tDetails('examsCourseNotEnlockedHint')}
-                  </p>
-                  {cid != null ? (
-                    <p className="mt-2 text-xs font-semibold text-orange-950">
-                      {tDetails('examsCourseIdLabel', { id: String(cid) })}
-                    </p>
-                  ) : null}
-                </div>
-                {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
-                <Link
-                  href={courseDetailsHref ?? coursesHref}
-                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2137D6] px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] sm:mt-6"
-                >
-                  <GraduationCap className="size-[18px] shrink-0 text-white" strokeWidth={2.25} aria-hidden />
-                  <span>{tDetails('examsActivateCourseFirstCta')}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </section>
-  </div>
+          <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
+            {tDetails('examsCourseNotEnrolledTitle')}
+          </h2>
+          {loading ? (
+            <p className="rounded-xl border border-[#E5E7EB] bg-white px-5 py-10 text-center text-sm text-[#64748B]">
+              {t('loadingQuizzes')}
+            </p>
+          ) : courseNotEnrolled.length === 0 ? (
+            <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-5 py-8 text-center text-sm text-[#64748B]">
+              {t('emptyLocked')}
+            </p>
+          ) : (
+            <ul className={STUDENT_EXAM_GRID}>
+              {courseNotEnrolled.map((row) => {
+                const title = hubQuizTitle(row);
+                const cid = readHubQuizCourseId(row);
+                const coursesHref = `/${locale}/student/courses`;
+                const courseDetailsHref =
+                  cid != null && /^\d+$/.test(cid)
+                    ? `/${locale}/student/courses/course-details/${cid}`
+                    : null;
+                return (
+                  <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} text-[#64748B]`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-bold leading-snug text-[#475569] sm:text-lg">{title}</h3>
+                      </div>
+                      <Lock className="size-5 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+                    </div>
+                    <div className="mt-3 rounded-lg border border-orange-200/80 bg-orange-50/90 px-3 py-2.5">
+                      <p className="text-sm font-semibold text-orange-950">
+                        {tDetails('examsCourseNotEnrolledTitle')}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-orange-900/85">
+                        {tDetails('examsCourseNotEnrolledBody')}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-orange-900/85">
+                        {tDetails('examsCourseNotEnlockedHint')}
+                      </p>
+                      {cid != null ? (
+                        <p className="mt-2 text-xs font-semibold text-orange-950">
+                          {tDetails('examsCourseIdLabel', { id: String(cid) })}
+                        </p>
+                      ) : null}
+                    </div>
+                    {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
+                    <Link
+                      href={courseDetailsHref ?? coursesHref}
+                      className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2137D6] px-4 py-3 text-center text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] sm:mt-6"
+                    >
+                      <GraduationCap className="size-[18px] shrink-0 text-white" strokeWidth={2.25} aria-hidden />
+                      <span>{tDetails('examsActivateCourseFirstCta')}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
 
       {/* Pagination controls for the quiz list */}
       {paginationMeta && paginationMeta.last_page > 1 ? (

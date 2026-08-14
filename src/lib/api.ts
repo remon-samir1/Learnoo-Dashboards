@@ -73,6 +73,11 @@ import type {
   StartQuizAttemptRequest,
   FinishQuizAttemptRequest,
   FinishQuizAttemptResponse,
+  QuizAttemptListParams,
+  QuizUserAnswer,
+  CreateQuizUserAnswerRequest,
+  UpdateQuizUserAnswerRequest,
+  QuizAttemptResultResponse,
   // University types
   University,
   CreateUniversityRequest,
@@ -1009,7 +1014,18 @@ export const quizQuestionsApi = {
 // ============================================
 
 export const quizAttemptsApi = {
-  list: () => get<ApiListResponse<QuizAttempt>>('/v1/quiz-attempt'),
+  list: (params?: QuizAttemptListParams) => {
+    const query: Record<string, string | number | undefined> = {};
+    if (params?.quiz_id !== undefined) query.quiz_id = params.quiz_id;
+    if (params?.user_id !== undefined) query.user_id = params.user_id;
+    if (params?.page !== undefined) query.page = params.page;
+    if (params?.search !== undefined && params.search.trim() !== '') query.search = params.search.trim();
+    const hasQuery = Object.keys(query).length > 0;
+    return get<ApiListResponse<QuizAttempt>>(
+      '/v1/quiz-attempt',
+      hasQuery ? query : undefined,
+    );
+  },
 
   get: (id: number) => get<ApiResponse<QuizAttempt>>(`/v1/quiz-attempt/${id}`),
 
@@ -1019,6 +1035,30 @@ export const quizAttemptsApi = {
 
   submit: (id: number | string, data: FinishQuizAttemptRequest, options?: { keepalive?: boolean }) =>
     put<FinishQuizAttemptResponse>(`/v1/quiz-attempt/${id}`, data, false, options),
+};
+
+// ============================================
+// Quiz User Answer API (per-answer persistence)
+// ============================================
+
+export const quizUserAnswerApi = {
+  /** Create the answer row for a (quiz_attempt_id, quiz_question_id) pair. */
+  create: (data: CreateQuizUserAnswerRequest) =>
+    post<ApiResponse<QuizUserAnswer>>('/v1/quiz-user-answer', data),
+
+  /** Update an existing answer row (text changes, multi-select toggles, etc.). */
+  update: (id: number | string, data: UpdateQuizUserAnswerRequest) =>
+    put<ApiResponse<QuizUserAnswer>>(`/v1/quiz-user-answer/${id}`, data),
+};
+
+// ============================================
+// Quiz Attempt Result API (admin/doctor review)
+// ============================================
+
+export const quizAttemptResultApi = {
+  /** `GET /v1/quiz-attempts/{id}/result` — full review payload for a single attempt. */
+  result: (id: number | string) =>
+    get<QuizAttemptResultResponse>(`/v1/quiz-attempts/${id}/result`),
 };
 
 // ============================================
@@ -1408,6 +1448,8 @@ export const api = {
   quizzes: quizzesApi,
   quizQuestions: quizQuestionsApi,
   quizAttempts: quizAttemptsApi,
+  quizUserAnswers: quizUserAnswerApi,
+  quizAttemptResults: quizAttemptResultApi,
   universities: universitiesApi,
   userProgress: userProgressApi,
   students: studentsApi,

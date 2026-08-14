@@ -8,16 +8,16 @@ import { BookOpen, ChevronLeft, CircleX, Home, ListChecks, RefreshCw, Trophy } f
 import { ExamAnswersReview } from '@/components/student/exams/ExamAnswersReview';
 import { normalizeQuestions } from '@/src/lib/student-exam-question-utils';
 import {
-  clearStudentQuizResultPayload,
-  readStudentQuizResultPayload,
-  type StudentQuizResultPayload,
-} from '@/src/lib/student-quiz-cache';
-import { buildStudentStartExamHref, parseCourseIdFromCourseDetailsPath } from '@/src/lib/student-start-exam-href';
+  api
+} from '@/src/lib/api';
+import { readStudentQuizResultPayload } from '@/src/lib/student-quiz-cache';
+import type { Quiz } from '@/src/types';
 import { formatTimeTakenForDisplay } from '@/src/lib/quiz-finish-result-fields';
 import {
   passingMarksPercentage,
   readPercentageWithScoreFallback,
 } from '@/src/lib/student-exam-score';
+import type { QuizAttemptResultResponse } from '@/src/types';
 
 const PRIMARY = '#2D46D9';
 
@@ -38,47 +38,89 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
   const router = useRouter();
   const t = useTranslations('courses.studentExamResult');
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
-  const [payload, setPayload] = useState<StudentQuizResultPayload | null | undefined>(undefined);
+  const [payload, setPayload] = useState<QuizAttemptResultResponse | null | undefined>(undefined);
+
+  // Local fallback from sessionStorage right after exam finish
+  const [localQuizForReview, setLocalQuizForReview] = useState<Quiz | undefined>(undefined);
+  const [localSelections, setLocalSelections] = useState<Record<string, string[]> | undefined>(undefined);
+
   const [showAnswerReview, setShowAnswerReview] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    const p = readStudentQuizResultPayload(quizId);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate from sessionStorage once per quizId (no external store subscription)
-    setPayload(p);
-  }, [quizId]);
+    // Attempt to read local storage fallback if the user just finished an exam
+    const local = readStudentQuizResultPayload(quizId);
+    if (local?.quizForReview) setLocalQuizForReview(local.quizForReview);
+    if (local?.selectionsForReview) setLocalSelections(local.selectionsForReview);
+
+    let active = true;
+    async function loadResult() {
+      try {
+        let attemptIdToFetch: string | number | undefined = undefined;
+
+        // Try to get the exact attempt ID they just took from local memory
+        const finishRes = local?.finishResponse;
+        if (finishRes) {
+          attemptIdToFetch = finishRes.attempt?.data?.id ?? (finishRes.attempt as any)?.id;
+        }
+
+        // Fallback to searching their attempt history if they came straight to this URL
+        if (!attemptIdToFetch) {
+          const attemptsRes = await api.quizAttempts.list({ quiz_id: quizId });
+          const attempts = attemptsRes.data || [];
+          if (!attempts.length) {
+            if (active) setPayload(null);
+            return;
+          }
+          attemptIdToFetch = [...attempts].sort((a, b) => Number(b.id) - Number(a.id))[0].id;
+        }
+
+        const resultRes = await api.quizAttemptResults.result(attemptIdToFetch);
+        if (active) setPayload(resultRes);
+      } catch (err) {
+        console.error('Failed to load exam result', err);
+        if (active) setLoadError(t('loadingError', { fallback: 'Failed to load results.' }));
+        if (active) setPayload(null);
+      }
+    }
+    void loadResult();
+
+    return () => {
+      active = false;
+    };
+  }, [quizId, t]);
 
   useEffect(() => {
-    if (payload === null) {
+    if (payload === null && !loadError) {
       router.replace(`/${locale}/student/exams`);
     }
-  }, [payload, locale, router]);
+  }, [payload, loadError, locale, router]);
 
-  const finish = payload?.finishResponse;
-  const results = finish?.results;
-  const quizInfo = finish?.quiz_info;
+  const results: any = payload?.results ?? payload?.data?.attempt ?? (payload?.attempt as any)?.data ?? payload?.attempt;
+  const quizInfo: any = payload?.quiz_info ?? payload?.data?.quiz ?? payload?.quiz;
 
   const passed = results?.passed === true;
   const yourPct =
     results != null
       ? readPercentageWithScoreFallback(
-          results.percentage,
-          results.score,
-          results.total_score,
-        )
+        results.percentage ?? undefined,
+        results.score ?? results.earned_marks ?? (payload?.data as any)?.score,
+        results.total_score ?? quizInfo?.total_marks ?? quizInfo?.attributes?.total_marks,
+      )
       : null;
   const passPct =
-    quizInfo != null
-      ? passingMarksPercentage(quizInfo.passing_marks, quizInfo.total_marks)
+    quizInfo != null && (typeof quizInfo.passing_marks === 'number' || typeof quizInfo?.attributes?.passing_marks === 'number')
+      ? passingMarksPercentage(quizInfo.passing_marks ?? quizInfo?.attributes?.passing_marks, quizInfo.total_marks ?? quizInfo?.attributes?.total_marks)
       : null;
-  const timeTakenVal = results != null ? formatTimeTakenForDisplay(results.time_taken) : null;
+  const timeTakenVal = results != null && 'time_taken' in results ? formatTimeTakenForDisplay(results.time_taken as number | string | null | undefined) : null;
 
   const scoreMarksLine = useMemo(() => {
     if (!results) return '—';
-    const a = Number(results.score);
-    const b = Number(results.total_score);
+    const a = Number(results.score ?? results.earned_marks ?? (payload?.data as any)?.score);
+    const b = Number(results.total_score ?? quizInfo?.total_marks ?? quizInfo?.attributes?.total_marks);
     if (!Number.isFinite(a) || !Number.isFinite(b)) return '—';
     return `${a} / ${b}`;
-  }, [results]);
+  }, [results, payload, quizInfo]);
 
   if (payload === undefined) {
     return (
@@ -88,30 +130,33 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
     );
   }
 
-  if (payload === null || !finish || !results || !quizInfo) {
+  if (payload === null || !results || !quizInfo) {
+    if (loadError) {
+      return (
+        <div className="mx-auto max-w-[1130px] px-4 py-24 text-center text-sm text-red-600" dir={dir}>
+          {loadError}
+        </div>
+      );
+    }
     return null;
   }
 
   const homeHref = `/${locale}/student`;
-  const reviewHref = payload.backHref?.trim() || `/${locale}/student/courses`;
-  const retryCourseId = parseCourseIdFromCourseDetailsPath(payload.backHref);
-  const retryHref = buildStudentStartExamHref(locale, quizId, retryCourseId);
+  // Fallback to courses list if we don't have a specific course context
+  const reviewHref = `/${locale}/student/courses`;
+  const retryHref = `/${locale}/student/exams/start-exam/${encodeURIComponent(quizId)}`;
 
   const handleRetry = () => {
-    clearStudentQuizResultPayload(quizId);
     router.push(retryHref);
   };
 
-  const quizForReview = payload.quizForReview;
-  const selectionsForReview = payload.selectionsForReview;
-  const canAnswerReview = Boolean(
-    quizForReview &&
-      selectionsForReview &&
-      normalizeQuestions(quizForReview).length > 0,
-  );
+  // We dynamically pass the entire API payload to ExamAnswersReview, or use local fallback
+  const hasApiReviewData = Boolean((payload?.data?.quiz ?? payload?.quiz) && (payload?.data?.answers ?? payload?.answers));
+  const hasLocalReviewData = Boolean(localQuizForReview && localSelections);
+  const canAnswerReview = hasApiReviewData || hasLocalReviewData;
 
   const bannerBg = passed ? '#16A34A' : '#DC2626';
-  const quizTitle = quizInfo.title?.trim() || '—';
+  const quizTitle = quizInfo?.title?.trim() ?? quizInfo?.attributes?.title?.trim() ?? '—';
 
   return (
     <div className="flex w-full justify-center px-4 pb-16 pt-[72px] sm:pt-[112px]" dir={dir}>
@@ -146,7 +191,7 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
         </header>
 
         <div className="flex flex-1 flex-col gap-10 px-6 py-10 sm:px-12 sm:py-12">
-          {showAnswerReview && canAnswerReview && quizForReview && selectionsForReview ? (
+          {showAnswerReview && canAnswerReview ? (
             <>
               <div className="flex flex-col gap-4 border-b border-slate-100 pb-6">
                 <button
@@ -159,8 +204,9 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
                 </button>
               </div>
               <ExamAnswersReview
-                quiz={quizForReview}
-                selections={selectionsForReview}
+                payload={payload}
+                fallbackQuiz={localQuizForReview}
+                fallbackSelections={localSelections}
                 locale={locale}
                 onExitReview={() => setShowAnswerReview(false)}
               />
@@ -191,15 +237,15 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
               <dl className="grid gap-3 rounded-xl border border-[#E8ECF2] bg-[#F8FAFC] px-4 py-4 text-sm sm:grid-cols-2 sm:px-6 sm:py-5">
                 <div>
                   <dt className="font-medium text-[#64748B]">{t('finishedAt')}</dt>
-                  <dd className="mt-1 font-semibold text-[#0F172A]">{formatFinishedAt(results.finished_at, locale)}</dd>
+                  <dd className="mt-1 font-semibold text-[#0F172A]">{formatFinishedAt(results.finished_at as string | undefined, locale)}</dd>
                 </div>
                 <div>
                   <dt className="font-medium text-[#64748B]">{t('timeTaken')}</dt>
                   <dd className="mt-1 font-semibold text-[#0F172A]">
                     {timeTakenVal != null
                       ? t('timeTakenMinutes', {
-                          value: timeTakenVal.toLocaleString(locale, { maximumFractionDigits: 2 }),
-                        })
+                        value: Number(timeTakenVal).toLocaleString(locale, { maximumFractionDigits: 2 }),
+                      })
                       : '—'}
                   </dd>
                 </div>

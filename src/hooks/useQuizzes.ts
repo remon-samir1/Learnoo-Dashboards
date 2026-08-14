@@ -10,15 +10,21 @@ import {
 import { api } from '@/src/lib/api';
 import type {
   ApiListResponse,
+  ApiResponse,
   CreateQuizQuestionRequest,
   CreateQuizRequest,
+  CreateQuizUserAnswerRequest,
   FinishQuizAttemptRequest,
   FinishQuizAttemptResponse,
   Quiz,
   QuizAttempt,
+  QuizAttemptListParams,
+  QuizAttemptResultResponse,
   QuizListParams,
   QuizQuestion,
+  QuizUserAnswer,
   StartQuizAttemptRequest,
+  UpdateQuizUserAnswerRequest,
 } from '@/src/types';
 
 export const quizKeys = {
@@ -34,6 +40,9 @@ export const quizKeys = {
   question: (id: number) => [...quizKeys.questions(), id] as const,
   attempts: () => [...quizKeys.all, 'attempts'] as const,
   attempt: (id: number) => [...quizKeys.attempts(), id] as const,
+  attemptsByQuiz: (quizId: number) => [...quizKeys.all, 'attemptsByQuiz', quizId] as const,
+  attemptResult: (id: number) => [...quizKeys.all, 'attemptResult', id] as const,
+  userAnswers: () => [...quizKeys.all, 'userAnswers'] as const,
 };
 
 type QueryControl<T> = Pick<UseQueryOptions<T>, 'enabled' | 'initialData'>;
@@ -218,5 +227,69 @@ export function useSubmitQuizAttempt() {
       await queryClient.invalidateQueries({ queryKey: quizKeys.attempts() });
       await queryClient.invalidateQueries({ queryKey: quizKeys.details() });
     },
+  });
+}
+
+/**
+ * Admin/Doctor scope: list attempts for a specific quiz via `?quiz_id=`.
+ * Kept separate from `useQuizAttempts()` (student-owned history) to avoid
+ * cross-purpose reuse of a single query key.
+ *
+ * Accepts pagination + server-side search. The query key incorporates the
+ * filters so changing any of them triggers a new request automatically.
+ */
+export function useQuizAttemptsByQuiz(
+  params: QuizAttemptListParams & { quiz_id: number },
+  options: QueryControl<ApiListResponse<QuizAttempt>> = {},
+) {
+  const { quiz_id, page, search } = params;
+  return useQuery({
+    queryKey: [
+      ...quizKeys.all,
+      'attemptsByQuiz',
+      quiz_id,
+      { page: page ?? 1, search: search?.trim() || undefined },
+    ] as const,
+    queryFn: () => api.quizAttempts.list({ quiz_id, page, search }),
+    enabled: Number.isFinite(quiz_id) && quiz_id > 0 && options.enabled !== false,
+    placeholderData: keepPreviousData,
+    initialData: options.initialData,
+  });
+}
+
+/** Admin/Doctor: full review payload for a single attempt. */
+export function useQuizAttemptResult(id: number, options: QueryControl<QuizAttemptResultResponse> = {}) {
+  return useQuery({
+    queryKey: quizKeys.attemptResult(id),
+    queryFn: () => api.quizAttemptResults.result(id),
+    enabled: Number.isFinite(id) && id > 0 && options.enabled !== false,
+    initialData: options.initialData,
+  });
+}
+
+/** Student path: create a per-question answer row. Idempotent on (attempt, question) if backend enforces uniqueness. */
+export function useCreateQuizUserAnswer() {
+  const queryClient = useQueryClient();
+  return useMutation<
+    ApiResponse<QuizUserAnswer>,
+    Error,
+    CreateQuizUserAnswerRequest
+  >({
+    mutationFn: (data) => api.quizUserAnswers.create(data),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: quizKeys.userAnswers() });
+      await queryClient.invalidateQueries({ queryKey: quizKeys.attempts() });
+    },
+  });
+}
+
+/** Student path: update an existing answer row (subsequent changes to the same question). */
+export function useUpdateQuizUserAnswer() {
+  return useMutation<
+    ApiResponse<QuizUserAnswer>,
+    Error,
+    { id: number | string; data: UpdateQuizUserAnswerRequest }
+  >({
+    mutationFn: ({ id, data }) => api.quizUserAnswers.update(id, data),
   });
 }

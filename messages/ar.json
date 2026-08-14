@@ -1151,7 +1151,11 @@
       "finishError": "تعذّر إرسال الاختبار. حاول مرة أخرى.",
       "selectMultipleHint": "اختر كل الإجابات الصحيحة",
       "noReturnWarning": "لا يمكنك العودة إلى الأسئلة السابقة. تأكد من إجابتك قبل المتابعة.",
-      "timeOutMessage": "انتهى الوقت. انتهت هذه المحاولة."
+      "timeOutMessage": "انتهى الوقت. انتهت هذه المحاولة.",
+      "shortAnswerPlaceholder": "اكتب إجابتك هنا…",
+      "shortAnswerAriaLabel": "إجابتك",
+      "shortAnswerHint": "اكتب إجابة نصية.",
+      "awaitingGrading": "بانتظار التقييم"
     },
     "studentExamResult": {
       "loading": "جاري تحميل النتيجة…",
@@ -2078,8 +2082,52 @@
       "retry": "إعادة المحاولة",
       "quizLoadErrorTitle": "تعذر تحميل بيانات الاختبار",
       "quizLoadErrorDescription": "تحقق من الاتصال ثم حاول مرة أخرى.",
-      "unavailableTitle": "النتائج غير متاحة مؤقتًا",
-      "unavailableDescription": "واجهة API الحالية تعرض قائمة عامة لمحاولات الاختبارات فقط، ولا توثق عقدًا مخصصًا لنتائج اختبار واحد مع صلاحيات المدير أو المدرس. لحماية بيانات الطلاب، لم تعد هذه الصفحة تحمّل محاولات جميع المستخدمين ثم تصفيها داخل المتصفح. يجب أن يوفر فريق الخادم نقطة نهاية آمنة ومصرحًا بها لنتائج الاختبار قبل عرض النتائج هنا."
+      "attempts": "المحاولات",
+      "attemptsCount": "{count, plural, =0 {لا توجد محاولات} one {# محاولة} two {# محاولتان} few {# محاولات} many {# محاولة} other {# محاولة}}",
+      "noAttempts": "لا توجد محاولات لهذا الاختبار حتى الآن.",
+      "loadingAttempts": "جارٍ تحميل المحاولات…",
+      "errorAttempts": "تعذّر تحميل المحاولات.",
+      "columns": {
+        "student": "الطالب",
+        "score": "الدرجة",
+        "percentage": "النسبة",
+        "passed": "النتيجة",
+        "status": "الحالة",
+        "finishedAt": "انتهى في",
+        "attemptsRemaining": "المحاولات المتبقية"
+      },
+      "search": {
+        "label": "البحث في المحاولات",
+        "placeholder": "ابحث باسم الطالب…",
+        "clear": "مسح البحث",
+        "noResults": "لا توجد محاولات تطابق بحثك.",
+        "filteredBy": "تمت التصفية بـ «{q}»"
+      },
+      "pagination": {
+        "previous": "السابق",
+        "next": "التالي",
+        "pageXOfY": "الصفحة {page} من {total}",
+        "showingXtoYofZ": "عرض {from}–{to} من أصل {total}",
+        "perPage": "لكل صفحة"
+      },
+      "drillDown": {
+        "title": "مراجعة الإجابات",
+        "loading": "جارٍ تحميل المراجعة…",
+        "errorLoading": "تعذّر تحميل مراجعة هذه المحاولة.",
+        "noReview": "مراجعة كل سؤال غير متضمنة في استجابة هذه المحاولة.",
+        "quiz": "الاختبار",
+        "totalMarks": "مجموع الدرجات: {total}",
+        "passingMarks": "درجة النجاح: {marks}",
+        "earned": "المحرز",
+        "percentage": "النسبة",
+        "correct": "صحيحة",
+        "incorrect": "خاطئة",
+        "awaitingGrading": "بانتظار التقييم",
+        "yourAnswer": "إجابة الطالب",
+        "correctAnswer": "الإجابة الصحيحة",
+        "scoreEarned": "الدرجة المحرزة",
+        "feedback": "ملاحظات"
+      }
     }
   },
   "notesSummaries": {

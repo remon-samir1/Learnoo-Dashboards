@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import {
   AlertCircle,
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Loader2,
   Pencil,
   RotateCcw,
@@ -20,10 +22,16 @@ import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useCourses } from '@/src/hooks/useCourses';
 import {
+  useCreateQuiz,
   useDeleteQuiz,
   useQuizList,
   useUpdateQuiz,
 } from '@/src/hooks/useQuizzes';
+import { api } from '@/src/lib/api';
+import {
+  buildExamFormData,
+  getQuizCourseIds,
+} from '@/src/lib/exam-form';
 import type { Course, Quiz } from '@/src/types';
 
 interface ExamManagementListProps {
@@ -53,6 +61,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
   const [searchValue, setSearchValue] = useState('');
   const [selectedQuiz, setSelectedQuiz] = useState<Quiz | null>(null);
   const [updatingQuizId, setUpdatingQuizId] = useState<string | null>(null);
+  const [copyingQuizId, setCopyingQuizId] = useState<string | null>(null);
   const debouncedTitle = useDebouncedValue(searchValue.trim(), SEARCH_DEBOUNCE_MS);
 
   const quizzesQuery = useQuizList({
@@ -63,6 +72,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
   const { data: courses } = useCourses();
   const deleteMutation = useDeleteQuiz();
   const updateMutation = useUpdateQuiz();
+  const createMutation = useCreateQuiz();
 
   const quizzes = quizzesQuery.data?.data ?? [];
   const meta = quizzesQuery.data?.meta;
@@ -100,6 +110,70 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
         : [];
 
     return ids.map((id) => courseNames.get(Number(id))).filter(Boolean).join(', ') || '—';
+  };
+
+  const formatDateTimeForInput = (isoString: string | null): string => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
+  const handleCopyQuiz = async (quiz: Quiz) => {
+    setCopyingQuizId(quiz.id);
+    try {
+      const fullQuizRes = await api.quizzes.get(Number(quiz.id));
+      const fullQuiz = fullQuizRes.data;
+
+      const examDetails = {
+        title: `${fullQuiz.attributes.title} (Copy)`,
+        courses: getQuizCourseIds(
+          fullQuiz.attributes.courses,
+          fullQuiz.attributes.course_id,
+          fullQuiz.attributes.course_ids
+        ),
+        chapter: fullQuiz.attributes.chapter_id ? String(fullQuiz.attributes.chapter_id) : '',
+        type: (fullQuiz.attributes.type === 'exam' ? 'exam' : 'homework') as 'exam' | 'homework',
+        duration: String(fullQuiz.attributes.duration || 60),
+        totalMarks: String(fullQuiz.attributes.total_marks || 100),
+        passingMarks: String(fullQuiz.attributes.passing_marks || 60),
+        maxAttempts: String(fullQuiz.attributes.max_attempts || 1),
+        startTime: formatDateTimeForInput(fullQuiz.attributes.start_time),
+        endTime: formatDateTimeForInput(fullQuiz.attributes.end_time),
+        is_public: (fullQuiz.attributes.is_public === true || fullQuiz.attributes.is_public === 'true') ? 'true' : (fullQuiz.attributes.is_public === 'included' ? 'included' : 'false') as 'true' | 'false' | 'included',
+        status: fullQuiz.attributes.status === 'active' ? 'Active' : 'Draft' as 'Draft' | 'Active',
+      };
+
+      const questions = (fullQuiz.attributes.questions || []).map((q) => ({
+        id: `copy-${Date.now()}-${Math.random()}`,
+        text: q.attributes.text,
+        type: q.attributes.type,
+        score: q.attributes.score,
+        autoCorrect: q.attributes.auto_correct ?? true,
+        image: null,
+        imagePreview: q.attributes.image || '',
+        answers: q.attributes.answers?.map((ans) => ({
+          id: `copy-ans-${Date.now()}-${Math.random()}`,
+          text: ans.attributes.text,
+          isCorrect: ans.attributes.is_correct,
+          reason: ans.attributes.reason || '',
+          image: null,
+          imagePreview: ans.attributes.image || '',
+          reason_image: null,
+          reasonImagePreview: ans.attributes.reason_image || '',
+        })) || [],
+      }));
+
+      const formData = buildExamFormData(examDetails, questions, 'create');
+      await createMutation.mutateAsync(formData);
+      toast.success(t('createSuccess', { fallback: 'Exam copied successfully' }));
+    } catch (error) {
+      console.error(error);
+      toast.error(t('createError', { fallback: 'Failed to copy exam' }));
+    } finally {
+      setCopyingQuizId(null);
+    }
   };
 
   const updateQuiz = async (quiz: Quiz, data: { status?: 'draft' | 'active'; is_public?: boolean | 'true' | 'false' | 'included' }) => {
@@ -316,8 +390,22 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => void handleCopyQuiz(quiz)}
+                              disabled={copyingQuizId === quiz.id}
+                              aria-label={t('copyExam', { title, fallback: 'Copy' })}
+                              title={commonT('copy', { fallback: 'Copy' })}
+                              className="rounded-full p-2 text-[#64748B] transition hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {copyingQuizId === quiz.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Copy className="h-4 w-4" />
+                              )}
+                            </button>
                             <Link
-                              href={`${basePath}/edit/${quiz.id}`}
+                              href={`${basePath}/${quiz.id}/edit`}
                               aria-label={t('editExam', { title })}
                               title={commonT('edit')}
                               className="rounded-full p-2 text-[#64748B] transition hover:bg-blue-50 hover:text-[#2137D6]"

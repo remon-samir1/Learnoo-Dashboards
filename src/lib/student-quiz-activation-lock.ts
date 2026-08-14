@@ -23,6 +23,20 @@ export function coerceAttrBoolean(v: unknown): boolean | undefined {
   return undefined;
 }
 
+export function readIsPublicMode(attrs: Record<string, unknown> | null | undefined): 'true' | 'false' | 'included' | 'unknown' {
+  if (!attrs) return 'unknown';
+  const v = attrs.is_public;
+  if (typeof v === 'string') {
+    const s = v.trim().toLowerCase();
+    if (s === 'included') return 'included';
+    if (s === 'true' || s === '1') return 'true';
+    if (s === 'false' || s === '0') return 'false';
+  }
+  if (v === true || v === 1) return 'true';
+  if (v === false || v === 0) return 'false';
+  return 'unknown';
+}
+
 function coercePositiveInt(value: unknown): number | null {
   if (value == null) return null;
   if (typeof value === 'number' && Number.isFinite(value) && Number.isInteger(value) && value > 0) {
@@ -123,14 +137,14 @@ export function quizCourseIsEnrolled(
     enrolledCourseIds instanceof Set
       ? (enrolledCourseIds as ReadonlySet<string>)
       : new Set<string>(
-          (() => {
-            const out: string[] = [];
-            for (const v of enrolledCourseIds as Iterable<string>) {
-              if (typeof v === 'string' && v.trim()) out.push(v.trim());
-            }
-            return out;
-          })()
-        );
+        (() => {
+          const out: string[] = [];
+          for (const v of enrolledCourseIds as Iterable<string>) {
+            if (typeof v === 'string' && v.trim()) out.push(v.trim());
+          }
+          return out;
+        })()
+      );
   return set.has(cid);
 }
 
@@ -139,37 +153,47 @@ export function quizRequiresCourseActivationLock(
   attrs: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!attrs) return false;
-  if (coerceAttrBoolean(attrs.is_public) === true) return false;
-  if (coerceAttrBoolean(attrs.is_public) !== false) return false;
+  const mode = readIsPublicMode(attrs);
+  if (mode === 'true') return false;
   if (coerceAttrBoolean(attrs.has_activation) === true) return false;
-  return true;
+
+  if (mode === 'included' || mode === 'false') return true;
+  // If unknown, fallback behaviour is no lock (assume public like old 'undefined' behavior).
+  return false;
 }
 
 /**
  * Same as {@link quizRequiresCourseActivationLock} but also returns `false`
- * (i.e. unlocks the exam) when the owning course is already in the student's
- * enrolled courses list — the student has effectively activated it from
- * the My Courses page, so we should not block them on the exam card.
+ * (i.e. unlocks the exam) when it's an "included" exam and the owning course 
+ * is already in the student's enrolled courses list. Private ("false") exams 
+ * cannot be unlocked this way; they strictly require an activation code.
  */
 export function quizRequiresCourseActivationLockWithEnrolled(
   attrs: Record<string, unknown> | null | undefined,
   enrolledCourseIds?: ReadonlySet<string> | Iterable<string> | null
 ): boolean {
   if (quizRequiresCourseActivationLock(attrs) === false) return false;
-  if (quizCourseIsEnrolled(attrs, enrolledCourseIds)) return false;
+
+  const mode = readIsPublicMode(attrs);
+
+  if (mode === 'included') {
+    if (quizCourseIsEnrolled(attrs, enrolledCourseIds)) return false;
+  }
+
   return true;
 }
 
 /**
- * Private exam was already activated but the student used all attempts — enter a new code again.
+ * Private/included exam was already activated but the student used all attempts — enter a new code again.
  * Requires explicit `remaining === 0` from API (or derived from max/current).
  */
 export function quizNeedsReactivationAfterExhaustedAttempts(
   attrs: Record<string, unknown> | null | undefined,
 ): boolean {
   if (!attrs) return false;
-  if (coerceAttrBoolean(attrs.is_public) === true) return false;
-  if (coerceAttrBoolean(attrs.is_public) !== false) return false;
+  const mode = readIsPublicMode(attrs);
+  if (mode === 'true') return false;
+  if (mode === 'unknown') return false;
   if (coerceAttrBoolean(attrs.has_activation) !== true) return false;
   return readRemainingAttemptsFromQuizAttributes(attrs) === 0;
 }

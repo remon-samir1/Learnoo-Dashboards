@@ -69,9 +69,15 @@ export type ExamQuestionScreenProps = {
   selectedIds?: string[];
   onSelectSingle?: (answerId: string) => void;
   onToggleMulti?: (answerId: string) => void;
+  /** `short_answer` input — only relevant when `question.attributes.type === 'short_answer'`. */
+  shortText?: string;
+  onChangeShortText?: (text: string) => void;
   /** Review-only: whether the learner’s selection(s) for this question are fully correct. */
   reviewQuestionCorrect?: boolean;
   noAnswerOptionsText?: string;
+  shortAnswerPlaceholder?: string;
+  shortAnswerAriaLabel?: string;
+  awaitingGradingLabel?: string;
   articleFooter: ReactNode;
   belowArticle?: ReactNode;
 };
@@ -93,8 +99,13 @@ export function ExamQuestionScreen({
   selectedIds = [],
   onSelectSingle,
   onToggleMulti,
+  shortText = '',
+  onChangeShortText,
   reviewQuestionCorrect = false,
   noAnswerOptionsText,
+  shortAnswerPlaceholder,
+  shortAnswerAriaLabel,
+  awaitingGradingLabel,
   articleFooter,
   belowArticle,
 }: ExamQuestionScreenProps) {
@@ -223,7 +234,34 @@ const watermarkText = useMemo(() => {
             </div>
           ) : null}
 
-          {mode === 'take' ? (
+          {question.attributes.type === 'short_answer' ? (
+            <div className="flex flex-col gap-2 sm:gap-2.5">
+              {mode === 'take' ? (
+                <textarea
+                  value={shortText}
+                  onChange={(e) => onChangeShortText?.(e.target.value)}
+                  placeholder={shortAnswerPlaceholder}
+                  aria-label={shortAnswerAriaLabel ?? question.attributes.text}
+                  rows={5}
+                  className="w-full resize-y rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-[13px] leading-relaxed text-[#0F172A] outline-none transition focus:border-[#2D46D9] focus:ring-2 focus:ring-[#2D46D9]/15 sm:px-4 sm:py-3 sm:text-sm"
+                  style={{ userSelect: 'text' }}
+                />
+              ) : (
+                <div className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] bg-slate-50 px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3">
+                  {shortText.trim() ? (
+                    <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#0F172A] sm:text-sm">{shortText}</p>
+                  ) : (
+                    <p className="text-[13px] italic text-slate-500 sm:text-sm">—</p>
+                  )}
+                  {awaitingGradingLabel ? (
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                      {awaitingGradingLabel}
+                    </span>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          ) : mode === 'take' ? (
             <div className="flex flex-col gap-2 sm:gap-2.5">
               {answers.map((ans) => {
                 const aid = String(ans.id);

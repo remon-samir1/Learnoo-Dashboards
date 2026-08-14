@@ -57,7 +57,7 @@ export function createQueryHook<T, P extends unknown[] = []>(
   return function useQuery(...paramsAndOptions: [...P, QueryOptions?]) {
     const maybeOptions =
       paramsAndOptions.length > 0 &&
-      isTrailingQueryOptions(paramsAndOptions[paramsAndOptions.length - 1])
+        isTrailingQueryOptions(paramsAndOptions[paramsAndOptions.length - 1])
         ? (paramsAndOptions.pop() as QueryOptions)
         : {};
     const params = paramsAndOptions as unknown as P;
@@ -106,8 +106,12 @@ export function createQueryHook<T, P extends unknown[] = []>(
     useEffect(() => {
       isMountedRef.current = true;
       paramsRef.current = params;
-        if (mergedOptions.enabled === false) return;
-      execute();
+      if (mergedOptions.enabled === false) return;
+      execute().catch((error) => {
+        // Error is already handled inside execute (setState), 
+        // we just need to prevent an unhandled promise rejection.
+        console.error('Query execution failed:', error);
+      });
 
       return () => {
         isMountedRef.current = false;
@@ -120,7 +124,7 @@ export function createQueryHook<T, P extends unknown[] = []>(
 
       const handleFocus = () => {
         if (document.visibilityState === 'visible') {
-          refetch();
+          refetch().catch(() => { });
         }
       };
 
@@ -132,7 +136,7 @@ export function createQueryHook<T, P extends unknown[] = []>(
     useEffect(() => {
       if (!mergedOptions.refetchInterval) return;
 
-      const interval = setInterval(refetch, mergedOptions.refetchInterval);
+      const interval = setInterval(() => refetch().catch(() => { }), mergedOptions.refetchInterval);
       return () => clearInterval(interval);
     }, [refetch, mergedOptions.refetchInterval]);
 
@@ -164,8 +168,8 @@ export function createMutationHook<T, P extends unknown[] = []>(
         setState({ data, isLoading: false, error: null, isError: false, isSuccess: true });
         return data;
       } catch (error) {
-        const message = error instanceof ApiError 
-          ? error.message 
+        const message = error instanceof ApiError
+          ? error.message
           : 'An error occurred while processing the request';
         setState({ data: null, isLoading: false, error: message, isError: true, isSuccess: false });
         throw error;

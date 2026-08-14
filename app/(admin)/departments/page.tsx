@@ -2249,7 +2249,7 @@ export default function DepartmentsPage() {
       // Copy the chapter to each target lecture
       for (const targetLectureIdStr of selectedTargetLectures) {
         const targetLectureId = parseInt(targetLectureIdStr);
-        
+
         // Copy the chapter
         const newChapter = await copyChapter(chapterId, targetLectureId);
 
@@ -5800,7 +5800,7 @@ function AddModal({
                     htmlFor="add_is_free_preview"
                     className="text-sm font-medium text-gray-700"
                   >
-                  video Free Preview
+                    video Free Preview
                   </label>
 
                   <label className="flex items-center gap-2 cursor-pointer">

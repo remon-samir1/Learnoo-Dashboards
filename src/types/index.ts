@@ -489,7 +489,8 @@ export interface UserAttributes {
 
   last_name: string;
 
-
+  /** Backend-computed display name; preferred when present. */
+  full_name?: string;
 
   phone: string | null;
 
@@ -4093,7 +4094,10 @@ export interface QuizAttemptAttributes {
   /** Included on some payloads (e.g. list with nested quiz). */
   quiz?: unknown;
 
-
+  /** Eager-loaded on list responses (`?include=user` or always-included by Laravel). */
+  user?: {
+    data?: User | null;
+  } | null;
 
 }
 
@@ -4274,6 +4278,166 @@ export interface FinishQuizAttemptResponse {
   correct_answers?: QuizFinishCorrectAnswerEntry[] | null;
 
 
+
+}
+
+
+/** Query params for `GET /v1/quiz-attempt` — admin/doctor scope. */
+export interface QuizAttemptListParams {
+  quiz_id?: number | string;
+  user_id?: number | string;
+  page?: number;
+  /** Server-side full-text search across user name / student code / email. */
+  search?: string;
+}
+
+/** One row of the `quiz-user-answer` resource (Laravel controller resource). */
+export interface QuizUserAnswerAttributes {
+
+
+
+  quiz_attempt_id: number | string;
+
+
+
+  quiz_question_id: number | string;
+
+
+
+  answer_text: string;
+
+
+
+  score_earned: number;
+
+
+
+  is_correct: boolean | null;
+
+
+
+  feedback: string | null;
+
+
+
+  created_at: string | null;
+
+
+
+  updated_at: string | null;
+
+
+
+  /** Eager-loaded on `/v1/quiz-attempts/{id}/result`. */
+  quiz_question?: {
+    id: number | string;
+    text: string;
+    type: QuestionType;
+    score: number;
+    auto_correct?: boolean | null;
+    image_url?: string | null;
+  } | null;
+
+
+
+  /** Eager-loaded on `/v1/quiz-attempts/{id}/result`. */
+  quiz_attempt?: {
+    id: number | string;
+    score: number | null;
+    total_score: number | null;
+    finished_at: string | null;
+  } | null;
+
+
+
+}
+
+
+
+export type QuizUserAnswer = JsonApiData<QuizUserAnswerAttributes>;
+
+/** Body for `POST /v1/quiz-user-answer` (first answer for a question). */
+export interface CreateQuizUserAnswerRequest {
+
+
+
+  quiz_attempt_id: number | string;
+
+
+
+  quiz_question_id: number | string;
+
+
+
+  answer_text: string;
+
+
+
+}
+
+/** Body for `PUT /v1/quiz-user-answer/{id}` (subsequent updates). */
+export interface UpdateQuizUserAnswerRequest {
+
+
+
+  answer_text: string;
+
+
+
+}
+
+/** Quiz snapshot inside `GET /v1/quiz-attempts/{id}/result`. */
+export interface QuizAttemptResultQuiz {
+  id: number | string;
+  title?: string;
+  total_marks?: number;
+  passing_marks?: number;
+  [key: string]: unknown;
+}
+
+/** Attempt summary inside `GET /v1/quiz-attempts/{id}/result` (flat, not JSON:API wrapped). */
+export interface QuizAttemptResultAttempt {
+  id: number | string;
+  score?: number | null;
+  earned_marks?: number | null;
+  total_score?: number | null;
+  percentage?: number | null;
+  passed?: boolean | null;
+  finished_at?: string | null;
+  [key: string]: unknown;
+}
+
+/** Response from `GET /v1/quiz-attempts/{id}/result` — admin/doctor review.
+ * Backend may reuse the finish envelope; we accept either shape loosely. */
+export interface QuizAttemptResultResponse {
+
+  /** Primary observed shape: `{ data: { quiz, attempt, answers? } }`. */
+  data?: {
+    quiz?: QuizAttemptResultQuiz | null;
+    attempt?: QuizAttemptResultAttempt | null;
+    /** Some backends include per-question answers here. */
+    answers?: QuizUserAnswer[] | null;
+  } | null;
+
+  /** Sometimes nested (matches FinishQuizAttemptResponse), sometimes flat. */
+  attempt?: {
+
+    data?: QuizAttempt | null;
+
+  } | QuizAttempt | null;
+
+  /** Per-question answers for this attempt. */
+  answers?: QuizUserAnswer[] | null;
+
+  /** Optional quiz snapshot for review rendering. */
+  quiz?: Quiz | null;
+
+  /** Some backends reuse the finish envelope. */
+  results?: QuizFinishResultsBlock;
+
+  quiz_info?: QuizFinishQuizInfo;
+
+  correct_answers?: QuizFinishCorrectAnswerEntry[] | null;
 
 }
 

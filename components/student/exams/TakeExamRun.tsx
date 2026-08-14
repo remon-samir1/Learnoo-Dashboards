@@ -21,9 +21,14 @@ import {
   computeExamScore,
   isMultipleChoice,
   isQuestionAnswered,
+  isShortAnswer,
   normalizeQuestions,
   questionAnswers,
 } from '@/src/lib/student-exam-question-utils';
+import {
+  useCreateQuizUserAnswer,
+  useUpdateQuizUserAnswer,
+} from '@/src/hooks/useQuizzes';
 import { useExamCopyGuard } from '@/src/hooks/useExamCopyGuard';
 import { useExamCheatingGuard } from '@/src/hooks/useExamCheatingGuard';
 
@@ -65,16 +70,29 @@ export default function TakeExamRun({
   const [session, setSession] = useState<StudentTakePayload | null | undefined>(undefined);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
+  const [shortTexts, setShortTexts] = useState<Record<string, string>>({});
   const [remainingSec, setRemainingSec] = useState<number | null>(null);
   const [timeExpired, setTimeExpired] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const timeOutHandled = useRef(false);
   const isFinished = useRef(false);
   const selectionsRef = useRef(selections);
+  const shortTextsRef = useRef(shortTexts);
+  /** questionId -> backend-created quiz-user-answer row id, used for POST-then-PUT. */
+  const answerRowIdsRef = useRef<Map<string, string | number>>(new Map());
+  /** Per-question debounce timers for short_answer typing. */
+  const shortAnswerTimersRef = useRef<Map<string, number>>(new Map());
+
+  const createAnswer = useCreateQuizUserAnswer();
+  const updateAnswer = useUpdateQuizUserAnswer();
 
   useEffect(() => {
     selectionsRef.current = selections;
   }, [selections]);
+
+  useEffect(() => {
+    shortTextsRef.current = shortTexts;
+  }, [shortTexts]);
 
   useEffect(() => {
     const p = readStudentTakePayload(quizId);
@@ -96,6 +114,8 @@ export default function TakeExamRun({
   useExamCopyGuard(session !== null && session !== undefined && total > 0);
   const current = questions[currentIndex] ?? null;
   const isLast = total > 0 && currentIndex === total - 1;
+  const answers = useMemo(() => (current ? questionAnswers(current) : []), [current]);
+  const currentShortText = current ? shortTexts[String(current.id)] ?? '' : '';
 
   const durationMinutes = useMemo(() => {
     if (!quiz) return 0;
@@ -147,39 +167,106 @@ export default function TakeExamRun({
 
   const setSingleAnswer = (answerId: string) => {
     if (!current) return;
-    setSelections((prev) => ({ ...prev, [String(current.id)]: [answerId] }));
+    const qid = String(current.id);
+    setSelections((prev) => ({ ...prev, [qid]: [answerId] }));
   };
 
   const toggleMultiAnswer = (answerId: string) => {
     if (!current) return;
     const qid = String(current.id);
-    setSelections((prev) => {
-      const cur = prev[qid] ?? [];
-      const has = cur.includes(answerId);
-      const next = has ? cur.filter((id) => id !== answerId) : [...cur, answerId];
-      return { ...prev, [qid]: next };
-    });
+    const cur = selections[qid] ?? [];
+    const has = cur.includes(answerId);
+    const nextIds = has ? cur.filter((id) => id !== answerId) : [...cur, answerId];
+    setSelections((prev) => ({ ...prev, [qid]: nextIds }));
+  };
+
+  const setShortAnswerText = (text: string) => {
+    if (!current) return;
+    const qid = String(current.id);
+    setShortTexts((prev) => ({ ...prev, [qid]: text }));
+  };
+
+  /** Best-effort: POST first time, PUT thereafter, per (quiz_attempt_id, quiz_question_id). */
+  const persistAnswer = async (qid: string, answerText: string) => {
+    if (!attemptId || !qid || !answerText) return;
+    const existingId = answerRowIdsRef.current.get(qid);
+    if (existingId != null) {
+      try {
+        await updateAnswer.mutateAsync({ id: existingId, data: { answer_text: answerText } });
+      } catch (err) {
+        console.error('[quiz-user-answer] update failed', err);
+      }
+      return;
+    }
+    try {
+      const res = await createAnswer.mutateAsync({
+        quiz_attempt_id: attemptId,
+        quiz_question_id: qid,
+        answer_text: answerText,
+      });
+      const payload = (res as { data?: { id?: string | number }; id?: string | number }).data
+        ?? (res as { id?: string | number });
+      const newId = payload?.id;
+      if (newId != null) answerRowIdsRef.current.set(qid, newId);
+    } catch (err) {
+      console.error('[quiz-user-answer] create failed', err);
+    }
+  };
+
+  const flushCurrentAnswer = async (qid: string) => {
+    const q = questions.find((x) => String(x.id) === qid);
+    if (!q) return;
+
+    let textToSave = '';
+    if (isShortAnswer(q)) {
+      textToSave = (shortTextsRef.current[qid] ?? '').trim();
+    } else {
+      const selectedIds = selectionsRef.current[qid] ?? [];
+      const ansList = questionAnswers(q);
+      textToSave = selectedIds
+        .map((id) => ansList.find((a) => String(a.id) === id)?.attributes?.text?.trim() ?? '')
+        .filter(Boolean)
+        .join(', ');
+    }
+
+    if (textToSave) {
+      await persistAnswer(qid, textToSave);
+    }
   };
 
   const selectedForCurrent = current ? selections[String(current.id)] ?? [] : [];
 
-  const goNext = () => {
-    if (!current || !isQuestionAnswered(current, selectedForCurrent)) return;
-    if (!isLast) setCurrentIndex((i) => Math.min(i + 1, total - 1));
+  const [isGoingNext, setIsGoingNext] = useState(false);
+
+  const goNext = async () => {
+    if (!current || isGoingNext) return;
+    if (!isQuestionAnswered(current, selectedForCurrent, currentShortText)) return;
+    setIsGoingNext(true);
+
+    try {
+      await flushCurrentAnswer(String(current.id));
+      if (!isLast) setCurrentIndex((i) => Math.min(i + 1, total - 1));
+    } finally {
+      setIsGoingNext(false);
+    }
   };
 
   const autoSubmit = useCallback(async () => {
     if (!quiz || !attemptId || isFinished.current) return;
     isFinished.current = true;
 
-    const { score, total_score } = computeExamScore(questions, selectionsRef.current);
+    if (current) {
+      await flushCurrentAnswer(String(current.id));
+    }
+
+    const { score, total_score } = computeExamScore(questions, selectionsRef.current, shortTextsRef.current);
     try {
       await api.quizAttempts.submit(attemptId, { score, total_score }, { keepalive: true });
       clearStudentTakePayload(quizId);
     } catch (err) {
       console.error('Auto-submit failed:', err);
     }
-  }, [quiz, attemptId, questions, quizId]);
+  }, [quiz, attemptId, questions, quizId, current]);
 
   useExamCheatingGuard({
     onLeave: autoSubmit,
@@ -188,15 +275,19 @@ export default function TakeExamRun({
 
   const handleFinish = async () => {
     if (!quiz || !current || !attemptId || finishing || isFinished.current) return;
-    if (!isQuestionAnswered(current, selectedForCurrent)) return;
-    const { score, total_score } = computeExamScore(questions, selections);
+    if (!isQuestionAnswered(current, selectedForCurrent, currentShortText)) return;
+
     setFinishing(true);
-    isFinished.current = true;
     try {
+      await flushCurrentAnswer(String(current.id));
+      const { score, total_score } = computeExamScore(questions, selectionsRef.current, shortTextsRef.current);
+      isFinished.current = true;
+
       const res = (await api.quizAttempts.submit(attemptId, {
         score,
         total_score,
       })) as FinishQuizAttemptResponse;
+
       writeStudentQuizResultPayload(quizId, {
         version: 2,
         quizId,
@@ -230,9 +321,9 @@ export default function TakeExamRun({
 
   const title = quiz.attributes.title?.trim() ?? t('defaultExamTitle');
   const qNum = currentIndex + 1;
-  const answers = current ? questionAnswers(current) : [];
   const multi = current ? isMultipleChoice(current) : false;
-  const answered = current ? isQuestionAnswered(current, selectedForCurrent) : false;
+  const answered = current ? isQuestionAnswered(current, selectedForCurrent, currentShortText) : false;
+  const isShort = current ? isShortAnswer(current) : false;
 
   if (!current) return null;
 
@@ -266,14 +357,18 @@ export default function TakeExamRun({
       selectedIds={selectedForCurrent}
       onSelectSingle={setSingleAnswer}
       onToggleMulti={toggleMultiAnswer}
+      shortText={currentShortText}
+      onChangeShortText={setShortAnswerText}
+      shortAnswerPlaceholder={t('shortAnswerPlaceholder', { fallback: 'Type your answer here…' })}
+      shortAnswerAriaLabel={t('shortAnswerAriaLabel', { fallback: 'Your answer' })}
       articleFooter={
         <>
-          <p className="text-xs text-[#94A3B8] sm:text-[13px]">{multi ? t('selectMultipleHint') : t('selectAnswerHint')}</p>
+          <p className="text-xs text-[#94A3B8] sm:text-[13px]">{isShort ? t('shortAnswerHint', { fallback: 'Type a free-text answer.' }) : multi ? t('selectMultipleHint') : t('selectAnswerHint')}</p>
           {!isLast ? (
             <button
               type="button"
-              onClick={goNext}
-              disabled={!answered}
+              onClick={() => void goNext()}
+              disabled={!answered || isGoingNext}
               className="inline-flex h-10 items-center justify-center gap-1.5 self-stretch rounded-lg bg-[#2D46D9] px-5 text-xs font-bold text-white transition-colors hover:bg-[#2438c4] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-white sm:h-11 sm:self-auto sm:rounded-xl sm:px-6 sm:text-sm"
             >
               {t('nextQuestion')}
@@ -283,7 +378,7 @@ export default function TakeExamRun({
             <button
               type="button"
               onClick={() => void handleFinish()}
-              disabled={!answered || finishing}
+              disabled={!answered || finishing || isGoingNext}
               className="inline-flex h-10 items-center justify-center gap-1.5 self-stretch rounded-lg bg-[#2D46D9] px-5 text-xs font-bold text-white transition-colors hover:bg-[#2438c4] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-white sm:h-11 sm:self-auto sm:rounded-xl sm:px-6 sm:text-sm"
             >
               {t('finishExam')}

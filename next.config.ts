@@ -10,6 +10,30 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/exams/edit/:id',
+        destination: '/exams/:id/edit',
+        permanent: true,
+      },
+      {
+        source: '/doctor/exams/edit/:id',
+        destination: '/doctor/exams/:id/edit',
+        permanent: true,
+      },
+      {
+        source: '/:locale/exams/edit/:id',
+        destination: '/:locale/exams/:id/edit',
+        permanent: true,
+      },
+      {
+        source: '/:locale/doctor/exams/edit/:id',
+        destination: '/:locale/doctor/exams/:id/edit',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 const withNextIntl = createNextIntlPlugin(

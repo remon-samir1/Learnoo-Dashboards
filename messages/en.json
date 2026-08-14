@@ -1116,7 +1116,11 @@
       "finishError": "Could not submit the exam. Try again.",
       "selectMultipleHint": "Select all correct answers",
       "noReturnWarning": "You cannot return to previous questions. Make sure of your answer before proceeding.",
-      "timeOutMessage": "Time is up. This attempt has ended."
+      "timeOutMessage": "Time is up. This attempt has ended.",
+      "shortAnswerPlaceholder": "Type your answer here…",
+      "shortAnswerAriaLabel": "Your answer",
+      "shortAnswerHint": "Type a free-text answer.",
+      "awaitingGrading": "Awaiting grading"
     },
     "studentExamResult": {
       "loading": "Loading results…",
@@ -2043,8 +2047,52 @@
       "retry": "Try again",
       "quizLoadErrorTitle": "Exam details could not be loaded",
       "quizLoadErrorDescription": "Check your connection and try again.",
-      "unavailableTitle": "Results are temporarily unavailable",
-      "unavailableDescription": "The current API only exposes the general quiz-attempt collection and does not document an exam-scoped, role-authorized results contract. To protect student data, this page no longer downloads every user's attempts and filters them in the browser. The backend must provide an authorized exam-results endpoint before results can be displayed here."
+      "attempts": "Attempts",
+      "attemptsCount": "{count, plural, =0 {No attempts} one {# attempt} other {# attempts}}",
+      "noAttempts": "No attempts yet for this exam.",
+      "loadingAttempts": "Loading attempts…",
+      "errorAttempts": "Could not load attempts.",
+      "columns": {
+        "student": "Student",
+        "score": "Score",
+        "percentage": "Percentage",
+        "passed": "Result",
+        "status": "Status",
+        "finishedAt": "Finished",
+        "attemptsRemaining": "Attempts left"
+      },
+      "search": {
+        "label": "Search attempts",
+        "placeholder": "Search by student name…",
+        "clear": "Clear search",
+        "noResults": "No attempts match your search.",
+        "filteredBy": "filtered by “{q}”"
+      },
+      "pagination": {
+        "previous": "Previous",
+        "next": "Next",
+        "pageXOfY": "Page {page} of {total}",
+        "showingXtoYofZ": "Showing {from}–{to} of {total}",
+        "perPage": "Per page"
+      },
+      "drillDown": {
+        "title": "Review answers",
+        "loading": "Loading review…",
+        "errorLoading": "Could not load this attempt's review.",
+        "noReview": "Per-question review isn't included in this attempt's response.",
+        "quiz": "Quiz",
+        "totalMarks": "Total marks: {total}",
+        "passingMarks": "Passing: {marks}",
+        "earned": "Earned",
+        "percentage": "Percentage",
+        "correct": "Correct",
+        "incorrect": "Incorrect",
+        "awaitingGrading": "Awaiting grading",
+        "yourAnswer": "Student answer",
+        "correctAnswer": "Correct answer",
+        "scoreEarned": "Score earned",
+        "feedback": "Feedback"
+      }
     }
   },
   "notesSummaries": {

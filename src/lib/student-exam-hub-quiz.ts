@@ -4,6 +4,7 @@
 
 import {
   quizRequiresCourseActivationLockWithEnrolled,
+  readIsPublicMode,
   readQuizOwningCourseId,
   readRemainingAttemptsFromQuizAttributes,
 } from '@/src/lib/student-quiz-activation-lock';
@@ -152,13 +153,17 @@ export function classifyHubQuizRow(
   enrolledCourseIds?: ReadonlySet<string> | Iterable<string> | null
 ): HubQuizBucket {
   const attrs = hubQuizAttrs(row);
-  // The enrolled-aware helper returns `true` only when the strict activation
-  // gate is on AND the owning course is missing from the student's enrolled
-  // courses list. That is the "private exam, course not yet activated"
-  // case the user is asking us to surface with a separate "activate course
-  // first" message.
+  // The enrolled-aware helper returns `true` when the student hasn't met the
+  // requirements to bypass the lock (i.e. course not enrolled for 'included',
+  // or hasn't entered a code for 'false').
   if (quizRequiresCourseActivationLockWithEnrolled(attrs, enrolledCourseIds)) {
-    return 'course_not_enrolled';
+    // If it's an 'included' exam, they can activate it by enrolling in the course.
+    if (readIsPublicMode(attrs) === 'included') {
+      return 'course_not_enrolled';
+    }
+    // If it's a 'false' (private) exam, they MUST use an activation code.
+    // It should go to 'locked' to prompt them for a code.
+    return 'locked';
   }
 
   const status = String(attrs.status ?? '')
