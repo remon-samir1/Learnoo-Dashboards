@@ -513,7 +513,7 @@ export default function CommunityModerationPage() {
     type: 'post' as 'post' | 'question' | 'summary',
     status: 'published' as 'draft' | 'published',
     image: null as File | null,
-    course_id: '' as string
+    course_ids: [] as string[]
   });
 
   useEffect(() => {
@@ -586,7 +586,7 @@ export default function CommunityModerationPage() {
           type: createForm.type,
           status: createForm.status,
           image: createForm.image || undefined,
-          course_id: createForm.course_id ? parseInt(createForm.course_id) : undefined
+          course_ids: createForm.course_ids.length > 0 ? createForm.course_ids.map(id => parseInt(id)) : undefined
         });
         alert(t('community.notifications.postUpdated'));
       } else {
@@ -596,7 +596,7 @@ export default function CommunityModerationPage() {
           type: createForm.type,
           status: createForm.status,
           image: createForm.image || undefined,
-          course_id: createForm.course_id ? parseInt(createForm.course_id) : undefined
+          course_ids: createForm.course_ids.length > 0 ? createForm.course_ids.map(id => parseInt(id)) : undefined
         });
         alert(t('community.notifications.postCreated'));
       }
@@ -732,7 +732,7 @@ export default function CommunityModerationPage() {
       type: post.attributes.type as 'post' | 'question' | 'summary',
       status: post.attributes.status as 'draft' | 'published',
       image: null,
-      course_id: String(post.attributes.course_id || '')
+      course_ids: post.attributes.course_ids ? post.attributes.course_ids.map((id: number) => String(id)) : (post.attributes.course_id ? [String(post.attributes.course_id)] : [])
     });
     setIsCreateModalOpen(true);
   };
@@ -745,7 +745,7 @@ export default function CommunityModerationPage() {
       type: 'post',
       status: 'published',
       image: null,
-      course_id: ''
+      course_ids: []
     });
     setIsCreateModalOpen(false);
   };
@@ -909,8 +909,8 @@ export default function CommunityModerationPage() {
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-[15px] font-bold text-[#1E293B]">{userName}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${userRole.toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
-                          userRole.toLowerCase() === 'doctor' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                            'bg-slate-100 text-slate-700 border border-slate-200'
+                        userRole.toLowerCase() === 'doctor' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
                         {userRole}
                       </span>
@@ -1221,8 +1221,9 @@ export default function CommunityModerationPage() {
               </div>
 
               <CourseTreeSelect
-                value={createForm.course_id}
-                onChange={(val) => setCreateForm({ ...createForm, course_id: val })}
+                value={createForm.course_ids}
+                multiple={true}
+                onMultiChange={(val) => setCreateForm({ ...createForm, course_ids: val })}
                 label={t('community.createPost.courseLabel')}
               />
               <div>

@@ -3231,7 +3231,8 @@ export interface PostAttributes {
   /** When set, post belongs to this course (community / course tab). */
   course_id?: number;
 
-
+  /** Multiselect course ids for community posts */
+  course_ids?: number[];
 
   tags: string[];
 
@@ -3368,7 +3369,8 @@ export interface CreatePostRequest {
   /** Associate a new top-level post with a course (multipart create). */
   course_id?: number;
 
-
+  /** Associate a new top-level post with multiple courses (multipart create). */
+  course_ids?: number[];
 
 }
 

@@ -56,6 +56,15 @@ export default async function StudentPage() {
   const liveSessionsCount = liveSessions?.length;
   const studentData = student ?? null;
 
+  const enrolledCourseIds = new Set(
+    (courses || []).map((c: { id: string | number }) => String(c.id))
+  );
+  const enrolledNotes = (notes || []).filter(
+    (note: { attributes?: { course_id?: string | number | null } }) =>
+      note.attributes?.course_id &&
+      enrolledCourseIds.has(String(note.attributes.course_id))
+  );
+
   return (
     <div className="flex max-w-full flex-col gap-4 sm:gap-6">
       <WelcomeSection
@@ -75,7 +84,7 @@ export default async function StudentPage() {
           <UpcomingLiveClasses sessions={liveSessions} />
         </div>
         <div className="flex min-w-0 w-full flex-col gap-4">
-          <GetStudentNotes notes={notes} />
+          <GetStudentNotes notes={enrolledNotes} />
           <LibrarySection library={library} />
         </div>
       </div>
