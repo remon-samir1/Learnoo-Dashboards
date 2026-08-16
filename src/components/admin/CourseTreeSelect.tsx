@@ -278,6 +278,52 @@ export function CourseTreeSelect({
       });
     }
 
+    // Create chapter nodes if selectChapters is enabled
+    if (selectChapters && chapters.length > 0) {
+      chapters.forEach((chapter: any) => {
+        // Try course_id directly first, then fall back to lecture_id → course lookup
+        const directCourseId =
+          chapter.attributes?.course_id?.toString() ||
+          chapter.course_id?.toString();
+
+        const lectureId =
+          chapter.attributes?.lecture_id?.toString() ||
+          chapter.lecture_id?.toString();
+
+        // Resolve courseId: prefer direct, fallback via lecture
+        let resolvedCourseId: string | undefined = directCourseId;
+        if (!resolvedCourseId && lectureId) {
+          // Find the course that owns this lecture
+          const ownerLecture = lectures.find((l: any) => String(l.id) === lectureId);
+          if (ownerLecture) {
+            resolvedCourseId =
+              ownerLecture.attributes?.course_id?.toString() ||
+              ownerLecture.course_id?.toString();
+          }
+        }
+
+        const name = chapter.attributes?.title || chapter.title || 'Chapter';
+        const chapterNode: TreeNode = {
+          id: `chapter-${chapter.id}`,
+          type: 'chapter',
+          name,
+          children: [],
+          level: 0,
+          originalId: String(chapter.id),
+          path: [name],
+        };
+
+        chapterMap.set(String(chapter.id), chapterNode);
+
+        if (resolvedCourseId && courseMap.has(resolvedCourseId)) {
+          const parentNode = courseMap.get(resolvedCourseId)!;
+          chapterNode.level = parentNode.level + 1;
+          chapterNode.path = [...parentNode.path, chapterNode.name];
+          parentNode.children.push(chapterNode);
+        }
+      });
+    }
+
     const rootNodes: TreeNode[] = [];
 
     universityMap.forEach(node => {
@@ -323,7 +369,11 @@ export function CourseTreeSelect({
           return { ...node, children: cleanedChildren };
         })
         .filter(node => {
-          if (node.type === 'course' || node.type === 'lecture') return true;
+          // Leaf selectable nodes: always keep
+          if (selectLectures && node.type === 'lecture') return true;
+          if (selectChapters && node.type === 'chapter') return true;
+          if (!selectLectures && !selectChapters && node.type === 'course') return true;
+          // Container nodes: keep only if they have children after cleaning
           return node.children.length > 0;
         });
     };
@@ -470,6 +520,7 @@ export function CourseTreeSelect({
         case 'department': return <Folder className="w-4 h-4 text-amber-500" />;
         case 'course': return <BookOpen className={`w-4 h-4 ${isSelected && !multiple ? 'text-white' : 'text-blue-500'}`} />;
         case 'lecture': return <FolderOpen className={`w-4 h-4 ${isExcluded ? 'text-gray-400' : isSelected && !multiple ? 'text-white' : 'text-purple-500'}`} />;
+        case 'chapter': return <FolderOpen className={`w-4 h-4 ${isExcluded ? 'text-gray-400' : isSelected && !multiple ? 'text-white' : 'text-orange-500'}`} />;
       }
     };
 

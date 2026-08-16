@@ -46,6 +46,8 @@ export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
 export function isStudentChapterVideoRequiresActivation(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
   if (attrs.is_locked === true) return false;
+  // Already activated → no activation needed
+  if (attrs.is_activated === true) return false;
   if (!coerceCanWatchExplicitTrue(attrs.can_watch)) return false;
   // Video is playable via can_watch, but free_preview is false → requires activation
   return !coercePreviewFlag(attrs.is_free_preview);
@@ -71,6 +73,8 @@ export function isStudentChapterPdfVisible(chapter: Chapter): boolean {
 export function isStudentChapterPdfRequiresActivation(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
   if (attrs.is_locked === true) return false;
+  // Already activated → no activation needed
+  if (attrs.is_activated === true) return false;
   if (!coerceCanWatchExplicitTrue(attrs.can_watch)) return false;
   // PDF is visible via can_watch, but is_free_preview_attachment is false → requires activation
   return !coercePreviewFlag(attrs.is_free_preview_attachment);
