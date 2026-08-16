@@ -75,7 +75,9 @@ export default async function StudentPage() {
       />
 
       <ContinueWatchingSection progress={progress ?? []} />
+
       <MySubjectSection categories={category} />
+
       <MyCoursesSection />
       <LatestPostsSection posts={latestPosts} />
       <NewestExams exams={latestExams} />

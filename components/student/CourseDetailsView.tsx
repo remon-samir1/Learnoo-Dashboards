@@ -1,5 +1,4 @@
 "use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
@@ -25,6 +24,7 @@ import {
 import { useCourse } from "@/src/hooks/useCourses";
 import {
   coerceCanWatchExplicitTrue,
+  isNoVideoUrl,
   isStudentChapterPdfVisible,
   isStudentChapterPdfRequiresActivation,
   isStudentChapterVideoPlayable,
@@ -923,10 +923,36 @@ function ChapterRow({
       : t("viewsUnlimited");
   const viewsExhausted = maxViews != null && maxViews > 0 && currentViews >= maxViews;
 
-  // Free preview checks
-  const isFreePreview = (attrs.is_free_preview as number | boolean) === 1 || (attrs.is_free_preview as number | boolean) === true;
-  const isAttachmentFreePreview = (attrs.is_free_preview_attachment as number | boolean) === 1 || (attrs.is_free_preview_attachment as number | boolean) === true;
-  const bothFreePreviewDisabled = !isFreePreview && !isAttachmentFreePreview;
+  // Chapter-level locks collapse every per-content button into one chapter-level action.
+  const chapterLevelLocked = chapterLocked || viewsExhausted;
+  // Some chapters are PDF-only — only show a video button when there is actual playable video.
+  const hasVideoContent =
+    !isNoVideoUrl(attrs.video ?? null) ||
+    !isNoVideoUrl(attrs.playlist ?? null) ||
+    !isNoVideoUrl(attrs.video_hls_url ?? null) ||
+    !isNoVideoUrl(attrs.video_mp4_url ?? null);
+
+  /** Independent video button state. "hidden" ⇒ render nothing for video. */
+  const videoButton:
+    | "watch"
+    | "activate"
+    | "hidden" = (() => {
+    if (chapterLevelLocked) return "hidden";
+    if (!hasVideoContent) return "hidden";
+    if (videoPlayable && !videoRequiresActivation) return "watch";
+    if (needsPlaybackActivation || videoRequiresActivation) return "activate";
+    return "hidden";
+  })();
+
+  /** Independent PDF button state. "hidden" ⇒ render nothing for PDF. */
+  const pdfButton: "open" | "activate" | "hidden" = (() => {
+    if (chapterLevelLocked) return "hidden";
+    if (!hasPdf) return "hidden";
+    if (!pdfUrl) return "hidden";
+    if (pdfVisible && !pdfRequiresActivation) return "open";
+    if (pdfRequiresActivation) return "activate";
+    return "hidden";
+  })();
 
   const watchHref = `/${locale}/student/courses/watch/${chapter.id}`;
 
@@ -1042,7 +1068,30 @@ function ChapterRow({
       </div>
 
       <div className="flex w-full shrink-0 flex-col gap-2.5 sm:min-w-[10.5rem] sm:w-auto sm:justify-center sm:gap-3 md:min-w-[12rem]">
-        {viewsExhausted || bothFreePreviewDisabled ? (
+        {/*
+          Render exactly what's actionable:
+          - Chapter locked  → ONE gray "Activate" button.
+          - Views exhausted → ONE red  "Re-activate" button.
+          - Otherwise       → video button (if any) + PDF button (if any).
+            When only one of the two is available we render a single button;
+            when both are available we render up to two stacked buttons.
+            Free-preview content opens directly; paid content shows an
+            "Activate" button specific to the type (video vs PDF).
+        */}
+        {chapterLocked ? (
+          <button
+            type="button"
+            onClick={openChapterActivation}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
+          >
+            <Power
+              className="size-4 shrink-0 opacity-90"
+              strokeWidth={2}
+              aria-hidden
+            />
+            {t("activateChapter")}
+          </button>
+        ) : viewsExhausted ? (
           <button
             type="button"
             onClick={openChapterActivation}
@@ -1053,11 +1102,11 @@ function ChapterRow({
               strokeWidth={2}
               aria-hidden
             />
-            {viewsExhausted ? t("reactivate") : t("activateChapter")}
+            {t("reactivate")}
           </button>
         ) : (
           <>
-            {videoPlayable && !videoRequiresActivation ? (
+            {videoButton === "watch" && (
               <Link
                 href={watchHref}
                 prefetch
@@ -1069,7 +1118,48 @@ function ChapterRow({
                   strokeWidth={2.5}
                 />
               </Link>
-            ) : chapterLocked ? (
+            )}
+            {videoButton === "activate" && (
+              <button
+                type="button"
+                onClick={openChapterActivation}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+              >
+                <Power
+                  className="size-4 shrink-0 opacity-95"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                {t("activateChapter")}
+              </button>
+            )}
+
+            {pdfButton === "open" && pdfUrl && (
+              <button
+                type="button"
+                onClick={() => setPdfPreviewOpen(true)}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
+              >
+                <FileText className="size-4 shrink-0" strokeWidth={2} />
+                {t("openPdf")}
+              </button>
+            )}
+            {pdfButton === "activate" && (
+              <button
+                type="button"
+                onClick={openChapterActivation}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+              >
+                <Power
+                  className="size-4 shrink-0 opacity-95"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+                {t("activateChapter")}
+              </button>
+            )}
+
+            {videoButton === "hidden" && pdfButton === "hidden" && (
               <button
                 type="button"
                 onClick={openChapterActivation}
@@ -1082,67 +1172,6 @@ function ChapterRow({
                 />
                 {t("activateChapter")}
               </button>
-            ) : needsPlaybackActivation ? (
-              <button
-                type="button"
-                onClick={openChapterActivation}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
-              >
-                <Power
-                  className="size-4 shrink-0 opacity-95"
-                  strokeWidth={2}
-                  aria-hidden
-                />
-                {t("activateChapter")}
-              </button>
-            ) : videoRequiresActivation ? (
-              <button
-                type="button"
-                onClick={openChapterActivation}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
-              >
-                <Power
-                  className="size-4 shrink-0 opacity-95"
-                  strokeWidth={2}
-                  aria-hidden
-                />
-                {t("activateChapter")}
-              </button>
-            ) : null}
-
-            {hasPdf && (
-              pdfVisible && pdfUrl && !pdfRequiresActivation ? (
-                <button
-                  type="button"
-                  onClick={() => setPdfPreviewOpen(true)}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-                >
-                  <FileText className="size-4 shrink-0" strokeWidth={2} />
-                  {t("hasPdf")}
-                </button>
-              ) : pdfRequiresActivation ? (
-                <button
-                  type="button"
-                  onClick={openChapterActivation}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
-                >
-                  <Power
-                    className="size-4 shrink-0 opacity-95"
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                  {t("activateChapter")}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#94A3B8] opacity-70 sm:min-h-10 sm:py-2.5"
-                >
-                  <FileText className="size-4 shrink-0" strokeWidth={2} />
-                  {t("hasPdf")}
-                </button>
-              )
             )}
           </>
         )}
