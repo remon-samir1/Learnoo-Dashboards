@@ -1880,6 +1880,7 @@
     "pageTitle": "Exams & Quizzes",
     "pageDescription": "Manage assessments and quizzes",
     "createExam": "Create Exam",
+    "copyExam": "Copy Exam {title}",
     "searchPlaceholder": "Search exams by title...",
     "searchLabel": "Search exams by title",
     "loadErrorTitle": "Exams could not be loaded",

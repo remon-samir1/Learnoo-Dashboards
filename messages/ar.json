@@ -1915,6 +1915,7 @@
     "pageTitle": "الاختبارات والأسئلة",
     "pageDescription": "إدارة التقييمات والاختبارات",
     "createExam": "إنشاء اختبار",
+    "copyExam": "نسخ الاختبار {title}",
     "searchPlaceholder": "البحث عن اختبار بالعنوان...",
     "searchLabel": "البحث عن اختبار بالعنوان",
     "loadErrorTitle": "تعذر تحميل الاختبارات",

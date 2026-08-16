@@ -332,6 +332,15 @@ export default function EditExamPage() {
         return;
       }
 
+      const totalMarks = Number(examDetails.totalMarks) || 0;
+      const currentScore = Number(questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0).toFixed(2));
+      if (currentScore !== totalMarks) {
+        toast.error(locale === 'ar'
+          ? `مجموع درجات الأسئلة (${currentScore}) يجب أن يساوي الدرجة الكلية (${totalMarks})`
+          : `Total questions score (${currentScore}) must equal total marks (${totalMarks})`);
+        return;
+      }
+
       const formData = buildExamFormData(examDetails, questions, 'edit');
 
       // Submit directly using the helper.
@@ -661,6 +670,41 @@ export default function EditExamPage() {
 
         {/* ── Questions ── */}
         <div className="flex flex-col gap-8">
+          <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-[#F1F5F9] shadow-sm">
+            <div>
+              <h2 className="text-base font-bold text-[#1E293B]">
+                {locale === 'ar' ? 'الأسئلة' : 'Questions'}
+              </h2>
+              <p className={`text-sm mt-1 ${Number(questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0).toFixed(2)) === (Number(examDetails.totalMarks) || 0) ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+                {locale === 'ar'
+                  ? `مجموع الدرجات الحالي: ${Number(questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0).toFixed(2))} / ${examDetails.totalMarks}`
+                  : `Current total score: ${Number(questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0).toFixed(2))} / ${examDetails.totalMarks}`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const total = Number(examDetails.totalMarks) || 0;
+                if (questions.length > 0 && total > 0) {
+                  const perQuestion = Number((total / questions.length).toFixed(2));
+                  const newQuestions = questions.map(q => ({ ...q, score: perQuestion }));
+
+                  const totalAssigned = Number((perQuestion * questions.length).toFixed(2));
+                  const diff = Number((total - totalAssigned).toFixed(2));
+                  if (diff !== 0) {
+                    newQuestions[newQuestions.length - 1].score = Number((perQuestion + diff).toFixed(2));
+                  }
+
+                  setQuestions(newQuestions);
+                  toast.success(locale === 'ar' ? 'تم توزيع الدرجات بنجاح' : 'Marks distributed successfully');
+                }
+              }}
+              className="px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#2137D6] hover:bg-[#F1F5F9] transition-all"
+            >
+              {locale === 'ar' ? 'توزيع الدرجات بالتساوي' : 'Distribute marks equally'}
+            </button>
+          </div>
+
           {/* Insert at top button */}
           <div className="flex justify-center -mb-4 relative z-10">
             <button
