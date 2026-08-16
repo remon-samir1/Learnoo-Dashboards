@@ -1225,6 +1225,8 @@ function ChapterRow({
         pdfUrl={pdfUrl}
         title={attrs.title}
         contentType="chapters"
+        chapterId={Number(chapter.id)}
+        viewByMinute={attrs.view_by_minute ?? 0}
       />
     </div>
   );

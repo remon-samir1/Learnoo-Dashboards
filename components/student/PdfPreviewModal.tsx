@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { useCurrentUser } from '@/src/hooks';
 import { resolveEnabledWatermarkBucket, WatermarkResolution } from '@/src/lib/watermark-from-features';
 import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
+import { api } from '@/src/lib/api';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -27,6 +28,10 @@ type Props = {
   onScaleChange?: (scale: number) => void;
   /** Content type used to resolve the correct watermark bucket. Defaults to 'chapters'. */
   contentType?: 'chapters' | 'library' | 'liveStreams' | 'videos' | 'files' | 'exams';
+  /** Chapter ID to record a view for when the PDF is opened. */
+  chapterId?: number | null;
+  /** Minutes of reading time before recording a view (matches chapter `view_by_minute`). 0 = immediate. */
+  viewByMinute?: number;
 };
 
 function PdfPreviewContent({
@@ -142,6 +147,8 @@ export default function PdfPreviewModal({
   scale: externalScale,
   onScaleChange,
   contentType = 'chapters',
+  chapterId,
+  viewByMinute = 0,
 }: Props) {
   const [internalScale, setInternalScale] = useState(1.0);
   const [numPages, setNumPages] = useState(0);
@@ -194,6 +201,49 @@ export default function PdfPreviewModal({
       (e.target as HTMLInputElement).blur();
     }
   };
+
+  // ── PDF View Recording ──────────────────────────────────────────────────
+  const viewRecordedRef = useRef(false);
+
+  useEffect(() => {
+    // Reset when modal closes or chapter changes
+    if (!open) {
+      viewRecordedRef.current = false;
+      return;
+    }
+
+    if (!chapterId || !Number.isFinite(chapterId)) return;
+
+    let cancelled = false;
+    const minutesRequired = Math.max(0, Number(viewByMinute) || 0);
+    const delayMs = minutesRequired > 0 ? minutesRequired * 60 * 1000 : 0;
+
+    const recordView = async () => {
+      if (cancelled || viewRecordedRef.current) return;
+      viewRecordedRef.current = true;
+      try {
+        await api.chapters.recordView(chapterId);
+      } catch {
+        // Silently ignore — view limit errors are handled by the server
+        viewRecordedRef.current = false;
+      }
+    };
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    if (delayMs === 0) {
+      void recordView();
+    } else {
+      timeoutId = setTimeout(() => {
+        if (!cancelled) void recordView();
+      }, delayMs);
+    }
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) clearTimeout(timeoutId);
+    };
+  }, [open, chapterId, viewByMinute]);
+  // ────────────────────────────────────────────────────────────────────────
 
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
   const { user } = useCurrentUser();
