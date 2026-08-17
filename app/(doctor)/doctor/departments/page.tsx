@@ -95,6 +95,7 @@ import {
 
 import { DeleteModal } from "@/src/components/ui/DeleteModal";
 import { CourseTreeSelect } from "@/src/components/admin/CourseTreeSelect";
+import { InstructorSelect } from "@/src/components/admin/InstructorSelect";
 
 import toast, { Toaster } from "react-hot-toast";
 
@@ -4013,26 +4014,15 @@ function EditModal({
                       Instructor
                     </label>
 
-                    <select
+                    <InstructorSelect
                       value={formData.instructor_id || ""}
-                      onChange={(e) =>
+                      onChange={(id) =>
                         setFormData({
                           ...formData,
-                          instructor_id: e.target.value,
+                          instructor_id: id,
                         })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      disabled={instructorsLoading}
-                    >
-                      <option value="">
-                        {instructorsLoading ? "Loading..." : "Select Instructor"}
-                      </option>
-                      {instructors?.map((instructor: any) => (
-                        <option key={instructor.id} value={instructor.id}>
-                          {instructor.attributes.first_name} {instructor.attributes.last_name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
               </div>
@@ -5296,26 +5286,15 @@ function AddModal({
                   Instructor
                 </label>
 
-                <select
+                <InstructorSelect
                   value={formData.instructor_id || ""}
-                  onChange={(e) =>
+                  onChange={(id) =>
                     setFormData({
                       ...formData,
-                      instructor_id: e.target.value,
+                      instructor_id: id,
                     })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  disabled={instructorsLoading}
-                >
-                  <option value="">
-                    {instructorsLoading ? "Loading..." : "Select Instructor"}
-                  </option>
-                  {instructors?.map((instructor: any) => (
-                    <option key={instructor.id} value={instructor.id}>
-                      {instructor.attributes.first_name} {instructor.attributes.last_name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               {/* Show In Field */}
