@@ -133,6 +133,14 @@ export default function GetStudentNotes({
         <div className="space-y-4">
           {visibleNotes.map((note) => {
             const studentNote = note.attributes;
+            const attachmentUrl = studentNote?.attachment?.url;
+            const attachmentExt = (
+              (studentNote?.attachment as any)?.extension ||
+              attachmentUrl?.split(".").pop() ||
+              ""
+            ).toLowerCase();
+            const isVideo = ["mp4", "webm", "ogg", "mov", "avi", "mkv"].includes(attachmentExt);
+            const isImage = ["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"].includes(attachmentExt);
 
             return (
               <Link
@@ -141,11 +149,23 @@ export default function GetStudentNotes({
                 className="group block overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white transition duration-300 hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-lg"
               >
                 <div className="flex gap-4 p-4">
-                  {studentNote?.attachment?.url ? (
+                  {attachmentUrl && isVideo ? (
+                    /* Video attachment — show a play-button icon tile */
+                    <div className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gray-900">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="white"
+                        className="size-7 opacity-90"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  ) : attachmentUrl && isImage ? (
                     <div className="relative size-14 shrink-0 overflow-hidden rounded-2xl">
                       <Image
-                        src={studentNote.attachment.url}
-                        alt={studentNote.title ?? "Note image"}
+                        src={attachmentUrl}
+                        alt={studentNote?.title ?? "Note image"}
                         fill
                         className="object-cover"
                       />

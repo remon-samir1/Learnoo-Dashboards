@@ -138,6 +138,7 @@ function DiscussionNode({
   const discussionType = d.attributes?.type;
   const imageUrl = d.attributes?.image;
   const _duration = d.attributes?.duration;
+  const [repliesOpen, setRepliesOpen] = useState(false);
 
   // Detect voice discussions based on actual API structure
   const isVoice = discussionType === 'voice';
@@ -203,7 +204,7 @@ function DiscussionNode({
         <p className={`mt-3 leading-relaxed text-slate-300 ${isReply ? 'text-[13px]' : 'text-sm'}`}>{content}</p>
       ) : null}
 
-      {imageUrl && !isVoice && (
+      {imageUrl && (
         <button
           type="button"
           onClick={() => onPreviewImage(imageUrl)}
@@ -230,7 +231,18 @@ function DiscussionNode({
           {t('reply')}
         </button>
         {replies.length > 0 && (
-          <span className="text-xs text-slate-600">{replies.length} {replies.length === 1 ? 'reply' : 'replies'}</span>
+          <button
+            type="button"
+            onClick={() => setRepliesOpen((o) => !o)}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 transition-colors hover:text-white"
+          >
+            <ChevronDown
+              className={`size-3 shrink-0 transition-transform ${repliesOpen ? 'rotate-180' : ''}`}
+            />
+            {repliesOpen
+              ? `Hide ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`
+              : `Show ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
+          </button>
         )}
       </div>
 
@@ -264,7 +276,7 @@ function DiscussionNode({
         </div>
       )}
 
-      {replies.length > 0 && (
+      {replies.length > 0 && repliesOpen && (
         <div className="mt-4 border-s-2 border-slate-700/30 ps-3 sm:ps-5 ms-2 sm:ms-3">
           {replies.map((r, ri) => (
             <DiscussionNode
@@ -1186,13 +1198,17 @@ export default function ChapterWatchView({
                   </div>
                 </div> */}
 
-                  <div className="flex justify-stretch md:min-w-0 md:justify-end">
+                  <div className="flex items-center justify-stretch gap-2 md:min-w-0 md:justify-end">
                     <button
                       type="button"
                       onClick={() => setDiscussionsOpen((o) => !o)}
-                      className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border border-slate-600/90 bg-slate-800/90 px-8 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 active:bg-slate-800/80 max-md:px-12 md:flex-1 md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5"
+                      className={`inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border px-8 py-3 text-sm font-semibold text-white transition active:bg-slate-800/80 max-md:px-12 md:flex-1 md:min-h-0 md:w-auto md:shrink-0 md:px-5 md:py-2.5 ${discussionsOpen
+                        ? 'border-[#2D43D1]/70 bg-[#2D43D1]/20 hover:bg-[#2D43D1]/30'
+                        : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800'
+                        }`}
                       aria-expanded={discussionsOpen}
                     >
+                      <MessageCircle className="size-4 shrink-0" aria-hidden />
                       {t('discussionsCount', { count: discussions.length })}
                       <ChevronDown
                         className={`size-4 shrink-0 transition ${discussionsOpen ? 'rotate-180' : ''}`}
