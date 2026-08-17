@@ -183,7 +183,7 @@ function StudentNoteCard({
         {/* Attachment preview */}
         {attrs.attachment?.url && (() => {
           const url = attrs.attachment.url;
-          const ext = ((attrs.attachment as any).extension ||
+          const ext = (attrs.attachment.extension ||
             url.split('.').pop() || '').toLowerCase();
           const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext);
           const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
@@ -216,7 +216,7 @@ function StudentNoteCard({
                     rel="noopener noreferrer"
                     className="text-sm font-medium text-blue-600 hover:underline truncate"
                   >
-                    {(attrs.attachment as any).name || 'Download attachment'}
+                    {attrs.attachment.name || 'Download attachment'}
                   </a>
                 </div>
               )}
