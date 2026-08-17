@@ -1,8 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { ChevronDown, FileText, Loader2, X } from 'lucide-react';
+import { ChevronDown, Download, FileText, Loader2, X } from 'lucide-react';
 import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import { useDeleteNote, useUpdateNote } from '@/src/hooks/useNotes';
 import type { Note, NoteType } from '@/src/types';
@@ -178,9 +179,53 @@ function StudentNoteCard({
         {content ? (
           <p className="mt-2 text-sm leading-relaxed text-[#475569]">{content}</p>
         ) : null}
+
+        {/* Attachment preview */}
+        {attrs.attachment?.url && (() => {
+          const url = attrs.attachment.url;
+          const ext = ((attrs.attachment as any).extension ||
+            url.split('.').pop() || '').toLowerCase();
+          const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext);
+          const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
+
+          return (
+            <div className="mt-3 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+              {isVideo ? (
+                <video
+                  src={url}
+                  controls
+                  className="w-full max-h-[300px] object-contain"
+                  preload="metadata"
+                />
+              ) : isImage ? (
+                <div className="flex items-center justify-center max-h-[300px] overflow-hidden">
+                  <Image
+                    src={url}
+                    alt={attrs.title || 'Note attachment'}
+                    width={600}
+                    height={300}
+                    className="h-auto w-full max-h-[300px] object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <Download size={16} className="shrink-0 text-blue-600" aria-hidden />
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-blue-600 hover:underline truncate"
+                  >
+                    {(attrs.attachment as any).name || 'Download attachment'}
+                  </a>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
-  
+
     </li>
   );
 }
