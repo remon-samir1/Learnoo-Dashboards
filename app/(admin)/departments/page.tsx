@@ -1950,11 +1950,11 @@ export default function DepartmentsPage() {
     const newErrors: Record<string, string> = {};
 
     if (!noteTitle.trim()) {
-      newErrors.title = "Title is required";
+      newErrors.title = t("departments.noteTitleRequired");
     }
 
     if (!noteType.trim()) {
-      newErrors.type = "Type is required";
+      newErrors.type = t("departments.noteTypeRequired");
     }
 
     setNoteErrors(newErrors);
@@ -1987,11 +1987,11 @@ export default function DepartmentsPage() {
 
       if (isEditMode && editingNoteId) {
         await updateNote(parseInt(editingNoteId), noteData);
-        toast.success("Note updated successfully");
+        toast.success(t("departments.noteUpdatedSuccess"));
         refetchAll();
       } else {
         await createNote(noteData);
-        toast.success("Note created successfully");
+        toast.success(t("departments.noteCreatedSuccess"));
         refetchAll();
       }
 
@@ -2018,7 +2018,7 @@ export default function DepartmentsPage() {
       setEditingNoteId(null);
     } catch {
       toast.error(
-        isEditMode ? "Failed to update note" : "Failed to create note",
+        isEditMode ? t("departments.noteUpdateFailed") : t("departments.noteCreateFailed"),
       );
     }
   };
@@ -3033,13 +3033,13 @@ export default function DepartmentsPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-2xl font-bold text-[#1E293B]">
-                  {isEditMode ? "Edit Note/Summary" : "Add Note/Summary"}
+                  {isEditMode ? t("departments.editNoteTitle") : t("departments.addNoteTitle")}
                 </h2>
 
                 <p className="text-sm text-[#64748B] mt-0.5">
                   {isEditMode
-                    ? "Update this note or summary"
-                    : "Create a new note or summary for this course"}
+                    ? t("departments.editNoteDesc")
+                    : t("departments.addNoteDesc")}
                 </p>
               </div>
 
@@ -3056,14 +3056,14 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-2">
-                  Title <span className="text-[#EF4444]">*</span>
+                  {t("departments.noteTitleLabel")} <span className="text-[#EF4444]">*</span>
                 </label>
 
                 <input
                   type="text"
                   value={noteTitle}
                   onChange={(e) => setNoteTitle(e.target.value)}
-                  placeholder="Enter note title"
+                  placeholder={t("departments.noteTitlePlaceholder")}
                   className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${noteErrors.title ? "border-[#EF4444]" : "border-[#E2E8F0]"
                     }`}
                 />
@@ -3079,7 +3079,7 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-2">
-                  Type <span className="text-[#EF4444]">*</span>
+                  {t("departments.noteTypeLabel")} <span className="text-[#EF4444]">*</span>
                 </label>
 
                 <select
@@ -3106,7 +3106,7 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-2">
-                  Course
+                  {t("departments.noteCourseLabel")}
                 </label>
 
                 <div className="relative">
@@ -3115,7 +3115,7 @@ export default function DepartmentsPage() {
                     disabled
                     className="w-full px-4 py-3 bg-gray-50 border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-not-allowed disabled:opacity-50"
                   >
-                    <option value="">Select course</option>
+                    <option value="">{t("departments.noteSelectCoursePlaceholder")}</option>
 
                     {courses?.map((course) => (
                       <option key={course.id} value={course.id}>
@@ -3132,14 +3132,14 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-2">
-                  Linked Lecture
+                  {t("departments.noteLinkedLectureLabel")}
                 </label>
 
                 <input
                   type="text"
                   value={noteLinkedLecture}
                   onChange={(e) => setNoteLinkedLecture(e.target.value)}
-                  placeholder="Enter linked lecture"
+                  placeholder={t("departments.noteLinkedLecturePlaceholder")}
                   className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
                 />
               </div>
@@ -3148,7 +3148,7 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-2">
-                  Content
+                  {t("departments.noteContentLabel")}
                 </label>
 
                 <div className="relative">
@@ -3157,7 +3157,7 @@ export default function DepartmentsPage() {
                   <textarea
                     value={noteContent}
                     onChange={(e) => setNoteContent(e.target.value)}
-                    placeholder="Enter note content"
+                    placeholder={t("departments.noteContentPlaceholder")}
                     rows={8}
                     className="w-full pl-12 pr-4 py-4 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
                   />
@@ -3172,7 +3172,7 @@ export default function DepartmentsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-2">
-                  Attachment
+                  {t("departments.noteAttachmentLabel")}
                 </label>
 
                 <input
@@ -3247,7 +3247,7 @@ export default function DepartmentsPage() {
                   htmlFor="isPublish"
                   className="text-sm font-semibold text-[#475569]"
                 >
-                  Publish immediately
+                  {t("departments.notePublishLabel")}
                 </label>
               </div>
 
@@ -3259,7 +3259,7 @@ export default function DepartmentsPage() {
                   onClick={() => setNoteModalOpen(false)}
                   className="px-5 py-2.5 text-sm font-bold text-[#64748B] hover:text-[#1E293B] transition-colors"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
 
                 <button
@@ -3271,12 +3271,12 @@ export default function DepartmentsPage() {
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
 
-                      {isEditMode ? "Updating..." : "Creating..."}
+                      {isEditMode ? t("departments.updating") : t("departments.creating")}
                     </>
                   ) : isEditMode ? (
-                    "Update Note"
+                    t("departments.updateNoteAction")
                   ) : (
-                    "Create Note"
+                    t("departments.createNoteAction")
                   )}
                 </button>
               </div>
