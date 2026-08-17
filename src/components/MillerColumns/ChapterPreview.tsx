@@ -21,19 +21,19 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
 
     for (const url of candidates) {
       if (!url || typeof url !== "string") continue;
-      
+
       const trimmed = url.trim();
       if (trimmed.length === 0) continue;
-      
+
       // Exclude literal "null"
       if (trimmed === "null") continue;
-      
+
       // Exclude URLs ending in "/storage" or "/storage/" (fake placeholder)
       if (trimmed.endsWith("/storage") || trimmed.endsWith("/storage/")) continue;
-      
+
       return trimmed;
     }
-    
+
     return null;
   };
 
@@ -73,7 +73,7 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
         <label className="text-[10px] font-bold text-gray-400 max-w-[300px] uppercase tracking-wider block mb-1">
           {t("videoPreview")}
         </label>
-        <div className="aspect-video w-full rounded-lg overflow-hidden border border-gray-200 bg-black">
+        <div className="aspect-video w-full w-[200px] rounded-lg overflow-hidden border border-gray-200 bg-black">
           {isEmbed ? (
             <iframe
               src={videoUrl}
@@ -85,7 +85,7 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
           ) : (
             <video
               src={videoUrl}
-              className="w-[200px] h-[200px]"
+              className="w-full h-[200px]"
               controls
               preload="metadata"
               onError={() => {
