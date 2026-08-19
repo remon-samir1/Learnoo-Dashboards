@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Globe, Loader2, MessageSquare, Plus, Reply, ThumbsUp } from 'lucide-react';
+import { BookOpen, ExternalLink, Globe, Loader2, MessageSquare, Plus, Reply, ThumbsUp } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -372,6 +372,9 @@ export default function StudentCommunityFeed({
             const liked = Boolean(post.attributes.user_reaction);
             const tags = post.attributes.tags ?? [];
             const postImageSrc = pickPostImageUrl(post.attributes);
+            const courseNames = (post.attributes.courses ?? []).map(
+              (c) => c.attributes?.title || null,
+            ).filter(Boolean) as string[];
 
             const cardTone = instructor
               ? 'border-amber-200 bg-amber-50/90'
@@ -387,8 +390,8 @@ export default function StudentCommunityFeed({
                     <div className="flex flex-wrap items-center gap-2 gap-y-1">
                       <span className="text-[15px] font-bold text-[#1E293B]">{userName}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${userRole.toLowerCase() === 'admin' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
-                          (userRole.toLowerCase() === 'doctor' || userRole.toLowerCase() === 'instructor') ? 'bg-blue-100 text-blue-700 border border-blue-200' :
-                            'bg-slate-100 text-slate-700 border border-slate-200'
+                        (userRole.toLowerCase() === 'doctor' || userRole.toLowerCase() === 'instructor') ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
                         {userRole}
                       </span>
@@ -401,6 +404,20 @@ export default function StudentCommunityFeed({
                         {typeLabel}
                       </span>
                     </div>
+
+                    {courseNames.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {courseNames.map((name) => (
+                          <span
+                            key={name}
+                            className="inline-flex items-center gap-1 rounded-full bg-[#EEF2FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#2137D6]"
+                          >
+                            <BookOpen className="size-3 shrink-0" aria-hidden />
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
 
                     <h3 className="mt-3 text-base font-bold text-[#0F172A] sm:text-[17px]">{post.attributes.title}</h3>
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[#475569]">

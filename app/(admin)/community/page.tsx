@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { ChevronDown, MessageCircle, Send, Globe, Edit2, Trash2, MessageSquare, Pin, Check, Trash, Loader2, X, Eye, Plus, ChevronRight, FolderOpen, BookOpen } from 'lucide-react';
+import { ChevronDown, MessageCircle, Send, Globe, Edit2, Trash2, MessageSquare, Pin, Check, Trash, Loader2, X, Eye, Plus, ChevronRight, FolderOpen, BookOpen, Search } from 'lucide-react';
 import { usePosts, useDeletePost, useUpdatePost, useCreatePost } from '@/src/hooks/usePosts';
 import { useSocialLinks, useCreateSocialLink, useUpdateSocialLink, useDeleteSocialLink } from '@/src/hooks/useSocialLinks';
 import { useCourses } from '@/src/hooks/useCourses';
@@ -445,11 +445,43 @@ export default function CommunityModerationPage() {
 
   // Tree selection state
   const [courseTreeExpanded, setCourseTreeExpanded] = useState<Set<string>>(new Set());
+  const [socialTreeSearch, setSocialTreeSearch] = useState('');
 
   // Build course tree
   const courseTree = useMemo(() => {
     return buildCourseTree(universities, faculties, centers, departments, courses || []);
   }, [universities, faculties, centers, departments, courses]);
+
+  // Filtered tree for social link modal search
+  const filteredSocialTree = useMemo(() => {
+    if (!socialTreeSearch.trim()) return courseTree;
+    const query = socialTreeSearch.toLowerCase();
+    const filterNodes = (nodes: TreeNode[]): TreeNode[] => {
+      const result: TreeNode[] = [];
+      for (const node of nodes) {
+        const nameMatches = node.name.toLowerCase().includes(query);
+        const filteredChildren = filterNodes(node.children);
+        if (nameMatches || filteredChildren.length > 0) {
+          result.push({ ...node, children: filteredChildren });
+        }
+      }
+      return result;
+    };
+    return filterNodes(courseTree);
+  }, [courseTree, socialTreeSearch]);
+
+  // When searching, auto-expand all visible parent nodes
+  const displaySocialExpanded = useMemo(() => {
+    if (!socialTreeSearch.trim()) return courseTreeExpanded;
+    const allIds = new Set<string>();
+    const collectIds = (nodes: TreeNode[]) => {
+      nodes.forEach(node => {
+        if (node.children.length > 0) { allIds.add(node.id); collectIds(node.children); }
+      });
+    };
+    collectIds(filteredSocialTree);
+    return allIds;
+  }, [socialTreeSearch, courseTreeExpanded, filteredSocialTree]);
 
   // Handle tree node toggle
   const handleCourseTreeToggle = (nodeId: string) => {
@@ -493,12 +525,13 @@ export default function CommunityModerationPage() {
     type: 'post' as 'post' | 'question' | 'summary',
     status: 'published' as 'draft' | 'published',
     image: null as File | null,
+    imagePreview: '' as string,
     course_ids: [] as string[]
   });
 
   useEffect(() => {
     if (postsData) {
-      setPosts(postsData);
+      setPosts(postsData.filter(p => !p.attributes.parent_id));
     }
   }, [postsData]);
 
@@ -633,7 +666,7 @@ export default function CommunityModerationPage() {
         subtitle: '',
         color: '',
         status: true,
-        is_paid: false
+        is_paid: true
       });
       setCourseTreeExpanded(new Set());
     }
@@ -652,8 +685,9 @@ export default function CommunityModerationPage() {
       subtitle: '',
       color: '',
       status: true,
-      is_paid: false
+      is_paid: true
     });
+    setSocialTreeSearch('');
   };
 
   const handleSaveSocialLink = async () => {
@@ -701,13 +735,23 @@ export default function CommunityModerationPage() {
 
   const startEdit = (post: Post) => {
     setEditingPost(post);
+    // Prefer the full `courses` objects returned by the API, fall back to course_ids / course_id
+    const courseIds: string[] =
+      post.attributes.courses && post.attributes.courses.length > 0
+        ? post.attributes.courses.map((c) => String(c.id))
+        : post.attributes.course_ids
+          ? post.attributes.course_ids.map((id: number) => String(id))
+          : post.attributes.course_id
+            ? [String(post.attributes.course_id)]
+            : [];
     setCreateForm({
       title: post.attributes.title,
       content: post.attributes.content,
       type: post.attributes.type as 'post' | 'question' | 'summary',
       status: post.attributes.status as 'draft' | 'published',
       image: null,
-      course_ids: post.attributes.course_ids ? post.attributes.course_ids.map((id: number) => String(id)) : (post.attributes.course_id ? [String(post.attributes.course_id)] : [])
+      imagePreview: post.attributes.image_url || post.attributes.image || '',
+      course_ids: courseIds
     });
     setIsCreateModalOpen(true);
   };
@@ -720,6 +764,7 @@ export default function CommunityModerationPage() {
       type: 'post',
       status: 'published',
       image: null,
+      imagePreview: '',
       course_ids: []
     });
     setIsCreateModalOpen(false);
@@ -1006,23 +1051,42 @@ export default function CommunityModerationPage() {
             <div className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-semibold text-[#475569] mb-1">{t('community.socialLinks.modal.course')}</label>
-                <div className="border border-[#E2E8F0] rounded-xl max-h-48 overflow-y-auto">
-                  {courseTree.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-gray-500">Loading courses...</div>
-                  ) : (
-                    <div className="py-2">
-                      {courseTree.map((node) => (
-                        <CourseTreeItem
-                          key={node.id}
-                          node={node}
-                          expanded={courseTreeExpanded}
-                          onToggle={handleCourseTreeToggle}
-                          onSelect={handleCourseTreeSelect}
-                          selectedCourseIds={socialForm.course_ids || []}
-                        />
-                      ))}
-                    </div>
-                  )}
+                <div className="border border-[#E2E8F0] rounded-xl overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 py-2 border-b border-[#E2E8F0] bg-[#F8FAFC]">
+                    <Search className="w-4 h-4 text-[#94A3B8] flex-shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Search courses..."
+                      value={socialTreeSearch}
+                      onChange={(e) => setSocialTreeSearch(e.target.value)}
+                      className="w-full bg-transparent text-sm text-[#1E293B] focus:outline-none placeholder:text-[#94A3B8]"
+                    />
+                    {socialTreeSearch && (
+                      <button type="button" onClick={() => setSocialTreeSearch('')} className="text-[#94A3B8] hover:text-[#475569]">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-44 overflow-y-auto">
+                    {filteredSocialTree.length === 0 ? (
+                      <div className="p-4 text-center text-sm text-gray-500">
+                        {socialTreeSearch ? 'No matching courses' : 'Loading courses...'}
+                      </div>
+                    ) : (
+                      <div className="py-2">
+                        {filteredSocialTree.map((node) => (
+                          <CourseTreeItem
+                            key={node.id}
+                            node={node}
+                            expanded={displaySocialExpanded}
+                            onToggle={handleCourseTreeToggle}
+                            onSelect={handleCourseTreeSelect}
+                            selectedCourseIds={socialForm.course_ids || []}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1234,10 +1298,26 @@ export default function CommunityModerationPage() {
                 <label className="block text-sm font-semibold text-[#475569] mb-1">
                   {t('community.createPost.imageLabel')}
                 </label>
+                {createForm.imagePreview && (
+                  <div className="mb-3">
+                    <img src={createForm.imagePreview} alt="Preview" className="max-h-40 rounded-lg object-cover" />
+                  </div>
+                )}
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setCreateForm({ ...createForm, image: e.target.files?.[0] || null })}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setCreateForm({ ...createForm, image: file, imagePreview: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    } else {
+                      setCreateForm({ ...createForm, image: null, imagePreview: editingPost ? (editingPost.attributes.image_url || editingPost.attributes.image || '') : '' });
+                    }
+                  }}
                   className="w-full text-sm text-[#475569] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-[#EEF2FF] file:text-[#2137D6] hover:file:bg-[#DBEAFE]"
                 />
               </div>

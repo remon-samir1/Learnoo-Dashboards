@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useCourse } from "@/src/hooks/useCourses";
 import {
-  coerceCanWatchExplicitTrue,
+  coercePreviewFlag,
   isNoVideoUrl,
   isStudentChapterPdfVisible,
   isStudentChapterPdfRequiresActivation,
@@ -900,9 +900,6 @@ function ChapterRow({
   const hasPdf = hasPdfAttachment(chapter);
   const pdfUrl = getFirstPdfUrl(chapter);
   const chapterLocked = attrs.is_locked === true;
-  const canWatchOk = coerceCanWatchExplicitTrue(attrs.can_watch);
-  /** Backend denied playback (`can_watch` not true) — chapter activation; not client view math. */
-  const needsPlaybackActivation = !chapterLocked && !canWatchOk;
   const videoPlayable = isStudentChapterVideoPlayable(chapter);
   const pdfVisible = isStudentChapterPdfVisible(chapter);
   const videoRequiresActivation = isStudentChapterVideoRequiresActivation(chapter);
@@ -923,8 +920,6 @@ function ChapterRow({
       : t("viewsUnlimited");
   const viewsExhausted = maxViews != null && maxViews > 0 && currentViews >= maxViews;
 
-  // Chapter-level locks collapse every per-content button into one chapter-level action.
-  const chapterLevelLocked = chapterLocked || viewsExhausted;
   // Some chapters are PDF-only — only show a video button when there is actual playable video.
   const hasVideoContent =
     !isNoVideoUrl(attrs.video ?? null) ||
@@ -932,21 +927,29 @@ function ChapterRow({
     !isNoVideoUrl(attrs.video_hls_url ?? null) ||
     !isNoVideoUrl(attrs.video_mp4_url ?? null);
 
-  /** Independent video button state. "hidden" ⇒ render nothing for video. */
+  /**
+   * Independent video button state.
+   * CASE 2: is_locked===false → videoPlayable is true → "watch".
+   * CASE 1: locked, is_free_preview → "watch"; no is_free_preview → "hidden" (Activate button shown separately).
+   * CASE 3: viewsExhausted → handled separately, videoButton/pdfButton not used in that branch.
+   */
   const videoButton:
     | "watch"
     | "activate"
     | "hidden" = (() => {
-      if (chapterLevelLocked) return "hidden";
+      // These branches are only rendered when neither chapterLocked nor viewsExhausted.
       if (!hasVideoContent) return "hidden";
       if (videoPlayable && !videoRequiresActivation) return "watch";
-      if (needsPlaybackActivation || videoRequiresActivation) return "activate";
+      if (videoRequiresActivation) return "activate";
       return "hidden";
     })();
 
-  /** Independent PDF button state. "hidden" ⇒ render nothing for PDF. */
+  /**
+   * Independent PDF button state.
+   * CASE 2: is_locked===false → pdfVisible is true → "open".
+   * CASE 1: locked, is_free_preview_attachment → "open"; no flag → "hidden" (Activate button shown separately).
+   */
   const pdfButton: "open" | "activate" | "hidden" = (() => {
-    if (chapterLevelLocked) return "hidden";
     if (!hasPdf) return "hidden";
     if (!pdfUrl) return "hidden";
     if (pdfVisible && !pdfRequiresActivation) return "open";
@@ -966,26 +969,16 @@ function ChapterRow({
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12";
     iconColor = "#94A3B8";
     IconEl = Lock;
-  } else if (needsPlaybackActivation) {
-    iconWrap =
-      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12";
-    iconColor = "#D97706";
-    IconEl = Play;
-  } else if (videoRequiresActivation) {
-    iconWrap =
-      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12";
-    iconColor = "#D97706";
-    IconEl = Play;
   } else if (viewsExhausted) {
     iconWrap =
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FEF2F2] text-[#DC2626] sm:size-12";
     iconColor = "#DC2626";
     IconEl = Lock;
-  } else if (!videoPlayable) {
+  } else if (videoRequiresActivation || !videoPlayable) {
     iconWrap =
-      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12";
-    iconColor = "#94A3B8";
-    IconEl = Lock;
+      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12";
+    iconColor = "#D97706";
+    IconEl = Play;
   }
 
   const heading = t("chapterItemHeading", {
@@ -1048,11 +1041,6 @@ function ChapterRow({
                 {t("hasExam")}
               </span>
             )}
-            {needsPlaybackActivation ? (
-              <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-amber-50 text-amber-900">
-                {t("watchAccessPending")}
-              </span>
-            ) : null}
             {videoRequiresActivation ? (
               <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-amber-50 text-amber-900">
                 {t("watchAccessPending")}
@@ -1080,8 +1068,8 @@ function ChapterRow({
         */}
         {chapterLocked ? (
           <>
-            {/* Free-preview video: accessible even when locked */}
-            {hasVideoContent && attrs.is_free_preview === 1 && (
+            {/* CASE 1: Free-preview VIDEO: accessible even when locked (is_free_preview only — not PDF) */}
+            {hasVideoContent && coercePreviewFlag(attrs.is_free_preview) && (
               <Link
                 href={watchHref}
                 prefetch
@@ -1094,8 +1082,8 @@ function ChapterRow({
                 />
               </Link>
             )}
-            {/* Free-preview PDF: accessible even when locked */}
-            {hasPdf && pdfUrl && attrs.is_free_preview_attachment && (
+            {/* CASE 1: Free-preview PDF: accessible even when locked (is_free_preview_attachment only — not video) */}
+            {hasPdf && pdfUrl && coercePreviewFlag(attrs.is_free_preview_attachment) && (
               <button
                 type="button"
                 onClick={() => setPdfPreviewOpen(true)}
@@ -1188,32 +1176,22 @@ function ChapterRow({
             )}
 
             {videoButton === "hidden" && pdfButton === "hidden" && (
-              attrs.is_activated ? (
-                <Link
-                  href={watchHref}
-                  prefetch
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-                >
-                  {t("watch")}
-                  <ChevronRight
-                    className="size-4 shrink-0 rtl:rotate-180"
-                    strokeWidth={2.5}
-                  />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={openChapterActivation}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
-                >
-                  <Power
-                    className="size-4 shrink-0 opacity-90"
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                  {t("activateChapter")}
-                </button>
-              )
+              /*
+               * CASE 2: is_locked===false but no video URL + no PDF found.
+               * This is an edge case (e.g. chapter content not yet uploaded).
+               * Still show Watch so the student can navigate to the watch page.
+               */
+              <Link
+                href={watchHref}
+                prefetch
+                className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
+              >
+                {t("watch")}
+                <ChevronRight
+                  className="size-4 shrink-0 rtl:rotate-180"
+                  strokeWidth={2.5}
+                />
+              </Link>
             )}
           </>
         )}

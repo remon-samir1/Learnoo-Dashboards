@@ -11,6 +11,7 @@ import { DataTable, Column, Pagination } from '@/src/components/ui/DataTable';
 import { DeleteModal } from '@/src/components/ui/DeleteModal';
 import { useCodes, usePaginatedCodes, useDeleteCode, useActivateCode } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
+import { useDepartments } from '@/src/hooks/useDepartments';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
@@ -60,6 +61,7 @@ export default function ActivationPage() {
     'Library': 'App\\Models\\Library',
     'Live Room': 'App\\Models\\LiveRoom',
     'Quiz': 'App\\Models\\Quiz',
+    'Department': 'App\\Models\\Department',
   };
 
   const mappedTypeFilter = typeFilter !== 'All Types' ? codeableTypeMap[typeFilter] : undefined;
@@ -90,6 +92,7 @@ export default function ActivationPage() {
   const { data: libraries } = useLibraries();
   const { data: liveRooms } = useLiveRooms();
   const { data: quizzes } = useQuizzes();
+  const { data: departments } = useDepartments();
 
   const handleDelete = (code: Code) => {
     setSelectedCode(code);
@@ -119,8 +122,8 @@ export default function ActivationPage() {
     // Identify codes that don't belong to anything
     codes.forEach((code) => {
       const itemName = getItemName(code.attributes.codeable_type, code.attributes.codeable_id);
-      // Check if the item name is a fallback (e.g., "Course #123", "Chapter #123", "Library #123", "Live Room #123", "Quiz #123")
-      const isOrphaned = /^(Course|Chapter|Library|Live Room|Quiz) #\d+$/.test(itemName);
+      // Check if the item name is a fallback (e.g., "Course #123", "Chapter #123", "Library #123", "Live Room #123", "Quiz #123", "Department #123")
+      const isOrphaned = /^(Course|Chapter|Library|Live Room|Quiz|Department) #\d+$/.test(itemName);
       if (isOrphaned) {
         orphanedCodes.push(code);
       }
@@ -168,12 +171,14 @@ export default function ActivationPage() {
     }
 
     try {
-      const itemType: 'course' | 'chapter' | 'library' =
+      const itemType: 'course' | 'chapter' | 'library' | 'department' =
         code.attributes.codeable_type === 'App\\Models\\Course'
           ? 'course'
           : code.attributes.codeable_type === 'App\\Models\\Chapter'
             ? 'chapter'
-            : 'library';
+            : code.attributes.codeable_type === 'App\\Models\\Department'
+              ? 'department'
+              : 'library';
       await activateCode({
         code: code.attributes.code,
         item_id: code.attributes.codeable_id,
@@ -198,6 +203,7 @@ export default function ActivationPage() {
       'App\\Models\\Library': t('activation.types.library'),
       'App\\Models\\LiveRoom': t('activation.types.liveRoom'),
       'App\\Models\\Quiz': t('activation.types.quiz'),
+      'App\\Models\\Department': t('activation.types.department'),
     };
     return labels[type] || type;
   };
@@ -209,12 +215,13 @@ export default function ActivationPage() {
       'App\\Models\\Library': 'bg-purple-100 text-purple-700',
       'App\\Models\\LiveRoom': 'bg-orange-100 text-orange-700',
       'App\\Models\\Quiz': 'bg-pink-100 text-pink-700',
+      'App\\Models\\Department': 'bg-indigo-100 text-indigo-700',
     };
     return colors[type] || 'bg-gray-100 text-gray-700';
   };
 
   const getItemName = (type: string, id: number) => {
-    let item: Course | Chapter | Library | LiveRoom | Quiz | undefined;
+    let item: Course | Chapter | Library | LiveRoom | Quiz | any | undefined;
     switch (type) {
       case 'App\\Models\\Course':
         item = courses?.find((c: Course) => parseInt(c.id) === id);
@@ -231,6 +238,9 @@ export default function ActivationPage() {
       case 'App\\Models\\Quiz':
         item = quizzes?.find((q: Quiz) => parseInt(q.id) === id);
         return item?.attributes.title || `Quiz #${id}`;
+      case 'App\\Models\\Department':
+        item = departments?.find((d: any) => parseInt(d.id) === id);
+        return item?.attributes?.name || `Department #${id}`;
       default:
         return `Item #${id}`;
     }
@@ -250,6 +260,8 @@ export default function ActivationPage() {
         return liveRooms?.map((lr) => ({ value: lr.id, label: lr.attributes.title })) || [];
       case 'Quiz':
         return quizzes?.map((q) => ({ value: q.id, label: q.attributes.title })) || [];
+      case 'Department':
+        return departments?.map((d: any) => ({ value: d.id, label: d.attributes.name })) || [];
       default:
         return [];
     }
@@ -425,6 +437,7 @@ export default function ActivationPage() {
                     { value: 'Course', label: t('activation.types.course') },
                     { value: 'Chapter', label: t('activation.types.chapter') },
                     { value: 'Library', label: t('activation.types.library') },
+                    { value: 'Department', label: t('activation.types.department') },
                   ],
                   value: typeFilter === 'All Types' ? '' : typeFilter,
                   onChange: (val) => {

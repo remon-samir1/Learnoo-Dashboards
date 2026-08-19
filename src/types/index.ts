@@ -3234,6 +3234,9 @@ export interface PostAttributes {
   /** Multiselect course ids for community posts */
   course_ids?: number[];
 
+  /** Full course objects returned inline by the posts list API. */
+  courses?: { id: string; type: string; attributes: { title: string;[key: string]: unknown } }[];
+
   tags: string[];
 
 

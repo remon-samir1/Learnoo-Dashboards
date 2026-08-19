@@ -98,27 +98,53 @@ function normaliseCourseId(value: unknown): string | null {
 }
 
 /**
- * Resolve the owning course id for a quiz from the loose API payload.
- * Tries `courses.data[0].id` first, then `course_id` as a fallback.
+ * Resolve the owning course ids for a quiz from the loose API payload.
+ * Tries `courses_ids` first, then `courses`, then `course_id` as a fallback.
  */
-export function readQuizOwningCourseId(
+export function readQuizOwningCourseIds(
   attrs: Record<string, unknown> | null | undefined
-): string | null {
-  if (!attrs) return null;
+): string[] {
+  if (!attrs) return [];
+  const out = new Set<string>();
+
+  // Use courses_ids if available (array of numbers/strings)
+  if (Array.isArray(attrs.courses_ids)) {
+    for (const val of attrs.courses_ids) {
+      const id = normaliseCourseId(val);
+      if (id != null) out.add(id);
+    }
+  }
+
+  // Fallback to courses relationship
   const courses = attrs.courses;
-  if (courses != null && typeof courses === 'object' && !Array.isArray(courses)) {
-    const data = (courses as Record<string, unknown>).data;
-    if (Array.isArray(data) && data.length > 0) {
-      const first = data[0];
-      if (first != null && typeof first === 'object') {
-        const id = normaliseCourseId((first as Record<string, unknown>).id);
-        if (id != null) return id;
+  if (courses != null) {
+    if (Array.isArray(courses)) {
+      // Direct array of course objects
+      for (const course of courses) {
+        if (course != null && typeof course === 'object') {
+          const id = normaliseCourseId((course as Record<string, unknown>).id);
+          if (id != null) out.add(id);
+        }
+      }
+    } else if (typeof courses === 'object') {
+      // JSON API style nested data array
+      const data = (courses as Record<string, unknown>).data;
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (item != null && typeof item === 'object') {
+            const id = normaliseCourseId((item as Record<string, unknown>).id);
+            if (id != null) out.add(id);
+          }
+        }
       }
     }
   }
+
+  // Fallback to old course_id
   const direct = normaliseCourseId(attrs.course_id);
-  if (direct != null) return direct;
-  return null;
+  if (direct != null) out.add(direct);
+
+  return Array.from(out);
 }
 
 /**
@@ -131,8 +157,8 @@ export function quizCourseIsEnrolled(
   enrolledCourseIds: ReadonlySet<string> | Iterable<string> | null | undefined
 ): boolean {
   if (!attrs || enrolledCourseIds == null) return false;
-  const cid = readQuizOwningCourseId(attrs);
-  if (cid == null) return false;
+  const cids = readQuizOwningCourseIds(attrs);
+  if (cids.length === 0) return false;
   const set: ReadonlySet<string> =
     enrolledCourseIds instanceof Set
       ? (enrolledCourseIds as ReadonlySet<string>)
@@ -145,7 +171,7 @@ export function quizCourseIsEnrolled(
           return out;
         })()
       );
-  return set.has(cid);
+  return cids.some(cid => set.has(cid));
 }
 
 /** True when the student must redeem an activation code before accessing this quiz/exam. */

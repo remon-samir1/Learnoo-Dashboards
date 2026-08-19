@@ -12,6 +12,7 @@ import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
 import { useLiveRooms } from '@/src/hooks/useLiveRooms';
 import { useQuizzes } from '@/src/hooks/useQuizzes';
+import { useDepartments } from '@/src/hooks/useDepartments';
 
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 
@@ -56,8 +57,8 @@ function SearchableItemSelect({
                     type="button"
                     onClick={() => onChange(String(item.id))}
                     className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${isSelected
-                        ? 'bg-[#2137D6] text-white font-medium'
-                        : 'hover:bg-slate-50 text-[#1E293B]'
+                      ? 'bg-[#2137D6] text-white font-medium'
+                      : 'hover:bg-slate-50 text-[#1E293B]'
                       }`}
                   >
                     {item.label}
@@ -81,6 +82,7 @@ function useCodeTypes(t: any) {
     { value: 'App\\Models\\Library', label: t('activation.types.library') },
     { value: 'App\\Models\\LiveRoom', label: t('activation.types.liveRoom') },
     { value: 'App\\Models\\Quiz', label: t('activation.types.quiz') },
+    { value: 'App\\Models\\Department', label: t('activation.types.department') },
   ];
 }
 
@@ -93,6 +95,7 @@ function GenerateCodeForm() {
   const { data: courses } = useCourses();
   const { data: libraries } = useLibraries();
   const { data: liveRooms } = useLiveRooms();
+  const { data: departments } = useDepartments();
 
   const [codeType, setCodeType] = useState('App\\Models\\Course');
   const [itemId, setItemId] = useState('');
@@ -103,6 +106,7 @@ function GenerateCodeForm() {
   const [liveRoomSearch, setLiveRoomSearch] = useState('');
   const [librarySearch, setLibrarySearch] = useState('');
   const [quizSearch, setQuizSearch] = useState('');
+  const [departmentSearch, setDepartmentSearch] = useState('');
   const [debouncedQuizSearch] = useDebounce(quizSearch, 500);
 
   const { data: quizzes, isLoading: isLoadingQuizzes } = useQuizzes({ title: debouncedQuizSearch });
@@ -114,6 +118,7 @@ function GenerateCodeForm() {
     const libraryId = searchParams.get('library_id');
     const liveRoomId = searchParams.get('live_room_id');
     const quizId = searchParams.get('quiz_id');
+    const departmentId = searchParams.get('department_id');
 
     if (courseId) {
       setCodeType('App\\Models\\Course');
@@ -130,6 +135,9 @@ function GenerateCodeForm() {
     } else if (quizId) {
       setCodeType('App\\Models\\Quiz');
       setItemId(quizId);
+    } else if (departmentId) {
+      setCodeType('App\\Models\\Department');
+      setItemId(departmentId);
     }
   }, [searchParams]);
 
@@ -172,6 +180,19 @@ function GenerateCodeForm() {
           onSearchChange: setQuizSearch,
           placeholder: t('activation.sections.searchStudents') || 'Search quizzes...',
           isLoading: isLoadingQuizzes,
+        };
+      case 'App\\Models\\Department':
+        const searchDeps = (departments || []).filter((d: any) =>
+          (d.attributes?.name || d.name || '').toLowerCase().includes(departmentSearch.toLowerCase())
+        );
+        return {
+          items: searchDeps.map((item: any) => ({
+            id: item.id,
+            label: item.attributes?.name || item.name || `Department ${item.id}`,
+          })),
+          searchValue: departmentSearch,
+          onSearchChange: setDepartmentSearch,
+          placeholder: t('activation.sections.searchStudents') || 'Search departments...',
         };
       default:
         return { items: [], searchValue: '', onSearchChange: () => { }, placeholder: '' };

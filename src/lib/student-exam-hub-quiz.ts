@@ -5,7 +5,7 @@
 import {
   quizRequiresCourseActivationLockWithEnrolled,
   readIsPublicMode,
-  readQuizOwningCourseId,
+  readQuizOwningCourseIds,
   readRemainingAttemptsFromQuizAttributes,
 } from '@/src/lib/student-quiz-activation-lock';
 
@@ -13,6 +13,7 @@ export type HubQuizListRow = {
   id: string;
   type?: string;
   attributes?: Record<string, unknown>;
+  [key: string]: unknown;
 };
 
 function coercePositiveInt(value: unknown): number | null {
@@ -45,16 +46,18 @@ function coerceNonNegativeInt(value: unknown): number | null {
 
 export function hubQuizAttrs(row: HubQuizListRow): Record<string, unknown> {
   const a = row.attributes;
-  return a != null && typeof a === 'object' && !Array.isArray(a) ? (a as Record<string, unknown>) : {};
+  const attrs = a != null && typeof a === 'object' && !Array.isArray(a) ? (a as Record<string, unknown>) : {};
+  // Merge root-level properties into attrs so helpers looking for courses_ids/is_public/etc. find them seamlessly
+  return { ...row, ...attrs };
 }
 
 /**
- * Read the owning course id for a quiz row in a string-normalised form.
+ * Read the owning course ids for a quiz row in a string-normalised form.
  * Re-exports the helper from the lock module so the hub code only has to
  * import this one file.
  */
-export function readHubQuizCourseId(row: HubQuizListRow): string | null {
-  return readQuizOwningCourseId(hubQuizAttrs(row));
+export function readHubQuizCourseIds(row: HubQuizListRow): string[] {
+  return readQuizOwningCourseIds(hubQuizAttrs(row));
 }
 
 export function readHubQuizMaxAttempts(row: HubQuizListRow): number | null {

@@ -133,7 +133,10 @@ export default function EditExamPage() {
       maxAttempts: String(quiz.attributes.max_attempts || 1),
       startTime: formatDateTimeForInput(quiz.attributes.start_time),
       endTime: formatDateTimeForInput(quiz.attributes.end_time),
-      is_public: (quiz.attributes.is_public ? 'true' : 'false') as 'true' | 'false',
+      is_public: (
+        String(quiz.attributes.is_public).toLowerCase() === 'included' ? 'included' :
+          (quiz.attributes.is_public === true || String(quiz.attributes.is_public).toLowerCase() === 'true') ? 'true' : 'false'
+      ) as 'true' | 'false' | 'included',
       status: quiz.attributes.status === 'active' ? 'Active' : 'Draft',
     });
 
@@ -284,7 +287,7 @@ export default function EditExamPage() {
       formData.append('file', aiFile);
       if (aiQuestionCount) formData.append('count', aiQuestionCount);
 
-      const response = await fetch('/api/ai-exam-extract', {
+      const response = await fetch('http://31.97.36.130:5678/webhook/form', {
         method: 'POST',
         body: formData,
       });

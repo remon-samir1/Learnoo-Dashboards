@@ -399,13 +399,54 @@ export default function ChapterWatchView({
   const chapterNumericId = Number.parseInt(chapterId, 10);
   const chapterIdForApi = Number.isFinite(chapterNumericId) ? chapterNumericId : NaN;
 
+  /**
+   * Normalise a raw URL coming from the API:
+   * - Fix accidental double-slashes after the protocol, e.g. "https:\/\/api…" or "https://api…" with backslashes
+   * - Trim whitespace
+   */
+  const normaliseVideoUrl = useCallback((raw: string | null | undefined): string => {
+    if (!raw) return '';
+    // Replace backslashes with forward slashes, then collapse any ://…// patterns
+    return raw
+      .trim()
+      .replace(/\\\//g, '/')            // backslash → forward slash
+      .replace(/([a-z])\/\/+/, '$1/');  // collapse duplicate slashes except after protocol
+  }, []);
+
   const videoSrc = useMemo(() => {
     if (!chapter) return '';
     const attrs = chapter.attributes;
-    const rawUrl = attrs.video_hls_url || attrs.video_mp4_url || attrs.video || attrs.playlist || '';
-    if (isNoVideoUrl(rawUrl)) return '';
-    return rawUrl;
-  }, [chapter]);
+
+    // Priority: explicit HLS URL → the `video` field (can be HLS playlist OR mp4) → mp4 URL → playlist field
+    const candidates = [
+      attrs.video_hls_url,
+      attrs.video,        // may be HLS playlist URL or mp4 – HlsVideoPlayer handles both
+      attrs.video_mp4_url,
+      (attrs as any).main_video,
+      attrs.playlist,
+    ];
+
+    for (const raw of candidates) {
+      const url = normaliseVideoUrl(raw);
+      if (url && !isNoVideoUrl(url)) return url;
+    }
+    return '';
+  }, [chapter, normaliseVideoUrl]);
+
+  /** The mp4 to pass to HlsVideoPlayer as a progressive fallback if HLS fails */
+  const mp4FallbackSrc = useMemo(() => {
+    if (!chapter) return '';
+    const attrs = chapter.attributes;
+    const candidates = [
+      attrs.video_mp4_url,
+      (attrs as any).main_video,
+    ];
+    for (const raw of candidates) {
+      const url = normaliseVideoUrl(raw);
+      if (url && !isNoVideoUrl(url)) return url;
+    }
+    return '';
+  }, [chapter, normaliseVideoUrl]);
 
   // Update stableVideoSrc only when chapter.id changes (new chapter), not on discussion refreshes
   useEffect(() => {
@@ -1071,7 +1112,7 @@ export default function ChapterWatchView({
                       <HlsVideoPlayer
                         ref={hlsVideoRef}
                         src={stableVideoSrc}
-                        mp4FallbackUrl={attrs.video_mp4_url ?? ''}
+                        mp4FallbackUrl={mp4FallbackSrc}
                         showCustomControls
                         showWatermark
                         watermarkContentType="chapters"
@@ -1291,12 +1332,17 @@ export default function ChapterWatchView({
                       {!audioBlob ? (
                         <div className="flex flex-col items-center gap-4 py-4">
                           {composerMoment != null ? (
-                            <span className="flex items-center gap-1 self-start text-[11px] text-slate-500">
-                              <Camera className="size-3" />
-                              {t('composerMomentLabel', {
-                                time: formatMomentSeconds(composerMoment) ?? '—',
-                              })}
-                            </span>
+                            <div className="flex items-center gap-3 self-start">
+                              <span className="flex items-center gap-1 text-[11px] text-slate-500">
+                                <Camera className="size-3" />
+                                {t('composerMomentLabel', {
+                                  time: formatMomentSeconds(composerMoment) ?? '—',
+                                })}
+                              </span>
+                              {framePreviewUrl && (
+                                <img src={framePreviewUrl} alt="Screenshot preview" className="h-[48px] w-auto rounded border border-slate-700 shadow-sm opacity-80" />
+                              )}
+                            </div>
                           ) : null}
                           {isRecording ? (
                             <>
@@ -1333,9 +1379,14 @@ export default function ChapterWatchView({
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
-                            <Mic className="size-4" />
-                            Voice note recorded ({formatRecordingTime(recordingSeconds)})
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400">
+                              <Mic className="size-4" />
+                              Voice note recorded ({formatRecordingTime(recordingSeconds)})
+                            </div>
+                            {framePreviewUrl && (
+                              <img src={framePreviewUrl} alt="Screenshot preview" className="h-[48px] w-auto rounded border border-slate-700 shadow-sm opacity-80" />
+                            )}
                           </div>
                           {audioUrl && (
                             <audio controls src={audioUrl} className="w-full rounded-lg [&::-webkit-media-controls-panel]:bg-slate-900 [&::-webkit-media-controls-current-time-display]:text-white [&::-webkit-media-controls-time-remaining-display]:text-white" />

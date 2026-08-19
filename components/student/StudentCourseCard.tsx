@@ -80,19 +80,17 @@ export const StudentCourseCard: React.FC<StudentCourseCardProps> = ({
       tabIndex={locked ? -1 : 0}
       onClick={locked ? undefined : () => onView?.()}
       onKeyDown={handleKeyDown}
-      className={`group overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${
-        locked
+      className={`group overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563EB] ${locked
           ? 'cursor-default'
           : 'cursor-pointer hover:-translate-y-0.5 hover:shadow-md'
-      }`}
+        }`}
     >
       <div className="relative h-52 overflow-hidden bg-slate-100">
         <img
           src={image}
           alt={title}
-          className={`h-full w-full object-cover object-center ${
-            locked ? '' : 'transition-transform duration-500 group-hover:scale-[1.03]'
-          }`}
+          className={`h-full w-full object-cover object-center ${locked ? '' : 'transition-transform duration-500 group-hover:scale-[1.03]'
+            }`}
         />
 
         {locked ? (
@@ -168,11 +166,11 @@ export const StudentCourseCard: React.FC<StudentCourseCardProps> = ({
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              onActivate?.();
+              onView?.();
             }}
             className="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-[#2137D6] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#1a2bb3] active:bg-[#162699]"
           >
-            {tCard('activateCourse')}
+            {tCard('courseDetails')}
           </button>
         ) : null}
       </div>

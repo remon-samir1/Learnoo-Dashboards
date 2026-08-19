@@ -16,6 +16,7 @@ import {
   ListOrdered,
   Lock,
   Play,
+  Search,
   Tag,
   Target,
   XCircle,
@@ -43,7 +44,7 @@ import {
   hubQuizQuestionCount,
   hubQuizTitle,
   hubQuizTypeLabel,
-  readHubQuizCourseId,
+  readHubQuizCourseIds,
   type HubQuizListRow,
 } from '@/src/lib/student-exam-hub-quiz';
 import {
@@ -55,6 +56,7 @@ import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import { STUDENT_EXAM_CARD_BASE, STUDENT_EXAM_GRID } from '@/components/student/exams/studentExamCardStyles';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { useCourses, STUDENT_COURSES_LIST_PARAMS } from '@/src/hooks/useCourses';
+import { courseIsLocked } from '@/src/lib/student-course-lock';
 
 function normalizeQuizListRow(raw: unknown): HubQuizListRow | null {
   if (raw == null || typeof raw !== 'object') return null;
@@ -67,6 +69,7 @@ function normalizeQuizListRow(raw: unknown): HubQuizListRow | null {
       ? (attrs as Record<string, unknown>)
       : undefined;
   return {
+    ...o,
     id,
     type: typeof o.type === 'string' ? o.type : undefined,
     attributes: attrRec,
@@ -97,6 +100,8 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     null
   );
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
 
   // Student's enrolled courses (My Courses / courses the student has
@@ -107,19 +112,29 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     const set = new Set<string>();
     if (!enrolledCourses) return set;
     for (const course of enrolledCourses) {
-      if (course?.id != null && String(course.id).trim() !== '') {
+      if (!courseIsLocked(course) && course?.id != null && String(course.id).trim() !== '') {
         set.add(String(course.id).trim());
       }
+    }
+    if (typeof window !== 'undefined') {
+      // @ts-ignore
+      window.__debugEnrolledCourseIds = Array.from(set);
+      console.log('[DEBUG] enrolledCourseIds:', Array.from(set));
     }
     return set;
   }, [enrolledCourses]);
 
-  const loadAll = useCallback(async (pageNum: number) => {
+  const loadAll = useCallback(async (pageNum: number, searchTitle?: string) => {
     setLoading(true);
     setLoadError(null);
     try {
+      const qsParams: Record<string, string | number> = { page: pageNum };
+      if (searchTitle?.trim()) {
+        qsParams.title = searchTitle.trim();
+      }
+
       const [quizRes, attemptRes] = await Promise.all([
-        api.quizzes.list({ page: pageNum }),
+        api.quizzes.list(qsParams),
         api.quizAttempts.list(),
       ]);
       const qRaw = (quizRes as { data?: unknown; meta?: PaginationMeta }).data;
@@ -143,8 +158,16 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
   }, [t]);
 
   useEffect(() => {
-    void loadAll(page);
-  }, [loadAll, page]);
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      setPage(1); // Reset page on new search
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    void loadAll(page, debouncedSearchQuery);
+  }, [loadAll, page, debouncedSearchQuery]);
 
   const { available, upcoming, expired, locked, courseNotEnrolled } = useMemo(() => {
     const buckets: {
@@ -164,6 +187,18 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     const now = Date.now();
     for (const row of quizList) {
       const b = classifyHubQuizRow(row, now, enrolledCourseIds);
+      if (typeof window !== 'undefined' && String(row.id) === '146') {
+        const attrs = hubQuizAttrs(row);
+        const cids = readHubQuizCourseIds(row);
+        console.log('[DEBUG] classify 146:', {
+          isPublic: attrs.is_public,
+          courses_ids: attrs.courses_ids,
+          parsedCids: cids,
+          hasEnrolled: cids.some(cid => enrolledCourseIds.has(cid)),
+          enrolledCourseIds: Array.from(enrolledCourseIds),
+          bucket: b,
+        });
+      }
       switch (b) {
         case 'available':
           buckets.available.push(row);
@@ -290,13 +325,42 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
           <p>{loadError}</p>
           <button
             type="button"
-            onClick={() => void loadAll(page)}
+            onClick={() => void loadAll(page, debouncedSearchQuery)}
             className="mt-2 text-sm font-semibold text-red-900 underline underline-offset-2"
           >
             {t('retryLoad')}
           </button>
         </div>
       ) : null}
+
+      {/* Global Search Bar */}
+      <div className="mb-8 relative max-w-md">
+        <label htmlFor="exam-search" className="sr-only">
+          {t('searchLabel') || 'Search exams...'}
+        </label>
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <Search className="h-5 w-5 text-[#94A3B8]" aria-hidden="true" />
+          </div>
+          <input
+            id="exam-search"
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="block w-full rounded-xl border border-[#E2E8F0] bg-white py-3.5 pl-12 pr-4 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#2137D6] focus:outline-none focus:ring-1 focus:ring-[#2137D6] shadow-sm transition-colors"
+            placeholder={t('searchPlaceholder') || 'Search exams...'}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#94A3B8] hover:text-[#475569]"
+            >
+              <XCircle className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
 
       <div className="flex flex-col gap-10 sm:gap-12">
         <section className="space-y-4 sm:space-y-5">
@@ -314,22 +378,28 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
           ) : (
             <ul className={STUDENT_EXAM_GRID}>
               {available.map((row) => {
-                const coursesObj = hubQuizAttrs(row).courses as { data: Array<{ id: string | number }> } | undefined;
-                const firstCid = coursesObj?.data?.[0]?.id;
-                const courseForStart =
-                  firstCid != null && String(firstCid).trim() !== ''
-                    ? String(firstCid).trim()
-                    : null;
+                const cids = readHubQuizCourseIds(row);
+                // Try to find the first course that is enrolled, otherwise use the first one
+                let courseForStart: string | null = null;
+                for (const cid of cids) {
+                  if (enrolledCourseIds.has(cid)) {
+                    courseForStart = cid;
+                    break;
+                  }
+                }
+                if (!courseForStart && cids.length > 0) {
+                  courseForStart = cids[0];
+                }
+
                 const startHref = buildStudentStartExamHref(locale, row.id, courseForStart);
                 const title = hubQuizTitle(row);
-                const courseId = readHubQuizCourseId(row);
                 // For 'included' exams the user can see them in the available 
                 // bucket because their owning course is already enrolled. 
                 // Surface a small "Course active" badge so the student knows 
                 // why the exam is open.
                 const mode = readIsPublicMode(hubQuizAttrs(row));
                 const showCourseActiveBadge =
-                  mode === 'included' && courseId != null && enrolledCourseIds.has(courseId);
+                  mode === 'included' && courseForStart != null && enrolledCourseIds.has(courseForStart);
                 return (
                   <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} border-emerald-200`}>
                     <div className="flex items-start justify-between gap-3">
@@ -604,8 +674,8 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                   enrolledCourseIds
                 );
                 const reactivateOnly = quizNeedsReactivationAfterExhaustedAttempts(attrsForPolicy);
-                const coursesObj = attrs.courses as { data: Array<{ id: string | number }> } | undefined;
-                const cid = coursesObj?.data?.[0]?.id;
+                const cids = readHubQuizCourseIds(row);
+                const cid = cids.length > 0 ? cids[0] : null;
 
                 return (
                   <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} text-[#64748B]`}>
@@ -680,7 +750,8 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
             <ul className={STUDENT_EXAM_GRID}>
               {courseNotEnrolled.map((row) => {
                 const title = hubQuizTitle(row);
-                const cid = readHubQuizCourseId(row);
+                const cids = readHubQuizCourseIds(row);
+                const cid = cids.length > 0 ? cids[0] : null;
                 const coursesHref = `/${locale}/student/courses`;
                 const courseDetailsHref =
                   cid != null && /^\d+$/.test(cid)

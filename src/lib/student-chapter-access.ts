@@ -3,12 +3,20 @@ import type { Chapter } from '@/src/types';
 /**
  * Student chapter / part access — **trust the backend** for video.
  *
- * - Do **not** compare `max_views` vs `current_user_views` for allow/deny; the API sets `can_watch`.
- * - **Video**: playable only when `can_watch` is explicitly true and the chapter is not `is_locked`.
- *   Controlled by `is_free_preview` flag for free preview access.
- * - **PDF / attachments (student UI)**: **`is_free_preview_attachment` only** — `true` → show; otherwise hide.
- *   Controlled by `is_free_preview_attachment` flag for free preview access.
- *   Independent of `can_watch`, activation, and view limits.
+ * Three cases govern a chapter's content visibility:
+ *
+ * CASE 1 — Free preview (chapter still locked, `is_locked === true`):
+ *   - `is_free_preview` flag controls **video only** — if true, the video is watchable even while locked.
+ *   - `is_free_preview_attachment` flag controls **PDF only** — if true, the PDF is viewable even while locked.
+ *   - These two flags are completely independent; a chapter with only PDF and `is_free_preview=true`
+ *     remains locked for the PDF (needs `is_free_preview_attachment=true`).
+ *
+ * CASE 2 — Chapter activated (`is_locked === false`):
+ *   - All content (video and PDF) is fully accessible regardless of free-preview flags.
+ *   - `is_locked` is the authoritative key; free-preview flags do not matter.
+ *
+ * CASE 3 — Views exhausted (`current_user_views >= max_views`):
+ *   - Show a re-activation button. After the user re-enters a code, `is_locked` becomes false → Case 2 applies.
  */
 
 /** Normalize API booleans / 0–1 / numeric strings for preview flags. */
@@ -30,53 +38,73 @@ export function coerceCanWatchExplicitTrue(value: unknown): boolean {
   return false;
 }
 
-/** Chapter video stream — `can_watch` + `is_locked` + `is_free_preview`. */
+/**
+ * Whether the chapter VIDEO is currently playable.
+ *
+ * - CASE 2: `is_locked === false` → always playable (if any video content exists).
+ * - CASE 1: `is_locked === true` → playable only if `is_free_preview` is true.
+ * - Otherwise, trust `can_watch` from the server.
+ */
 export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
-  if (attrs.is_locked === true) return false;
 
-  // free_preview controls video access only
-  return (
-    coercePreviewFlag(attrs.is_free_preview) ||
-    coerceCanWatchExplicitTrue(attrs.can_watch)
-  );
+  // CASE 2: chapter fully unlocked — video is accessible
+  if (attrs.is_locked === false) return true;
+
+  // CASE 1: chapter is locked but free-preview flag allows video
+  if (coercePreviewFlag(attrs.is_free_preview)) return true;
+
+  // Fallback: trust server can_watch (e.g. intermediate states)
+  return coerceCanWatchExplicitTrue(attrs.can_watch);
 }
 
-/** Whether video requires activation due to `is_free_preview` being false (even if `can_watch` is true). */
+/**
+ * Whether the video requires an activation prompt (i.e. accessible but pending a code entry).
+ * Only relevant when `is_locked` is NOT false (not yet fully activated).
+ */
 export function isStudentChapterVideoRequiresActivation(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
-  if (attrs.is_locked === true) return false;
-  // Already activated → no activation needed
+  // CASE 2: fully unlocked → no activation needed
+  if (attrs.is_locked === false) return false;
+  // Already activated
   if (attrs.is_activated === true) return false;
+  // can_watch is granted but is_free_preview is false → server says "watch but not fully open"
   if (!coerceCanWatchExplicitTrue(attrs.can_watch)) return false;
-  // Video is playable via can_watch, but free_preview is false → requires activation
   return !coercePreviewFlag(attrs.is_free_preview);
 }
 
-
-/** Whether PDF/attachment UI may be shown — **`is_free_preview_attachment` only** (API boolean / 0–1). */
+/**
+ * Whether the chapter PDF is visible.
+ *
+ * - CASE 2: `is_locked === false` → always visible (if PDF attachment exists).
+ * - CASE 1: `is_locked === true` → visible only if `is_free_preview_attachment` is true.
+ * - `is_free_preview` has NO effect on PDF visibility.
+ */
 export function isStudentChapterPdfVisible(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
 
-  // is_free_preview_attachment controls PDF access only
-  if (attrs.is_locked === true && !coercePreviewFlag(attrs.is_free_preview_attachment)) {
-    return false;
-  }
+  // CASE 2: chapter fully unlocked — PDF is accessible
+  if (attrs.is_locked === false) return true;
 
-  return (
-    coercePreviewFlag(attrs.is_free_preview_attachment) ||
-    coerceCanWatchExplicitTrue(attrs.can_watch)
-  );
+  // CASE 1: chapter is locked but free-preview-attachment flag allows PDF
+  if (coercePreviewFlag(attrs.is_free_preview_attachment)) return true;
+
+  // Fallback: trust server can_watch for PDF too
+  return coerceCanWatchExplicitTrue(attrs.can_watch);
 }
 
-/** Whether PDF requires activation due to `is_free_preview_attachment` being false (even if `can_watch` is true). */
+/**
+ * Whether the PDF requires an activation prompt.
+ * Only relevant when `is_locked` is NOT false.
+ */
 export function isStudentChapterPdfRequiresActivation(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
-  if (attrs.is_locked === true) return false;
-  // Already activated → no activation needed
+  // CASE 2: fully unlocked → no activation needed
+  if (attrs.is_locked === false) return false;
+  // Already activated
   if (attrs.is_activated === true) return false;
+  // can_watch granted but is_free_preview_attachment is false → PDF needs activation
   if (!coerceCanWatchExplicitTrue(attrs.can_watch)) return false;
-  // PDF is visible via can_watch, but is_free_preview_attachment is false → requires activation
   return !coercePreviewFlag(attrs.is_free_preview_attachment);
 }
 

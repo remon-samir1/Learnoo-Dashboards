@@ -559,7 +559,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        video.src = trimmedSrc;
+        video.src = toProxiedLearnooHlsUrl(trimmedSrc);
         logVideoState(video, 'mp4 primary assign');
         return () => {
           detach();
@@ -576,7 +576,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           });
           const detach = attachVideoErrorListener('mp4-progressive');
           detachVideoSourceSoft(video);
-          video.src = mp4Fb;
+          video.src = toProxiedLearnooHlsUrl(mp4Fb);
           logVideoState(video, 'mp4-only-fallback assign');
           return () => {
             detach();
@@ -708,7 +708,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           hlsInstanceRef.current = null;
           detachVideoSourceSoft(video);
           detachMp4Ui = attachVideoErrorListener('mp4-progressive');
-          video.src = fb;
+          video.src = toProxiedLearnooHlsUrl(fb);
           logVideoState(video, 'after HLS→MP4 fallback assign');
           const clearSwitching = () => setShowPlaybackSwitching(false);
           video.addEventListener('loadeddata', clearSwitching, { once: true });
@@ -953,7 +953,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         );
         logVideoState(video, 'before native assign');
         const detachError = attachVideoErrorListener('native-hls');
-        video.src = apiMasterUrl;
+        video.src = toProxiedLearnooHlsUrl(apiMasterUrl);
         logVideoState(video, 'after native assign');
         return () => {
           detachError();
@@ -972,7 +972,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        video.src = mp4Fb;
+        video.src = toProxiedLearnooHlsUrl(mp4Fb);
         logVideoState(video, 'mp4 assign (no HLS support in browser)');
         return () => {
           detach();

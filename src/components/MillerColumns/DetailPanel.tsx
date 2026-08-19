@@ -21,6 +21,7 @@ import {
 import type { TreeNode } from "./useMillerState";
 import type { Course, Lecture, Chapter, Note } from "@/src/types";
 import { ChapterPreview } from "./ChapterPreview";
+import { StudentSelector } from "./StudentSelector";
 
 interface DetailPanelProps {
   node: TreeNode;
@@ -210,8 +211,8 @@ export function DetailPanel({
                 <label className="text-[10px] text-gray-400 block">{t("status")}</label>
                 <span
                   className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${node.meta?.status === "active"
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-gray-100 text-gray-700 border border-gray-200"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                 >
                   {node.meta?.status === "active" ? t("active") : t("draft")}
@@ -341,49 +342,12 @@ export function DetailPanel({
                       )}
                     </div>
 
-                    {/* Student list search */}
-                    <div>
-                      <label className="text-[10px] text-gray-500 block mb-1">{t("selectStudent")}</label>
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder={t("searchStudents")}
-                          value={studentSearch}
-                          onChange={(e) => setStudentSearch(e.target.value)}
-                          className="w-full pl-7 pr-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
-                        />
-                      </div>
-                      {studentSearch && students?.data && (
-                        <div className="mt-1.5 max-h-24 overflow-y-auto border border-gray-200 rounded-lg p-1 space-y-1 bg-white">
-                          {students.data
-                            .filter((student: any) => {
-                              const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
-                              return fullName.includes(studentSearch.toLowerCase());
-                            })
-                            .map((student: any) => (
-                              <label
-                                key={student.id}
-                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${selectedStudent === student.id ? "bg-blue-50" : "hover:bg-gray-50"
-                                  }`}
-                              >
-                                <input
-                                  type="radio"
-                                  name="course-student"
-                                  value={student.id}
-                                  checked={selectedStudent === student.id}
-                                  onChange={() => {
-                                    setSelectedStudent(student.id);
-                                    setStudentSearch(`${student.attributes.first_name} ${student.attributes.last_name}`);
-                                  }}
-                                  className="w-3.5 h-3.5 text-blue-600"
-                                />
-                                <span className="text-[11px] text-gray-800">{student.attributes.first_name} {student.attributes.last_name}</span>
-                              </label>
-                            ))}
-                        </div>
-                      )}
-                    </div>
+                    <StudentSelector
+                      selectedStudent={selectedStudent}
+                      setSelectedStudent={setSelectedStudent}
+                      studentSearch={studentSearch}
+                      setStudentSearch={setStudentSearch}
+                    />
 
                     <button
                       onClick={() => handleActivate(itemId, "course")}
@@ -598,48 +562,12 @@ export function DetailPanel({
                       )}
                     </div>
 
-                    <div>
-                      <label className="text-[10px] text-gray-500 block mb-1">{t("selectStudent")}</label>
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder={t("searchStudents")}
-                          value={studentSearch}
-                          onChange={(e) => setStudentSearch(e.target.value)}
-                          className="w-full pl-7 pr-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs"
-                        />
-                      </div>
-                      {studentSearch && students?.data && (
-                        <div className="mt-1.5 max-h-24 overflow-y-auto border border-gray-200 rounded-lg p-1 space-y-1 bg-white">
-                          {students.data
-                            .filter((student: any) => {
-                              const fullName = `${student.attributes.first_name} ${student.attributes.last_name}`.toLowerCase();
-                              return fullName.includes(studentSearch.toLowerCase());
-                            })
-                            .map((student: any) => (
-                              <label
-                                key={student.id}
-                                className={`flex items-center gap-1.5 p-1 rounded-md cursor-pointer text-xs ${selectedStudent === student.id ? "bg-blue-50" : "hover:bg-gray-50"
-                                  }`}
-                              >
-                                <input
-                                  type="radio"
-                                  name="chapter-student"
-                                  value={student.id}
-                                  checked={selectedStudent === student.id}
-                                  onChange={() => {
-                                    setSelectedStudent(student.id);
-                                    setStudentSearch(`${student.attributes.first_name} ${student.attributes.last_name}`);
-                                  }}
-                                  className="w-3.5 h-3.5 text-blue-600"
-                                />
-                                <span className="text-[11px] text-gray-800">{student.attributes.first_name} {student.attributes.last_name}</span>
-                              </label>
-                            ))}
-                        </div>
-                      )}
-                    </div>
+                    <StudentSelector
+                      selectedStudent={selectedStudent}
+                      setSelectedStudent={setSelectedStudent}
+                      studentSearch={studentSearch}
+                      setStudentSearch={setStudentSearch}
+                    />
 
                     <button
                       onClick={() => handleActivate(itemId, "chapter")}
@@ -782,8 +710,8 @@ export function DetailPanel({
               <div className="mt-1">
                 <span
                   className={`inline-block px-1.5 py-0.5 text-[9px] font-bold rounded-md ${(node.data as Note).attributes.is_publish
-                      ? "bg-green-50 text-green-700 border border-green-200"
-                      : "bg-gray-100 text-gray-700 border border-gray-200"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-gray-100 text-gray-700 border border-gray-200"
                     }`}
                 >
                   {(node.data as Note).attributes.is_publish ? t("published") : t("draft")}

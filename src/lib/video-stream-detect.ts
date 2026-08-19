@@ -6,7 +6,11 @@ export function isHlsStreamUrl(url: string): boolean {
   if (lower.includes('.m3u8')) return true;
   try {
     const path = new URL(trimmed).pathname.toLowerCase();
-    return path.includes('/hls/') && (path.includes('playlist') || path.includes('.m3u8'));
+    // Match /hls/ paths with playlist suffix (e.g. /hls/chapter/275/playlist)
+    // and any path ending in /playlist or /playlist.m3u8
+    if (path.includes('/hls/')) return true;
+    if (path.endsWith('/playlist') || path.endsWith('/playlist.m3u8')) return true;
+    return false;
   } catch {
     return false;
   }

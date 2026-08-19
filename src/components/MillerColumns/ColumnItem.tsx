@@ -262,21 +262,29 @@ export function ColumnItem({
     );
   };
 
+  const createdAt = (item.data as any)?.attributes?.created_at || (item.data as any)?.created_at;
+
   return (
     <div
       onClick={onSelect}
-      className={`relative flex flex-col gap-1 px-3 py-2 rounded-xl text-xs transition-all duration-150 cursor-pointer border-l-2 select-none ${
-        isSelected
+      className={`relative flex flex-col gap-1 px-3 py-2 rounded-xl text-xs transition-all duration-150 cursor-pointer border-l-2 select-none ${isSelected
           ? "bg-blue-50/70 border-blue-500 text-blue-700"
           : "border-transparent hover:bg-slate-50 text-slate-700"
-      }`}
+        }`}
     >
       {/* Row 1: icon + name + chevron */}
       <div className="flex items-center gap-1.5 min-w-0">
         {getNodeIcon(item.type)}
-        <span className="truncate text-[11px] font-medium flex-1 leading-snug">
-          {highlightText(item.name, searchQuery)}
-        </span>
+        <div className="flex flex-col flex-1 min-w-0 justify-center">
+          <span className="truncate text-[11px] font-medium leading-snug">
+            {highlightText(item.name, searchQuery)}
+          </span>
+          {(item.type === 'course' || item.type === 'lecture' || item.type === 'chapter') && createdAt && (
+            <span className="text-[9.5px] text-slate-400 mt-0.5 truncate font-normal">
+              {new Date(createdAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
         {/* Status dot for courses */}
         {item.type === "course" && item.meta?.status && (
           <span

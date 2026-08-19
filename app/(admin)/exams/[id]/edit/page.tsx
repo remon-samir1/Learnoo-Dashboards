@@ -67,6 +67,15 @@ export default function EditExamPage() {
   const { mutateAsync: updateQuiz } = useUpdateQuiz();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{
+    questionIds: Set<string>;
+    answerIds: Set<string>;
+    noCorrectAnswerIds: Set<string>;
+  }>({
+    questionIds: new Set(),
+    answerIds: new Set(),
+    noCorrectAnswerIds: new Set(),
+  });
 
   const [isExtractingAI, setIsExtractingAI] = useState(false);
   const [showReplaceModal, setShowReplaceModal] = useState(false);
@@ -132,7 +141,10 @@ export default function EditExamPage() {
       maxAttempts: String(quiz.attributes.max_attempts || 1),
       startTime: formatDateTimeForInput(quiz.attributes.start_time),
       endTime: formatDateTimeForInput(quiz.attributes.end_time),
-      is_public: (quiz.attributes.is_public ? 'true' : 'false') as 'true' | 'false',
+      is_public: (
+        String(quiz.attributes.is_public).toLowerCase() === 'included' ? 'included' :
+          (quiz.attributes.is_public === true || String(quiz.attributes.is_public).toLowerCase() === 'true') ? 'true' : 'false'
+      ) as 'true' | 'false' | 'included',
       status: quiz.attributes.status === 'active' ? 'Active' : 'Draft',
     });
 
@@ -283,7 +295,7 @@ export default function EditExamPage() {
       formData.append('file', aiFile);
       if (aiQuestionCount) formData.append('count', aiQuestionCount);
 
-      const response = await fetch('/api/ai-exam-extract', {
+      const response = await fetch('http://31.97.36.130:5678/webhook/form', {
         method: 'POST',
         body: formData,
       });
@@ -324,6 +336,32 @@ export default function EditExamPage() {
   // ── submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // ── Client-side validation ──
+    const emptyQuestionIds = new Set<string>();
+    const emptyAnswerIds = new Set<string>();
+    const noCorrectAnswerIds = new Set<string>();
+
+    for (const q of questions) {
+      if (!q.text.trim()) emptyQuestionIds.add(q.id);
+      if (q.type !== 'short_answer') {
+        const hasCorrect = q.answers.some(a => a.isCorrect);
+        if (!hasCorrect) noCorrectAnswerIds.add(q.id);
+        for (const a of q.answers) {
+          if (!a.text.trim()) emptyAnswerIds.add(a.id);
+        }
+      }
+    }
+
+    if (emptyQuestionIds.size > 0 || emptyAnswerIds.size > 0 || noCorrectAnswerIds.size > 0) {
+      setValidationErrors({ questionIds: emptyQuestionIds, answerIds: emptyAnswerIds, noCorrectAnswerIds });
+      toast.error(locale === 'ar'
+        ? 'يرجى تصحيح الأخطاء قبل الحفظ'
+        : 'Please fix the highlighted errors before saving');
+      return;
+    }
+    setValidationErrors({ questionIds: new Set(), answerIds: new Set(), noCorrectAnswerIds: new Set() });
+
     setIsSubmitting(true);
 
     try {
@@ -799,14 +837,25 @@ export default function EditExamPage() {
 
                   {/* Question Text */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')}</label>
+                    <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')} <span className="text-[#EF4444]">*</span></label>
                     <input
                       type="text"
                       placeholder={t('create.questionPlaceholder')}
-                      className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                      className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${validationErrors.questionIds.has(q.id)
+                        ? 'border-[#EF4444] focus:ring-[#EF4444] bg-red-50'
+                        : 'border-[#E2E8F0] focus:ring-[#2137D6]'
+                        }`}
                       value={q.text}
-                      onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
+                      onChange={(e) => {
+                        updateQuestion(q.id, { text: e.target.value });
+                        if (validationErrors.questionIds.has(q.id)) {
+                          setValidationErrors(prev => ({ ...prev, questionIds: new Set([...prev.questionIds].filter(id => id !== q.id)) }));
+                        }
+                      }}
                     />
+                    {validationErrors.questionIds.has(q.id) && (
+                      <p className="text-xs text-[#EF4444] mt-1">{locale === 'ar' ? 'نص السؤال مطلوب' : 'Question text is required'}</p>
+                    )}
                   </div>
 
                   {/* Question Image */}
@@ -840,11 +889,23 @@ export default function EditExamPage() {
                       <div className="flex items-center justify-between">
                         <label className="text-[13px] font-bold text-[#475569]">{t('create.answers')}</label>
                         {q.type !== 'true_false' && (
-                          <button type="button" onClick={() => addAnswer(q.id)}
-                            className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2137D6] bg-[#E0E7FF] rounded-lg hover:bg-[#C7D2FF] transition-all">
-                            <Plus className="w-3 h-3" />
-                            {t('create.addAnswer')}
-                          </button>
+                          <>
+                            {validationErrors.noCorrectAnswerIds.has(q.id) && (
+                              <span className="text-xs text-[#EF4444] font-medium">
+                                {locale === 'ar' ? '⚠ يجب اختيار إجابة صحيحة واحدة على الأقل' : '⚠ Select at least one correct answer'}
+                              </span>
+                            )}
+                            <button type="button" onClick={() => addAnswer(q.id)}
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#2137D6] bg-[#E0E7FF] rounded-lg hover:bg-[#C7D2FF] transition-all">
+                              <Plus className="w-3 h-3" />
+                              {t('create.addAnswer')}
+                            </button>
+                          </>
+                        )}
+                        {q.type === 'true_false' && validationErrors.noCorrectAnswerIds.has(q.id) && (
+                          <span className="text-xs text-[#EF4444] font-medium">
+                            {locale === 'ar' ? '⚠ يجب اختيار إجابة صحيحة واحدة على الأقل' : '⚠ Select at least one correct answer'}
+                          </span>
                         )}
                       </div>
 
@@ -868,10 +929,17 @@ export default function EditExamPage() {
                               <input
                                 type="text"
                                 placeholder={`${t('create.answer')} ${ansIndex + 1}`}
-                                className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                                className={`flex-1 px-4 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${validationErrors.answerIds.has(answer.id)
+                                  ? 'border-[#EF4444] focus:ring-[#EF4444] bg-red-50'
+                                  : 'border-[#E2E8F0] focus:ring-[#2137D6]'
+                                  }`}
                                 value={answer.text}
-                                onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
-                                required
+                                onChange={(e) => {
+                                  updateAnswer(q.id, answer.id, { text: e.target.value });
+                                  if (validationErrors.answerIds.has(answer.id)) {
+                                    setValidationErrors(prev => ({ ...prev, answerIds: new Set([...prev.answerIds].filter(id => id !== answer.id)) }));
+                                  }
+                                }}
                               />
 
                               <input

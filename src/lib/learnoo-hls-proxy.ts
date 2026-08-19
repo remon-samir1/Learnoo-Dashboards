@@ -22,14 +22,18 @@ export function rewriteLearnooHlsPlaylistBody(body: string): string {
 }
 
 /**
- * Map `https://api…/hls/chapter/…/playlist` → `/api/learnoo-origin/hls/chapter/…/playlist`.
+ * Map API media paths to the same-origin proxy to bypass CORS restrictions
+ * and allow crossOrigin="anonymous" on the <video> element (needed for screenshots).
+ * Matches both `https://api…/hls/` and `https://api…/storage/`.
  */
 export function toProxiedLearnooHlsUrl(apiPlaylistUrl: string): string {
   const trimmed = apiPlaylistUrl.trim();
   try {
     const u = new URL(trimmed);
     const base = new URL(learnooApiBaseUrl());
-    if (u.hostname !== base.hostname || !u.pathname.startsWith('/hls/')) return trimmed;
+    if (u.hostname !== base.hostname) return trimmed;
+    if (!u.pathname.startsWith('/hls/') && !u.pathname.startsWith('/storage/')) return trimmed;
+
     return `${LEARNOO_API_PROXY_PREFIX}${u.pathname}${u.search}`;
   } catch {
     return trimmed;

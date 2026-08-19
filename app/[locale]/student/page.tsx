@@ -21,28 +21,24 @@ import {
   getStudentNotifications,
   getStudentProgression,
 } from "@/src/services/student/user.service";
-
 export default async function StudentPage() {
-  const {
-    data: {
-      data: { attributes: student },
-    },
-  } = await getStudentData();
-  const {
-    data: { data: progress },
-  } = await getStudentProgression();
-  const {
-    data: { data: courses },
-  } = await getStudentCourses();
+  const studentResult = await getStudentData();
+  const student = studentResult.success ? studentResult.data?.data?.attributes ?? null : null;
+
+  const progressResult = await getStudentProgression();
+  const progress = progressResult.success ? progressResult.data?.data ?? [] : [];
+
+  const coursesResult = await getStudentCourses();
+  const courses = coursesResult.success ? coursesResult.data?.data ?? [] : [];
+
   const liveRoomsResult = await getStudentLiveRooms();
   const liveSessions = liveRoomsResult.success ? liveRoomsResult.data ?? [] : [];
-  const {
-    data: { data: notes },
-  } = await getStudentNotes();
 
-  const {
-    data: { data: library },
-  } = await getLibrary();
+  const notesResult = await getStudentNotes();
+  const notes = notesResult.success ? notesResult.data?.data ?? [] : [];
+
+  const libraryResult = await getLibrary();
+  const library = libraryResult.success ? libraryResult.data?.data ?? [] : [];
   const categoryResult = await getCategories();
   const category = categoryResult.success ? categoryResult.data?.data ?? [] : [];
   const postsResult = await getLatestGeneralPosts(3);
@@ -54,7 +50,6 @@ export default async function StudentPage() {
   const coursesCount = courses?.length;
   const progressCount = progress?.length;
   const liveSessionsCount = liveSessions?.length;
-  const studentData = student ?? null;
 
   const enrolledCourseIds = new Set(
     (courses || []).map((c: { id: string | number }) => String(c.id))
@@ -70,7 +65,7 @@ export default async function StudentPage() {
       <WelcomeSection
         coursesCount={coursesCount}
         progressCount={progressCount}
-        student={studentData}
+        student={student}
         liveSessionsCount={liveSessionsCount}
       />
 

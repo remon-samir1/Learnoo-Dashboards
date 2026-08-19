@@ -816,7 +816,8 @@
     "studentResultsCount": "{count, plural, one {# دورة} other {# دورات}}",
     "studentCourseCard": {
       "activateToAccess": "فعّل للوصول",
-      "activateCourse": "تفعيل الدورة"
+      "activateCourse": "تفعيل الدورة",
+      "courseDetails": "تفاصيل الدورة"
     },
     "detailPanel": {
       "details": "التفاصيل",
@@ -842,6 +843,7 @@
       "noCodesAvailable": "لا توجد أكواد متاحة",
       "selectStudent": "اختر طالب",
       "searchStudents": "البحث عن الطلاب",
+      "noStudentsFound": "لم يتم العثور على طلاب",
       "activating": "جاري التفعيل...",
       "activateStudent": "تفعيل الطالب",
       "phoneNumbers": "أرقام الهواتف",
@@ -1184,6 +1186,8 @@
     "studentExamsPage": {
       "pageTitle": "الامتحانات",
       "pageSubtitle": "اعرض وادرس امتحانات دوراتك.",
+      "searchLabel": "البحث في الامتحانات",
+      "searchPlaceholder": "ابحث في الامتحانات...",
       "loadError": "تعذّر تحميل الامتحانات أو المحاولات. حاول مرة أخرى.",
       "retryLoad": "إعادة المحاولة",
       "loadingQuizzes": "جاري تحميل الامتحانات…",
@@ -2030,8 +2034,8 @@
       "expectedAnswerPlaceholder": "أدخل الإجابة المتوقعة للمرجعية...",
       "markCorrectHint": "انقر على المربع لتحديد الإجابة الصحيحة",
       "multipleAllowed": "ات (متعددة مسموح بها)",
-      "trueAnswer": "صح",
-      "falseAnswer": "خطأ",
+      "trueAnswer": "صح (True)",
+      "falseAnswer": "خطأ (False)",
       "insertHere": "هنا",
       "addQuestionAtBeginning": "إضافة سؤال في البداية",
       "autoCorrect": "التصحيح التلقائي",

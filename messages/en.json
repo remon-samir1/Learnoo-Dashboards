@@ -781,7 +781,8 @@
     "studentResultsCount": "{count, plural, one {# course} other {# courses}}",
     "studentCourseCard": {
       "activateToAccess": "Activate to access",
-      "activateCourse": "Activate Course"
+      "activateCourse": "Activate Course",
+      "courseDetails": "Course Details"
     },
     "detailPanel": {
       "details": "Details",
@@ -807,6 +808,7 @@
       "noCodesAvailable": "No codes available",
       "selectStudent": "Select Student",
       "searchStudents": "Search students",
+      "noStudentsFound": "No students found",
       "activating": "Activating...",
       "activateStudent": "Activate Student",
       "phoneNumbers": "Phone Numbers",
@@ -1149,6 +1151,8 @@
     "studentExamsPage": {
       "pageTitle": "Exams",
       "pageSubtitle": "View and manage your course examinations.",
+      "searchLabel": "Search exams",
+      "searchPlaceholder": "Search exams...",
       "loadError": "Could not load exams or attempts. Try again.",
       "retryLoad": "Try again",
       "loadingQuizzes": "Loading exams…",
@@ -1527,6 +1531,7 @@
       "library": "Library",
       "liveRoom": "Live Room",
       "quiz": "Quiz",
+      "department": "Department",
       "allTypes": "All Types"
     },
     "filters": {
@@ -1995,8 +2000,8 @@
       "expectedAnswerPlaceholder": "Enter the expected answer for reference...",
       "markCorrectHint": "Click the checkbox to mark the correct answer",
       "multipleAllowed": "s (multiple allowed)",
-      "trueAnswer": "True",
-      "falseAnswer": "False",
+      "trueAnswer": "صح (True)",
+      "falseAnswer": "خطأ (False)",
       "insertHere": "here",
       "addQuestionAtBeginning": "Add question at the beginning",
       "autoCorrect": "Auto-correct",

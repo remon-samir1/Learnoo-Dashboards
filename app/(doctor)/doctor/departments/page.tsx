@@ -3235,7 +3235,7 @@ export default function DepartmentsPage() {
 
               {/* Publish Status */}
 
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   id="isPublish"
@@ -3250,7 +3250,7 @@ export default function DepartmentsPage() {
                 >
                   {t("departments.notePublishLabel")}
                 </label>
-              </div>
+              </div> */}
 
               {/* Actions */}
 
@@ -3368,7 +3368,7 @@ function EditModal({
 
           status: course.attributes.status,
 
-          schedule: course.attributes.schedule || "",
+          schedule: course.attributes.schedule ? course.attributes.schedule.replace(' ', 'T').substring(0, 16) : "",
 
           price: course.attributes.price?.toString() || "0",
 
@@ -3390,7 +3390,7 @@ function EditModal({
 
           description: lecture.attributes.description || "",
 
-          schedule: lecture.attributes.schedule || "",
+          schedule: lecture.attributes.schedule ? lecture.attributes.schedule.replace(' ', 'T').substring(0, 16) : "",
         };
 
       case "chapter":
@@ -3415,7 +3415,7 @@ function EditModal({
 
           content: chapter.attributes.content || "",
 
-          schedule: chapter.attributes.schedule || "",
+          schedule: chapter.attributes.schedule ? chapter.attributes.schedule.replace(' ', 'T').substring(0, 16) : "",
 
           thumbnail: null,
         };

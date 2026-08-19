@@ -650,7 +650,7 @@ export const preActivationApi = {
 // ============================================
 
 export const coursesApi = {
-  list: (params?: { category_id?: number; activated?: number }) =>
+  list: (params?: { category_id?: number; activated?: number; per_page?: number } | Record<string, string | number>) =>
     get<ApiListResponse<Course>>('/v1/course', params),
 
   get: (id: number) => get<ApiResponse<Course>>(`/v1/course/${id}`),

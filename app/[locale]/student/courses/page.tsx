@@ -93,7 +93,7 @@ export default function StudentCoursesPage() {
                 statusLabel={String(course.attributes.status)}
                 statusCode={course.attributes.status}
                 locked={locked}
-                onView={locked ? undefined : () => goToCourse(course.id)}
+                onView={() => goToCourse(course.id)}
                 onActivate={
                   locked ? () => activation.openForCourse(course) : undefined
                 }

@@ -9,6 +9,7 @@ import { useCode, useUpdateCode } from '@/src/hooks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
+import { useDepartments } from '@/src/hooks/useDepartments';
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 import toast from 'react-hot-toast';
 
@@ -17,6 +18,7 @@ function useCodeTypes(t: any) {
     { value: 'App\\Models\\Course', label: t('activation.types.course') },
     { value: 'App\\Models\\Chapter', label: t('activation.types.chapter') },
     { value: 'App\\Models\\Library', label: t('activation.types.library') },
+    { value: 'App\\Models\\Department', label: t('activation.types.department') },
   ];
 }
 
@@ -32,8 +34,9 @@ export default function EditCodePage() {
   const { data: courses, isLoading: isLoadingCourses } = useCourses();
   const { data: chapters, isLoading: isLoadingChapters } = useChapters();
   const { data: libraries, isLoading: isLoadingLibraries } = useLibraries();
+  const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
 
-  const isLoadingItems = isLoadingCourses || isLoadingChapters || isLoadingLibraries;
+  const isLoadingItems = isLoadingCourses || isLoadingChapters || isLoadingLibraries || isLoadingDepartments;
 
   const [codeType, setCodeType] = useState('');
   const [itemId, setItemId] = useState('');
@@ -62,6 +65,8 @@ export default function EditCodePage() {
         return extractItems(chapters);
       case 'App\\Models\\Library':
         return extractItems(libraries);
+      case 'App\\Models\\Department':
+        return extractItems(departments);
       default:
         return [];
     }
