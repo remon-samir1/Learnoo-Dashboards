@@ -124,6 +124,17 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     return set;
   }, [enrolledCourses]);
 
+  const visibleCourseIds = useMemo<Set<string>>(() => {
+    const set = new Set<string>();
+    if (!enrolledCourses) return set;
+    for (const course of enrolledCourses) {
+      if (course?.id != null && String(course.id).trim() !== '') {
+        set.add(String(course.id).trim());
+      }
+    }
+    return set;
+  }, [enrolledCourses]);
+
   const loadAll = useCallback(async (pageNum: number, searchTitle?: string) => {
     setLoading(true);
     setLoadError(null);
@@ -186,6 +197,13 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     if (!quizList?.length) return buckets;
     const now = Date.now();
     for (const row of quizList) {
+      const cids = readHubQuizCourseIds(row);
+      const isVisibleCourse = cids.length === 0 || cids.some(cid => visibleCourseIds.has(cid));
+
+      if (!isVisibleCourse) {
+        continue; // Do not show exams that belong to courses completely hidden from the student
+      }
+
       const b = classifyHubQuizRow(row, now, enrolledCourseIds);
       if (typeof window !== 'undefined' && String(row.id) === '146') {
         const attrs = hubQuizAttrs(row);
@@ -220,7 +238,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
       }
     }
     return buckets;
-  }, [quizList, enrolledCourseIds]);
+  }, [quizList, enrolledCourseIds, visibleCourseIds]);
 
   const completedAttempts = useMemo(() => {
     if (!attemptList?.length) return [];
@@ -241,24 +259,41 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
   const renderQuizMetaBlock = (row: HubQuizListRow, opts: { chapterFallback: string }) => {
     const title = hubQuizTitle(row);
     const chapterName = hubQuizChapterTitle(row);
-    const chapterLine = chapterName ?? opts.chapterFallback;
+    const attrs = hubQuizAttrs(row);
+
+    const coursesData = Array.isArray(attrs.courses) ? attrs.courses : [];
+    const courseTitles = coursesData
+      .map((c: any) => c?.attributes?.title)
+      .filter((t: unknown) => typeof t === 'string' && t.trim() !== '') as string[];
+
+    let topHeading: string | null = null;
+    if (courseTitles.length > 0 && chapterName) {
+      topHeading = `${courseTitles.join(' • ')} - ${chapterName}`;
+    } else if (courseTitles.length > 0) {
+      topHeading = courseTitles.join(' • ');
+    } else if (chapterName) {
+      topHeading = chapterName;
+    }
+
     const typeLabel = hubQuizTypeLabel(row, tExams);
     const durationMin = hubQuizDurationMinutes(row);
     const qCount = hubQuizQuestionCount(row);
     const passMarks = hubQuizPassMarks(row);
     const attemptsLines = hubQuizAttemptsSummaryLines(row, tExams);
-    const startRaw = row.attributes?.start_time;
-    const endRaw = row.attributes?.end_time;
+    const startRaw = attrs.start_time;
+    const endRaw = attrs.end_time;
     const startStr = typeof startRaw === 'string' ? formatIsoDate(startRaw, locale) : null;
     const endStr = typeof endRaw === 'string' ? formatIsoDate(endRaw, locale) : null;
 
     return (
       <>
         <div className="mt-4 space-y-2.5 text-sm text-[#64748B]">
-          <div className="flex items-center gap-2.5">
-            <BookOpen className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
-            <span>{chapterLine}</span>
-          </div>
+          {topHeading ? (
+            <div className="flex items-center gap-2.5">
+              <BookOpen className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
+              <span>{topHeading}</span>
+            </div>
+          ) : null}
           {typeLabel ? (
             <div className="flex items-center gap-2.5">
               <Tag className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
@@ -278,10 +313,10 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                 {tDetails('examsPassMarks', { passing: passMarks.passing, total: passMarks.total })}
               </span>
             </div>
-          ) : typeof row.attributes?.total_marks === 'number' && Number.isFinite(row.attributes.total_marks) ? (
+          ) : typeof attrs.total_marks === 'number' && Number.isFinite(attrs.total_marks) ? (
             <div className="flex items-center gap-2.5">
               <FileText className="size-4 shrink-0 text-[#94A3B8]" strokeWidth={2} aria-hidden />
-              <span>{tDetails('examsTotalMarks', { count: row.attributes.total_marks as number })}</span>
+              <span>{tDetails('examsTotalMarks', { count: attrs.total_marks })}</span>
             </div>
           ) : null}
           {attemptsLines.map((line, li) => (

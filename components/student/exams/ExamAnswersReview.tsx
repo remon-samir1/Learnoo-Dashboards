@@ -113,6 +113,7 @@ export function ExamAnswersReview({
       selectedIds={selectedForCurrent}
       shortText={shortTextValue}
       reviewQuestionCorrect={reviewCorrectProp}
+      feedbackLabel={tResult('feedbackLabel')}
       noAnswerOptionsText={tResult('reviewNoAnswerOptions')}
       articleFooter={
         <>

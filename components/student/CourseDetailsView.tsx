@@ -29,6 +29,7 @@ import {
   isStudentChapterPdfRequiresActivation,
   isStudentChapterVideoPlayable,
   isStudentChapterVideoRequiresActivation,
+  isChapterFullyUnlocked,
 } from "@/src/lib/student-chapter-access";
 import { courseIsLocked } from "@/src/lib/student-course-lock";
 import {
@@ -105,9 +106,10 @@ function getFirstPdfUrl(ch: Chapter): string | null {
 
 function sortedLectures(lectures: Lecture[] | undefined): Lecture[] {
   if (!lectures?.length) return [];
-  return [...lectures].sort(
-    (a, b) => (a.attributes.order ?? 0) - (b.attributes.order ?? 0),
-  );
+  return [...lectures]
+    .sort(
+      (a, b) => (a.attributes.order ?? 0) - (b.attributes.order ?? 0),
+    );
 }
 
 function detailTabFromSearchParams(searchParams: URLSearchParams): DetailTab {
@@ -707,6 +709,7 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
                 locale={locale}
                 lectures={lectures}
                 exams={course.attributes.exams}
+                lockedCourse={lockedCourse}
                 t={t}
                 onRequestChapterActivation={(chapterId, chapterTitle) =>
                   setActivationTarget({
@@ -810,12 +813,14 @@ function LecturesTab({
   locale,
   lectures,
   exams,
+  lockedCourse,
   t,
   onRequestChapterActivation,
 }: {
   locale: string;
   lectures: Lecture[];
   exams: Course["attributes"]["exams"] | undefined;
+  lockedCourse: boolean;
   t: StudentDetailsT;
   onRequestChapterActivation: (chapterId: string, chapterTitle: string) => void;
 }) {
@@ -835,7 +840,19 @@ function LecturesTab({
   return (
     <div className="flex flex-col gap-8 sm:gap-10">
       {lectures.map((lecture) => {
-        const chapters = lecture.attributes.chapters ?? [];
+        const chapters = (lecture.attributes.chapters ?? []).filter(
+          (ch) => {
+            const attrs = ch.attributes as any;
+            let schedulePassed = true;
+            if (attrs?.schedule) {
+              const scheduleTime = new Date(attrs.schedule.replace(' ', 'T')).getTime();
+              if (!Number.isNaN(scheduleTime)) {
+                schedulePassed = scheduleTime <= Date.now();
+              }
+            }
+            return schedulePassed;
+          }
+        );
         const partCount = chapters.length;
 
         return (
@@ -865,6 +882,7 @@ function LecturesTab({
                     itemIndexWithinLecture={chIdx + 1}
                     partCount={partCount}
                     chapterHasExam={chapterIdsWithExams.has(String(chapter.id))}
+                    lockedCourse={lockedCourse}
                     t={t}
                     onRequestChapterActivation={onRequestChapterActivation}
                   />
@@ -884,6 +902,7 @@ function ChapterRow({
   itemIndexWithinLecture,
   partCount,
   chapterHasExam,
+  lockedCourse,
   t,
   onRequestChapterActivation,
 }: {
@@ -892,6 +911,7 @@ function ChapterRow({
   itemIndexWithinLecture: number;
   partCount: number;
   chapterHasExam: boolean;
+  lockedCourse: boolean;
   t: StudentDetailsT;
   onRequestChapterActivation: (chapterId: string, chapterTitle: string) => void;
 }) {
@@ -899,11 +919,10 @@ function ChapterRow({
   const attrs = chapter.attributes;
   const hasPdf = hasPdfAttachment(chapter);
   const pdfUrl = getFirstPdfUrl(chapter);
-  const chapterLocked = attrs.is_locked === true;
-  const videoPlayable = isStudentChapterVideoPlayable(chapter);
-  const pdfVisible = isStudentChapterPdfVisible(chapter);
-  const videoRequiresActivation = isStudentChapterVideoRequiresActivation(chapter);
-  const pdfRequiresActivation = isStudentChapterPdfRequiresActivation(chapter);
+  const videoPlayable = isStudentChapterVideoPlayable(chapter, lockedCourse);
+  const pdfVisible = isStudentChapterPdfVisible(chapter, lockedCourse);
+  const videoRequiresActivation = isStudentChapterVideoRequiresActivation(chapter, lockedCourse);
+  const pdfRequiresActivation = isStudentChapterPdfRequiresActivation(chapter, lockedCourse);
 
   const chapterTitleForModal = attrs.title?.trim() ?? "";
   const openChapterActivation = () =>
@@ -964,17 +983,20 @@ function ChapterRow({
   let iconColor = C_PRIMARY;
   let IconEl: typeof Play | typeof Lock = Play;
 
-  if (chapterLocked) {
-    iconWrap =
-      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12";
-    iconColor = "#94A3B8";
-    IconEl = Lock;
-  } else if (viewsExhausted) {
+  const isEffectivelyLocked = videoButton !== "watch" && pdfButton !== "open";
+  const needsAnyActivation = videoButton === "activate" || pdfButton === "activate";
+
+  if (viewsExhausted) {
     iconWrap =
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FEF2F2] text-[#DC2626] sm:size-12";
     iconColor = "#DC2626";
     IconEl = Lock;
-  } else if (videoRequiresActivation || !videoPlayable) {
+  } else if (isEffectivelyLocked) {
+    iconWrap =
+      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12";
+    iconColor = "#94A3B8";
+    IconEl = Lock;
+  } else if (needsAnyActivation) {
     iconWrap =
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12";
     iconColor = "#D97706";
@@ -989,7 +1011,7 @@ function ChapterRow({
   return (
     <div className="flex flex-col gap-5 py-6 sm:flex-row sm:items-stretch sm:gap-8 sm:py-6 md:gap-10">
       <div className="flex min-w-0 flex-1 flex-row items-start gap-4 sm:items-center sm:gap-6">
-        {videoPlayable && !videoRequiresActivation ? (
+        {videoButton === "watch" ? (
           <Link
             href={watchHref}
             prefetch
@@ -1007,8 +1029,8 @@ function ChapterRow({
         ) : (
           <div
             className={`${iconWrap} shrink-0`}
-            style={{ color: !videoPlayable || videoRequiresActivation ? undefined : iconColor }}
-            aria-hidden={!videoPlayable || videoRequiresActivation}
+            style={{ color: isEffectivelyLocked || needsAnyActivation ? undefined : iconColor }}
+            aria-hidden={isEffectivelyLocked || needsAnyActivation}
           >
             <IconEl
               className="size-[22px] sm:size-5"
@@ -1066,48 +1088,7 @@ function ChapterRow({
             Free-preview content opens directly; paid content shows an
             "Activate" button specific to the type (video vs PDF).
         */}
-        {chapterLocked ? (
-          <>
-            {/* CASE 1: Free-preview VIDEO: accessible even when locked (is_free_preview only — not PDF) */}
-            {hasVideoContent && coercePreviewFlag(attrs.is_free_preview) && (
-              <Link
-                href={watchHref}
-                prefetch
-                className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-              >
-                {t("watch")}
-                <ChevronRight
-                  className="size-4 shrink-0 rtl:rotate-180"
-                  strokeWidth={2.5}
-                />
-              </Link>
-            )}
-            {/* CASE 1: Free-preview PDF: accessible even when locked (is_free_preview_attachment only — not video) */}
-            {hasPdf && pdfUrl && coercePreviewFlag(attrs.is_free_preview_attachment) && (
-              <button
-                type="button"
-                onClick={() => setPdfPreviewOpen(true)}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-              >
-                <FileText className="size-4 shrink-0" strokeWidth={2} />
-                {t("openPdf")}
-              </button>
-            )}
-            {/* Always show activate button when locked */}
-            <button
-              type="button"
-              onClick={openChapterActivation}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
-            >
-              <Power
-                className="size-4 shrink-0 opacity-90"
-                strokeWidth={2}
-                aria-hidden
-              />
-              {t("activateChapter")}
-            </button>
-          </>
-        ) : viewsExhausted ? (
+        {viewsExhausted ? (
           <button
             type="button"
             onClick={openChapterActivation}
@@ -1135,20 +1116,6 @@ function ChapterRow({
                 />
               </Link>
             )}
-            {videoButton === "activate" && (
-              <button
-                type="button"
-                onClick={openChapterActivation}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
-              >
-                <Power
-                  className="size-4 shrink-0 opacity-95"
-                  strokeWidth={2}
-                  aria-hidden
-                />
-                {t("activateChapter")}
-              </button>
-            )}
 
             {pdfButton === "open" && pdfUrl && (
               <button
@@ -1160,14 +1127,15 @@ function ChapterRow({
                 {t("openPdf")}
               </button>
             )}
-            {pdfButton === "activate" && (
+
+            {(videoButton === "activate" || pdfButton === "activate") && (
               <button
                 type="button"
                 onClick={openChapterActivation}
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-[#F97316] bg-[#FFF7ED] px-4 py-3 text-sm font-semibold text-[#C2410C] transition hover:bg-[#FFEDD5] sm:min-h-10 sm:py-2.5"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
               >
                 <Power
-                  className="size-4 shrink-0 opacity-95"
+                  className="size-4 shrink-0 opacity-90"
                   strokeWidth={2}
                   aria-hidden
                 />

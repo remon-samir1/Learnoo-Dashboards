@@ -60,6 +60,20 @@ export default async function StudentPage() {
       enrolledCourseIds.has(String(note.attributes.course_id))
   );
 
+  const filteredLatestExams = latestExams.filter((exam) => {
+    // Collect all course IDs linked to this exam (single or multiple)
+    const examCids = [
+      ...(exam.courses_ids || []),
+      ...(exam.course_id ? [exam.course_id] : []),
+    ];
+    // If the exam doesn't belong to any courses, we evaluate if it should be shown.
+    // Given the requirement "only show exams scoped to user colleges/courses", if there are NO course ids we skip it.
+    if (examCids.length === 0) return false;
+
+    // Check if ANY of the exam's courses overlap with the user's enrolled courses.
+    return examCids.some((cid) => enrolledCourseIds.has(String(cid)));
+  });
+
   return (
     <div className="flex max-w-full flex-col gap-4 sm:gap-6">
       <WelcomeSection
@@ -75,7 +89,7 @@ export default async function StudentPage() {
 
       <MyCoursesSection />
       <LatestPostsSection posts={latestPosts} />
-      <NewestExams exams={latestExams} />
+      <NewestExams exams={filteredLatestExams} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
         <div className="min-w-0">
           <UpcomingLiveClasses sessions={liveSessions} />

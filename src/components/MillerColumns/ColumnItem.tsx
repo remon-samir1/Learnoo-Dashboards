@@ -268,8 +268,8 @@ export function ColumnItem({
     <div
       onClick={onSelect}
       className={`relative flex flex-col gap-1 px-3 py-2 rounded-xl text-xs transition-all duration-150 cursor-pointer border-l-2 select-none ${isSelected
-          ? "bg-blue-50/70 border-blue-500 text-blue-700"
-          : "border-transparent hover:bg-slate-50 text-slate-700"
+        ? "bg-blue-50/70 border-blue-500 text-blue-700"
+        : "border-transparent hover:bg-slate-50 text-slate-700"
         }`}
     >
       {/* Row 1: icon + name + chevron */}
@@ -281,7 +281,13 @@ export function ColumnItem({
           </span>
           {(item.type === 'course' || item.type === 'lecture' || item.type === 'chapter') && createdAt && (
             <span className="text-[9.5px] text-slate-400 mt-0.5 truncate font-normal">
-              {new Date(createdAt).toLocaleDateString()}
+              {new Date(createdAt).toLocaleString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+              })}
             </span>
           )}
         </div>

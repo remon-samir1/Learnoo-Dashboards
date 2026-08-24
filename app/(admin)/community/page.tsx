@@ -5,7 +5,9 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronDown, MessageCircle, Send, Globe, Edit2, Trash2, MessageSquare, Pin, Check, Trash, Loader2, X, Eye, Plus, ChevronRight, FolderOpen, BookOpen, Search } from 'lucide-react';
 import { usePosts, useDeletePost, useUpdatePost, useCreatePost } from '@/src/hooks/usePosts';
+import { useCreateComment, useDeleteComment } from '@/src/hooks/useComments';
 import { useSocialLinks, useCreateSocialLink, useUpdateSocialLink, useDeleteSocialLink } from '@/src/hooks/useSocialLinks';
+import ModeratorPostComments from '@/src/components/admin/community/ModeratorPostComments';
 import { useCourses } from '@/src/hooks/useCourses';
 import { getApiErrorMessage } from '@/src/lib/api';
 import { toast } from 'sonner';
@@ -407,8 +409,47 @@ export default function CommunityModerationPage() {
   const t = useTranslations();
   const { data: postsData, isLoading, error, refetch } = usePosts(null);
   const { mutate: deletePost, isLoading: isDeleting } = useDeletePost();
-  const { mutate: updatePost } = useUpdatePost();
+  const { mutate: updatePost, isLoading: isUpdating } = useUpdatePost();
   const { mutate: createPost, isLoading: isCreating } = useCreatePost();
+  const { mutate: createComment, isLoading: isCreatingComment } = useCreateComment();
+  const { mutate: deleteComment, isLoading: isDeletingComment } = useDeleteComment();
+
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [replyForms, setReplyForms] = useState<Record<string, string>>({});
+
+  const toggleComments = (postId: string) => {
+    setExpandedComments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(postId)) {
+        newSet.delete(postId);
+      } else {
+        newSet.add(postId);
+      }
+      return newSet;
+    });
+  };
+
+  const handlePostComment = async (postId: string) => {
+    const reply = replyForms[postId];
+    if (!reply?.trim()) return;
+    try {
+      await createComment(parseInt(postId), { parent_id: parseInt(postId), content: reply });
+      setReplyForms(prev => ({ ...prev, [postId]: '' }));
+      await refetch();
+    } catch {
+      await refetch();
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!confirm(t('community.confirmations.deleteComment'))) return;
+    try {
+      await deleteComment(commentId);
+      await refetch();
+    } catch {
+      await refetch();
+    }
+  };
 
   // Social Links hooks
   const { data: socialLinks, isLoading: socialLinksLoading, refetch: refetchSocialLinks } = useSocialLinks(null);
@@ -967,13 +1008,13 @@ export default function CommunityModerationPage() {
                     </>
 
                     <div className="flex items-center gap-6 mt-5">
-                      <Link
-                        href={`/community/${post.id}`}
+                      <button
+                        onClick={() => toggleComments(post.id)}
                         className="flex items-center gap-2 text-[#64748B] hover:text-[#1E293B] transition-colors"
                       >
                         <MessageSquare className="w-[18px] h-[18px]" />
-                        <span className="text-[13px] font-semibold">{post.attributes.comments_count || 0} {t('community.posts.comments')}</span>
-                      </Link>
+                        <span className="text-[13px] font-semibold">{post.attributes.comments_count || 0} {expandedComments.has(post.id) ? t('community.posts.actions.hideComments') : t('community.posts.actions.showComments')}</span>
+                      </button>
                       <span className="flex items-center gap-1 text-[13px] text-[#64748B]">
                         {post.attributes.reactions_count} {t('community.posts.reactions')}
                       </span>
@@ -988,13 +1029,6 @@ export default function CommunityModerationPage() {
 
                 <div className="flex items-center gap-3 ml-6 pt-1">
                   <>
-                    <Link
-                      href={`/community/${post.id}`}
-                      className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#2137D6] hover:bg-[#EEF2FF] rounded-xl text-sm font-bold transition-all"
-                    >
-                      <Eye className="w-4 h-4" />
-                      {t('community.posts.actions.view')}
-                    </Link>
                     <button
                       onClick={() => startEdit(post)}
                       className="flex items-center gap-1.5 px-4 py-2 border border-[#E2E8F0] text-[#475569] hover:bg-[#F8FAFC] rounded-xl text-sm font-bold transition-all"
@@ -1030,6 +1064,35 @@ export default function CommunityModerationPage() {
                   </>
                 </div>
               </div>
+
+              <ModeratorPostComments
+                postId={post.id}
+                commentsCount={post.attributes.comments_count || 0}
+                expanded={expandedComments.has(post.id)}
+                onToggleExpanded={() => toggleComments(post.id)}
+                onRefresh={() => { void refetch(); }}
+              />
+              {expandedComments.has(post.id) && (
+                <div className="mt-4 flex flex-col gap-4">
+
+                  <div className="mt-2 flex items-start gap-3">
+                    <textarea
+                      rows={2}
+                      placeholder={t('community.postDetails.replyPlaceholder')}
+                      className="flex-1 px-3 py-2 bg-white border border-[#E2E8F0] rounded-xl text-[13px] focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
+                      value={replyForms[post.id] || ''}
+                      onChange={(e) => setReplyForms(prev => ({ ...prev, [post.id]: e.target.value }))}
+                    />
+                    <button
+                      onClick={() => handlePostComment(post.id)}
+                      disabled={!(replyForms[post.id]?.trim()) || isCreatingComment}
+                      className="px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-blue-200 disabled:opacity-50 mt-1"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -1325,11 +1388,11 @@ export default function CommunityModerationPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={handleCreatePost}
-                  disabled={isCreating}
+                  disabled={isCreating || isUpdating}
                   className="flex-1 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingPost ? t('community.posts.editForm.save') : t('community.createPost.submit')}
+                  {(isCreating || isUpdating) && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {editingPost ? t('community.posts.actions.edit') : t('community.createPost.submit')}
                 </button>
                 <button
                   onClick={cancelEdit}

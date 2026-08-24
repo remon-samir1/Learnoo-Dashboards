@@ -74,6 +74,7 @@ export type ExamQuestionScreenProps = {
   onChangeShortText?: (text: string) => void;
   /** Review-only: whether the learner’s selection(s) for this question are fully correct. */
   reviewQuestionCorrect?: boolean;
+  feedbackLabel?: string;
   noAnswerOptionsText?: string;
   shortAnswerPlaceholder?: string;
   shortAnswerAriaLabel?: string;
@@ -102,6 +103,7 @@ export function ExamQuestionScreen({
   shortText = '',
   onChangeShortText,
   reviewQuestionCorrect = false,
+  feedbackLabel,
   noAnswerOptionsText,
   shortAnswerPlaceholder,
   shortAnswerAriaLabel,
@@ -113,56 +115,56 @@ export function ExamQuestionScreen({
   const copyGuardActive = mode === 'take' || mode === 'review';
   const copyGuardProps = examCopyGuardContentProps(copyGuardActive);
   const questionImageSrc = resolveStudentExamMediaUrl(question.attributes.image);
-const { user } = useCurrentUser();
+  const { user } = useCurrentUser();
 
-const [watermarkConfig, setWatermarkConfig] =
-  useState<WatermarkResolution | null>(null);
+  const [watermarkConfig, setWatermarkConfig] =
+    useState<WatermarkResolution | null>(null);
 
   useEffect(() => {
-  let mounted = true;
+    let mounted = true;
 
-  const loadWatermark = async () => {
-    try {
-      const features = await getStudentPlatformFeatures();
+    const loadWatermark = async () => {
+      try {
+        const features = await getStudentPlatformFeatures();
 
-      const resolution = resolveEnabledWatermarkBucket(
-        features,
-        'exams'
-      );
+        const resolution = resolveEnabledWatermarkBucket(
+          features,
+          'exams'
+        );
 
-      if (mounted) {
-        setWatermarkConfig(resolution);
+        if (mounted) {
+          setWatermarkConfig(resolution);
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
+    };
+
+    loadWatermark();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+  const watermarkText = useMemo(() => {
+    const config = watermarkConfig?.config;
+
+    if (!config?.enabled) return '';
+
+    const attrs = user?.attributes;
+
+    const parts: string[] = [];
+
+    if (config.useStudentCode && attrs?.student_code) {
+      parts.push(String(attrs.student_code));
     }
-  };
 
-  loadWatermark();
+    if (config.usePhoneNumber && attrs?.phone) {
+      parts.push(String(attrs.phone));
+    }
 
-  return () => {
-    mounted = false;
-  };
-}, []);
-const watermarkText = useMemo(() => {
-  const config = watermarkConfig?.config;
-
-  if (!config?.enabled) return '';
-
-  const attrs = user?.attributes;
-
-  const parts: string[] = [];
-
-  if (config.useStudentCode && attrs?.student_code) {
-    parts.push(String(attrs.student_code));
-  }
-
-  if (config.usePhoneNumber && attrs?.phone) {
-    parts.push(String(attrs.phone));
-  }
-
-  return parts.join(' · ');
-}, [watermarkConfig, user]);
+    return parts.join(' · ');
+  }, [watermarkConfig, user]);
 
   const headerInner = (
     <header className="box-border flex min-h-[52px] w-full min-w-0 items-center justify-between gap-3 border-b border-[#EEEEEE] bg-white py-2.5 ps-5 pe-8 sm:ps-6 sm:pe-12 lg:ps-8 lg:pe-16">
@@ -189,218 +191,220 @@ const watermarkText = useMemo(() => {
       )}
 
       <div className="mx-auto   flex w-full max-w-[832px] flex-col gap-4 sm:gap-5">
-        
+
         <article
           className={`relative isolate flex w-full flex-col overflow-hidden rounded-xl border border-[#E8ECF2] bg-white px-4 py-4 shadow-[0_4px_24px_rgba(15,23,42,0.06)] sm:rounded-2xl sm:px-5 sm:py-5${copyGuardActive ? ' select-none' : ''}`}
           {...copyGuardProps}
         >
           <div className="relative z-0 flex flex-col gap-4 sm:gap-5">
-          {studentName ? (
-            <p className="text-[11px] font-medium text-[#94A3B8] sm:text-[12px]">{studentName}</p>
-          ) : null}
+            {studentName ? (
+              <p className="text-[11px] font-medium text-[#94A3B8] sm:text-[12px]">{studentName}</p>
+            ) : null}
 
-          <div
-            className="relative min-h-[min(38vh,300px)] flex-1 overflow-hidden sm:min-h-[min(42vh,340px)]"
-            aria-label={examTitle}
-          >
-          <div className="relative z-0 flex flex-col gap-4 sm:gap-5">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <span
-              className="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold sm:px-3 sm:py-1 sm:text-[12px]"
-              style={{ backgroundColor: '#E8EEFC', color: '#2D46D9' }}
+            <div
+              className="relative min-h-[min(38vh,300px)] flex-1 overflow-hidden sm:min-h-[min(42vh,340px)]"
+              aria-label={examTitle}
             >
-              {questionBadgeText}
-            </span>
-            <span className="text-xs font-semibold text-[#64748B] sm:text-sm">
-              {qNum} / {totalQuestions}
-            </span>
-          </div>
-
-          <h2 className="text-start text-base font-bold leading-snug text-[#0F172A] sm:text-lg">
-            {question.attributes.text}
-          </h2>
-
-          {questionImageSrc ? (
-            <div className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-[#E2E8F0] bg-slate-50">
-              <Image
-                src={questionImageSrc}
-                alt=""
-                width={800}
-                height={450}
-                className="max-h-[min(40vh,220px)] w-full object-contain sm:max-h-[min(42vh,260px)]"
-                sizes="(max-width: 768px) 100vw, 800px"
-                unoptimized
-              />
-            </div>
-          ) : null}
-
-          {question.attributes.type === 'short_answer' ? (
-            <div className="flex flex-col gap-2 sm:gap-2.5">
-              {mode === 'take' ? (
-                <textarea
-                  value={shortText}
-                  onChange={(e) => onChangeShortText?.(e.target.value)}
-                  placeholder={shortAnswerPlaceholder}
-                  aria-label={shortAnswerAriaLabel ?? question.attributes.text}
-                  rows={5}
-                  className="w-full resize-y rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-[13px] leading-relaxed text-[#0F172A] outline-none transition focus:border-[#2D46D9] focus:ring-2 focus:ring-[#2D46D9]/15 sm:px-4 sm:py-3 sm:text-sm"
-                  style={{ userSelect: 'text' }}
-                />
-              ) : (
-                <div className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] bg-slate-50 px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3">
-                  {shortText.trim() ? (
-                    <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#0F172A] sm:text-sm">{shortText}</p>
-                  ) : (
-                    <p className="text-[13px] italic text-slate-500 sm:text-sm">—</p>
-                  )}
-                  {awaitingGradingLabel ? (
-                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                      {awaitingGradingLabel}
-                    </span>
-                  ) : null}
-                </div>
-              )}
-            </div>
-          ) : mode === 'take' ? (
-            <div className="flex flex-col gap-2 sm:gap-2.5">
-              {answers.map((ans) => {
-                const aid = String(ans.id);
-                const label = ans.attributes?.text?.trim() ?? '';
-                const imgSrc = resolveStudentExamMediaUrl(ans.attributes?.image);
-                const checked = selectedIds.includes(aid);
-                return (
-                  <label
-                    key={aid}
-                    className={`flex cursor-pointer flex-col gap-2 rounded-lg border bg-white px-3 py-2.5 transition-colors sm:gap-2.5 sm:px-4 sm:py-3 ${
-                      checked ? 'border-[#2D46D9] ring-1 ring-[#2D46D9]/20' : 'border-[#E2E8F0] hover:border-slate-300'
-                    }`}
+              <div className="relative z-0 flex flex-col gap-4 sm:gap-5">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <span
+                    className="inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold sm:px-3 sm:py-1 sm:text-[12px]"
+                    style={{ backgroundColor: '#E8EEFC', color: '#2D46D9' }}
                   >
-                    <div className="flex items-start gap-2.5 sm:gap-3">
-                      
-                      <input
-                        type={multi ? 'checkbox' : 'radio'}
-                        name={`question-${question.id}`}
-                        value={aid}
-                        checked={checked}
-                        onChange={() =>
-                          multi ? onToggleMulti?.(aid) : onSelectSingle?.(aid)
-                        }
-                        className="mt-0.5 size-[15px] shrink-0 accent-[#2D46D9] sm:mt-1 sm:size-4"
+                    {questionBadgeText}
+                  </span>
+                  <span className="text-xs font-semibold text-[#64748B] sm:text-sm">
+                    {qNum} / {totalQuestions}
+                  </span>
+                </div>
+
+                <h2 className="text-start text-base font-bold leading-snug text-[#0F172A] sm:text-lg">
+                  {question.attributes.text}
+                </h2>
+
+                {questionImageSrc ? (
+                  <div className="relative w-full max-w-2xl overflow-hidden rounded-lg border border-[#E2E8F0] bg-slate-50">
+                    <Image
+                      src={questionImageSrc}
+                      alt=""
+                      width={800}
+                      height={450}
+                      className="max-h-[min(40vh,220px)] w-full object-contain sm:max-h-[min(42vh,260px)]"
+                      sizes="(max-width: 768px) 100vw, 800px"
+                      unoptimized
+                    />
+                  </div>
+                ) : null}
+
+                {question.attributes.type === 'short_answer' ? (
+                  <div className="flex flex-col gap-2 sm:gap-2.5">
+                    {mode === 'take' ? (
+                      <textarea
+                        value={shortText}
+                        onChange={(e) => onChangeShortText?.(e.target.value)}
+                        placeholder={shortAnswerPlaceholder}
+                        aria-label={shortAnswerAriaLabel ?? question.attributes.text}
+                        rows={5}
+                        className="w-full resize-y rounded-lg border border-[#E2E8F0] bg-white px-3 py-2.5 text-[13px] leading-relaxed text-[#0F172A] outline-none transition focus:border-[#2D46D9] focus:ring-2 focus:ring-[#2D46D9]/15 sm:px-4 sm:py-3 sm:text-sm"
+                        style={{ userSelect: 'text' }}
                       />
-                      <span className="text-[13px] font-medium leading-snug text-[#0F172A] sm:text-sm">{label}</span>
-                    </div>
-                    {imgSrc ? (
-                      <div className="relative ms-6 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50 sm:ms-7">
-                        <Image
-                          src={imgSrc}
-                          alt=""
-                          width={640}
-                          height={360}
-                          className="max-h-[min(32vh,180px)] w-full object-contain sm:max-h-[min(34vh,200px)]"
-                          sizes="(max-width: 768px) 100vw, 640px"
-                          unoptimized
-                        />
+                    ) : (
+                      <div className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] bg-slate-50 px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3">
+                        {shortText.trim() ? (
+                          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#0F172A] sm:text-sm">{shortText}</p>
+                        ) : (
+                          <p className="text-[13px] italic text-slate-500 sm:text-sm">—</p>
+                        )}
+                        {awaitingGradingLabel ? (
+                          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                            {awaitingGradingLabel}
+                          </span>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </label>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2 sm:gap-2.5">
-              
-              {answers.length === 0 ? (
-                <p className="text-sm text-slate-600">{noAnswerOptionsText}</p>
-              ) : (
-                answers.map((ans) => {
-                  const aid = String(ans.id);
-                  const selected = selectedIds.includes(aid);
-                  const isCorrect = !!ans.attributes?.is_correct;
-                  const reason = answerReasonText(ans);
-                  const reasonImageSrc = answerReasonImage(ans);
-                  const showFeedback = (reason != null || reasonImageSrc != null) && (isCorrect || selected);
-                  const label = ans.attributes?.text?.trim() ?? '';
-                  const imgSrc = resolveStudentExamMediaUrl(ans.attributes?.image);
-                  return (
-                    <div
-                      key={aid}
-                      className={`flex flex-col gap-2 rounded-lg border px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3 ${reviewOptionContainerClass({
-                        selected,
-                        isCorrect,
-                        questionCorrect: reviewQuestionCorrect,
-                      })}`}
-                    >
-                      
-                      <div className="flex items-start gap-2.5 sm:gap-3">
-                        <span
-                          className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[10px] font-bold text-slate-600 sm:mt-1 sm:size-[18px] sm:text-[11px]"
-                          aria-hidden
+                    )}
+                  </div>
+                ) : mode === 'take' ? (
+                  <div className="flex flex-col gap-2 sm:gap-2.5">
+                    {answers.map((ans) => {
+                      const aid = String(ans.id);
+                      const label = ans.attributes?.text?.trim() ?? '';
+                      const imgSrc = resolveStudentExamMediaUrl(ans.attributes?.image);
+                      const checked = selectedIds.includes(aid);
+                      return (
+                        <label
+                          key={aid}
+                          className={`flex cursor-pointer flex-col gap-2 rounded-lg border bg-white px-3 py-2.5 transition-colors sm:gap-2.5 sm:px-4 sm:py-3 ${checked ? 'border-[#2D46D9] ring-1 ring-[#2D46D9]/20' : 'border-[#E2E8F0] hover:border-slate-300'
+                            }`}
                         >
-                          {selected ? '✓' : ''}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={`text-[13px] font-medium leading-snug sm:text-sm ${reviewOptionTextClass({
-                              selected,
-                              isCorrect,
-                            })}`}
-                          >
-                            {label}
-                          </p>
-                          {showFeedback ? (
-                            <div className="mt-2 border-s-2 border-slate-200 ps-3">
-                              {reason ? (
-                                <p className="text-xs leading-relaxed text-slate-600 sm:text-[13px]">
-                                  {reason}
-                                </p>
-                              ) : null}
-                              {reasonImageSrc ? (
-                                <div className="relative mt-2 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50">
-                                  <Image
-                                    src={reasonImageSrc}
-                                    alt=""
-                                    width={640}
-                                    height={360}
-                                    className="max-h-[min(32vh,180px)] w-full object-contain sm:max-h-[min(34vh,200px)]"
-                                    sizes="(max-width: 768px) 100vw, 640px"
-                                    unoptimized
-                                  />
-                                </div>
-                              ) : null}
+                          <div className="flex items-start gap-2.5 sm:gap-3">
+
+                            <input
+                              type={multi ? 'checkbox' : 'radio'}
+                              name={`question-${question.id}`}
+                              value={aid}
+                              checked={checked}
+                              onChange={() =>
+                                multi ? onToggleMulti?.(aid) : onSelectSingle?.(aid)
+                              }
+                              className="mt-0.5 size-[15px] shrink-0 accent-[#2D46D9] sm:mt-1 sm:size-4"
+                            />
+                            <span className="text-[13px] font-medium leading-snug text-[#0F172A] sm:text-sm">{label}</span>
+                          </div>
+                          {imgSrc ? (
+                            <div className="relative ms-6 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50 sm:ms-7">
+                              <Image
+                                src={imgSrc}
+                                alt=""
+                                width={640}
+                                height={360}
+                                className="max-h-[min(32vh,180px)] w-full object-contain sm:max-h-[min(34vh,200px)]"
+                                sizes="(max-width: 768px) 100vw, 640px"
+                                unoptimized
+                              />
                             </div>
                           ) : null}
-                        </div>
-                      </div>
-                      {imgSrc ? (
-                        <div className="relative ms-7 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50 sm:ms-8">
-                          <Image
-                            src={imgSrc}
-                            alt=""
-                            width={640}
-                            height={360}
-                            className="max-h-[min(32vh,180px)] w-full object-contain sm:max-h-[min(34vh,200px)]"
-                            sizes="(max-width: 768px) 100vw, 640px"
-                            unoptimized
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })
-              )}
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2 sm:gap-2.5">
+
+                    {answers.length === 0 ? (
+                      <p className="text-sm text-slate-600">{noAnswerOptionsText}</p>
+                    ) : (
+                      answers.map((ans) => {
+                        const aid = String(ans.id);
+                        const selected = selectedIds.includes(aid);
+                        const isCorrect = !!ans.attributes?.is_correct;
+                        const reason = answerReasonText(ans);
+                        const reasonImageSrc = answerReasonImage(ans);
+                        const showFeedback = (reason != null || reasonImageSrc != null) && (isCorrect || selected);
+                        const label = ans.attributes?.text?.trim() ?? '';
+                        const imgSrc = resolveStudentExamMediaUrl(ans.attributes?.image);
+                        return (
+                          <div
+                            key={aid}
+                            className={`flex flex-col gap-2 rounded-lg border px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3 ${reviewOptionContainerClass({
+                              selected,
+                              isCorrect,
+                              questionCorrect: reviewQuestionCorrect,
+                            })}`}
+                          >
+
+                            <div className="flex items-start gap-2.5 sm:gap-3">
+                              <span
+                                className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border border-slate-300 bg-white text-[10px] font-bold text-slate-600 sm:mt-1 sm:size-[18px] sm:text-[11px]"
+                                aria-hidden
+                              >
+                                {selected ? '✓' : ''}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p
+                                  className={`text-[13px] font-medium leading-snug sm:text-sm ${reviewOptionTextClass({
+                                    selected,
+                                    isCorrect,
+                                  })}`}
+                                >
+                                  {label}
+                                </p>
+                                {showFeedback ? (
+                                  <div className="mt-2 border-s-2 border-slate-200 ps-3">
+                                    {feedbackLabel ? (
+                                      <p className="text-xs font-bold text-slate-700 mb-1 sm:text-[13px]">{feedbackLabel}</p>
+                                    ) : null}
+                                    {reason ? (
+                                      <p className="text-xs leading-relaxed text-slate-600 sm:text-[13px]">
+                                        {reason}
+                                      </p>
+                                    ) : null}
+                                    {reasonImageSrc ? (
+                                      <div className="relative mt-2 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50">
+                                        <Image
+                                          src={reasonImageSrc}
+                                          alt=""
+                                          width={640}
+                                          height={360}
+                                          className="max-h-[min(32vh,180px)] w-full object-contain sm:max-h-[min(34vh,200px)]"
+                                          sizes="(max-width: 768px) 100vw, 640px"
+                                          unoptimized
+                                        />
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                            {imgSrc ? (
+                              <div className="relative ms-7 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50 sm:ms-8">
+                                <Image
+                                  src={imgSrc}
+                                  alt=""
+                                  width={640}
+                                  height={360}
+                                  className="max-h-[min(32vh,180px)] w-full object-contain sm:max-h-[min(34vh,200px)]"
+                                  sizes="(max-width: 768px) 100vw, 640px"
+                                  unoptimized
+                                />
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+
+              </div>
+
+              {watermarkConfig?.config.enabled && watermarkText ? (
+                <ExamWatermark text={watermarkText} watermarkConfig={watermarkConfig} />
+              ) : null}
             </div>
-          )}
 
-          </div>
-
-          {watermarkConfig?.config.enabled && watermarkText ? (
-            <ExamWatermark text={watermarkText} watermarkConfig={watermarkConfig} />
-          ) : null}
-          </div>
-
-          <div className="relative z-10 mt-auto flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
-            {articleFooter}
-          </div>
+            <div className="relative z-10 mt-auto flex flex-col gap-3 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between sm:pt-4">
+              {articleFooter}
+            </div>
           </div>
         </article>
 

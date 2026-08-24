@@ -91,6 +91,10 @@ export const getStudentCourses = async (categoryId?: number | string) => {
         success: false,
         message: data.message,
       };
+    if (data && Array.isArray(data.data)) {
+      data.data = data.data.filter((c: any) => c.attributes?.status === 1 || c.attributes?.status === 'active');
+    }
+
     return {
       success: true,
       data,
@@ -264,7 +268,7 @@ export const updateUserPassword = async (password: string) => {
   const userData = await getUserDataFromJWT();
   const token = userData?.token;
 
- 
+
 
 
   try {
@@ -275,7 +279,7 @@ export const updateUserPassword = async (password: string) => {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({password}),
+      body: JSON.stringify({ password }),
     });
 
     const payload = await res.json();

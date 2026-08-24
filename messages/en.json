@@ -2277,7 +2277,9 @@
         "edit": "Edit",
         "publish": "Publish",
         "unpublish": "Unpublish",
-        "delete": "Delete"
+        "delete": "Delete",
+        "showComments": "Show Comments",
+        "hideComments": "Hide Comments"
       }
     },
     "createPost": {

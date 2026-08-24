@@ -66,6 +66,7 @@ export default function CreateExamPage() {
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiQuestionCount, setAiQuestionCount] = useState<string>('5');
   const [aiFile, setAiFile] = useState<File | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '',
@@ -105,13 +106,41 @@ export default function CreateExamPage() {
   const questionsRef = useRef(questions);
   questionsRef.current = questions;
 
-  // Create routes must always start clean. Remove legacy drafts without restoring them.
   useEffect(() => {
-    localStorage.removeItem('exam_create_form_draft');
-    localStorage.removeItem('doctor_exam_create_form_draft');
+    const draft = localStorage.getItem('doctor_exam_create_draft');
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        if (parsed.examDetails) setExamDetails(parsed.examDetails);
+        if (parsed.questions) setQuestions(parsed.questions);
+      } catch (e) {
+        console.error('Failed to parse draft', e);
+      }
+    }
+    setIsLoaded(true);
 
     return () => revokeQuestionsObjectUrls(questionsRef.current);
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    // Save draft without non-serializable fields (File objects or object URLs)
+    const draftQuestions = questions.map(q => ({
+      ...q,
+      image: null,
+      imagePreview: '',
+      answers: q.answers.map(a => ({
+        ...a,
+        image: null,
+        imagePreview: '',
+        reason_image: null,
+        reasonImagePreview: ''
+      }))
+    }));
+
+    localStorage.setItem('doctor_exam_create_draft', JSON.stringify({ examDetails, questions: draftQuestions }));
+  }, [examDetails, questions, isLoaded]);
 
   const closeAIModal = () => {
     if (isExtractingAI) return;
@@ -365,7 +394,7 @@ export default function CreateExamPage() {
       }
 
       // Refresh handled by hook
-      localStorage.removeItem('doctor_exam_create_form_draft');
+      localStorage.removeItem('doctor_exam_create_draft');
       toast.success(t('create.success'));
       router.push('/doctor/exams');
     } catch (error: any) {
@@ -920,8 +949,8 @@ export default function CreateExamPage() {
                                 type="text"
                                 placeholder={`${t('create.answer')} ${ansIndex + 1}`}
                                 className={`flex-1 px-4 py-2.5 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] ${validationErrors.answerIds.has(answer.id)
-                                    ? 'border-[#EF4444] focus:ring-[#EF4444] bg-red-50'
-                                    : 'border-[#E2E8F0] focus:ring-[#2137D6]'
+                                  ? 'border-[#EF4444] focus:ring-[#EF4444] bg-red-50'
+                                  : 'border-[#E2E8F0] focus:ring-[#2137D6]'
                                   }`}
                                 value={answer.text}
                                 onChange={(e) => {
@@ -1097,7 +1126,10 @@ export default function CreateExamPage() {
         <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-[#E2E8F0]">
           <button
             type="button"
-            onClick={() => router.push('/doctor/exams')}
+            onClick={() => {
+              localStorage.removeItem('doctor_exam_create_draft');
+              router.push('/doctor/exams');
+            }}
             disabled={isSubmitting}
             className="px-8 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] hover:shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >

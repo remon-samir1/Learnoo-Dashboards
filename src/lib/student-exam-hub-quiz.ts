@@ -168,11 +168,9 @@ export function classifyHubQuizRow(
     // It should go to 'locked' to prompt them for a code.
     return 'locked';
   }
-
   const status = String(attrs.status ?? '')
     .trim()
     .toLowerCase();
-
   const startRaw = attrs.start_time;
   const endRaw = attrs.end_time;
   const start = typeof startRaw === 'string' && startRaw.trim() ? new Date(startRaw).getTime() : NaN;

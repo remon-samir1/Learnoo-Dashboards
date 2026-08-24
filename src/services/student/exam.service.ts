@@ -12,6 +12,7 @@ export interface LatestExamSummary {
   total_marks: number | null;
   passing_marks: number | null;
   course_id: number | string | null;
+  courses_ids?: (number | string)[];
   created_at: string | null;
   /** Status derived from start_time/end_time comparison vs current time. */
   status: "available" | "upcoming" | "expired";
@@ -96,6 +97,14 @@ function pickFirstCourseId(quiz: Quiz): number | string | null {
   return typeof first === "number" ? first : String(first);
 }
 
+function pickAllCourseIds(quiz: Quiz): (number | string)[] {
+  const attrs = (quiz.attributes ?? null) as any;
+  if (!attrs) return [];
+
+  const cids = Array.isArray(attrs.courses_ids) ? attrs.courses_ids : [];
+  return cids;
+}
+
 function deriveStatus(quiz: Quiz, nowMs: number): LatestExamSummary["status"] {
   const attrs = quiz.attributes ?? null;
   if (!attrs) return "upcoming";
@@ -125,6 +134,7 @@ function summarize(quiz: Quiz, nowMs: number): LatestExamSummary | null {
     total_marks: typeof attrs.total_marks === "number" ? attrs.total_marks : null,
     passing_marks: typeof attrs.passing_marks === "number" ? attrs.passing_marks : null,
     course_id: pickFirstCourseId(quiz),
+    courses_ids: pickAllCourseIds(quiz),
     created_at: attrs.created_at ?? null,
     status,
   };

@@ -73,7 +73,7 @@ export default function MySubjectSection({
   useEffect(() => {
     const fetchMe = async () => {
       try {
-      const token = Cookies.get('token');
+        const token = Cookies.get('token');
 
         const res = await fetch(
           "https://api.learnoo.app/v1/auth/me",
@@ -150,8 +150,16 @@ export default function MySubjectSection({
     selectedCategory,
   ]);
 
-  const currentCourses =
-    selectedCategory?.attributes.courses || [];
+  const currentCourses = useMemo(() => {
+    const rawCourses = selectedCategory?.attributes.courses || [];
+    const filtered = rawCourses.filter(
+      (c) =>
+        (c.attributes as any)?.status === 1 ||
+        (c.attributes as any)?.status === "active",
+    );
+    console.log("MySubjectSection [Tree] - currentCourses Data:", filtered);
+    return filtered;
+  }, [selectedCategory]);
 
   const handleOpenCategory = (category: Category) => {
     setHistory((prev) => [
@@ -273,48 +281,48 @@ export default function MySubjectSection({
                   onClick={() =>
                     handleOpenCategory(category)
                   }
-                  className="group flex min-h-[180px] flex-col rounded-2xl border border-[var(--border-color)] bg-white p-4 text-start transition hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
+                  className="group flex min-h-[180px] flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white text-start shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
                 >
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div className="relative h-14 w-14 overflow-hidden rounded-2xl bg-gray-100">
-                      {image ? (
-                        <Image
-                          src={image}
-                          alt={title}
-                          fill
-                          sizes="56px"
-                          className="object-cover"
+                  <div className="relative h-52 w-full overflow-hidden bg-slate-100">
+                    {image ? (
+                      <Image
+                        src={image}
+                        alt={title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-blue-50">
+                        <BookOpen
+                          size={48}
+                          className="text-[var(--primary)] opacity-50"
                         />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-blue-50">
-                          <BookOpen
-                            size={24}
-                            className="text-[var(--primary)]"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <ChevronLeft
-                      size={20}
-                      className="text-[var(--text-placeholder)] transition group-hover:text-[var(--primary)]"
-                    />
+                      </div>
+                    )}
                   </div>
 
-                  <h3 className="line-clamp-2 text-lg font-bold text-[var(--text-dark)]">
-                    {title}
-                  </h3>
+                  <div className="flex flex-1 flex-col p-4 sm:p-5 w-full">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="line-clamp-2 text-lg font-bold leading-snug tracking-tight text-[var(--text-dark)]">
+                        {title}
+                      </h3>
+                      <ChevronLeft
+                        size={20}
+                        className="mt-1 shrink-0 text-[var(--text-placeholder)] transition group-hover:text-[var(--primary)]"
+                      />
+                    </div>
 
-                  <div className="mt-auto flex items-center gap-4 pt-4 text-sm text-[var(--text-muted)]">
-                    <span className="flex items-center gap-1">
-                      <BookOpen size={15} />
-                      {coursesCount} {t("courses")}
-                    </span>
+                    <div className="mt-auto flex items-center gap-4 pt-4 text-sm font-medium text-[var(--text-muted)]">
+                      <span className="flex items-center gap-1.5">
+                        <BookOpen size={16} />
+                        {coursesCount} {t("courses")}
+                      </span>
 
-                    <span className="flex items-center gap-1">
-                      <Users size={15} />
-                      {studentsCount} {t("students")}
-                    </span>
+                      <span className="flex items-center gap-1.5">
+                        <Users size={16} />
+                        {studentsCount} {t("students")}
+                      </span>
+                    </div>
                   </div>
                 </button>
               );
@@ -329,8 +337,8 @@ export default function MySubjectSection({
               const href = `/${locale}/student/courses/course-details/${course.id}`;
 
               const content = (
-                <>
-                  <div className="relative h-36 w-full overflow-hidden ">
+                <div className="flex h-full flex-col w-full">
+                  <div className="relative h-52 w-full overflow-hidden bg-slate-100">
                     {course.attributes.thumbnail ? (
                       <Image
                         src={
@@ -339,35 +347,34 @@ export default function MySubjectSection({
                         alt={
                           course.attributes.title
                         }
-                        width={75}
-                        height={75}
-                        className="h-75 w-75 object-cover transition group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-blue-50">
                         <BookOpen
-                          size={32}
-                          className="text-[var(--primary)]"
+                          size={48}
+                          className="text-[var(--primary)] opacity-50"
                         />
                       </div>
                     )}
 
                     {locked && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/35">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/90 text-[var(--primary)] shadow">
-                          <Lock size={20} />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/65">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[var(--primary)] shadow-lg">
+                          <Lock size={24} />
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="line-clamp-1 font-bold text-[var(--text-dark)]">
+                  <div className="flex flex-1 flex-col p-4 sm:p-5">
+                    <h3 className="line-clamp-2 text-lg font-bold leading-snug tracking-tight text-[var(--text-dark)]">
                       {course.attributes.title}
                     </h3>
 
                     {course.attributes.sub_title && (
-                      <p className="mt-1 line-clamp-1 text-sm text-[var(--text-muted)]">
+                      <p className="mt-1 line-clamp-1 text-sm font-medium text-[var(--text-muted)]">
                         {
                           course.attributes
                             .sub_title
@@ -375,14 +382,16 @@ export default function MySubjectSection({
                       </p>
                     )}
 
-                    <div className="mt-3 flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                      <span>
+                    <div className="mt-auto pt-4 flex items-center gap-4 text-sm font-medium text-[var(--text-muted)]">
+                      <span className="flex items-center gap-1.5">
+                        <BookOpen size={16} />
                         {course.attributes.stats
                           ?.notes ?? 0}{" "}
                         {t("notes")}
                       </span>
 
-                      <span>
+                      <span className="flex items-center gap-1.5">
+                        <Users size={16} />
                         {course.attributes.stats
                           ?.lectures ?? 0}{" "}
                         {t("lectures")}
@@ -390,21 +399,21 @@ export default function MySubjectSection({
                     </div>
 
                     {locked && (
-                      <div className="mt-4 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-center text-sm font-bold text-white transition group-hover:bg-[var(--primary-blue)]">
+                      <div className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-[var(--primary)] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700">
                         {t(
                           "activation.button",
                         )}
                       </div>
                     )}
                   </div>
-                </>
+                </div>
               );
 
               return (
                 <Link
                   key={course.id}
                   href={href}
-                  className="group overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white transition hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
                 >
                   {content}
                 </Link>
@@ -484,11 +493,11 @@ export default function MySubjectSection({
 
               {activationLoading
                 ? t(
-                    "activation.loading",
-                  )
+                  "activation.loading",
+                )
                 : t(
-                    "activation.submit",
-                  )}
+                  "activation.submit",
+                )}
             </button>
           </div>
         </div>

@@ -2311,7 +2311,9 @@
         "edit": "تعديل",
         "publish": "نشر",
         "unpublish": "إلغاء النشر",
-        "delete": "حذف"
+        "delete": "حذف",
+        "showComments": "عرض التعليقات",
+        "hideComments": "إخفاء التعليقات"
       }
     },
     "createPost": {

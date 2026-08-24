@@ -710,6 +710,7 @@ const DiscussionNode = ({
   playingAudioId,
   setPlayingAudioId
 }: any) => {
+  const [showReplies, setShowReplies] = useState(false);
   const hasReplies = discussion.replies?.length > 0;
   const isReplyComposerOpen = replyingTo === discussion.id;
 
@@ -871,28 +872,47 @@ const DiscussionNode = ({
         )}
 
         {hasReplies && (
-          <div className="mt-2 border-l border-[#E2E8F0] ml-4 sm:ml-5">
-            {discussion.replies.map((reply: any) => (
-              <DiscussionNode
-                key={reply.id}
-                discussion={reply}
-                replyingTo={replyingTo}
-                setReplyingTo={setReplyingTo}
-                onReplySuccess={onReplySuccess}
-                handleDelete={handleDelete}
-                t={t}
-                formatTime={formatTime}
-                formatMoment={formatMoment}
-                formatDuration={formatDuration}
-                getDiscussionTypeBadge={getDiscussionTypeBadge}
-                previewImageUrl={previewImageUrl}
-                setPreviewImageUrl={setPreviewImageUrl}
-                playingAudioId={playingAudioId}
-                setPlayingAudioId={setPlayingAudioId}
-              />
-            ))}
+          <div className="mt-2 text-sm">
+            <button
+              onClick={() => setShowReplies(!showReplies)}
+              className="flex items-center gap-1 font-semibold text-[#2137D6] hover:underline"
+            >
+              {showReplies ? t('hideReplies') : t('showReplies')}
+              <ChevronDown className={`h-4 w-4 transition-transform ${showReplies ? 'rotate-180' : ''}`} />
+            </button>
           </div>
         )}
+
+        <div
+          className={`grid transition-all duration-300 ease-in-out ${showReplies ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            }`}
+        >
+          <div className="overflow-hidden">
+            {hasReplies && (
+              <div className="mt-2 border-l border-[#E2E8F0] ml-4 sm:ml-5">
+                {discussion.replies.map((reply: any) => (
+                  <DiscussionNode
+                    key={reply.id}
+                    discussion={reply}
+                    replyingTo={replyingTo}
+                    setReplyingTo={setReplyingTo}
+                    onReplySuccess={onReplySuccess}
+                    handleDelete={handleDelete}
+                    t={t}
+                    formatTime={formatTime}
+                    formatMoment={formatMoment}
+                    formatDuration={formatDuration}
+                    getDiscussionTypeBadge={getDiscussionTypeBadge}
+                    previewImageUrl={previewImageUrl}
+                    setPreviewImageUrl={setPreviewImageUrl}
+                    playingAudioId={playingAudioId}
+                    setPlayingAudioId={setPlayingAudioId}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
