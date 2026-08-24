@@ -4,6 +4,8 @@ import { resolveEnabledWatermarkBucket } from '@/src/lib/watermark-from-features
 import { getChapterById } from '@/src/services/student/chapter.service';
 import { getLectureById } from '@/src/services/student/lecture.service';
 import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
+import { getCourseById } from '@/src/services/student/course.service';
+import { courseIsLocked } from '@/src/lib/student-course-lock';
 import type { Chapter, Lecture } from '@/src/types';
 
 interface WatchChapterPageProps {
@@ -55,17 +57,27 @@ export default async function WatchChapterPage({ params }: WatchChapterPageProps
   const watchAccessDenied =
     chapter != null && !coerceCanWatchExplicitTrue(chapter.attributes.can_watch);
 
+  let courseLocked = false;
+  if (chapter?.attributes?.course_id != null) {
+    const courseRes = await getCourseById(chapter.attributes.course_id);
+    if (courseRes.success && courseRes.data?.data) {
+      // @ts-ignore
+      courseLocked = courseIsLocked(courseRes.data.data);
+    }
+  }
+
   const platformFeatures = await getStudentPlatformFeatures();
   const initialWatermarkResolution = resolveEnabledWatermarkBucket(platformFeatures, 'chapters');
 
   return (
-    <ChapterWatchView 
+    <ChapterWatchView
       chapterId={chapterId}
       chapter={chapter}
       loadError={loadError}
       lectureChapters={lectureChapters}
       lectureTitle={lectureTitle}
       watchAccessDenied={watchAccessDenied}
+      courseLocked={courseLocked}
       initialWatermarkResolution={initialWatermarkResolution}
     />
   );

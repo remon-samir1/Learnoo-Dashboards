@@ -307,6 +307,7 @@ export default function ChapterWatchView({
   lectureChapters,
   lectureTitle,
   watchAccessDenied,
+  courseLocked,
   initialWatermarkResolution,
 }: {
   chapterId: string;
@@ -316,6 +317,8 @@ export default function ChapterWatchView({
   lectureTitle: string;
   /** Server says `can_watch` is false — user cannot use this chapter URL to stream. */
   watchAccessDenied: boolean;
+  /** Whether the parent course is locked */
+  courseLocked: boolean;
   /** From server `GET /v1/feature` + bucket resolution; used until client query settles. */
   initialWatermarkResolution?: WatermarkResolution | null;
 }) {
@@ -566,8 +569,8 @@ export default function ChapterWatchView({
   }, [chapter, locale]);
 
   const pdfPanelVisible = useMemo(
-    () => (chapter ? isStudentChapterPdfVisible(chapter) : false),
-    [chapter]
+    () => (chapter ? isStudentChapterPdfVisible(chapter, courseLocked) : false),
+    [chapter, courseLocked]
   );
 
   const viewsBadge = useMemo(() => {
