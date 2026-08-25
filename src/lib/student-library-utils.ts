@@ -15,5 +15,5 @@ export function isStudentLibraryPublished(lib: Library): boolean {
 
 export function librarySearchHaystack(lib: Library): string {
   const a = lib.attributes;
-  return [a.title, a.description, String(a.course_id ?? ''), a.material_type].join(' ').toLowerCase();
+  return [a.title, a.description, ...(a.course_ids ?? []), a.material_type].join(' ').toLowerCase();
 }

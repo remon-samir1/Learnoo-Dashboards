@@ -27,8 +27,6 @@ export default function ElectronicLibraryPage() {
   const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [materialTypeFilter, setMaterialTypeFilter] = useState('all');
-  const [courseFilter, setCourseFilter] = useState('all');
 
   // Debounce search
   useEffect(() => {
@@ -48,15 +46,9 @@ export default function ElectronicLibraryPage() {
         item.attributes.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         item.attributes.description?.toLowerCase().includes(debouncedSearch.toLowerCase());
 
-      const matchesType = materialTypeFilter === 'all' ||
-        item.attributes.material_type === materialTypeFilter;
-
-      const matchesCourse = courseFilter === 'all' ||
-        String(item.attributes.course_id) === courseFilter;
-
-      return matchesSearch && matchesType && matchesCourse;
+      return matchesSearch;
     });
-  }, [libraries, debouncedSearch, materialTypeFilter, courseFilter]);
+  }, [libraries, debouncedSearch]);
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('electronicLibrary.deleteConfirm'))) return;
@@ -87,7 +79,7 @@ export default function ElectronicLibraryPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[300px] relative">
+        <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8]" />
           <input
             type="text"
@@ -96,35 +88,6 @@ export default function ElectronicLibraryPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <select
-              value={materialTypeFilter}
-              onChange={(e) => setMaterialTypeFilter(e.target.value)}
-              className="appearance-none pl-4 pr-10 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#475569] font-medium focus:outline-none cursor-pointer"
-            >
-              <option value="all">{t('electronicLibrary.filters.allTypes')}</option>
-              <option value="booklet">{t('electronicLibrary.filters.booklet')}</option>
-              <option value="reference">{t('electronicLibrary.filters.reference')}</option>
-              <option value="guide">{t('electronicLibrary.filters.guide')}</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
-          </div>
-          <div className="relative">
-            <select
-              value={courseFilter}
-              onChange={(e) => setCourseFilter(e.target.value)}
-              disabled={isLoadingCourses}
-              className="appearance-none pl-4 pr-10 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#475569] font-medium focus:outline-none cursor-pointer disabled:opacity-50"
-            >
-              <option value="all">{t('electronicLibrary.filters.allCourses')}</option>
-              {courses?.map((course) => (
-                <option key={course.id} value={course.id}>{course.attributes.title}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
-          </div>
         </div>
       </div>
 

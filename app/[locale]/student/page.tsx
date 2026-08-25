@@ -48,7 +48,6 @@ export default async function StudentPage() {
   const latestExams = examsResult.success ? examsResult.data ?? [] : [];
 
   const coursesCount = courses?.length;
-  const progressCount = progress?.length;
   const liveSessionsCount = liveSessions?.length;
 
   const enrolledCourseIds = new Set(
@@ -78,7 +77,7 @@ export default async function StudentPage() {
     <div className="flex max-w-full flex-col gap-4 sm:gap-6">
       <WelcomeSection
         coursesCount={coursesCount}
-        progressCount={progressCount}
+        notesCount={enrolledNotes.length}
         student={student}
         liveSessionsCount={liveSessionsCount}
       />

@@ -228,16 +228,6 @@ export default function EditStudentPage() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-[13px] font-bold text-[#475569]">Feedback</label>
-              <textarea
-                placeholder="Enter feedback for this student..."
-                rows={3}
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
-                value={formData.feedback}
-                onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
-              />
-            </div>
           </div>
         </section>
 
@@ -397,7 +387,7 @@ export default function EditStudentPage() {
             <ShieldCheck className="w-4 h-4 text-[#4F46E5]" />
             <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.sections.accountStatus')}</h2>
           </div>
-          <div className="p-6">
+          <div className="p-6 flex flex-col gap-6">
             <div className="flex flex-col gap-2 relative max-w-md">
               <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.status')}</label>
               <select
@@ -411,6 +401,17 @@ export default function EditStudentPage() {
                 <option value={2}>{StudentStatusLabels[2]}</option>
               </select>
               <ChevronDown className="absolute right-4 top-[38px] w-4 h-4 text-[#94A3B8] pointer-events-none" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.feedback')}</label>
+              <textarea
+                placeholder={t('students.form.fields.placeholders.feedback')}
+                rows={3}
+                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8] resize-none"
+                value={formData.feedback}
+                onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
+              />
             </div>
           </div>
         </section>

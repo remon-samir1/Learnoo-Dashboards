@@ -142,7 +142,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
       <header className="mb-6 flex flex-col gap-4 border-b border-[#E5E7EB] pb-6 max-lg:gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold leading-tight tracking-tight text-[#0F172A] sm:text-2xl lg:text-3xl">{a.title}</h1>
-          <p className="mt-1.5 text-sm font-medium text-[#64748B]">{t('courseRef', { id: a.course_id })}</p>
+          <p className="mt-1.5 text-sm font-medium text-[#64748B]">{t('courseRef', { id: a.course_ids?.join(', ') })}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
             <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[#4338CA]">{materialTypeLabel(a.material_type)}</span>
             <span className="text-[#64748B]">
@@ -214,7 +214,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
               <p className="mt-2 text-sm leading-relaxed text-[#475569]">{a.description.trim()}</p>
             </div>
           ) : null}
-{/* 
+          {/* 
           <div className="rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-sm">
             <h2 className="text-xs font-bold uppercase tracking-wide text-[#64748B]">{t('attachments')}</h2>
             <ul className="mt-3 space-y-2">
@@ -310,15 +310,15 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
                   <span className="text-xs font-semibold text-blue-700">Watermarked</span>
                 </div>
               ) : null}
-          
-  <PdfPreviewModal
-    open={true}
-    pdfUrl={selected.attributes.path}
-    title={selected.attributes.name ?? 'PDF'}
-    variant="inline"
-    expandToContainer={true}
-    contentType="library"
-  />
+
+              <PdfPreviewModal
+                open={true}
+                pdfUrl={selected.attributes.path}
+                title={selected.attributes.name ?? 'PDF'}
+                variant="inline"
+                expandToContainer={true}
+                contentType="library"
+              />
             </div>
           ) : canOpenUnlocked && selected?.attributes?.path ? (
             <div className="flex min-h-[480px] flex-col items-center justify-center gap-4 px-6 py-16 text-center">

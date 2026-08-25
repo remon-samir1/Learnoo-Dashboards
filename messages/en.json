@@ -499,6 +499,7 @@
         "activeCourses": "Active Courses",
         "liveToday": "Live Today",
         "upcomingExams": "In Progress",
+        "notes": "Notes and Summaries",
         "universityFallBack": "Not available"
       },
       "library": {
@@ -651,12 +652,14 @@
         "selectCourse": "Select Course",
         "noCentersSelected": "No centers selected",
         "noCoursesSelected": "No courses selected",
+        "feedback": "Feedback",
         "placeholders": {
           "firstName": "Ahmed",
           "lastName": "Ali",
           "phone": "+20 100 123 4567",
           "email": "student@university.edu",
-          "password": "********"
+          "password": "********",
+          "feedback": "Enter feedback for this student..."
         }
       },
       "buttons": {

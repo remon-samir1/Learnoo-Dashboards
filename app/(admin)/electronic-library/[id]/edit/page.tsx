@@ -16,13 +16,13 @@ export default function EditLibraryItemPage() {
   const params = useParams();
   const libraryId = parseInt(params.id as string);
 
-function getPreviewUrl(path: string | null): string {
-  if (!path) return '';
-  // blob: URLs are for local previews, return as-is
-  if (path.startsWith('blob:')) return path;
-  // API returns full URLs, return as-is
-  return path;
-}
+  function getPreviewUrl(path: string | null): string {
+    if (!path) return '';
+    // blob: URLs are for local previews, return as-is
+    if (path.startsWith('blob:')) return path;
+    // API returns full URLs, return as-is
+    return path;
+  }
 
 
   const { data: library, isLoading: isLoadingLibrary, error } = useLibrary(libraryId);
@@ -35,7 +35,7 @@ function getPreviewUrl(path: string | null): string {
   const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [courseId, setCourseId] = useState('');
+  const [courseIds, setCourseIds] = useState<string[]>([]);
   const [materialType, setMaterialType] = useState('booklet');
   const [codeActivation, setCodeActivation] = useState(false);
   const [isPublish, setIsPublish] = useState(false);
@@ -56,7 +56,7 @@ function getPreviewUrl(path: string | null): string {
       setExistingAttachments(library.attributes.attachments || []);
       setTitle(library.attributes.title || '');
       setDescription(library.attributes.description || '');
-      setCourseId(String(library.attributes.course_id) || '');
+      setCourseIds(library.attributes.course_ids?.map(String) || []);
       setMaterialType(library.attributes.material_type || 'booklet');
       setCodeActivation(library.attributes.code_activation || false);
       setIsPublish(library.attributes.is_publish || false);
@@ -91,7 +91,7 @@ function getPreviewUrl(path: string | null): string {
         ...(attachments.length > 0 && { attachment: attachments[0] }),
         title: title.trim(),
         description: description.trim(),
-        course_id: parseInt(courseId || '0'),
+        course_ids: courseIds.map((id: string) => parseInt(id)),
         material_type: materialType as any,
         code_activation: codeActivation,
         is_publish: isPublish,
@@ -116,7 +116,7 @@ function getPreviewUrl(path: string | null): string {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-[#EF4444]">{t('electronicLibrary.detail.loadError')}</p>
-        <Link 
+        <Link
           href="/electronic-library"
           className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
         >
@@ -131,7 +131,7 @@ function getPreviewUrl(path: string | null): string {
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link 
+        <Link
           href={`/electronic-library/${libraryId}`}
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
@@ -147,12 +147,12 @@ function getPreviewUrl(path: string | null): string {
         {/* Item Details Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm  p-6 flex flex-col gap-6">
           <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.edit.sections.itemDetails')}</h2>
-          
+
           {/* Title */}
           <div className="flex flex-col gap-2">
             <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.title')} <span className="text-[#EF4444]">*</span></label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -163,7 +163,7 @@ function getPreviewUrl(path: string | null): string {
           {/* Description */}
           <div className="flex flex-col gap-2">
             <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.description')}</label>
-            <textarea 
+            <textarea
               rows={4}
               className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all resize-none"
               value={description}
@@ -177,17 +177,18 @@ function getPreviewUrl(path: string | null): string {
               <CourseTreeSelect
                 label={t('electronicLibrary.edit.fields.course')}
                 required
-                value={courseId}
-                onChange={(val) => setCourseId(val)}
+                multiple
+                value={courseIds}
+                onMultiChange={(val) => setCourseIds(val)}
               />
-              {errors.courseId && <p className="text-xs text-[#EF4444] mt-1">{errors.courseId}</p>}
+              {errors.courseIds && <p className="text-xs text-[#EF4444] mt-1">{errors.courseIds}</p>}
             </div>
 
             {/* Material Type */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.materialType')}</label>
               <div className="relative">
-                <select 
+                <select
                   className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
                   value={materialType}
                   onChange={(e) => setMaterialType(e.target.value)}
@@ -204,8 +205,8 @@ function getPreviewUrl(path: string | null): string {
           {/* Price */}
           <div className="flex flex-col gap-2">
             <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.price')}</label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               step="0.01"
               className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all"
               value={price}
@@ -221,9 +222,9 @@ function getPreviewUrl(path: string | null): string {
             {/* Preview */}
             {coverImagePreview && (
               <div className="relative w-full h-48 rounded-xl overflow-hidden bg-[#F8FAFC]">
-                <img 
-                  src={getPreviewUrl(coverImagePreview)} 
-                  alt="Cover preview" 
+                <img
+                  src={getPreviewUrl(coverImagePreview)}
+                  alt="Cover preview"
                   className="w-full h-full object-cover"
                 />
                 <button
@@ -238,19 +239,19 @@ function getPreviewUrl(path: string | null): string {
                 </button>
               </div>
             )}
-            
+
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.uploadNewCoverImage')}</label>
               <div className="relative">
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   accept="image/*"
                   onChange={handleCoverImageChange}
                   className="hidden"
                   id="coverImageUpload"
                 />
-                <label 
+                <label
                   htmlFor="coverImageUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
@@ -284,7 +285,7 @@ function getPreviewUrl(path: string | null): string {
                 </div>
               ))
             )}
-            
+
             {/* Selected New File Display */}
             {attachments.map((file, index) => (
               <div key={index} className="flex items-center gap-3 p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0]">
@@ -301,18 +302,18 @@ function getPreviewUrl(path: string | null): string {
                 </button>
               </div>
             ))}
-            
+
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.edit.fields.uploadNewFile')}</label>
               <div className="relative">
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   onChange={handleAttachmentChange}
                   className="hidden"
                   id="attachmentUpload"
                 />
-                <label 
+                <label
                   htmlFor="attachmentUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
@@ -327,24 +328,24 @@ function getPreviewUrl(path: string | null): string {
         {/* Settings Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-6">
           <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.edit.sections.settings')}</h2>
-          
+
           {/* Code Activation */}
           {canUseActivations && (
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.edit.settings.codeActivation')}</span>
-              <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.edit.settings.codeActivationDescription')}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.edit.settings.codeActivation')}</span>
+                <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.edit.settings.codeActivationDescription')}</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={codeActivation}
+                  onChange={(e) => setCodeActivation(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
+              </label>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={codeActivation}
-                onChange={(e) => setCodeActivation(e.target.checked)}
-              />
-              <div className="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
-            </label>
-          </div>
           )}
 
           {/* Publish Status */}
@@ -354,8 +355,8 @@ function getPreviewUrl(path: string | null): string {
               <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.edit.settings.publishItemDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={isPublish}
                 onChange={(e) => setIsPublish(e.target.checked)}
@@ -371,8 +372,8 @@ function getPreviewUrl(path: string | null): string {
               <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.edit.settings.downloadableDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={downloadable}
                 onChange={(e) => setDownloadable(e.target.checked)}
@@ -400,13 +401,13 @@ function getPreviewUrl(path: string | null): string {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 mt-2">
-          <Link 
+          <Link
             href={`/electronic-library/${libraryId}`}
             className="px-6 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-all"
           >
             {t('electronicLibrary.edit.buttons.cancel')}
           </Link>
-          <button 
+          <button
             type="submit"
             disabled={isUpdating}
             className="flex items-center gap-2 px-6 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200 disabled:opacity-50"

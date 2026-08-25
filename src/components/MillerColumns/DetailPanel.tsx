@@ -168,29 +168,6 @@ export function DetailPanel({
               </div>
             </div>
 
-            {/* Department Actions for Activations */}
-            {canUseActivations && (
-              <div className="pt-3 border-t border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-700">{t("activation")}</span>
-                  {!isInstructor && (
-                    <button
-                      onClick={() => onGenerateCodes("department", node.data.id)}
-                      className="p-1 hover:text-blue-600 transition-colors border rounded bg-gray-50"
-                      title={t("generateCodes")}
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-                {/* Department codes rendering */}
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-500">
-                    {t("departmentActivationMessage")}
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

@@ -11,7 +11,7 @@ export type LibraryResponse = ApiListResponse<LibraryItem>;
 export type LibraryItemAttributes = {
   cover_image: string | null;
   title: string;
-  course_id: number;
+  course_ids: number[];
   description: string | null;
   material_type: MaterialType;
   code_activation: boolean;

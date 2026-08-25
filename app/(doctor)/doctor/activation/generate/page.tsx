@@ -80,7 +80,6 @@ function useCodeTypes(t: any) {
     { value: 'App\\Models\\Library', label: t('activation.types.library') },
     { value: 'App\\Models\\LiveRoom', label: t('activation.types.liveRoom') },
     { value: 'App\\Models\\Quiz', label: t('activation.types.quiz') },
-    { value: 'App\\Models\\Department', label: t('activation.types.department') },
   ];
 }
 

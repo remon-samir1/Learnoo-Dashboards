@@ -534,6 +534,7 @@
         "activeCourses": "الكورسات المفعلة",
         "liveToday": "بث مباشر اليوم",
         "upcomingExams": "قيد المشاهدة",
+        "notes": "ملاحظات وملخصات",
         "universityFallBack": "لا يوجد"
       },
       "library": {
@@ -686,12 +687,14 @@
         "selectCourse": "اختر الدورة",
         "noCentersSelected": "لم يتم اختيار مراكز",
         "noCoursesSelected": "لم يتم اختيار دورات",
+        "feedback": "ملاحظات وتوجيهات",
         "placeholders": {
           "firstName": "أحمد",
           "lastName": "علي",
           "phone": "+20 100 123 4567",
           "email": "student@university.edu",
-          "password": "********"
+          "password": "********",
+          "feedback": "أدخل ملاحظات أو توجيهات لهذا الطالب..."
         }
       },
       "buttons": {

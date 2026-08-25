@@ -2508,7 +2508,7 @@ export interface LibraryAttributes {
 
 
 
-  course_id: number;
+  course_ids: number[];
 
 
 
@@ -2587,7 +2587,7 @@ export interface CreateLibraryRequest {
 
 
 
-  course_id: number;
+  course_ids: number[];
 
 
 
@@ -2650,7 +2650,7 @@ export interface UpdateLibraryRequest {
 
 
 
-  course_id?: number;
+  course_ids?: number[];
 
 
 

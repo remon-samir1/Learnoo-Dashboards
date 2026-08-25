@@ -18,7 +18,6 @@ function useCodeTypes(t: any) {
     { value: 'App\\Models\\Course', label: t('activation.types.course') },
     { value: 'App\\Models\\Chapter', label: t('activation.types.chapter') },
     { value: 'App\\Models\\Library', label: t('activation.types.library') },
-    { value: 'App\\Models\\Department', label: t('activation.types.department') },
   ];
 }
 

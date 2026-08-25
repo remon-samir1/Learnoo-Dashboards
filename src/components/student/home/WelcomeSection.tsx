@@ -6,12 +6,12 @@ import { useTranslations } from "next-intl";
 
 const WelcomeSection = ({
   coursesCount,
-  progressCount,
+  notesCount,
   student,
   liveSessionsCount,
 }: {
   student: IStudent;
-  progressCount: number;
+  notesCount: number;
   coursesCount: number;
   liveSessionsCount: number;
 }) => {
@@ -42,7 +42,7 @@ const WelcomeSection = ({
         <div className="flex min-h-11 items-center gap-2 rounded-xl bg-white/10 px-3 py-2 sm:min-h-0 sm:bg-transparent sm:px-0 sm:py-0">
           <FileText size={18} className="shrink-0" aria-hidden />
           <span>
-            {progressCount} {t("upcomingExams")}
+            {notesCount} {t("notes")}
           </span>
         </div>
       </div>

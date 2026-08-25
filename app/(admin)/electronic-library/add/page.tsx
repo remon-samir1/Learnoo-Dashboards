@@ -22,7 +22,7 @@ export default function AddLibraryItemPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [courseId, setCourseId] = useState('');
+  const [courseIds, setCourseIds] = useState<string[]>([]);
   const [materialType, setMaterialType] = useState('booklet');
   const [codeActivation, setCodeActivation] = useState(false);
   const [isPublish, setIsPublish] = useState(false);
@@ -46,7 +46,7 @@ export default function AddLibraryItemPage() {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = t('electronicLibrary.add.fields.titleRequired');
     if (!description.trim()) newErrors.description = t('electronicLibrary.add.fields.descriptionRequired');
-    if (!courseId) newErrors.courseId = t('electronicLibrary.add.fields.courseRequired');
+    if (courseIds.length === 0) newErrors.courseIds = t('electronicLibrary.add.fields.courseRequired');
     if (!price.trim() || isNaN(parseFloat(price))) newErrors.price = t('electronicLibrary.add.fields.priceRequired');
     if (!coverImage) newErrors.coverImage = t('electronicLibrary.add.fields.coverImageRequired');
     if (attachments.length === 0) newErrors.attachment = t('electronicLibrary.add.fields.attachmentRequired');
@@ -79,7 +79,7 @@ export default function AddLibraryItemPage() {
         title: title.trim(),
         description: description.trim(),
         attachment: attachments[0],
-        course_id: parseInt(courseId),
+        course_ids: courseIds.map(id => parseInt(id)),
         material_type: materialType as any,
         code_activation: codeActivation,
         is_publish: isPublish,
@@ -96,7 +96,7 @@ export default function AddLibraryItemPage() {
     <div className="flex flex-col gap-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link 
+        <Link
           href="/electronic-library"
           className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
         >
@@ -112,12 +112,12 @@ export default function AddLibraryItemPage() {
         {/* Item Details Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm  p-6 flex flex-col gap-6">
           <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.add.sections.itemDetails')}</h2>
-          
+
           {/* Title */}
           <div className="flex flex-col gap-2">
             <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.title')} <span className="text-[#EF4444]">*</span></label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder={t('electronicLibrary.add.fields.titlePlaceholder')}
               className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] ${errors.title ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
               value={title}
@@ -129,7 +129,7 @@ export default function AddLibraryItemPage() {
           {/* Description */}
           <div className="flex flex-col gap-2">
             <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.description')} <span className="text-[#EF4444]">*</span></label>
-            <textarea 
+            <textarea
               placeholder={t('electronicLibrary.add.fields.descriptionPlaceholder')}
               rows={4}
               className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] resize-none ${errors.description ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
@@ -145,17 +145,18 @@ export default function AddLibraryItemPage() {
               <CourseTreeSelect
                 label={t('electronicLibrary.add.fields.course')}
                 required
-                value={courseId}
-                onChange={(val) => setCourseId(val)}
+                multiple
+                value={courseIds}
+                onMultiChange={(val) => setCourseIds(val)}
               />
-              {errors.courseId && <p className="text-xs text-[#EF4444] mt-1">{errors.courseId}</p>}
+              {errors.courseIds && <p className="text-xs text-[#EF4444] mt-1">{errors.courseIds}</p>}
             </div>
 
             {/* Material Type */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.materialType')}</label>
               <div className="relative">
-                <select 
+                <select
                   className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all appearance-none cursor-pointer"
                   value={materialType}
                   onChange={(e) => setMaterialType(e.target.value)}
@@ -172,8 +173,8 @@ export default function AddLibraryItemPage() {
           {/* Price */}
           <div className="flex flex-col gap-2">
             <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.price')} <span className="text-[#EF4444]">*</span></label>
-            <input 
-              type="number" 
+            <input
+              type="number"
               step="0.01"
               placeholder={t('electronicLibrary.add.fields.pricePlaceholder')}
               className={`w-full px-4 py-3 bg-white border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all placeholder:text-[#94A3B8] ${errors.price ? 'border-[#EF4444]' : 'border-[#E2E8F0]'}`}
@@ -191,9 +192,9 @@ export default function AddLibraryItemPage() {
             {/* Preview */}
             {coverImagePreview && (
               <div className="relative w-full h-48 rounded-xl overflow-hidden bg-[#F8FAFC]">
-                <img 
-                  src={getPreviewUrl(coverImagePreview)} 
-                  alt="Cover preview" 
+                <img
+                  src={getPreviewUrl(coverImagePreview)}
+                  alt="Cover preview"
                   className="w-full h-full object-cover"
                 />
                 <button
@@ -208,19 +209,19 @@ export default function AddLibraryItemPage() {
                 </button>
               </div>
             )}
-            
+
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.uploadCoverImage')}</label>
               <div className="relative">
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   accept="image/*"
                   onChange={handleCoverImageChange}
                   className="hidden"
                   id="coverImageUpload"
                 />
-                <label 
+                <label
                   htmlFor="coverImageUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
@@ -253,18 +254,18 @@ export default function AddLibraryItemPage() {
                 </button>
               </div>
             ))}
-            
+
             {/* Upload Input */}
             <div className="flex flex-col gap-2">
               <label className="text-[13px] font-bold text-[#475569]">{t('electronicLibrary.add.fields.uploadFile')}</label>
               <div className="relative">
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   onChange={handleAttachmentChange}
                   className="hidden"
                   id="attachmentUpload"
                 />
-                <label 
+                <label
                   htmlFor="attachmentUpload"
                   className="flex items-center justify-center w-full px-4 py-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded-xl text-sm text-[#64748B] hover:bg-[#F1F5F9] hover:border-[#94A3B8] transition-all cursor-pointer"
                 >
@@ -280,24 +281,24 @@ export default function AddLibraryItemPage() {
         {/* Settings Section */}
         <section className="bg-white rounded-2xl border border-[#F1F5F9] shadow-sm overflow-hidden p-6 flex flex-col gap-6">
           <h2 className="text-base font-bold text-[#1E293B]">{t('electronicLibrary.add.sections.settings')}</h2>
-          
+
           {/* Code Activation */}
           {canUseActivations && (
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.add.settings.codeActivation')}</span>
-              <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.add.settings.codeActivationDescription')}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <span className="text-[14px] font-bold text-[#1E293B]">{t('electronicLibrary.add.settings.codeActivation')}</span>
+                <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.add.settings.codeActivationDescription')}</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={codeActivation}
+                  onChange={(e) => setCodeActivation(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
+              </label>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={codeActivation}
-                onChange={(e) => setCodeActivation(e.target.checked)}
-              />
-              <div className="w-11 h-6 bg-[#E2E8F0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2137D6]"></div>
-            </label>
-          </div>
           )}
 
           {/* Publish Status */}
@@ -307,8 +308,8 @@ export default function AddLibraryItemPage() {
               <span className="text-[13px] text-[#64748B]">{t('electronicLibrary.add.settings.publishItemDescription')}</span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 className="sr-only peer"
                 checked={isPublish}
                 onChange={(e) => setIsPublish(e.target.checked)}
@@ -353,7 +354,7 @@ export default function AddLibraryItemPage() {
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-4 mt-2">
-          <button 
+          <button
             type="button"
             onClick={() => router.push('/electronic-library')}
             className="px-6 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-all"

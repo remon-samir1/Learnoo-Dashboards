@@ -56,7 +56,7 @@ export default function StudentElectronicLibrary() {
   }, [publishedMaterials, tab, searchNeedle]);
 
   const firstLockedForBanner = useMemo(
-    () => publishedMaterials.find((l) => l.attributes.is_locked) ?? null,
+    () => publishedMaterials.find((l) => (l.attributes as any).code_activation) ?? null,
     [publishedMaterials],
   );
 
@@ -149,8 +149,8 @@ export default function StudentElectronicLibrary() {
               type="button"
               onClick={() => setTab(filterKey)}
               className={`shrink-0 snap-start rounded-full px-4 py-2.5 text-sm font-semibold transition sm:py-2 ${tab === filterKey
-                  ? 'bg-[#2563EB] text-white shadow-sm'
-                  : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
+                ? 'bg-[#2563EB] text-white shadow-sm'
+                : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
                 }`}
             >
               {filterTabLabel(filterKey)}
@@ -184,7 +184,7 @@ export default function StudentElectronicLibrary() {
         <ul className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-3">
           {tabFiltered.map((lib) => {
             const a = lib.attributes;
-            const locked = Boolean(a.is_locked);
+            const locked = Boolean((a as any).code_activation);
             const cover = a.cover_image?.trim();
             const meta = firstAttachmentMeta(a);
             const href = `${base}/${encodeURIComponent(String(lib.id))}`;
@@ -230,7 +230,7 @@ export default function StudentElectronicLibrary() {
                     ) : null}
                     <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#0F172A] sm:text-[13px]">{a.title}</h3>
                     <p className="mt-0.5 line-clamp-1 text-xs font-medium text-[#64748B] sm:text-[10px]">
-                      {t('courseRef', { id: a.course_id })}
+                      {t('courseRef', { id: a.course_ids?.join(', ') })}
                     </p>
                     {a.description?.trim() ? (
                       <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-[#64748B] sm:line-clamp-2 sm:text-[10px]">
