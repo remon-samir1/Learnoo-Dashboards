@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Video, MessageCircle, Play, Settings as SettingsIcon, Info, Disc, Trash2 } from 'lucide-react';
+import { Video, MessageCircle, Play, Settings as SettingsIcon, Info, Disc, Trash2, Edit } from 'lucide-react';
 
 interface LiveSessionCardProps {
   status: 'LIVE' | 'UPCOMING' | 'ENDED';
@@ -15,7 +15,7 @@ interface LiveSessionCardProps {
   enable_recording?: boolean;
   onStart?: () => void;
   onDetails?: () => void;
-  onSettings?: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
 }
 
@@ -30,7 +30,7 @@ export default function LiveSessionCard({
   enable_recording = false,
   onStart,
   onDetails,
-  onSettings,
+  onEdit,
   onDelete
 }: LiveSessionCardProps) {
   const t = useTranslations();
@@ -49,8 +49,8 @@ export default function LiveSessionCard({
       <div className="flex-1 min-w-0">
         <div className="flex flex-wrap items-center gap-3 mb-2">
           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase ${isLive ? 'bg-[#DCFCE7] text-[#166534]' :
-              isUpcoming ? 'bg-[#DBEAFE] text-[#2563EB]' :
-                'bg-[#F1F5F9] text-[#64748B]'
+            isUpcoming ? 'bg-[#DBEAFE] text-[#2563EB]' :
+              'bg-[#F1F5F9] text-[#64748B]'
             }`}>
             {isLive ? t('liveSessions.status.now') : t(`liveSessions.status.${status.toLowerCase()}`)}
           </span>
@@ -98,13 +98,15 @@ export default function LiveSessionCard({
             {t('liveSessions.card.details')}
           </button>
         )}
-        {/* <button
-          onClick={onSettings}
-          className="w-full py-2 bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#F8FAFC] transition-colors"
-        >
-          <SettingsIcon className="w-4 h-4" />
-          {t('liveSessions.card.settings')}
-        </button> */}
+        {onEdit && (
+          <button
+            onClick={onEdit}
+            className="w-full py-2 bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#F8FAFC] transition-colors"
+          >
+            <Edit className="w-4 h-4" />
+            {t('common.edit') || 'Edit'}
+          </button>
+        )}
         <button
           onClick={onDelete}
           className="w-full py-2 bg-white border border-[#E2E8F0] text-[#EF4444] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] hover:border-[#EF4444] transition-colors"

@@ -1,12 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useDebounce } from 'use-debounce';
 import LiveSessionCard from '@/components/live-sessions/LiveSessionCard';
-import { useLiveRooms, useDeleteLiveRoom } from '@/src/hooks/useLiveRooms';
+import { usePaginatedLiveRooms, useDeleteLiveRoom } from '@/src/hooks/useLiveRooms';
 import type { LiveRoom } from '@/src/types';
 import { toast } from 'react-hot-toast';
 
@@ -64,7 +65,14 @@ function getDuration(startedAt: string, endedAt?: string | null): string {
 export default function LiveSessionsPage() {
   const t = useTranslations();
   const router = useRouter();
-  const { data: liveRooms, isLoading, error, refetch } = useLiveRooms();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch] = useDebounce(search, 500);
+
+  const { data: response, isLoading, error, refetch } = usePaginatedLiveRooms({ page, search: debouncedSearch });
+  const liveRooms = response?.data || [];
+  const meta = response?.meta;
+
   const deleteMutation = useDeleteLiveRoom();
 
   const handleStart = (roomId: string) => {
@@ -120,6 +128,8 @@ export default function LiveSessionsPage() {
         <input
           type="text"
           placeholder={t('liveSessions.searchPlaceholder')}
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           className="w-full pl-11 pr-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
         />
       </div>
@@ -145,7 +155,7 @@ export default function LiveSessionsPage() {
                 {...cardProps}
                 onStart={() => handleStart(room.id)}
                 onDetails={() => router.push(`/doctor/live-sessions/${room.id}`)}
-                onSettings={() => router.push(`/doctor/live-sessions/${room.id}/settings`)}
+                onEdit={() => router.push(`/doctor/live-sessions/${room.id}/edit`)}
                 onDelete={() => handleDelete(room.id)}
               />
             );
@@ -156,6 +166,29 @@ export default function LiveSessionsPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination controls */}
+      {meta && meta.last_page > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1E293B] bg-white border border-[#E2E8F0] rounded-xl hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {t('common.previous') || 'Previous'}
+          </button>
+          <span className="text-sm font-medium text-[#64748B]">
+            {meta.current_page} / {meta.last_page}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))}
+            disabled={page >= meta.last_page}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1E293B] bg-white border border-[#E2E8F0] rounded-xl hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {t('common.next') || 'Next'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

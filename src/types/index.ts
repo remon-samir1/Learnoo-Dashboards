@@ -2753,6 +2753,8 @@ export interface LiveRoomAttributes {
 
   chapter_id?: number | null;
 
+  is_public?: string;
+
 
 
   chapter?: {
@@ -2897,6 +2899,8 @@ export type LiveRoom = JsonApiData<LiveRoomAttributes>;
 
 export interface CreateLiveRoomRequest {
 
+  is_public?: string;
+
 
 
   course_ids: number[];
@@ -2948,8 +2952,8 @@ export interface CreateLiveRoomRequest {
 
 
 export interface UpdateLiveRoomRequest {
-
-
+  course_ids?: number[];
+  is_public?: string;
 
   title?: string;
 

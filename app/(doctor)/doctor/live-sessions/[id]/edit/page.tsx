@@ -1,21 +1,22 @@
 "use client";
 
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, Info } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/src/lib/api';
-import { Course, CreateLiveRoomRequest } from '@/src/types';
-import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
+import { CreateLiveRoomRequest } from '@/src/types';
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
+import { useRouter, useParams } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
-export default function ScheduleSessionPage() {
+export default function EditSessionPage() {
   const t = useTranslations();
   const router = useRouter();
-  const [courses, setCourses] = useState<Course[]>([]);
+  const params = useParams();
+  const roomId = params.id;
+  const [isFetchingSession, setIsFetchingSession] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [isFetchingCourses, setIsFetchingCourses] = useState(true);
 
   const [formData, setFormData] = useState<{
     course_ids: string[];
@@ -35,21 +36,53 @@ export default function ScheduleSessionPage() {
     is_public: 'true'
   });
 
+  
   useEffect(() => {
-    const fetchCourses = async () => {
+    if (!roomId || roomId === 'undefined') {
+        return;
+    }
+    const fetchSession = async () => {
       try {
-        const response = await api.courses.list();
-        setCourses(response.data);
+        const response = await api.liveRooms.get(Number(roomId));
+        const room = response.data.attributes || response.data || {};
+        
+        // Handle course_ids extraction based on backend response
+        let cIds = [];
+        try {
+            if (room.course_ids) {
+                cIds = room.course_ids.map(String);
+            } else if (room.courses?.data) {
+                cIds = room.courses.data.map(c => String(c.id));
+            } else if (room.course?.data?.id) {
+                cIds = [String(room.course.data.id)];
+            } else if ((response.data as any)?.relationships?.course?.data?.id) {
+                cIds = [String((response.data as any).relationships.course.data.id)];
+            }
+        } catch(e) { console.error('course processing error', e) }
+        
+        const formatStarted = (dateStr) => {
+            if (!dateStr) return '';
+            try { return dateStr.replace(' ', 'T').slice(0, 16); } catch(e) { return ''; }
+        };
+
+        setFormData({
+            title: room.title || '',
+            description: room.description || '',
+            started_at: formatStarted(room.started_at),
+            max_students: room.max_students || 50,
+            max_join_time: room.max_join_time || 15,
+            is_public: room.is_public !== undefined ? String(room.is_public) : 'true',
+            course_ids: cIds
+        });
       } catch (error) {
-        console.error('Error fetching courses:', error);
-        toast.error(t('courses.messages.loadError'));
+        console.error('Error fetching session:', error);
       } finally {
-        setIsFetchingCourses(false);
+        setIsFetchingSession(false);
       }
     };
-    fetchCourses();
-  }, []);
-
+    fetchSession();
+  }, [roomId]);
+  
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -80,8 +113,8 @@ export default function ScheduleSessionPage() {
         is_public: formData.is_public,
       };
 
-      await api.liveRooms.create(requestData);
-      toast.success(t('liveSessions.schedule.success'));
+      await api.liveRooms.update(Number(roomId), requestData);
+      toast.success(t('liveSessions.editSuccess') || 'Session updated successfully');
       router.push('/live-sessions');
     } catch (error: any) {
       console.error('Error scheduling session:', error);
@@ -101,7 +134,7 @@ export default function ScheduleSessionPage() {
           </button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">{t('liveSessions.schedule.pageTitle')}</h1>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('liveSessions.editPageTitle') || 'Edit Session'}</h1>
           <p className="text-[#64748B] text-[14px]">{t('liveSessions.schedule.pageDescription')}</p>
         </div>
       </div>
@@ -129,12 +162,11 @@ export default function ScheduleSessionPage() {
                 />
               </div>
 
-              {/* Course */}
               <CourseTreeSelect
                 value={formData.course_ids}
                 multiple={true}
-                onMultiChange={(val) => setFormData(prev => ({ ...prev, course_ids: val }))}
-                label={`${t('liveSessions.schedule.course')}`}
+                onMultiChange={(val) => { setFormData(prev => ({ ...prev, course_ids: val as string[] })); }}
+                label={t('liveSessions.schedule.course')}
                 required
               />
 
@@ -232,7 +264,7 @@ export default function ScheduleSessionPage() {
               disabled={loading}
               className="w-full py-3.5 bg-[#2563EB] text-white rounded-xl font-bold text-[14px] hover:bg-[#1D4ED8] transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? t('liveSessions.schedule.scheduling') : t('liveSessions.schedule.scheduleButton')}
+              {loading ? t('liveSessions.updating') || 'Updating...' : t('liveSessions.editButton') || 'Update Session'}
             </button>
             <Link href="/live-sessions">
               <button className="w-full py-3.5 bg-white border border-[#E2E8F0] text-[#64748B] rounded-xl font-bold text-[14px] hover:bg-[#F8FAFC] transition-all text-center">

@@ -10,7 +10,7 @@ import { useCreateCode } from '@/src/hooks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
-import { useLiveRooms } from '@/src/hooks/useLiveRooms';
+import { usePaginatedLiveRooms } from '@/src/hooks/useLiveRooms';
 import { useQuizzes } from '@/src/hooks/useQuizzes';
 import { useDepartments } from '@/src/hooks/useDepartments';
 
@@ -93,7 +93,6 @@ function GenerateCodeForm() {
   const CODE_TYPES = useCodeTypes(t);
   const { data: courses } = useCourses();
   const { data: libraries } = useLibraries();
-  const { data: liveRooms } = useLiveRooms();
   const { data: departments } = useDepartments();
 
   const [codeType, setCodeType] = useState('App\\Models\\Course');
@@ -106,9 +105,13 @@ function GenerateCodeForm() {
   const [librarySearch, setLibrarySearch] = useState('');
   const [quizSearch, setQuizSearch] = useState('');
   const [departmentSearch, setDepartmentSearch] = useState('');
+
   const [debouncedQuizSearch] = useDebounce(quizSearch, 500);
+  const [debouncedLiveRoomSearch] = useDebounce(liveRoomSearch, 500);
 
   const { data: quizzes, isLoading: isLoadingQuizzes } = useQuizzes({ title: debouncedQuizSearch });
+  const { data: liveRoomsResponse, isLoading: isLoadingLiveRooms } = usePaginatedLiveRooms({ search: debouncedLiveRoomSearch });
+  const liveRooms = liveRoomsResponse?.data || [];
 
   // Handle query params for pre-selection
   useEffect(() => {
@@ -156,9 +159,7 @@ function GenerateCodeForm() {
           placeholder: t('activation.sections.searchStudents') || 'Search libraries...',
         };
       case 'App\\Models\\LiveRoom':
-        const searchLiveRooms = (liveRooms || []).filter((lr: any) =>
-          (lr.attributes?.title || lr.title || '').toLowerCase().includes(liveRoomSearch.toLowerCase())
-        );
+        const searchLiveRooms = liveRooms || [];
         return {
           items: searchLiveRooms.map((item: any) => ({
             id: item.id,
@@ -167,6 +168,7 @@ function GenerateCodeForm() {
           searchValue: liveRoomSearch,
           onSearchChange: setLiveRoomSearch,
           placeholder: t('activation.sections.searchStudents') || 'Search live rooms...',
+          isLoading: isLoadingLiveRooms,
         };
       case 'App\\Models\\Quiz':
         const searchQuizzes = quizzes || [];

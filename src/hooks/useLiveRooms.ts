@@ -7,7 +7,12 @@ import { createQueryHook, createMutationHook } from './index';
 // ============================================
 
 export const useLiveRooms = createQueryHook(
-  () => api.liveRooms.list().then(res => res.data),
+  (params?: { page?: number; search?: string }) => api.liveRooms.list(params).then(res => res.data),
+  { enabled: true }
+);
+
+export const usePaginatedLiveRooms = createQueryHook(
+  (params?: { page?: number; search?: string }) => api.liveRooms.list(params),
   { enabled: true }
 );
 
@@ -21,7 +26,7 @@ export const useCreateLiveRoom = createMutationHook(
 );
 
 export const useUpdateLiveRoom = createMutationHook(
-  (id: number, data: Partial<CreateLiveRoomRequest>) => 
+  (id: number, data: Partial<CreateLiveRoomRequest>) =>
     api.liveRooms.update(id, data).then(res => res.data)
 );
 

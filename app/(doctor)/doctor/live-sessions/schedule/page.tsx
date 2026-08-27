@@ -22,13 +22,15 @@ export default function ScheduleSessionPage() {
     started_at: string;
     max_students: number;
     max_join_time: number | string;
+    is_public: string;
   }>({
     course_ids: [],
     title: '',
     description: '',
     started_at: '',
     max_students: 50,
-    max_join_time: 15
+    max_join_time: 15,
+    is_public: 'true'
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -58,6 +60,7 @@ export default function ScheduleSessionPage() {
         started_at: sqlFormat(formData.started_at),
         max_students: Number(formData.max_students),
         max_join_time: formData.max_join_time ? Number(formData.max_join_time) : null,
+        is_public: formData.is_public,
       };
 
       await api.liveRooms.create(requestData);
@@ -116,6 +119,21 @@ export default function ScheduleSessionPage() {
                 label={t('liveSessions.schedule.course')}
                 required
               />
+
+              {/* Session Type */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[13px] font-bold text-[#1E293B]">Session Type *</label>
+                <select
+                  name="is_public"
+                  value={formData.is_public}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
+                >
+                  <option value="true">Public</option>
+                  <option value="false">Private</option>
+                  <option value="included">Included</option>
+                </select>
+              </div>
 
               {/* Start Time */}
               <div className="flex flex-col gap-2">

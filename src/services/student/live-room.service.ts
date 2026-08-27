@@ -4,15 +4,18 @@ import {
   extractLiveRoomsFromResponse,
 } from "@/src/lib/student-live-room";
 
+import type { PaginationMeta } from "@/src/types";
+
 export type StudentLiveRoomServiceResult<T> = {
   success: boolean;
   data?: T;
+  meta?: PaginationMeta;
   message?: string;
 };
 
 const API_BASE = "https://api.learnoo.app/v1/live-room";
 
-export async function getStudentLiveRooms(): Promise<
+export async function getStudentLiveRooms(params?: { page?: number }): Promise<
   StudentLiveRoomServiceResult<StudentLiveRoom[]>
 > {
   const userData = await getUserDataFromJWT();
@@ -23,7 +26,12 @@ export async function getStudentLiveRooms(): Promise<
   }
 
   try {
-    const res = await fetch(API_BASE, {
+    const url = new URL(API_BASE);
+    if (params?.page) {
+      url.searchParams.set("page", String(params.page));
+    }
+
+    const res = await fetch(url.toString(), {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -44,7 +52,9 @@ export async function getStudentLiveRooms(): Promise<
     }
 
     const rooms = extractLiveRoomsFromResponse(data);
-    return { success: true, data: rooms };
+    const meta = data?.meta as PaginationMeta | undefined;
+
+    return { success: true, data: rooms, meta };
   } catch (error) {
     return {
       success: false,

@@ -834,7 +834,7 @@ export const librariesApi = {
 // ============================================
 
 export const liveRoomsApi = {
-  list: () => get<ApiListResponse<LiveRoom>>('/v1/live-room'),
+  list: (params?: { page?: number; search?: string }) => get<ApiListResponse<LiveRoom>>('/v1/live-room', params),
 
   get: (id: number) => get<ApiResponse<LiveRoom>>(`/v1/live-room/${id}`),
 

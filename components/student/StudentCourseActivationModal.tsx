@@ -9,7 +9,7 @@ import { ApiError } from '@/src/lib/api';
 import { activateCodeResponseUnlocksQuiz } from '@/src/lib/student-quiz-activation-lock';
 import type { ActivateCodeResponse } from '@/src/types';
 
-export type StudentActivationItemType = 'course' | 'library' | 'chapter' | 'quiz';
+export type StudentActivationItemType = 'course' | 'library' | 'chapter' | 'quiz' | 'live_room';
 
 export interface StudentCourseActivationModalProps {
   open: boolean;
@@ -33,28 +33,31 @@ function parseItemId(rawId: string): number | null {
 
 function invalidToastKey(
   type: StudentActivationItemType
-): 'invalidLibrary' | 'invalidChapter' | 'invalidCourse' | 'invalidQuiz' {
+): 'invalidLibrary' | 'invalidChapter' | 'invalidCourse' | 'invalidQuiz' | 'invalidLiveRoom' {
   if (type === 'library') return 'invalidLibrary';
   if (type === 'chapter') return 'invalidChapter';
   if (type === 'quiz') return 'invalidQuiz';
+  if (type === 'live_room') return 'invalidLiveRoom';
   return 'invalidCourse';
 }
 
 function successToastKey(
   type: StudentActivationItemType
-): 'successLibrary' | 'successChapter' | 'successQuiz' | 'success' {
+): 'successLibrary' | 'successChapter' | 'successQuiz' | 'successLiveRoom' | 'success' {
   if (type === 'library') return 'successLibrary';
   if (type === 'chapter') return 'successChapter';
   if (type === 'quiz') return 'successQuiz';
+  if (type === 'live_room') return 'successLiveRoom';
   return 'success';
 }
 
 function descriptionKey(
   type: StudentActivationItemType
-): 'descriptionLibrary' | 'descriptionChapter' | 'descriptionQuiz' | 'description' {
+): 'descriptionLibrary' | 'descriptionChapter' | 'descriptionQuiz' | 'descriptionLiveRoom' | 'description' {
   if (type === 'library') return 'descriptionLibrary';
   if (type === 'chapter') return 'descriptionChapter';
   if (type === 'quiz') return 'descriptionQuiz';
+  if (type === 'live_room') return 'descriptionLiveRoom';
   return 'description';
 }
 

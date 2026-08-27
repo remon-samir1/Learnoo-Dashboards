@@ -2,6 +2,8 @@
  * Student live-room API (JSON:API-style). All fields optional — API may omit or null.
  */
 
+import type { PaginationMeta } from "@/src/types";
+
 export interface StudentLiveRoomUserAttributes {
   full_name?: string | null;
   email?: string | null;
@@ -62,6 +64,8 @@ export interface StudentLiveRoomAttributes {
   recording_url?: string | null;
   playback_url?: string | null;
   video_url?: string | null;
+  is_public?: "public" | "private" | "included" | null;
+  has_activation?: boolean | null;
   user?: StudentLiveRoomUser | null;
   course?: StudentLiveRoomCourse | null;
   created_at?: string | null;
@@ -76,6 +80,7 @@ export interface StudentLiveRoom {
 
 export type StudentLiveRoomListResponse = {
   data?: StudentLiveRoom[] | { data?: StudentLiveRoom[] } | StudentLiveRoom | null;
+  meta?: PaginationMeta;
 };
 
 export type StudentLiveRoomDetailResponse = {
