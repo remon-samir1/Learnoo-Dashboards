@@ -720,23 +720,108 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
                 }
               />
             )}
-            {tab === "liveSession" && (
-              <div
-                className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[#E5E7EB] bg-white px-6 py-14 text-center sm:py-16"
-                role="status"
-                aria-live="polite"
-              >
-                <div
-                  className="flex size-14 items-center justify-center rounded-full bg-[#EEF2FF] text-[#2D43D1]"
-                  aria-hidden
-                >
-                  <Radio className="size-7" strokeWidth={1.75} />
+            {tab === "liveSession" && (() => {
+              const liveRooms = (course.attributes as any).live_rooms ?? [];
+              if (liveRooms.length === 0) {
+                return (
+                  <div
+                    className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-[#E5E7EB] bg-white px-6 py-14 text-center sm:py-16"
+                  >
+                    <div
+                      className="flex size-14 items-center justify-center rounded-full bg-[#EEF2FF] text-[#2D43D1]"
+                      aria-hidden
+                    >
+                      <Radio className="size-7" strokeWidth={1.75} />
+                    </div>
+                    <p className="max-w-md text-sm font-medium text-[#64748B] sm:text-base">
+                      {locale === "ar" ? "لا توجد جلسات مباشرة لهذا الكورس" : "No live sessions for this course"}
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex flex-col gap-4">
+                  {liveRooms.map((room: any) => {
+                    const attrs = room.attributes ?? {};
+                    const status = attrs.status;
+                    const isLive = status === "live" || status === "started";
+                    const ended = status === "ended";
+                    const upcoming = status === "pending" || status === "upcoming";
+                    const startedAt = attrs.started_at;
+                    const title = attrs.title?.trim() || "—";
+                    const instructorFullName = attrs.user?.data?.attributes?.full_name?.trim() || "";
+
+                    const whenLabel = startedAt ? new Date(startedAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }) : "";
+
+                    return (
+                      <div
+                        key={room.id}
+                        className={`flex flex-col gap-4 rounded-2xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md sm:flex-row sm:items-center sm:justify-between sm:gap-6 ${isLive ? "border-red-200 ring-1 ring-red-200" : "border-[#E5E7EB]"}`}
+                      >
+                        <div className="flex min-w-0 items-start gap-4">
+                          <div className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${isLive ? "bg-red-600" : ended ? "bg-[#F1F5F9]" : "bg-[#EEF2FF]"}`}>
+                            {isLive ? (
+                              <Radio size={22} className="text-white" />
+                            ) : ended ? (
+                              <CheckCircle size={22} className="text-[#94A3B8]" />
+                            ) : (
+                              <Calendar size={22} className="text-[#2D43D1]" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {isLive && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-2.5 py-1 text-[11px] font-bold text-white">
+                                  <span className="size-1.5 animate-pulse rounded-full bg-white" />
+                                  {locale === "ar" ? "مباشر الآن" : "Live Now"}
+                                </span>
+                              )}
+                              {upcoming && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                                  <Clock size={11} />
+                                  {locale === "ar" ? "قادم" : "Upcoming"}
+                                </span>
+                              )}
+                              {ended && (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F1F5F9] px-2.5 py-1 text-[11px] font-semibold text-[#64748B]">
+                                  <CheckCircle size={11} />
+                                  {locale === "ar" ? "انتهى" : "Ended"}
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="mt-1.5 truncate text-[15px] font-bold text-[#0F172A]">{title}</h3>
+                            {instructorFullName && (
+                              <p className="mt-0.5 truncate text-sm text-[#64748B]">{instructorFullName}</p>
+                            )}
+                            {whenLabel && (
+                              <p className="mt-1 text-xs text-[#94A3B8]">{whenLabel}</p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="shrink-0">
+                          {isLive ? (
+                            <Link href={`/${locale}/student/live-sessions/${room.id}`}>
+                              <button className="flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-red-700 active:scale-95">
+                                <Radio size={16} />
+                                {locale === "ar" ? "انضم الآن" : "Join Now"}
+                              </button>
+                            </Link>
+                          ) : (
+                            <Link href={`/${locale}/student/live-sessions/${room.id}`}>
+                              <button className="flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-5 py-2.5 text-sm font-semibold text-[#64748B] transition-all hover:bg-[#F8FAFC]">
+                                {locale === "ar" ? "عرض" : "View"}
+                              </button>
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="max-w-md text-sm font-medium text-[#0F172A] sm:text-base">
-                  {t("liveSessionUnderDevelopment")}
-                </p>
-              </div>
-            )}
+              );
+            })()}
             {tab === "exams" && (
               <ExamsTab
                 exams={course.attributes.exams}
