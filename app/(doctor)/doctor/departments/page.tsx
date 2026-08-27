@@ -1,4 +1,4 @@
-
+﻿
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
@@ -2444,7 +2444,9 @@ export default function DepartmentsPage() {
 
             attachments: formData.attachments,
 
-            schedule: formData.schedule,
+            schedule_start: formData.schedule_start,
+
+              schedule_end: formData.schedule_end,
           };
 
           // Add attachments_to_delete if present
@@ -2613,7 +2615,9 @@ export default function DepartmentsPage() {
 
               content: formData.type === "note" ? formData.content : undefined,
 
-              schedule: formData.schedule,
+              schedule_start: formData.schedule_start,
+
+              schedule_end: formData.schedule_end,
             },
             (progress) => setUploadProgress(progress),
           );
@@ -3368,7 +3372,8 @@ function EditModal({
 
           status: course.attributes.status,
 
-          schedule: course.attributes.schedule ? course.attributes.schedule.replace(' ', 'T').substring(0, 16) : "",
+          schedule_start: course.attributes.schedule_start ? course.attributes.schedule_start.replace(' ', 'T').substring(0, 16) : "",
+          schedule_end: course.attributes.schedule_end ? course.attributes.schedule_end.replace(' ', 'T').substring(0, 16) : "",
 
           price: course.attributes.price?.toString() || "0",
 
@@ -3390,7 +3395,8 @@ function EditModal({
 
           description: lecture.attributes.description || "",
 
-          schedule: lecture.attributes.schedule ? lecture.attributes.schedule.replace(' ', 'T').substring(0, 16) : "",
+          schedule_start: lecture.attributes.schedule_start ? lecture.attributes.schedule_start.replace(' ', 'T').substring(0, 16) : "",
+          schedule_end: lecture.attributes.schedule_end ? lecture.attributes.schedule_end.replace(' ', 'T').substring(0, 16) : "",
         };
 
       case "chapter":
@@ -3415,7 +3421,8 @@ function EditModal({
 
           content: chapter.attributes.content || "",
 
-          schedule: chapter.attributes.schedule ? chapter.attributes.schedule.replace(' ', 'T').substring(0, 16) : "",
+          schedule_start: chapter.attributes.schedule_start ? chapter.attributes.schedule_start.replace(' ', 'T').substring(0, 16) : "",
+          schedule_end: chapter.attributes.schedule_end ? chapter.attributes.schedule_end.replace(' ', 'T').substring(0, 16) : "",
 
           thumbnail: null,
         };
@@ -3990,23 +3997,30 @@ function EditModal({
                   </div>
 
                   {formData.status === 0 && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Schedule
-                      </label>
-
-                      <input
-                        type="datetime-local"
-                        value={formData.schedule || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            schedule: e.target.value,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      />
-                    </div>
+                    <div className="flex flex-col gap-3 w-full">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule Start
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_start || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_start: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule End
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_end || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_end: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
+                    />
+                  </div>
+                </div>
                   )}
 
                   <div>
@@ -4126,23 +4140,30 @@ function EditModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Schedule
-                </label>
-
-                <input
-                  type="datetime-local"
-                  value={formData.schedule || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      schedule: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
+              <div className="flex flex-col gap-3 w-full">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule Start
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_start || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_start: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule End
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_end || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_end: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    />
+                  </div>
+                </div>
             </>
           )}
 
@@ -4342,22 +4363,29 @@ function EditModal({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Schedule
-                  </label>
-
-                  <input
-                    type="datetime-local"
-                    value={formData.schedule || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        schedule: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule Start
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_start || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_start: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule End
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_end || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_end: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -5262,22 +5290,29 @@ function AddModal({
               </div>
 
               {formData.status === 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Schedule
-                  </label>
-
-                  <input
-                    type="datetime-local"
-                    value={formData.schedule || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        schedule: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule Start
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_start || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_start: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule End
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_end || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_end: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500`}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -5396,23 +5431,30 @@ function AddModal({
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Schedule
-                </label>
-
-                <input
-                  type="datetime-local"
-                  value={formData.schedule || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      schedule: e.target.value,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
+              <div className="flex flex-col gap-3 w-full">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule Start
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_start || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_start: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule End
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_end || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_end: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    />
+                  </div>
+                </div>
             </>
           )}
 
@@ -5615,22 +5657,29 @@ function AddModal({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Schedule
-                  </label>
-
-                  <input
-                    type="datetime-local"
-                    value={formData.schedule || ""}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        schedule: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
+                <div className="flex flex-col gap-3 w-full">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule Start
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_start || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_start: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Schedule End
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={formData.schedule_end || ""}
+                      onChange={(e) => setFormData({ ...formData, schedule_end: e.target.value })}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500`}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -6293,3 +6342,4 @@ function GenerateCodeModal({
     </div>
   );
 }
+

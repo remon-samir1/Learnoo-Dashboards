@@ -170,6 +170,7 @@ export default function LiveSessionRoomClient({
                 enableEmailInStats: false,
                 prejoinPageEnabled: false,
                 disableDeepLinking: true,
+                toolbarButtons: ['microphone'],
                 // Students auto-knock and wait in lobby until host admits them
                 lobby: {
                   enabled: true,

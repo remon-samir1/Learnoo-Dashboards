@@ -42,10 +42,10 @@ export default async function StudentLiveSessionDetailPage({ params }: PageProps
 
   const fromApi =
     userRes &&
-    typeof userRes === "object" &&
-    "success" in userRes &&
-    (userRes as { success: boolean }).success &&
-    "data" in userRes
+      typeof userRes === "object" &&
+      "success" in userRes &&
+      (userRes as { success: boolean }).success &&
+      "data" in userRes
       ? displayNameFromMe((userRes as { data?: unknown }).data)
       : "";
 

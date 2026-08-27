@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2, Video, Square } from 'lucide-react';
 import Link from 'next/link';
 import { useLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getUserData } from '@/lib/auth';
@@ -23,6 +23,62 @@ export default function DoctorLiveRoomPage() {
 
   const jitsiRoomName = `learnoo-room-${roomId}`;
   const jitsiApiRef = useRef<any>(null);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      setIsRecording(false);
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: true
+      });
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      recordedChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        document.body.appendChild(a);
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `recording-${roomId}-${new Date().getTime()}.webm`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      };
+
+      stream.getVideoTracks()[0].onended = () => {
+        if (mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+          setIsRecording(false);
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error starting screen recording:", err);
+      alert("تعذر بدء تسجيل الشاشة. يرجى التأكد من منح الصلاحيات.");
+    }
+  };
 
   const handleReadyToClose = () => {
     router.push('/doctor/live-sessions');
@@ -56,9 +112,30 @@ export default function DoctorLiveRoomPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-[#94A3B8] bg-[#0F172A] px-3 py-1.5 rounded-lg border border-[#334155]">
-          <span>Room ID:</span>
-          <code className="text-[#60A5FA] font-mono">{jitsiRoomName}</code>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleRecording}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${isRecording
+                ? 'bg-red-500/10 text-red-500 border-red-500'
+                : 'bg-[#0F172A] text-white border-[#334155] hover:bg-[#334155]'
+              }`}
+          >
+            {isRecording ? (
+              <>
+                <Square className="w-4 h-4 fill-current" />
+                <span>إيقاف التسجيل</span>
+              </>
+            ) : (
+              <>
+                <Video className="w-4 h-4" />
+                <span>تسجيل كفيديو</span>
+              </>
+            )}
+          </button>
+          <div className="flex items-center gap-2 text-xs text-[#94A3B8] bg-[#0F172A] px-3 py-1.5 rounded-lg border border-[#334155]">
+            <span>Room ID:</span>
+            <code className="text-[#60A5FA] font-mono">{jitsiRoomName}</code>
+          </div>
         </div>
       </div>
 
@@ -75,6 +152,46 @@ export default function DoctorLiveRoomPage() {
             enableEmailInStats: false,
             prejoinPageEnabled: false,
             disableDeepLinking: true,
+            fileRecordingsEnabled: true,
+            localRecording: {
+              enabled: true,
+            },
+            toolbarButtons: [
+              'camera',
+              'chat',
+              'closedcaptions',
+              'desktop',
+              'download',
+              'embedmeeting',
+              'etherpad',
+              'feedback',
+              'filmstrip',
+              'fullscreen',
+              'hangup',
+              'help',
+              'highlight',
+              'invite',
+              'linktosalesforce',
+              'livestreaming',
+              'microphone',
+              'noisesuppression',
+              'participants-pane',
+              'profile',
+              'raisehand',
+              'recording',
+              'localrecording',
+              'security',
+              'select-background',
+              'settings',
+              'shareaudio',
+              'sharedvideo',
+              'shortcuts',
+              'stats',
+              'tileview',
+              'toggle-camera',
+              'videoquality',
+              'whiteboard'
+            ],
             // Lobby: students wait until the host admits them
             lobby: {
               enabled: true,

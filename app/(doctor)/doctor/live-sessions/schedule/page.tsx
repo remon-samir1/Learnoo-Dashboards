@@ -15,8 +15,15 @@ export default function ScheduleSessionPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    course_id: '',
+  const [formData, setFormData] = useState<{
+    course_ids: string[];
+    title: string;
+    description: string;
+    started_at: string;
+    max_students: number;
+    max_join_time: number | string;
+  }>({
+    course_ids: [],
     title: '',
     description: '',
     started_at: '',
@@ -30,7 +37,7 @@ export default function ScheduleSessionPage() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.course_id || !formData.title || !formData.started_at) {
+    if (formData.course_ids.length === 0 || !formData.title || !formData.started_at) {
       toast.error(t('liveSessions.schedule.validation.fillRequired'));
       return;
     }
@@ -45,7 +52,7 @@ export default function ScheduleSessionPage() {
       };
 
       const requestData: CreateLiveRoomRequest = {
-        course_id: Number(formData.course_id),
+        course_ids: formData.course_ids.map(Number),
         title: formData.title,
         description: formData.description,
         started_at: sqlFormat(formData.started_at),
@@ -103,8 +110,9 @@ export default function ScheduleSessionPage() {
               </div>
 
               <CourseTreeSelect
-                value={formData.course_id}
-                onChange={(val) => { setFormData(prev => ({ ...prev, course_id: val as string })); }}
+                value={formData.course_ids}
+                multiple={true}
+                onMultiChange={(val) => { setFormData(prev => ({ ...prev, course_ids: val as string[] })); }}
                 label={t('liveSessions.schedule.course')}
                 required
               />

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, Users, Settings as SettingsIcon, Clock, Video, Loader2, Disc, MessageCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -8,15 +8,15 @@ import StatCard from '@/components/StatCard';
 import { api } from '@/src/lib/api';
 import { toast } from 'react-hot-toast';
 import type { LiveRoom } from '@/src/types';
-
+import { useParams } from 'next/navigation';
 
 function getSessionStatus(room: LiveRoom): 'LIVE' | 'UPCOMING' | 'ENDED' {
-  // Use API status if available
+  // ... same as before
   const apiStatus = room.attributes.status;
   if (apiStatus === 'live') return 'LIVE';
   if (apiStatus === 'ended') return 'ENDED';
   if (apiStatus === 'pending') return 'UPCOMING';
-  
+
   // Fallback to calculation if no API status
   const now = new Date();
   const startTime = new Date(room.attributes.started_at);
@@ -33,13 +33,13 @@ function getSessionStatus(room: LiveRoom): 'LIVE' | 'UPCOMING' | 'ENDED' {
 
 function formatDateTime(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
     year: 'numeric',
-    hour: 'numeric', 
-    minute: '2-digit', 
-    hour12: true 
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
   });
 }
 
@@ -78,9 +78,10 @@ function getInstructorName(room: LiveRoom, t: any): string {
   return t('liveSessions.card.unknownInstructor');
 }
 
-export default function SessionDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+export default function SessionDetailsPage() {
   const t = useTranslations();
-  const { id } = use(params);
+  const params = useParams();
+  const id = params.id as string;
   const [loading, setLoading] = useState(true);
   const [liveRoom, setLiveRoom] = useState<LiveRoom | null>(null);
 
@@ -137,11 +138,10 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-[#1E293B]">{attrs.title}</h1>
-              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase ${
-                status === 'LIVE' ? 'bg-[#DCFCE7] text-[#166534]' :
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase ${status === 'LIVE' ? 'bg-[#DCFCE7] text-[#166534]' :
                 status === 'UPCOMING' ? 'bg-[#DBEAFE] text-[#2563EB]' :
-                'bg-[#F1F5F9] text-[#64748B]'
-              }`}>
+                  'bg-[#F1F5F9] text-[#64748B]'
+                }`}>
                 {status === 'LIVE' ? t('liveSessions.status.now') : t(`liveSessions.status.${status.toLowerCase()}`)}
               </span>
             </div>
@@ -150,12 +150,12 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
         </div>
-        <Link href={`/live-sessions/${id}/settings`}>
+        {/* <Link href={`/live-sessions/${id}/settings`}>
           <button className="bg-white border border-[#E2E8F0] text-[#1E293B] px-4 py-2.5 rounded-xl font-bold text-[14px] flex items-center gap-2 hover:bg-[#F8FAFC] transition-all">
             <SettingsIcon className="w-4 h-4" />
             {t('liveSessions.detail.settings')}
           </button>
-        </Link>
+        </Link> */}
       </div>
 
       {/* Stats Grid */}
@@ -183,7 +183,7 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
               <Video className="w-5 h-5 text-[#2563EB]" />
               {t('liveSessions.detail.sessionInfo')}
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8">
               <div className="flex flex-col gap-1">
                 <span className="text-[12px] font-bold text-[#94A3B8] uppercase">{t('liveSessions.detail.labels.title')}</span>
@@ -215,34 +215,32 @@ export default function SessionDetailsPage({ params }: { params: Promise<{ id: s
           </div>
 
           {/* Features Card */}
-          <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
+          {/* <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
             <h2 className="text-[16px] font-bold text-[#1E293B] mb-6 flex items-center gap-2">
               {t('liveSessions.detail.features')}
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className={`flex items-center justify-between p-4 rounded-xl border ${
-                attrs.enable_chat ? 'bg-[#F0FDF4] border-[#DCFCE7]' : 'bg-[#F8FAFC] border-[#F1F5F9] opacity-50'
-              }`}>
-                 <div className="flex items-center gap-3">
-                   <MessageCircle className={`w-4 h-4 ${attrs.enable_chat ? 'text-[#10B981]' : 'text-[#94A3B8]'}`} />
-                   <span className={`text-[13px] font-bold ${attrs.enable_chat ? 'text-[#166534]' : 'text-[#64748B]'}`}>
-                     {t(attrs.enable_chat ? 'liveSessions.detail.chatEnabled' : 'liveSessions.detail.chatDisabled')}
-                   </span>
-                 </div>
+              <div className={`flex items-center justify-between p-4 rounded-xl border ${attrs.enable_chat ? 'bg-[#F0FDF4] border-[#DCFCE7]' : 'bg-[#F8FAFC] border-[#F1F5F9] opacity-50'
+                }`}>
+                <div className="flex items-center gap-3">
+                  <MessageCircle className={`w-4 h-4 ${attrs.enable_chat ? 'text-[#10B981]' : 'text-[#94A3B8]'}`} />
+                  <span className={`text-[13px] font-bold ${attrs.enable_chat ? 'text-[#166534]' : 'text-[#64748B]'}`}>
+                    {t(attrs.enable_chat ? 'liveSessions.detail.chatEnabled' : 'liveSessions.detail.chatDisabled')}
+                  </span>
+                </div>
               </div>
-              <div className={`flex items-center justify-between p-4 rounded-xl border ${
-                attrs.enable_recording ? 'bg-[#FEF2F2] border-[#FECACA]' : 'bg-[#F8FAFC] border-[#F1F5F9] opacity-50'
-              }`}>
-                 <div className="flex items-center gap-3">
-                   <Disc className={`w-4 h-4 ${attrs.enable_recording ? 'text-[#EF4444]' : 'text-[#94A3B8]'}`} />
-                   <span className={`text-[13px] font-bold ${attrs.enable_recording ? 'text-[#991B1B]' : 'text-[#64748B]'}`}>
-                     {t(attrs.enable_recording ? 'liveSessions.detail.recordingEnabled' : 'liveSessions.detail.recordingDisabled')}
-                   </span>
-                 </div>
+              <div className={`flex items-center justify-between p-4 rounded-xl border ${attrs.enable_recording ? 'bg-[#FEF2F2] border-[#FECACA]' : 'bg-[#F8FAFC] border-[#F1F5F9] opacity-50'
+                }`}>
+                <div className="flex items-center gap-3">
+                  <Disc className={`w-4 h-4 ${attrs.enable_recording ? 'text-[#EF4444]' : 'text-[#94A3B8]'}`} />
+                  <span className={`text-[13px] font-bold ${attrs.enable_recording ? 'text-[#991B1B]' : 'text-[#64748B]'}`}>
+                    {t(attrs.enable_recording ? 'liveSessions.detail.recordingEnabled' : 'liveSessions.detail.recordingDisabled')}
+                  </span>
+                </div>
               </div>
-            </div>
-          </div>
+            </div> */}
+          {/* </div> */}
         </div>
       </div>
     </div>

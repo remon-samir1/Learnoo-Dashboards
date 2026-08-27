@@ -948,6 +948,8 @@ export interface ChapterAttributes {
 
 
   schedule?: string | null;
+  schedule_start?: string | null;
+  schedule_end?: string | null;
 
 
 
@@ -1017,6 +1019,8 @@ export interface CreateChapterRequest {
   content?: string;
 
   schedule?: string | null;
+  schedule_start?: string | null;
+  schedule_end?: string | null;
 
 }
 
@@ -1082,6 +1086,8 @@ export interface UpdateChapterRequest {
   content?: string;
 
   schedule?: string | null;
+  schedule_start?: string | null;
+  schedule_end?: string | null;
 
 }
 
@@ -1324,9 +1330,8 @@ export interface CourseAttributes {
 
 
   chapter_attachments: any[];
-
-  schedule: any;
-
+  schedule_start?: string | null;
+  schedule_end?: string | null;
   chapter_discussions: any[];
 
 
@@ -2300,6 +2305,8 @@ export interface LectureAttributes {
 
 
   schedule?: string | null;
+  schedule_start?: string | null;
+  schedule_end?: string | null;
 
 
 
@@ -2359,6 +2366,8 @@ export interface CreateLectureRequest {
 
 
   schedule?: string | null;
+  schedule_start?: string | null;
+  schedule_end?: string | null;
 
 
 
@@ -2890,7 +2899,7 @@ export interface CreateLiveRoomRequest {
 
 
 
-  course_id: number;
+  course_ids: number[];
 
 
 

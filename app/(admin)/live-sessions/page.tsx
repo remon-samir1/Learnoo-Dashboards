@@ -16,7 +16,7 @@ function getSessionStatus(room: LiveRoom): 'LIVE' | 'UPCOMING' | 'ENDED' {
   if (apiStatus === 'live') return 'LIVE';
   if (apiStatus === 'ended') return 'ENDED';
   if (apiStatus === 'pending') return 'UPCOMING';
-  
+
   // Fallback to calculation if no API status
   const now = new Date();
   const startTime = new Date(room.attributes.started_at);
@@ -145,7 +145,7 @@ export default function LiveSessionsPage() {
                 {...cardProps}
                 onStart={() => handleStart(room.id)}
                 onDetails={() => router.push(`/live-sessions/${room.id}`)}
-                onSettings={() => router.push(`/live-sessions/${room.id}/settings`)}
+                // onSettings={() => router.push(`/live-sessions/${room.id}/settings`)}
                 onDelete={() => handleDelete(room.id)}
               />
             );
