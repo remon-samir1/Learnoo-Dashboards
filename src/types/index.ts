@@ -2755,6 +2755,16 @@ export interface LiveRoomAttributes {
 
   is_public?: string;
 
+  course_ids?: number[];
+
+  courses?: {
+    data: {
+      id: string;
+      type: string;
+      attributes: { title: string; };
+    }[];
+  };
+
 
 
   chapter?: {

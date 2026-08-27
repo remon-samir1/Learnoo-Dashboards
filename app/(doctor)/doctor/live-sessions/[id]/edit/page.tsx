@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, Info } from 'lucide-react';
 import Link from 'next/link';
@@ -36,43 +36,43 @@ export default function EditSessionPage() {
     is_public: 'true'
   });
 
-  
+
   useEffect(() => {
     if (!roomId || roomId === 'undefined') {
-        return;
+      return;
     }
     const fetchSession = async () => {
       try {
         const response = await api.liveRooms.get(Number(roomId));
         const room = response.data.attributes || response.data || {};
-        
+
         // Handle course_ids extraction based on backend response
-        let cIds = [];
+        let cIds: string[] = [];
         try {
-            if (room.course_ids) {
-                cIds = room.course_ids.map(String);
-            } else if (room.courses?.data) {
-                cIds = room.courses.data.map(c => String(c.id));
-            } else if (room.course?.data?.id) {
-                cIds = [String(room.course.data.id)];
-            } else if ((response.data as any)?.relationships?.course?.data?.id) {
-                cIds = [String((response.data as any).relationships.course.data.id)];
-            }
-        } catch(e) { console.error('course processing error', e) }
-        
-        const formatStarted = (dateStr) => {
-            if (!dateStr) return '';
-            try { return dateStr.replace(' ', 'T').slice(0, 16); } catch(e) { return ''; }
+          if (room.course_ids) {
+            cIds = room.course_ids.map(String);
+          } else if (room.courses?.data) {
+            cIds = room.courses.data.map(c => String(c.id));
+          } else if (room.course?.data?.id) {
+            cIds = [String(room.course.data.id)];
+          } else if ((response.data as any)?.relationships?.course?.data?.id) {
+            cIds = [String((response.data as any).relationships.course.data.id)];
+          }
+        } catch (e) { console.error('course processing error', e) }
+
+        const formatStarted = (dateStr: string) => {
+          if (!dateStr) return '';
+          try { return dateStr.replace(' ', 'T').slice(0, 16); } catch (e) { return ''; }
         };
 
         setFormData({
-            title: room.title || '',
-            description: room.description || '',
-            started_at: formatStarted(room.started_at),
-            max_students: room.max_students || 50,
-            max_join_time: room.max_join_time || 15,
-            is_public: room.is_public !== undefined ? String(room.is_public) : 'true',
-            course_ids: cIds
+          title: room.title || '',
+          description: room.description || '',
+          started_at: formatStarted(room.started_at),
+          max_students: room.max_students || 50,
+          max_join_time: room.max_join_time || 15,
+          is_public: room.is_public !== undefined ? String(room.is_public) : 'true',
+          course_ids: cIds
         });
       } catch (error) {
         console.error('Error fetching session:', error);
@@ -82,7 +82,7 @@ export default function EditSessionPage() {
     };
     fetchSession();
   }, [roomId]);
-  
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
