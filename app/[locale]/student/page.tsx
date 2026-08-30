@@ -15,6 +15,10 @@ import { getLibrary } from "@/src/services/student/library.service";
 import { getLatestGeneralPosts } from "@/src/services/student/post.service";
 import { getStudentLiveRooms } from "@/src/services/student/live-room.service";
 import {
+  extractFacultyTreeCourses,
+  filterLiveRoomsByFacultyCourses,
+} from "@/src/lib/student-faculty-tree";
+import {
   getStudentCourses,
   getStudentData,
   getStudentNotes,
@@ -32,7 +36,7 @@ export default async function StudentPage() {
   const courses = coursesResult.success ? coursesResult.data?.data ?? [] : [];
 
   const liveRoomsResult = await getStudentLiveRooms();
-  const liveSessions = liveRoomsResult.success ? liveRoomsResult.data ?? [] : [];
+  const rawLiveSessions = liveRoomsResult.success ? liveRoomsResult.data ?? [] : [];
 
   const notesResult = await getStudentNotes();
   const notes = notesResult.success ? notesResult.data?.data ?? [] : [];
@@ -46,6 +50,11 @@ export default async function StudentPage() {
 
   const examsResult = await getLatestStudentExams(4);
   const latestExams = examsResult.success ? examsResult.data ?? [] : [];
+
+  // Filter live sessions to courses appearing in the student's faculty tree
+  const facultyId = student?.faculty?.data?.id ?? (student as any)?.faculty_id ?? null;
+  const { allCourseIds: facultyCourseIds } = extractFacultyTreeCourses(category, facultyId);
+  const liveSessions = filterLiveRoomsByFacultyCourses(rawLiveSessions, facultyCourseIds, true);
 
   const coursesCount = courses?.length;
   const liveSessionsCount = liveSessions?.length;

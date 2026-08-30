@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useDebounce } from 'use-debounce';
 import LiveSessionCard from '@/components/live-sessions/LiveSessionCard';
 import { usePaginatedLiveRooms, useDeleteLiveRoom } from '@/src/hooks/useLiveRooms';
+import { getCourseTitle } from '@/src/lib/student-live-room';
 import type { LiveRoom } from '@/src/types';
 import { toast } from 'react-hot-toast';
 
@@ -97,7 +98,7 @@ export default function LiveSessionsPage() {
       id: room.id,
       status: getSessionStatus(room),
       title: attrs.title,
-      course: attrs.course?.data?.attributes?.title || t('liveSessions.card.noCourse'),
+      course: getCourseTitle(attrs) || t('liveSessions.card.noCourse'),
       instructor: attrs.user?.data?.attributes?.full_name || t('liveSessions.card.unknownInstructor'),
       time: formatTime(attrs.started_at, t),
       duration: getDuration(attrs.started_at, attrs.ended_at),

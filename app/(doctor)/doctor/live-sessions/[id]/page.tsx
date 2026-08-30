@@ -7,6 +7,7 @@ import Link from 'next/link';
 import StatCard from '@/components/StatCard';
 import { api } from '@/src/lib/api';
 import { toast } from 'react-hot-toast';
+import { getCourseTitles } from '@/src/lib/student-live-room';
 import type { LiveRoom } from '@/src/types';
 
 
@@ -44,10 +45,9 @@ function formatDateTime(dateString: string): string {
 }
 
 function getCourseTitle(room: LiveRoom, t: any): string {
-  // First check if course is in attributes (list endpoint format)
-  if (room.attributes.course?.data?.attributes?.title) {
-    return room.attributes.course.data.attributes.title;
-  }
+  const titles = getCourseTitles(room.attributes);
+  if (titles.length > 0) return titles.join('، ');
+
   // Then check if course is in relationships with included data
   if (room.relationships?.course?.data && room.included) {
     const courseId = room.relationships.course.data.id;
@@ -55,6 +55,13 @@ function getCourseTitle(room: LiveRoom, t: any): string {
     if (course?.attributes?.title) {
       return String(course.attributes.title);
     }
+  }
+  if ((room.relationships as any)?.courses?.data && room.included) {
+    const courseIds = ((room.relationships as any).courses.data as any[]).map(d => d.id);
+    const includedTitles = room.included
+      .filter(item => courseIds.includes(item.id) && item.type === 'courses' && item.attributes?.title)
+      .map(item => String(item.attributes.title));
+    if (includedTitles.length > 0) return includedTitles.join('، ');
   }
   return t('liveSessions.card.noCourse');
 }

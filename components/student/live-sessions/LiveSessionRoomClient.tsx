@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Radio, Users, Video, Droplets } from "lucide-react";
+import { Radio, Users, Video, Droplets, Eye, ArrowLeft, ArrowRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { JitsiMeeting } from "@jitsi/react-sdk";
 import type { StudentLiveRoom } from "@/src/interfaces/student-live-room.interface";
@@ -14,13 +14,11 @@ import {
   isUpcoming,
   normalizeLiveStatus,
 } from "@/src/lib/student-live-room";
-import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { VideoWatermark } from "@/components/student/watch/VideoWatermark";
 import { resolveEnabledWatermarkBucket } from "@/src/lib/watermark-from-features";
 import { getStudentPlatformFeatures } from "@/src/services/student/platform-feature.service";
-
-const JITSI_DOMAIN = "meet.jit.si";
+import { JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
 
 function formatWhen(iso: string | null | undefined, locale: string) {
   if (!iso) return "";
@@ -52,8 +50,13 @@ export default function LiveSessionRoomClient({
     null;
   const showRecording = ended && !!recordingUrl;
 
-  const jitsiRoomName = `learnoo-room-${room.id}`;
+  const jitsiRoomName = getJitsiRoomName(room.id);
   const displayName = studentName?.trim() || "Student";
+
+  // Whiteboard and meeting state
+  const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
+  const [isConferenceJoined, setIsConferenceJoined] = useState(false);
+  const jitsiApiRef = useRef<any>(null);
 
   // Watermark state management
   const [watermarkEnabled, setWatermarkEnabled] = useState(false);
@@ -160,6 +163,15 @@ export default function LiveSessionRoomClient({
                 <span className="text-xs font-semibold text-blue-700">Watermarked</span>
               </div>
             ) : null}
+
+            {/* Whiteboard view-only notification badge */}
+            {isWhiteboardOpen ? (
+              <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/95 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-sm">
+                <Eye className="size-4 text-amber-600" aria-hidden />
+                <span>{isRtl ? "السبورة التفاعلية (للعرض فقط)" : "Whiteboard (View Only)"}</span>
+              </div>
+            ) : null}
+
             <JitsiMeeting
               domain={JITSI_DOMAIN}
               roomName={jitsiRoomName}
@@ -170,6 +182,35 @@ export default function LiveSessionRoomClient({
                 enableEmailInStats: false,
                 prejoinPageEnabled: false,
                 disableDeepLinking: true,
+                // Hide and disable remote video context menu (the 3 dots on remote video tiles)
+                remoteVideoMenu: {
+                  disabled: true,
+                  disableKick: true,
+                  disableGrantModerator: true,
+                  disablePrivateChat: true,
+                  disableDemote: true,
+                },
+                // Disable remote moderation actions
+                disableRemoteMute: true,
+                disableKick: true,
+                disableGrantModerator: true,
+                disablePrivateChat: true,
+                disableInviteFunctions: true,
+                hideConferenceSubject: true,
+                hideConferenceTimer: false,
+                moderator: {
+                  enabled: false,
+                },
+                participantsPane: {
+                  hideModeratorSettingsTab: true,
+                  hideMoreActionsButton: true,
+                  hideMuteAllButton: true,
+                },
+                // Enable whiteboard collab backend for students so they receive the canvas stream
+                whiteboard: {
+                  enabled: true,
+                  collabServerBaseUrl: 'https://whiteboard.jitsi.net',
+                },
                 toolbarButtons: ['microphone'],
                 // Students auto-knock and wait in lobby until host admits them
                 lobby: {
@@ -181,14 +222,54 @@ export default function LiveSessionRoomClient({
                 DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
                 SHOW_CHROME_EXTENSION_BANNER: false,
                 MOBILE_APP_PROMO: false,
+                TOOLBAR_BUTTONS: ['microphone'],
+                SETTINGS_SECTIONS: ['devices', 'language'],
+                HIDE_INVITE_MORE_HEADER: true,
               }}
               userInfo={{ displayName, email: "" }}
+              onApiReady={(api) => {
+                jitsiApiRef.current = api;
+                api.addEventListeners({
+                  videoConferenceJoined: () => {
+                    setIsConferenceJoined(true);
+                  },
+                  videoConferenceLeft: () => {
+                    setIsConferenceJoined(false);
+                    setIsWhiteboardOpen(false);
+                  },
+                  whiteboardStatusChanged: (event: any) => {
+                    const rawStatus = typeof event === "string" ? event : event?.status || "";
+                    const status = String(rawStatus).toLowerCase();
+                    const isOpen =
+                      status === "open" ||
+                      status === "opened" ||
+                      status === "showing" ||
+                      status === "active" ||
+                      status === "started" ||
+                      event?.isOpen === true;
+                    setIsWhiteboardOpen(isOpen);
+                  },
+                });
+              }}
               getIFrameRef={(iframe) => {
                 iframe.style.width = "100%";
                 iframe.style.height = "100%";
                 iframe.style.border = "none";
               }}
             />
+
+            {/* Read-only stage overlay: only active AFTER conference joined so Join meeting / prejoin buttons are fully clickable */}
+            {isConferenceJoined ? (
+              <div
+                className="absolute inset-x-0 top-0 bottom-[76px] z-10 select-none bg-transparent cursor-default"
+                style={{ touchAction: "none" }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onPointerDown={(e) => e.stopPropagation()}
+                title={isRtl ? "السبورة التفاعلية للعرض فقط" : "Whiteboard is view-only"}
+              />
+            ) : null}
+
             {/* Watermark overlay */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
               <VideoWatermark

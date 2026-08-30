@@ -7,8 +7,7 @@ import Link from 'next/link';
 import { useLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getUserData } from '@/lib/auth';
 import { JitsiMeeting } from '@jitsi/react-sdk';
-
-const JITSI_DOMAIN = 'meet.jit.si';
+import { JITSI_DOMAIN, getJitsiRoomName } from '@/src/lib/jitsi';
 
 export default function DoctorLiveRoomPage() {
   const params = useParams();
@@ -21,7 +20,7 @@ export default function DoctorLiveRoomPage() {
     ? `${userData.attributes.first_name} ${userData.attributes.last_name || ''}`.trim()
     : 'Instructor';
 
-  const jitsiRoomName = `learnoo-room-${roomId}`;
+  const jitsiRoomName = getJitsiRoomName(roomId);
   const jitsiApiRef = useRef<any>(null);
 
   const [isRecording, setIsRecording] = useState(false);
@@ -155,6 +154,10 @@ export default function DoctorLiveRoomPage() {
             fileRecordingsEnabled: true,
             localRecording: {
               enabled: true,
+            },
+            whiteboard: {
+              enabled: true,
+              collabServerBaseUrl: 'https://whiteboard.jitsi.net',
             },
             toolbarButtons: [
               'camera',

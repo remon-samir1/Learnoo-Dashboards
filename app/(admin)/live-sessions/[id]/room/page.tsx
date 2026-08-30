@@ -7,8 +7,7 @@ import Link from 'next/link';
 import { useLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getUserData } from '@/lib/auth';
 import { JitsiMeeting } from '@jitsi/react-sdk';
-
-const JITSI_DOMAIN = 'meet.jit.si';
+import { JITSI_DOMAIN, getJitsiRoomName } from '@/src/lib/jitsi';
 
 export default function LiveRoomPage() {
   const params = useParams();
@@ -22,7 +21,7 @@ export default function LiveRoomPage() {
     : 'Instructor';
 
   // Stable room name derived from the room ID
-  const jitsiRoomName = `learnoo-room-${roomId}`;
+  const jitsiRoomName = getJitsiRoomName(roomId);
 
   const jitsiApiRef = useRef<any>(null);
 
@@ -158,6 +157,10 @@ export default function LiveRoomPage() {
             fileRecordingsEnabled: true,
             localRecording: {
               enabled: true,
+            },
+            whiteboard: {
+              enabled: true,
+              collabServerBaseUrl: 'https://whiteboard.jitsi.net',
             },
             toolbarButtons: [
               'camera',

@@ -68,6 +68,8 @@ export interface StudentLiveRoomAttributes {
   has_activation?: boolean | null;
   user?: StudentLiveRoomUser | null;
   course?: StudentLiveRoomCourse | null;
+  course_ids?: (string | number)[] | null;
+  courses?: any[] | { data?: any[] } | null;
   created_at?: string | null;
   updated_at?: string | null;
 }

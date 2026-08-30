@@ -107,19 +107,136 @@ export function getInstructorDisplayName(
   return "";
 }
 
-export function getCourseTitle(attributes?: StudentLiveRoomAttributes | null): string {
-  const t = attributes?.course?.data?.attributes?.title;
-  return typeof t === "string" && t.trim() ? t.trim() : "";
+export function getCourseTitles(
+  attributes?: StudentLiveRoomAttributes | Record<string, any> | null,
+): string[] {
+  if (!attributes || typeof attributes !== "object") return [];
+
+  const titles: string[] = [];
+
+  // 1. Check attributes.courses array (e.g. [ { attributes: { title: "..." } }, ... ])
+  const coursesRaw = (attributes as Record<string, any>).courses;
+  const coursesList = Array.isArray(coursesRaw)
+    ? coursesRaw
+    : Array.isArray(coursesRaw?.data)
+      ? coursesRaw.data
+      : null;
+
+  if (coursesList && coursesList.length > 0) {
+    for (const c of coursesList) {
+      if (!c || typeof c !== "object") continue;
+      const t =
+        c.attributes?.title ??
+        c.title ??
+        c.data?.attributes?.title ??
+        c.data?.title;
+      if (typeof t === "string" && t.trim() && !titles.includes(t.trim())) {
+        titles.push(t.trim());
+      }
+    }
+  }
+
+  // 2. Check attributes.course (single course object)
+  const singleCourse = (attributes as Record<string, any>).course;
+  if (singleCourse && typeof singleCourse === "object") {
+    const t =
+      singleCourse.data?.attributes?.title ??
+      singleCourse.attributes?.title ??
+      singleCourse.data?.title ??
+      singleCourse.title;
+    if (typeof t === "string" && t.trim() && !titles.includes(t.trim())) {
+      titles.push(t.trim());
+    }
+  }
+
+  return titles;
+}
+
+export function getCourseTitle(
+  attributes?: StudentLiveRoomAttributes | Record<string, any> | null,
+  separator: string = "، ",
+): string {
+  const titles = getCourseTitles(attributes);
+  return titles.join(separator);
+}
+
+export function getLiveRoomCourseIds(
+  roomOrAttrs?: StudentLiveRoom | StudentLiveRoomAttributes | Record<string, any> | null,
+): string[] {
+  if (!roomOrAttrs || typeof roomOrAttrs !== "object") return [];
+
+  const attrs = (roomOrAttrs as any).attributes || roomOrAttrs;
+  const ids = new Set<string>();
+
+  // 1. Check course_ids array
+  if (Array.isArray(attrs.course_ids)) {
+    for (const id of attrs.course_ids) {
+      if (id != null && String(id).trim()) {
+        ids.add(String(id).trim());
+      }
+    }
+  }
+
+  // 2. Check courses array
+  const coursesList = Array.isArray(attrs.courses)
+    ? attrs.courses
+    : Array.isArray(attrs.courses?.data)
+      ? attrs.courses.data
+      : null;
+
+  if (coursesList) {
+    for (const c of coursesList) {
+      const id = c?.id ?? c?.data?.id;
+      if (id != null && String(id).trim()) {
+        ids.add(String(id).trim());
+      }
+    }
+  }
+
+  // 3. Check single course
+  const singleId = attrs.course?.data?.id ?? attrs.course?.id;
+  if (singleId != null && String(singleId).trim()) {
+    ids.add(String(singleId).trim());
+  }
+
+  return Array.from(ids);
 }
 
 export function getCourseThumbnail(
-  attributes?: StudentLiveRoomAttributes | null,
+  attributes?: StudentLiveRoomAttributes | Record<string, any> | null,
 ): string | null {
-  const th = attributes?.course?.data?.attributes?.thumbnail;
+  if (!attributes || typeof attributes !== "object") return null;
+
+  const attrs = (attributes as any).attributes || attributes;
+
+  // 1. Check single course thumbnail
+  const single = attrs?.course?.data?.attributes ?? attrs?.course?.attributes ?? attrs?.course;
+  const th = single?.thumbnail;
   if (typeof th === "string" && th.trim()) return th.trim();
   if (th && typeof th === "object" && "url" in th) {
     const url = (th as { url?: string }).url;
     if (typeof url === "string" && url.trim()) return url.trim();
   }
+
+  // 2. Check courses array thumbnail
+  const coursesList = Array.isArray(attrs.courses)
+    ? attrs.courses
+    : Array.isArray(attrs.courses?.data)
+      ? attrs.courses.data
+      : null;
+
+  if (coursesList) {
+    for (const c of coursesList) {
+      const cAttrs = c?.attributes ?? c?.data?.attributes ?? c;
+      const cTh = cAttrs?.thumbnail;
+      if (typeof cTh === "string" && cTh.trim()) return cTh.trim();
+      if (cTh && typeof cTh === "object" && "url" in cTh) {
+        const url = (cTh as { url?: string }).url;
+        if (typeof url === "string" && url.trim()) return url.trim();
+      }
+    }
+  }
+
   return null;
 }
+

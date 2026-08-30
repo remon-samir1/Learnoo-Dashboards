@@ -14,13 +14,20 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import Cookies from "js-cookie";
 import {
   isLiveOrStarted,
   isUpcoming,
   isEnded,
   getCourseTitle,
   getInstructorDisplayName,
+  getLiveRoomCourseIds,
 } from "@/src/lib/student-live-room";
+import {
+  extractFacultyTreeCourses,
+  filterLiveRoomsByFacultyCourses,
+  resolveLiveRoomAccessState,
+} from "@/src/lib/student-faculty-tree";
 import type { StudentLiveRoom } from "@/src/interfaces/student-live-room.interface";
 import { getStudentLiveRooms } from "@/src/services/student/live-room.service";
 import { useCourses, STUDENT_COURSES_LIST_PARAMS } from "@/src/hooks/useCourses";
@@ -76,19 +83,6 @@ function formatDateTime(iso: string | null | undefined, locale: string): string 
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" });
-}
-
-function getLiveRoomCourseId(room: StudentLiveRoom): string | null {
-  const cId = room.attributes?.course?.data?.id;
-  if (cId != null && String(cId).trim() !== "") {
-    return String(cId).trim();
-  }
-  const raw = room as Record<string, any>;
-  const rawCId = raw.course?.data?.id;
-  if (rawCId != null && String(rawCId).trim() !== "") {
-    return String(rawCId).trim();
-  }
-  return null;
 }
 
 function StatusBadge({
@@ -157,6 +151,7 @@ function SessionCard({
   );
 
   const title = attrs?.title?.trim() || "—";
+  const firstCourseId = getLiveRoomCourseIds(room)[0];
 
   return (
     <div
@@ -197,6 +192,12 @@ function SessionCard({
                 {t.lockedPrivate}
               </span>
             )}
+            {accessState === "course_not_enrolled" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold text-orange-700 border border-orange-200">
+                <Lock size={10} />
+                {t.activateCourseFirst}
+              </span>
+            )}
           </div>
           <h2 className="mt-1.5 truncate text-[15px] font-bold text-[var(--text-dark)]">
             {title}
@@ -223,7 +224,7 @@ function SessionCard({
             {t.activateRoom}
           </button>
         ) : accessState === "course_not_enrolled" ? (
-          <Link href={`/${locale}/student/courses`}>
+          <Link href={firstCourseId ? `/${locale}/student/courses/course-details/${firstCourseId}` : `/${locale}/student/courses`}>
             <button className="flex items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-700 transition-all hover:bg-orange-100">
               <Lock size={16} />
               {t.activateCourseFirst}
@@ -263,6 +264,10 @@ export default function StudentLiveSessionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [facultyId, setFacultyId] = useState<string | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [hasLoadedFacultyTree, setHasLoadedFacultyTree] = useState(false);
+
   const [page, setPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
 
@@ -270,27 +275,74 @@ export default function StudentLiveSessionsPage() {
 
   const { data: enrolledCourses, isLoading: loadingCourses } = useCourses(STUDENT_COURSES_LIST_PARAMS);
 
-  const enrolledCourseIds = useMemo<Set<string>>(() => {
-    const set = new Set<string>();
-    if (!enrolledCourses) return set;
-    for (const course of enrolledCourses) {
-      if (!courseIsLocked(course) && course?.id != null && String(course.id).trim() !== "") {
-        set.add(String(course.id).trim());
-      }
-    }
-    return set;
-  }, [enrolledCourses]);
+  // Load student profile to get facultyId and department categories to build the full faculty tree
+  useEffect(() => {
+    let isMounted = true;
+    const loadStudentFacultyTree = async () => {
+      try {
+        const token = Cookies.get('token');
+        if (!token) return;
 
-  const visibleCourseIds = useMemo<Set<string>>(() => {
+        const [meRes, deptRes] = await Promise.all([
+          fetch("https://api.learnoo.app/v1/auth/me", {
+            headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+          }),
+          fetch("https://api.learnoo.app/v1/department", {
+            headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+          }),
+        ]);
+
+        if (meRes.ok && deptRes.ok) {
+          const meJson = await meRes.json();
+          const deptJson = await deptRes.json();
+
+          const fId =
+            meJson?.data?.attributes?.faculty?.data?.id ??
+            meJson?.data?.attributes?.faculty_id ??
+            null;
+          const cats = Array.isArray(deptJson?.data)
+            ? deptJson.data
+            : Array.isArray(deptJson)
+            ? deptJson
+            : [];
+
+          if (isMounted) {
+            setFacultyId(fId ? String(fId) : null);
+            setCategories(cats);
+            setHasLoadedFacultyTree(true);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load student faculty tree:", err);
+      } finally {
+        if (isMounted) setHasLoadedFacultyTree(true);
+      }
+    };
+
+    loadStudentFacultyTree();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const { allCourseIds: facultyCourseIds, unlockedCourseIds: unlockedTreeCourseIds } = useMemo(() => {
+    return extractFacultyTreeCourses(categories, facultyId);
+  }, [categories, facultyId]);
+
+  const allEnrolledCourseIds = useMemo<Set<string>>(() => {
     const set = new Set<string>();
-    if (!enrolledCourses) return set;
-    for (const course of enrolledCourses) {
-      if (course?.id != null && String(course.id).trim() !== "") {
-        set.add(String(course.id).trim());
+    if (enrolledCourses) {
+      for (const course of enrolledCourses) {
+        if (!courseIsLocked(course) && course?.id != null && String(course.id).trim() !== "") {
+          set.add(String(course.id).trim());
+        }
       }
     }
+    for (const id of unlockedTreeCourseIds) {
+      set.add(id);
+    }
     return set;
-  }, [enrolledCourses]);
+  }, [enrolledCourses, unlockedTreeCourseIds]);
 
   const fetchRooms = (pageNum: number) => {
     setLoading(true);
@@ -311,14 +363,10 @@ export default function StudentLiveSessionsPage() {
   }, [page]);
 
   const visibleRooms = useMemo(() => {
-    return rooms.filter((room) => {
-      const cids = [getLiveRoomCourseId(room)].filter(Boolean) as string[];
-      if (cids.length === 0) return true; // If no course, just show it
-      return cids.some((cid) => visibleCourseIds.has(cid));
-    });
-  }, [rooms, visibleCourseIds]);
+    return filterLiveRoomsByFacultyCourses(rooms, facultyCourseIds, hasLoadedFacultyTree);
+  }, [rooms, facultyCourseIds, hasLoadedFacultyTree]);
 
-  const isDataLoading = loading || loadingCourses;
+  const isDataLoading = loading;
 
   return (
     <div
@@ -346,21 +394,7 @@ export default function StudentLiveSessionsPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {visibleRooms.map((room) => {
-            const pub = String(room.attributes?.is_public ?? 'unknown');
-            let accessState: "available" | "locked_private" | "course_not_enrolled" = "available";
-
-            if (pub === "included") {
-              const cId = getLiveRoomCourseId(room);
-              if (cId && !enrolledCourseIds.has(cId)) {
-                accessState = "course_not_enrolled";
-              }
-            } else if (pub === "false" || pub === "private") {
-              const hasAct = room.attributes?.has_activation;
-              // If it's private and has_activation is not explicitly true, it is locked.
-              if (hasAct !== true) {
-                accessState = "locked_private";
-              }
-            }
+            const accessState = resolveLiveRoomAccessState(room, allEnrolledCourseIds);
 
             return (
               <SessionCard
