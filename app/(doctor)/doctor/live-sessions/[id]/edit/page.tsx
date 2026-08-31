@@ -36,7 +36,6 @@ export default function EditSessionPage() {
     is_public: 'true'
   });
 
-
   useEffect(() => {
     if (!roomId || roomId === 'undefined') {
       return;
@@ -58,7 +57,7 @@ export default function EditSessionPage() {
           } else if ((response.data as any)?.relationships?.course?.data?.id) {
             cIds = [String((response.data as any).relationships.course.data.id)];
           }
-        } catch (e) { console.error('course processing error', e) }
+        } catch (e) { console.error('course processing error', e); }
 
         const formatStarted = (dateStr: string) => {
           if (!dateStr) return '';
@@ -114,11 +113,11 @@ export default function EditSessionPage() {
       };
 
       await api.liveRooms.update(Number(roomId), requestData);
-      toast.success(t('liveSessions.editSuccess') || 'Session updated successfully');
-      router.push('/live-sessions');
+      toast.success(t('liveSessions.edit.success'));
+      router.push('/doctor/live-sessions');
     } catch (error: any) {
       console.error('Error scheduling session:', error);
-      toast.error(error.message || t('liveSessions.schedule.error'));
+      toast.error(error.message || t('liveSessions.edit.error'));
     } finally {
       setLoading(false);
     }
@@ -128,14 +127,14 @@ export default function EditSessionPage() {
     <div className="flex flex-col gap-8 pb-12">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/live-sessions">
+        <Link href="/doctor/live-sessions">
           <button className="p-2 hover:bg-[#F1F5F9] rounded-full transition-colors border border-transparent hover:border-[#E2E8F0]">
-            <ChevronLeft className="w-6 h-6 text-[#1E293B]" />
+            <ChevronLeft className="w-6 h-6 text-[#1E293B] rtl:rotate-180" />
           </button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-[#1E293B]">{t('liveSessions.editPageTitle') || 'Edit Session'}</h1>
-          <p className="text-[#64748B] text-[14px]">{t('liveSessions.schedule.pageDescription')}</p>
+          <h1 className="text-2xl font-bold text-[#1E293B]">{t('liveSessions.edit.pageTitle')}</h1>
+          <p className="text-[#64748B] text-[14px]">{t('liveSessions.edit.pageDescription')}</p>
         </div>
       </div>
 
@@ -145,7 +144,7 @@ export default function EditSessionPage() {
           {/* Session Details Card */}
           <div className="bg-white border border-[#F1F5F9] rounded-2xl p-8 shadow-sm">
             <h2 className="text-[16px] font-bold text-[#1E293B] mb-6 flex items-center gap-2">
-              {t('liveSessions.schedule.sessionDetails')}
+              {t('liveSessions.edit.sessionDetails')}
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -172,16 +171,16 @@ export default function EditSessionPage() {
 
               {/* Session Type */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Session Type *</label>
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.sessionType')} *</label>
                 <select
                   name="is_public"
                   value={formData.is_public}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
                 >
-                  <option value="true">Public</option>
-                  <option value="false">Private</option>
-                  <option value="included">Included</option>
+                  <option value="true">{t('liveSessions.public')}</option>
+                  <option value="false">{t('liveSessions.private')}</option>
+                  <option value="included">{t('liveSessions.included')}</option>
                 </select>
               </div>
 
@@ -264,9 +263,9 @@ export default function EditSessionPage() {
               disabled={loading}
               className="w-full py-3.5 bg-[#2563EB] text-white rounded-xl font-bold text-[14px] hover:bg-[#1D4ED8] transition-all shadow-lg shadow-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? t('liveSessions.updating') || 'Updating...' : t('liveSessions.editButton') || 'Update Session'}
+              {loading ? t('liveSessions.edit.updating') : t('liveSessions.edit.updateButton')}
             </button>
-            <Link href="/live-sessions">
+            <Link href="/doctor/live-sessions">
               <button className="w-full py-3.5 bg-white border border-[#E2E8F0] text-[#64748B] rounded-xl font-bold text-[14px] hover:bg-[#F8FAFC] transition-all text-center">
                 {t('liveSessions.schedule.cancel')}
               </button>

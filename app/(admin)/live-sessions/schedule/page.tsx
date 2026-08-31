@@ -97,7 +97,7 @@ export default function ScheduleSessionPage() {
       <div className="flex items-center gap-4">
         <Link href="/live-sessions">
           <button className="p-2 hover:bg-[#F1F5F9] rounded-full transition-colors border border-transparent hover:border-[#E2E8F0]">
-            <ChevronLeft className="w-6 h-6 text-[#1E293B]" />
+            <ChevronLeft className="w-6 h-6 text-[#1E293B] rtl:rotate-180" />
           </button>
         </Link>
         <div>
@@ -140,16 +140,16 @@ export default function ScheduleSessionPage() {
 
               {/* Session Type */}
               <div className="flex flex-col gap-2">
-                <label className="text-[13px] font-bold text-[#1E293B]">Session Type *</label>
+                <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.sessionType')} *</label>
                 <select
                   name="is_public"
                   value={formData.is_public}
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-xl border border-[#E2E8F0] focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition-all text-[14px]"
                 >
-                  <option value="true">Public</option>
-                  <option value="false">Private</option>
-                  <option value="included">Included</option>
+                  <option value="true">{t('liveSessions.public')}</option>
+                  <option value="false">{t('liveSessions.private')}</option>
+                  <option value="included">{t('liveSessions.included')}</option>
                 </select>
               </div>
 

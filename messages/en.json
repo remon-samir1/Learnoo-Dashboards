@@ -1838,6 +1838,25 @@
       "success": "Session scheduled successfully!",
       "error": "Failed to schedule session"
     },
+    "sessionType": "Session Type",
+    "public": "Public",
+    "private": "Private",
+    "included": "Included",
+    "edit": {
+      "pageTitle": "Edit Live Session",
+      "pageDescription": "Update and configure your live streaming session.",
+      "sessionDetails": "Session Details",
+      "sessionTitle": "Session Title",
+      "updateButton": "Update Session",
+      "updating": "Updating...",
+      "success": "Session updated successfully!",
+      "error": "Failed to update session"
+    },
+    "editPageTitle": "Edit Live Session",
+    "editPageDescription": "Update and configure your live streaming session.",
+    "editButton": "Update Session",
+    "updating": "Updating...",
+    "editSuccess": "Session updated successfully!",
     "settings": {
       "pageTitle": "Session Settings",
       "pageDescription": "Configure features for this live session.",

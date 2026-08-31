@@ -110,6 +110,7 @@ function GenerateCodeForm() {
   const [debouncedLiveRoomSearch] = useDebounce(liveRoomSearch, 500);
 
   const { data: liveRooms, isLoading: isLoadingLiveRooms } = useLiveRooms({ search: debouncedLiveRoomSearch });
+  const { data: quizzes, isLoading: isLoadingQuizzes } = useQuizzes({ title: debouncedQuizSearch });
 
   // Handle query params for pre-selection
   useEffect(() => {

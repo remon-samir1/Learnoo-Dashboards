@@ -1873,6 +1873,25 @@
       "success": "تم جدولة الجلسة بنجاح!",
       "error": "فشل جدولة الجلسة"
     },
+    "sessionType": "نوع الجلسة",
+    "public": "عام",
+    "private": "خاص",
+    "included": "مضمن",
+    "edit": {
+      "pageTitle": "تعديل الجلسة المباشرة",
+      "pageDescription": "تحديث وإعداد جلسة البث المباشر الخاصة بك.",
+      "sessionDetails": "تفاصيل الجلسة",
+      "sessionTitle": "عنوان الجلسة",
+      "updateButton": "تحديث الجلسة",
+      "updating": "جارٍ التحديث...",
+      "success": "تم تحديث الجلسة بنجاح!",
+      "error": "فشل تحديث الجلسة"
+    },
+    "editPageTitle": "تعديل الجلسة المباشرة",
+    "editPageDescription": "تحديث وإعداد جلسة البث المباشر الخاصة بك.",
+    "editButton": "تحديث الجلسة",
+    "updating": "جارٍ التحديث...",
+    "editSuccess": "تم تحديث الجلسة بنجاح!",
     "settings": {
       "pageTitle": "إعدادات الجلسة",
       "pageDescription": "تكوين الميزات لهذه الجلسة المباشرة.",
