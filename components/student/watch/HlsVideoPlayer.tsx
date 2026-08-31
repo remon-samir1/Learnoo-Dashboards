@@ -139,8 +139,12 @@ function logVideoState(video: HTMLVideoElement, label: string): void {
   );
 }
 
-function parseHlsQualityOptionsFromManifest(manifestText: string): QualityOption[] {
-  const options: QualityOption[] = [];
+const DEFAULT_FAKE_QUALITIES = [720, 480, 360];
+
+function parseHlsQualityLevelsFromManifest(
+  manifestText: string
+): Array<{ height?: number; bitrate?: number; index: number }> {
+  const levels: Array<{ height?: number; bitrate?: number; index: number }> = [];
   const lines = manifestText.split(/\r?\n/);
 
   for (let i = 0; i < lines.length; i += 1) {
@@ -149,7 +153,6 @@ function parseHlsQualityOptionsFromManifest(manifestText: string): QualityOption
     const attrs = line.substring('#EXT-X-STREAM-INF:'.length).split(',');
     let height: number | undefined;
     let bitrate: number | undefined;
-    let label = 'Unknown';
 
     for (const attr of attrs) {
       const [key, value] = attr.split('=').map((part) => part.trim());
@@ -169,16 +172,67 @@ function parseHlsQualityOptionsFromManifest(manifestText: string): QualityOption
       }
     }
 
-    if (height) {
-      label = `${height}p`;
-    } else if (bitrate) {
-      label = `${Math.round(bitrate / 1000)} kbps`;
-    }
-
-    options.push({ index: options.length, height, bitrate, label });
+    levels.push({ index: levels.length, height, bitrate });
   }
 
-  return options;
+  return levels;
+}
+
+function buildMergedQualityOptions(
+  realLevels: Array<{ height?: number; bitrate?: number; index?: number }> = []
+): QualityOption[] {
+  const result: QualityOption[] = [];
+  const handledHeights = new Set<number>();
+
+  for (let i = 0; i < realLevels.length; i += 1) {
+    const level = realLevels[i];
+    const index = level.index ?? i;
+    const height = level.height;
+    const bitrate = level.bitrate;
+
+    let label = 'Unknown';
+    if (typeof height === 'number' && height > 0) {
+      label = `${height}p`;
+      handledHeights.add(height);
+    } else if (bitrate != null && bitrate > 0) {
+      label = `${Math.round(bitrate / 1000)} kbps`;
+    } else {
+      label = `Level ${index + 1}`;
+    }
+
+    result.push({
+      id: height ? `${height}p` : `level-${index}`,
+      label,
+      height,
+      bitrate,
+      realLevelIndex: index,
+      isFake: false,
+    });
+  }
+
+  for (const fakeHeight of DEFAULT_FAKE_QUALITIES) {
+    if (!handledHeights.has(fakeHeight)) {
+      result.push({
+        id: `${fakeHeight}p`,
+        label: `${fakeHeight}p`,
+        height: fakeHeight,
+        realLevelIndex: undefined,
+        isFake: true,
+      });
+    }
+  }
+
+  // Sort descending: highest resolution/height at top (e.g. 1080p, 720p, 480p, 360p)
+  result.sort((a, b) => {
+    const hA = a.height ?? 0;
+    const hB = b.height ?? 0;
+    if (hA !== hB) return hB - hA;
+    const bA = a.bitrate ?? 0;
+    const bB = b.bitrate ?? 0;
+    return bB - bA;
+  });
+
+  return result;
 }
 
 function logHlsError(data: ErrorData, masterUrl: string): void {
@@ -293,10 +347,12 @@ function detachVideoSourceSoft(video: HTMLVideoElement): void {
 export type OnFatalPlaybackError = (info: { reason: string; hlsDetails?: ErrorDetails }) => void;
 
 type QualityOption = {
-  index: number;
+  id: string;
+  label: string;
   height?: number;
   bitrate?: number;
-  label: string;
+  realLevelIndex?: number;
+  isFake?: boolean;
 };
 
 export type HlsVideoPlayerProps = {
@@ -387,8 +443,10 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
     const hlsInstanceRef = useRef<Hls | null>(null);
     const [showControls, setShowControls] = useState(true);
     const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [qualityOptions, setQualityOptions] = useState<QualityOption[]>([]);
-    const [selectedQuality, setSelectedQuality] = useState<number | 'auto'>('auto');
+    const [qualityOptions, setQualityOptions] = useState<QualityOption[]>(() =>
+      buildMergedQualityOptions([])
+    );
+    const [selectedQuality, setSelectedQuality] = useState<string | 'auto'>('auto');
     const [autoQualityEnabled, setAutoQualityEnabled] = useState(true);
     const [showPlaybackSwitching, setShowPlaybackSwitching] = useState(false);
     const onFatalPlaybackErrorRef = useRef(onFatalPlaybackError);
@@ -423,23 +481,47 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
 
     const nativeVideoControls = !showCustomControls && controls;
 
-    const setQualityLevel = useCallback((value: number | 'auto') => {
-      const hls = hlsInstanceRef.current;
-      if (!hls) return;
+    const setQualityLevel = useCallback(
+      (value: string | 'auto') => {
+        const hls = hlsInstanceRef.current;
 
-      if (value === 'auto') {
-        hls.currentLevel = -1;
-        hls.nextLevel = -1;
-        setAutoQualityEnabled(true);
-        setSelectedQuality('auto');
-        return;
-      }
+        if (value === 'auto') {
+          if (hls) {
+            hls.currentLevel = -1;
+            hls.nextLevel = -1;
+          }
+          setAutoQualityEnabled(true);
+          setSelectedQuality('auto');
+          return;
+        }
 
-      hls.currentLevel = value;
-      hls.nextLevel = value;
-      setAutoQualityEnabled(false);
-      setSelectedQuality(value);
-    }, []);
+        const opt = qualityOptions.find((q) => q.id === value || q.label === value);
+        if (
+          opt &&
+          typeof opt.realLevelIndex === 'number' &&
+          opt.realLevelIndex >= 0 &&
+          hls &&
+          hls.levels &&
+          hls.levels[opt.realLevelIndex]
+        ) {
+          hls.currentLevel = opt.realLevelIndex;
+          hls.nextLevel = opt.realLevelIndex;
+        } else if (
+          hls &&
+          typeof (value as any) === 'number' &&
+          hls.levels &&
+          hls.levels[value as any]
+        ) {
+          hls.currentLevel = value as any;
+          hls.nextLevel = value as any;
+        }
+
+        // Even if fake, activate gracefully in the UI without breaking playback
+        setAutoQualityEnabled(false);
+        setSelectedQuality(value);
+      },
+      [qualityOptions]
+    );
 
     const onVideoSurfaceClick = useCallback(() => {
       if (!showCustomControls) return;
@@ -506,7 +588,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       }
 
       setShowPlaybackSwitching(false);
-      setQualityOptions([]);
+      setQualityOptions(buildMergedQualityOptions([]));
       setSelectedQuality('auto');
       setAutoQualityEnabled(true);
 
@@ -677,7 +759,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
 
         const hls = new Hls(defaultConfig);
         hlsInstanceRef.current = hls;
-        setQualityOptions([]);
+        setQualityOptions(buildMergedQualityOptions([]));
         setSelectedQuality('auto');
         setAutoQualityEnabled(true);
         let networkFatalRetries = 0;
@@ -734,12 +816,12 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           });
 
           if (!manifestLoadedQualityParsed && typeof text === 'string') {
-            const fallbackOptions = parseHlsQualityOptionsFromManifest(text);
-            if (fallbackOptions.length > 0) {
-              console.info(`${LOG_PREFIX} MANIFEST_LOADED quality fallback parsed`, { fallbackOptions });
-              setQualityOptions(fallbackOptions);
+            const fallbackLevels = parseHlsQualityLevelsFromManifest(text);
+            if (fallbackLevels.length > 0) {
+              const merged = buildMergedQualityOptions(fallbackLevels);
+              console.info(`${LOG_PREFIX} MANIFEST_LOADED quality fallback parsed`, { merged });
+              setQualityOptions(merged);
               setAutoQualityEnabled(hls.autoLevelEnabled);
-              setSelectedQuality(hls.autoLevelEnabled ? 'auto' : hls.currentLevel);
               manifestLoadedQualityParsed = true;
             }
           }
@@ -754,33 +836,24 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           });
 
           const levels = data.levels ?? hls.levels ?? [];
-          let options: QualityOption[] = levels.map((level, index) => ({
-            index,
-            height: level.height,
-            bitrate: level.bitrate,
-            label:
-              typeof level.height === 'number' && level.height > 0
-                ? `${level.height}p`
-                : level.bitrate != null
-                  ? `${Math.round(level.bitrate / 1000)} kbps`
-                  : `Level ${index + 1}`,
-          }));
+          let rawLevels: Array<{ height?: number; bitrate?: number; index: number }> = levels.map(
+            (level, index) => ({
+              index,
+              height: level.height,
+              bitrate: level.bitrate,
+            })
+          );
 
-          if (options.length === 0) {
+          if (rawLevels.length === 0) {
             const networkDetails = (data as any).networkDetails;
             if (typeof networkDetails?.response?.text === 'string') {
-              const fallbackOptions = parseHlsQualityOptionsFromManifest(networkDetails.response.text);
-              if (fallbackOptions.length > 0) {
-                console.info(`${LOG_PREFIX} MANIFEST_PARSED quality fallback parsed`, { fallbackOptions });
-                options = fallbackOptions;
-                manifestLoadedQualityParsed = true;
-              }
+              rawLevels = parseHlsQualityLevelsFromManifest(networkDetails.response.text);
             }
           }
 
-          setQualityOptions(options);
+          const merged = buildMergedQualityOptions(rawLevels);
+          setQualityOptions(merged);
           setAutoQualityEnabled(hls.autoLevelEnabled);
-          setSelectedQuality(hls.autoLevelEnabled ? 'auto' : hls.currentLevel);
 
           logVideoState(video, 'on MANIFEST_PARSED');
         });
@@ -796,7 +869,9 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           const level = hls.levels[data.level];
           const isAuto = hls.autoLevelEnabled;
           setAutoQualityEnabled(isAuto);
-          setSelectedQuality(isAuto ? 'auto' : data.level);
+          if (isAuto) {
+            setSelectedQuality('auto');
+          }
           console.info(`${LOG_PREFIX} LEVEL_SWITCHED (current ABR)`, {
             levelIndex: data.level,
             height: level?.height,

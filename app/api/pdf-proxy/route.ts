@@ -35,8 +35,13 @@ export async function GET(req: NextRequest) {
 
     let pdfBuffer = await response.arrayBuffer();
 
-    // Apply watermark if enabled
-    try {
+    // When preview=1, skip server-side watermark — the client-side CSS overlay
+    // in PdfPreviewModal already renders the visual watermark for the preview.
+    // Server watermark is only embedded for actual file downloads.
+    const isPreview = req.nextUrl.searchParams.get('preview') === '1';
+
+    // Apply watermark if enabled (download only, not preview)
+    if (!isPreview) try {
       const cookieStore = await cookies();
       const token = cookieStore.get('token')?.value;
 

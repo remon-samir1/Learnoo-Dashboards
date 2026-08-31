@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useMemo, useState, useEffect } from 'react';
-import { ArrowLeft, Download, Loader2, Lock, Minus, Plus, Search, Droplets } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, Lock, Minus, Plus, Search, Droplets, ChevronLeft, ChevronRight } from 'lucide-react';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { formatLibraryAttachmentSize } from '@/src/lib/student-library-utils';
 import { useLibrary } from '@/src/hooks/useLibraries';
@@ -33,6 +33,64 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
   const [activationOpen, setActivationOpen] = useState(false);
   const [selectedAttachmentId, setSelectedAttachmentId] = useState<string | null>(null);
   const [watermarkEnabled, setWatermarkEnabled] = useState(false);
+
+  const [scale, setScale] = useState(1.0);
+  const [numPages, setNumPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageInput, setPageInput] = useState('1');
+
+  useEffect(() => {
+    setPageInput(String(currentPage));
+  }, [currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+    setPageInput('1');
+    setScale(1.0);
+    setNumPages(0);
+  }, [selectedAttachmentId, materialId]);
+
+  const handleZoomIn = () => {
+    setScale((prev) => Math.min(2.5, Math.round((prev + 0.1) * 10) / 10));
+  };
+
+  const handleZoomOut = () => {
+    setScale((prev) => Math.max(0.5, Math.round((prev - 0.1) * 10) / 10));
+  };
+
+  const handleResetZoom = () => {
+    setScale(1.0);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(numPages > 0 ? numPages : 1, prev + 1));
+  };
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const submitPageJump = () => {
+    const parsed = parseInt(pageInput, 10);
+    if (!Number.isNaN(parsed) && parsed >= 1 && (numPages === 0 || parsed <= numPages)) {
+      setCurrentPage(parsed);
+      setPageInput(String(parsed));
+    } else {
+      setPageInput(String(currentPage));
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitPageJump();
+      (e.target as HTMLInputElement).blur();
+    }
+  };
 
   // Fetch watermark settings
   useEffect(() => {
@@ -73,7 +131,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
     return attachments[0] ?? null;
   }, [attachments, selectedAttachmentId]);
 
-  const locked = Boolean(library?.attributes.is_locked);
+  const locked = Boolean(library?.attributes.code_activation);
   const canAccessAttachment = !locked && selected?.attributes?.downloadable === true;
   const canOpenUnlocked = !locked && Boolean(selected?.attributes?.path?.trim());
   const showPdfFrame = Boolean(selected && isPdfPath(selected) && canOpenUnlocked);
@@ -156,18 +214,81 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
           </div>
         </div>
         <div className="flex w-full shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center lg:w-auto lg:justify-end">
-          <div className="order-2 flex items-center justify-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-2 py-1.5 text-sm text-[#64748B] sm:order-none sm:justify-start">
-            <button type="button" className="rounded-lg p-1.5 opacity-40" disabled aria-hidden>
+          {/* Page Navigation & Direct Page Jump */}
+          <div className="order-2 flex items-center justify-center gap-1.5 rounded-xl border border-[#E2E8F0] bg-white px-2.5 py-1.5 text-sm shadow-sm sm:order-none sm:justify-start">
+            <button
+              type="button"
+              onClick={handlePrevPage}
+              disabled={!showPdfFrame || currentPage <= 1 || numPages === 0}
+              className="flex size-7 items-center justify-center rounded-lg text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A] disabled:cursor-not-allowed disabled:opacity-30"
+              title={dir === 'rtl' ? 'الصفحة السابقة' : 'Previous page'}
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="size-4 rtl:rotate-180" aria-hidden />
+            </button>
+
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={pageInput}
+                onChange={handlePageInputChange}
+                onBlur={submitPageJump}
+                onKeyDown={handlePageInputKeyDown}
+                disabled={!showPdfFrame}
+                className="h-7 w-12 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-center text-xs font-bold text-[#0F172A] outline-none transition focus:border-[#2137D6] focus:bg-white focus:ring-1 focus:ring-[#2137D6] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Current page number"
+              />
+              <span className="text-xs font-semibold text-[#64748B]">
+                / {numPages > 0 ? numPages : '—'}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNextPage}
+              disabled={!showPdfFrame || (numPages > 0 && currentPage >= numPages) || numPages === 0}
+              className="flex size-7 items-center justify-center rounded-lg text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A] disabled:cursor-not-allowed disabled:opacity-30"
+              title={dir === 'rtl' ? 'الصفحة التالية' : 'Next page'}
+              aria-label="Next page"
+            >
+              <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
+            </button>
+          </div>
+
+          {/* Zoom In / Zoom Out */}
+          <div className="order-2 flex items-center justify-center gap-1 rounded-xl border border-[#E2E8F0] bg-white px-2 py-1.5 text-sm text-[#64748B] shadow-sm sm:order-none sm:justify-start">
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              disabled={!showPdfFrame || scale <= 0.5}
+              className="rounded-lg p-1.5 text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A] disabled:cursor-not-allowed disabled:opacity-30"
+              title="Zoom Out"
+              aria-label="Zoom out"
+            >
               <Minus className="size-4" />
             </button>
-            <span className="min-w-[3rem] text-center text-xs font-bold">100%</span>
-            <button type="button" className="rounded-lg p-1.5 opacity-40" disabled aria-hidden>
+            <button
+              type="button"
+              onClick={handleResetZoom}
+              disabled={!showPdfFrame}
+              className="min-w-[3rem] text-center text-xs font-bold text-[#0F172A] transition hover:text-[#2137D6] disabled:cursor-not-allowed disabled:opacity-40"
+              title="Reset Zoom (100%)"
+            >
+              {Math.round(scale * 100)}%
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              disabled={!showPdfFrame || scale >= 2.5}
+              className="rounded-lg p-1.5 text-[#64748B] transition hover:bg-[#F1F5F9] hover:text-[#0F172A] disabled:cursor-not-allowed disabled:opacity-30"
+              title="Zoom In"
+              aria-label="Zoom in"
+            >
               <Plus className="size-4" />
             </button>
           </div>
-          <button type="button" className="rounded-xl border border-[#E2E8F0] p-2 opacity-40" disabled aria-label="Search">
-            <Search className="size-5 text-[#64748B]" />
-          </button>
           {selected?.attributes?.path && canAccessAttachment ? (
             <a
               href={`/api/pdf-proxy?url=${encodeURIComponent(selected.attributes.path)}&contentType=library`}
@@ -295,7 +416,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
           ) : null}
         </aside>
 
-        <section className="order-first min-h-[min(50vh,420px)] overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-white shadow-sm lg:order-none lg:min-h-[480px]">
+        <section className="order-first min-h-[min(50vh,420px)] max-h-[85vh] overflow-y-auto rounded-2xl border border-[#E2E8F0] bg-[#F8FAFC] shadow-sm lg:order-none lg:min-h-[500px]">
           {locked ? (
             <div className="flex min-h-[480px] flex-col items-center justify-center gap-3 bg-slate-900/5 px-6 py-16 text-center">
               <Lock className="size-14 text-[#94A3B8]" aria-hidden />
@@ -303,9 +424,9 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
               <p className="max-w-md text-sm text-[#94A3B8]">{t('activateCourseHint')}</p>
             </div>
           ) : showPdfFrame && selected?.attributes?.path ? (
-            <div className="relative w-full h-[min(78vh,900px)]">
+            <div className="relative w-full p-2 sm:p-4">
               {watermarkEnabled ? (
-                <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
+                <div className="sticky top-2 end-2 z-20 float-end mb-2 flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 shadow-sm">
                   <Droplets className="size-4 text-blue-600" aria-hidden />
                   <span className="text-xs font-semibold text-blue-700">Watermarked</span>
                 </div>
@@ -318,6 +439,12 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
                 variant="inline"
                 expandToContainer={true}
                 contentType="library"
+                scale={scale}
+                onScaleChange={setScale}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                numPages={numPages}
+                onNumPagesChange={setNumPages}
               />
             </div>
           ) : canOpenUnlocked && selected?.attributes?.path ? (

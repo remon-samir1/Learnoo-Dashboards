@@ -115,6 +115,9 @@ export function ExamAnswersReview({
       reviewQuestionCorrect={reviewCorrectProp}
       feedbackLabel={tResult('feedbackLabel')}
       noAnswerOptionsText={tResult('reviewNoAnswerOptions')}
+      shortAnswerPlaceholder={tTake('shortAnswerPlaceholder')}
+      shortAnswerAriaLabel={tTake('shortAnswerAriaLabel')}
+      awaitingGradingLabel={tTake('awaitingGrading')}
       articleFooter={
         <>
           <p className="text-xs text-[#94A3B8] sm:text-[13px]">

@@ -79,7 +79,7 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
         if (active) setPayload(resultRes);
       } catch (err) {
         console.error('Failed to load exam result', err);
-        if (active) setLoadError(t('loadingError', { fallback: 'Failed to load results.' }));
+        if (active) setLoadError(t('loadingError'));
         if (active) setPayload(null);
       }
     }

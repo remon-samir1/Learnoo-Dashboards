@@ -471,7 +471,7 @@ export default function CommunityModerationPage() {
 
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [editingSocialLink, setEditingSocialLink] = useState<SocialLink | null>(null);
-  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('all');
+  const [socialSearchQuery, setSocialSearchQuery] = useState('');
   const [socialForm, setSocialForm] = useState({
     course_ids: [] as string[],
     icon: null as File | null,
@@ -550,12 +550,22 @@ export default function CommunityModerationPage() {
     }
   };
   const [posts, setPosts] = useState<Post[]>([]);
-  const [filter, setFilter] = useState('all');
 
-  // Filter social links by course
-  const filteredSocialLinks = selectedCourseFilter === 'all'
-    ? socialLinks
-    : socialLinks?.filter(link => String(link.attributes.course_id) === selectedCourseFilter);
+  // Filter social links by search query
+  const filteredSocialLinks = useMemo(() => {
+    if (!socialLinks) return [];
+    if (!socialSearchQuery.trim()) return socialLinks;
+    const query = socialSearchQuery.toLowerCase().trim();
+    return socialLinks.filter((link) => {
+      const title = link.attributes.title?.toLowerCase() || '';
+      const subtitle = link.attributes.subtitle?.toLowerCase() || '';
+      const url = link.attributes.link?.toLowerCase() || '';
+      const coursesMatch = link.attributes.courses?.some((c: { id: string; attributes?: { title?: string } }) =>
+        (c.attributes?.title as string | undefined)?.toLowerCase().includes(query)
+      );
+      return title.includes(query) || subtitle.includes(query) || url.includes(query) || coursesMatch;
+    });
+  }, [socialLinks, socialSearchQuery]);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   // Create Post Modal State
@@ -576,9 +586,7 @@ export default function CommunityModerationPage() {
     }
   }, [postsData]);
 
-  const filteredPosts = filter === 'all'
-    ? posts
-    : posts.filter(p => p.attributes.status === filter);
+  const filteredPosts = posts;
 
   const handleDelete = async (postId: string) => {
     if (!confirm(t('community.confirmations.deletePost'))) return;
@@ -818,40 +826,34 @@ export default function CommunityModerationPage() {
           <h1 className="text-2xl font-bold text-[#1E293B]">{t('community.pageTitle')}</h1>
           <p className="text-sm text-[#64748B] mt-0.5">{t('community.pageDescription')}</p>
         </div>
-        <div className="relative w-40">
-          <select
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            className="appearance-none w-full pl-4 pr-10 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm font-semibold text-[#475569] focus:outline-none cursor-pointer hover:border-[#CBD5E1] transition-colors shadow-sm"
-          >
-            <option value="all">{t('community.filters.all')}</option>
-            <option value="draft">{t('community.filters.draft')}</option>
-            <option value="published">{t('community.filters.published')}</option>
-          </select>
-          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
-        </div>
       </div>
 
       {/* Community Links Header */}
-      <div className="flex items-center justify-between mb-4 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
         <h2 className="text-lg font-bold text-[#1E293B]">{t('community.socialLinks.title')}</h2>
-        <div className="flex items-center gap-3">
-          <select
-            value={selectedCourseFilter}
-            onChange={(e) => setSelectedCourseFilter(e.target.value)}
-            className="px-3 py-2 border border-[#E2E8F0] rounded-xl text-sm text-[#475569] focus:outline-none focus:ring-2 focus:ring-[#2137D6]"
-            disabled={coursesLoading}
-          >
-            <option value="all">{t('community.socialLinks.allCourses')}</option>
-            {courses?.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.attributes.title}
-              </option>
-            ))}
-          </select>
+        <div className="flex items-center gap-3 flex-1 sm:flex-initial sm:justify-end">
+          <div className="relative flex-1 sm:w-64">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none rtl:left-auto rtl:right-3.5" />
+            <input
+              type="text"
+              placeholder={t('community.socialLinks.searchPlaceholder')}
+              value={socialSearchQuery}
+              onChange={(e) => setSocialSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-9 py-2 bg-white border border-[#E2E8F0] rounded-xl text-sm text-[#1E293B] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2137D6] transition-all rtl:pl-9 rtl:pr-10"
+            />
+            {socialSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setSocialSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#475569] p-0.5 rtl:right-auto rtl:left-3"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
           <button
             onClick={() => openSocialModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shrink-0"
           >
             <Plus className="w-4 h-4" />
             {t('community.socialLinks.addLink')}
@@ -921,7 +923,9 @@ export default function CommunityModerationPage() {
 
         {!socialLinksLoading && (!filteredSocialLinks || filteredSocialLinks.length === 0) && (
           <div className="text-center py-8 text-[#64748B] col-span-3">
-            {t('community.socialLinks.noLinks')}
+            {socialSearchQuery.trim()
+              ? t('community.socialLinks.noSearchResults')
+              : t('community.socialLinks.noLinks')}
           </div>
         )}
       </div>

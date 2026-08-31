@@ -7,12 +7,36 @@ import { createQueryHook, createMutationHook } from './index';
 // ============================================
 
 export const useLiveRooms = createQueryHook(
-  (params?: { page?: number; search?: string }) => api.liveRooms.list(params).then(res => res.data),
+  async (params?: { page?: number; search?: string; per_page?: number }) => {
+    if (params?.page) {
+      const res = await api.liveRooms.list(params);
+      return res.data;
+    }
+
+    const firstPage = await api.liveRooms.list({ ...params, page: 1, per_page: 100 });
+    let allRooms = [...(firstPage.data || [])];
+    const lastPage = firstPage.meta?.last_page || 1;
+
+    if (lastPage > 1) {
+      const pagePromises = [];
+      for (let p = 2; p <= lastPage; p++) {
+        pagePromises.push(api.liveRooms.list({ ...params, page: p, per_page: 100 }));
+      }
+      const restPages = await Promise.all(pagePromises);
+      for (const pageRes of restPages) {
+        if (pageRes.data) {
+          allRooms.push(...pageRes.data);
+        }
+      }
+    }
+
+    return allRooms;
+  },
   { enabled: true }
 );
 
 export const usePaginatedLiveRooms = createQueryHook(
-  (params?: { page?: number; search?: string }) => api.liveRooms.list(params),
+  (params?: { page?: number; search?: string; per_page?: number }) => api.liveRooms.list(params),
   { enabled: true }
 );
 

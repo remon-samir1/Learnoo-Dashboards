@@ -812,6 +812,8 @@
       "selectStudent": "Select Student",
       "searchStudents": "Search students",
       "noStudentsFound": "No students found",
+      "showMore": "Show More",
+      "loading": "Loading...",
       "activating": "Activating...",
       "activateStudent": "Activate Student",
       "phoneNumbers": "Phone Numbers",
@@ -1132,6 +1134,7 @@
     },
     "studentExamResult": {
       "loading": "Loading results…",
+      "loadingError": "Failed to load exam results. Please try again.",
       "congratulationsTitle": "Congratulations!",
       "passedSubtitle": "You passed the exam",
       "failedTitle": "Exam not passed",
@@ -1152,7 +1155,8 @@
       "reviewReadOnlyHint": "Read-only summary of your choices. You cannot change answers or resubmit from this screen.",
       "reviewQuestionBadge": "Question {n}",
       "reviewMultipleType": "Multiple choice",
-      "reviewNoAnswerOptions": "This question has no listed answer options."
+      "reviewNoAnswerOptions": "This question has no listed answer options.",
+      "feedbackLabel": "Explanation"
     },
     "studentExamsPage": {
       "pageTitle": "Exams",
@@ -1187,7 +1191,8 @@
       "tabAll": "All",
       "tabPosts": "Posts",
       "tabSummaries": "Summaries",
-      "hidecomments": "Hide comments",
+      "showcomments": "{count, plural, one {# comment} other {# comments}}",
+      "hidecomments": "Hide {count, plural, one {# comment} other {# comments}}",
       "showcommentsToggle": "Show comments",
       "tabQuestions": "Questions",
       "createPost": "Create post",
@@ -2222,9 +2227,11 @@
     },
     "socialLinks": {
       "title": "Social Links",
+      "searchPlaceholder": "Search social links...",
       "allCourses": "All Courses",
       "addLink": "Add Link",
       "noLinks": "No social links yet. Click \"Add Link\" to create one.",
+      "noSearchResults": "No social links found matching your search.",
       "status": {
         "active": "Active",
         "inactive": "Inactive"
@@ -2740,7 +2747,9 @@
         "codeActivation": "Code Activation Required",
         "codeActivationDescription": "Students need a code to access this item",
         "publishItem": "Publish Item",
-        "publishItemDescription": "Make this item visible to students"
+        "publishItemDescription": "Make this item visible to students",
+        "downloadable": "Downloadable",
+        "downloadableDescription": "Allow students to download the attached file"
       },
       "buttons": {
         "cancel": "Cancel",
@@ -2776,7 +2785,9 @@
         "codeActivation": "Code Activation Required",
         "codeActivationDescription": "Students need a code to access this item",
         "publishItem": "Publish Item",
-        "publishItemDescription": "Make this item visible to students"
+        "publishItemDescription": "Make this item visible to students",
+        "downloadable": "Downloadable",
+        "downloadableDescription": "Allow students to download the attached file"
       },
       "buttons": {
         "cancel": "Cancel",
@@ -2825,6 +2836,7 @@
         "clear": "Clear",
         "uploadAndProcess": "Upload & Process",
         "uploading": "Uploading...",
+        "uploadSuccess": "Successfully uploaded and processed {count} numbers",
         "preactivationResults": "Pre-activation Results:",
         "success": "Success",
         "failed": "Failed"

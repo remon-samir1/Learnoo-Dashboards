@@ -51,33 +51,20 @@ export async function addWatermarkToPdf(
     for (const page of pages) {
       const { width, height } = page.getSize();
 
-      if (watermarkConfig.position === 'full') {
-        // Add grid of watermarks across the page
-        addGridWatermarks(
-          page,
-          watermarkText,
-          rgb_color,
-          opacity,
-          fontSize,
-          rotationDegrees,
-          width,
-          height,
-          watermarkConfig.dynamicPosition
-        );
-      } else {
-        // Add single watermark at specified position
-        addSingleWatermark(
-          page,
-          watermarkText,
-          rgb_color,
-          opacity,
-          fontSize,
-          rotationDegrees,
-          width,
-          height,
-          watermarkConfig.position
-        );
-      }
+      // Always use full-grid watermarks — the client-side PdfPreviewModal
+      // always renders a 3×4 CSS grid regardless of the `position` config,
+      // so we mirror that here so the downloaded PDF looks identical.
+      addGridWatermarks(
+        page,
+        watermarkText,
+        rgb_color,
+        opacity,
+        fontSize,
+        rotationDegrees,
+        width,
+        height,
+        watermarkConfig.dynamicPosition
+      );
     }
 
     const watermarkedBytes = await pdfDoc.save();
@@ -118,32 +105,59 @@ function addGridWatermarks(
   text: string,
   color: { red: number; green: number; blue: number },
   opacity: number,
-  fontSize: number,
-  rotationDegrees: number,
+  _fontSize: number,
+  _rotationDegrees: number,
   pageWidth: number,
   pageHeight: number,
   _dynamicPosition: boolean
 ) {
-  // Diagonal tiling — mirrors the client CSS grid with rotate-[-25deg] pattern.
-  // spacingX/Y produce similar density to the 3-col × 4-row CSS grid in PdfPreviewModal.
-  const spacingX = 180;
-  const spacingY = 110;
+  // ── Exact mirror of PdfPreviewModal client-side CSS overlay ──────────────
+  //
+  // Client CSS (PdfPreviewContent):
+  //   <div class="absolute inset-0">
+  //     <div class="grid h-full w-full grid-cols-3 gap-16 p-10">
+  //       12 × <span class="rotate-[-25deg] text-2xl font-bold">
+  //     </div>
+  //   </div>
+  //
+  // The CSS grid fills the entire page container. We use proportional
+  // spacing so the layout scales correctly to any PDF page size.
 
-  let rowIdx = 0;
-  for (let y = pageHeight; y > -spacingY; y -= spacingY) {
-    // Stagger every other row by half spacingX — same effect as the CSS grid offset
-    const stagger = rowIdx % 2 === 0 ? 0 : spacingX / 2;
-    for (let x = -spacingX + stagger; x < pageWidth + spacingX; x += spacingX) {
+  const COLS = 3;
+  const ROWS = 4;
+  const FONT_SIZE = 24;  // CSS text-2xl
+  const ROTATION = -25;  // CSS rotate-[-25deg]
+
+  // Proportional padding & gap (relative to page dims, matching CSS ~5.5% / ~9%)
+  const padX = pageWidth * 0.055;
+  const padY = pageHeight * 0.048;
+  const gapX = pageWidth * 0.088;
+  const gapY = pageHeight * 0.063;
+
+  // Cell dimensions
+  const areaW = pageWidth - padX * 2;
+  const areaH = pageHeight - padY * 2;
+  const cellW = (areaW - gapX * (COLS - 1)) / COLS;
+  const cellH = (areaH - gapY * (ROWS - 1)) / ROWS;
+
+  for (let row = 0; row < ROWS; row++) {
+    for (let col = 0; col < COLS; col++) {
+      // Center of each grid cell — PDF origin is bottom-left, CSS is top-left
+      const cx = padX + col * (cellW + gapX) + cellW / 2;
+      const cy = pageHeight - (padY + row * (cellH + gapY) + cellH / 2);
+
+      // Rough center-alignment for the drawn text
+      const approxTextWidth = text.length * FONT_SIZE * 0.42;
+
       page.drawText(text, {
-        x,
-        y,
-        size: fontSize,
+        x: cx - approxTextWidth / 2,
+        y: cy - FONT_SIZE / 2,
+        size: FONT_SIZE,
         color: rgb(color.red, color.green, color.blue),
         opacity,
-        rotate: degrees(rotationDegrees),
+        rotate: degrees(ROTATION),
       });
     }
-    rowIdx++;
   }
 }
 

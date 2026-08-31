@@ -1,4 +1,4 @@
-﻿
+
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
@@ -1604,7 +1604,7 @@ export default function DepartmentsPage() {
 
   const [noteLinkedLecture, setNoteLinkedLecture] = useState("");
 
-  const [noteIsPublish, setNoteIsPublish] = useState(false);
+  const [noteIsPublish, setNoteIsPublish] = useState(true);
 
   const [noteAttachment, setNoteAttachment] = useState<File | null>(null);
 
@@ -1881,7 +1881,7 @@ export default function DepartmentsPage() {
 
       setNoteLinkedLecture(note.attributes.linked_lecture || "");
 
-      setNoteIsPublish(note.attributes.is_publish || false);
+      setNoteIsPublish(true);
 
       setNoteAttachment(null);
 
@@ -1917,7 +1917,7 @@ export default function DepartmentsPage() {
 
       setNoteLinkedLecture("");
 
-      setNoteIsPublish(false);
+      setNoteIsPublish(true);
 
       setNoteAttachment(null);
 
@@ -1978,7 +1978,7 @@ export default function DepartmentsPage() {
         content: noteContent.trim() || "",
         course_id: finalCourseId,
         linked_lecture: noteLinkedLecture.trim() || null,
-        is_publish: noteIsPublish,
+        is_publish: true,
       };
 
       // Include file attachment if present
@@ -2006,7 +2006,7 @@ export default function DepartmentsPage() {
 
       setNoteLinkedLecture("");
 
-      setNoteIsPublish(false);
+      setNoteIsPublish(true);
 
       setNoteAttachment(null);
 

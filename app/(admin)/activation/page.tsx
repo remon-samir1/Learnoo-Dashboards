@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { Power, Search, Plus, ChevronDown, Loader2, Trash2, Copy, CheckCircle, List, UserPlus, History, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Power, Search, Plus, ChevronDown, Loader2, Trash2, Copy, CheckCircle, List, UserPlus, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useDebounce } from 'use-debounce';
 import { AdminPageHeader } from '@/src/components/admin/AdminPageHeader';
@@ -32,7 +32,6 @@ export default function ActivationPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedCode, setSelectedCode] = useState<Code | null>(null);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
@@ -118,43 +117,6 @@ export default function ActivationPage() {
       refetch();
     } catch {
       // Error handled by hook
-    }
-  };
-
-  const handleRefresh = async () => {
-    if (!codes || codes.length === 0) return;
-
-    setIsRefreshing(true);
-    const orphanedCodes: Code[] = [];
-
-    // Identify codes that don't belong to anything
-    codes.forEach((code) => {
-      const itemName = getItemName(code.attributes.codeable_type, code.attributes.codeable_id);
-      // Check if the item name is a fallback (e.g., "Course #123", "Chapter #123", "Library #123", "Live Room #123", "Quiz #123", "Department #123")
-      const isOrphaned = /^(Course|Chapter|Library|Live Room|Quiz|Department) #\d+$/.test(itemName);
-      if (isOrphaned) {
-        orphanedCodes.push(code);
-      }
-    });
-
-    if (orphanedCodes.length === 0) {
-      toast.success(t('activation.messages.noOrphanedCodes'));
-      setIsRefreshing(false);
-      return;
-    }
-
-    const deletePromises = orphanedCodes.map((code) =>
-      deleteCode(parseInt(code.id))
-    );
-
-    try {
-      await Promise.all(deletePromises);
-      toast.success(`${orphanedCodes.length} ${t('activation.messages.orphanedCodesRemoved')}`);
-      refetch();
-    } catch {
-      toast.error(t('activation.messages.failedRemoveOrphaned'));
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
@@ -432,65 +394,45 @@ export default function ActivationPage() {
       {/* Codes Tab */}
       {activeTab === 'codes' && (
         <>
-          <div className="flex items-center justify-between">
-            <SearchFilter
-              searchPlaceholder={t('activation.filters.searchPlaceholder')}
-              searchValue={searchQuery}
-              onSearchChange={setSearchQuery}
-              filters={[
-                {
-                  key: 'type',
-                  label: t('activation.types.allTypes'),
-                  options: [
-                    { value: 'Course', label: t('activation.types.course') },
-                    { value: 'Chapter', label: t('activation.types.chapter') },
-                    { value: 'Library', label: t('activation.types.library') },
-                    { value: 'Department', label: t('activation.types.department') },
-                  ],
-                  value: typeFilter === 'All Types' ? '' : typeFilter,
-                  onChange: (val) => {
-                    setTypeFilter(val || 'All Types');
-                    setItemFilter('All Items');
-                  },
+          <SearchFilter
+            searchPlaceholder={t('activation.filters.searchPlaceholder')}
+            searchValue={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={[
+              {
+                key: 'type',
+                label: t('activation.types.allTypes'),
+                options: [
+                  { value: 'Course', label: t('activation.types.course') },
+                  { value: 'Chapter', label: t('activation.types.chapter') },
+                  { value: 'Library', label: t('activation.types.library') },
+                  { value: 'Live Room', label: t('activation.types.liveRoom') },
+                ],
+                value: typeFilter === 'All Types' ? '' : typeFilter,
+                onChange: (val) => {
+                  setTypeFilter(val || 'All Types');
+                  setItemFilter('All Items');
                 },
-                ...(typeFilter !== 'All Types' && getItemOptions().length > 0 ? [{
-                  key: 'item',
-                  label: t('activation.filters.allItems'),
-                  options: getItemOptions(),
-                  value: itemFilter === 'All Items' ? '' : itemFilter,
-                  onChange: (val: string) => setItemFilter(val || 'All Items'),
-                }] : []),
-                {
-                  key: 'status',
-                  label: t('activation.status.allStatus'),
-                  options: [
-                    { value: 'Used', label: t('activation.status.used') },
-                    { value: 'Available', label: t('activation.status.available') },
-                  ],
-                  value: statusFilter === 'All' ? '' : statusFilter,
-                  onChange: (val) => setStatusFilter(val || 'All'),
-                },
-              ]}
-            />
-            <button
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E2E8F0] text-[#64748B] rounded-xl text-sm font-medium hover:bg-[#F8FAFC] hover:text-[#1E293B] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Remove codes that don't belong to any item"
-            >
-              {isRefreshing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t('activation.actions.cleaning')}
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-4 h-4" />
-                  {t('activation.actions.cleanInvalid')}
-                </>
-              )}
-            </button>
-          </div>
+              },
+              ...(typeFilter !== 'All Types' && getItemOptions().length > 0 ? [{
+                key: 'item',
+                label: t('activation.filters.allItems'),
+                options: getItemOptions(),
+                value: itemFilter === 'All Items' ? '' : itemFilter,
+                onChange: (val: string) => setItemFilter(val || 'All Items'),
+              }] : []),
+              {
+                key: 'status',
+                label: t('activation.status.allStatus'),
+                options: [
+                  { value: 'Used', label: t('activation.status.used') },
+                  { value: 'Available', label: t('activation.status.available') },
+                ],
+                value: statusFilter === 'All' ? '' : statusFilter,
+                onChange: (val) => setStatusFilter(val || 'All'),
+              },
+            ]}
+          />
 
           <DataTable
             data={paginatedResponse?.data || []}

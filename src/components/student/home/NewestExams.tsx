@@ -8,11 +8,13 @@ import {
   ClipboardList,
   FileText,
   Play,
+  Timer,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import type { LatestExamSummary } from "@/src/services/student/exam.service";
 import { buildStudentStartExamHref } from "@/src/lib/student-start-exam-href";
+import { useCountdown } from "@/src/hooks/useCountdown";
 
 interface NewestExamsProps {
   exams?: LatestExamSummary[];
@@ -34,6 +36,47 @@ function formatDate(iso: string | null | undefined, locale: string): string | nu
   } catch {
     return d.toLocaleString();
   }
+}
+
+function ExamActionButton({
+  exam,
+  locale,
+  startHref,
+  t,
+}: {
+  exam: LatestExamSummary;
+  locale: string;
+  startHref: string;
+  t: any;
+}) {
+  const isAvailable = exam.status === "available";
+  const countdown = useCountdown(exam.start_time, {
+    dayLabel: locale === "ar" ? "يوم" : "d",
+  });
+
+  if (isAvailable || (countdown.isPast && !!exam.start_time)) {
+    return (
+      <Link
+        href={startHref}
+        className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+      >
+        <Play size={14} fill="currentColor" />
+        <span>{t("startExam")}</span>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href={startHref}
+      className="inline-flex h-10 items-center gap-2 rounded-xl bg-orange-50 border border-orange-200 px-4 text-sm font-bold text-orange-700 shadow-sm transition hover:bg-orange-100 hover:border-orange-300"
+    >
+      <Timer size={15} className="shrink-0 animate-pulse text-orange-600" />
+      <span className="font-mono tracking-wider">
+        {countdown.isReady ? countdown.formatted : t("upcomingBadge")}
+      </span>
+    </Link>
+  );
 }
 
 export default function NewestExams({
@@ -138,24 +181,12 @@ export default function NewestExams({
                     ) : null}
 
                     <div className="mt-3 flex items-center justify-between gap-3">
-                      {isAvailable ? (
-                        <Link
-                          href={startHref}
-                          className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
-                        >
-                          <Play size={14} fill="currentColor" />
-                          <span>{t("startExam")}</span>
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled
-                          className="inline-flex h-10 cursor-not-allowed items-center gap-2 rounded-xl bg-[#F1F5F9] px-4 text-sm font-semibold text-[#94A3B8]"
-                        >
-                          <Clock size={14} />
-                          <span>{t("upcomingBadge")}</span>
-                        </button>
-                      )}
+                      <ExamActionButton
+                        exam={exam}
+                        locale={locale}
+                        startHref={startHref}
+                        t={t}
+                      />
 
                       <Link
                         href={`/${locale}/student/exams`}
@@ -178,3 +209,4 @@ export default function NewestExams({
     </section>
   );
 }
+

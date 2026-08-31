@@ -154,10 +154,10 @@ export default function MySubjectSection({
     const rawCourses = selectedCategory?.attributes.courses || [];
     const filtered = rawCourses.filter(
       (c) =>
-        (c.attributes as any)?.status === 1 ||
-        (c.attributes as any)?.status === "active",
+        !c.attributes?.is_locked &&
+        ((c.attributes as any)?.status === 1 ||
+        (c.attributes as any)?.status === "active"),
     );
-    console.log("MySubjectSection [Tree] - currentCourses Data:", filtered);
     return filtered;
   }, [selectedCategory]);
 

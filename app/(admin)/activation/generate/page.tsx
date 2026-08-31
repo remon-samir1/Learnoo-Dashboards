@@ -10,7 +10,7 @@ import { useCreateCode } from '@/src/hooks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
-import { usePaginatedLiveRooms } from '@/src/hooks/useLiveRooms';
+import { useLiveRooms } from '@/src/hooks/useLiveRooms';
 import { useQuizzes } from '@/src/hooks/useQuizzes';
 import { useDepartments } from '@/src/hooks/useDepartments';
 
@@ -109,9 +109,7 @@ function GenerateCodeForm() {
   const [debouncedQuizSearch] = useDebounce(quizSearch, 500);
   const [debouncedLiveRoomSearch] = useDebounce(liveRoomSearch, 500);
 
-  const { data: quizzes, isLoading: isLoadingQuizzes } = useQuizzes({ title: debouncedQuizSearch });
-  const { data: liveRoomsResponse, isLoading: isLoadingLiveRooms } = usePaginatedLiveRooms({ search: debouncedLiveRoomSearch });
-  const liveRooms = liveRoomsResponse?.data || [];
+  const { data: liveRooms, isLoading: isLoadingLiveRooms } = useLiveRooms({ search: debouncedLiveRoomSearch });
 
   // Handle query params for pre-selection
   useEffect(() => {

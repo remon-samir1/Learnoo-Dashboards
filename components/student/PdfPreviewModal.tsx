@@ -26,6 +26,10 @@ type Props = {
   expandToContainer?: boolean;
   scale?: number;
   onScaleChange?: (scale: number) => void;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  numPages?: number;
+  onNumPagesChange?: (numPages: number) => void;
   /** Content type used to resolve the correct watermark bucket. Defaults to 'chapters'. */
   contentType?: 'chapters' | 'library' | 'liveStreams' | 'videos' | 'files' | 'exams';
   /** Chapter ID to record a view for when the PDF is opened. */
@@ -146,29 +150,48 @@ export default function PdfPreviewModal({
   expandToContainer = false,
   scale: externalScale,
   onScaleChange,
+  currentPage: externalCurrentPage,
+  onPageChange,
+  numPages: externalNumPages,
+  onNumPagesChange,
   contentType = 'chapters',
   chapterId,
   viewByMinute = 0,
 }: Props) {
   const [internalScale, setInternalScale] = useState(1.0);
-  const [numPages, setNumPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [internalNumPages, setInternalNumPages] = useState(0);
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
+
+  const scale = externalScale ?? internalScale;
+  const currentPage = externalCurrentPage ?? internalCurrentPage;
+  const numPages = externalNumPages ?? internalNumPages;
 
   useEffect(() => {
     setPageInput(String(currentPage));
   }, [currentPage]);
 
-  const scale = externalScale ?? internalScale;
+  const handlePageChange = (newPage: number) => {
+    if (onPageChange) {
+      onPageChange(newPage);
+    } else {
+      setInternalCurrentPage(newPage);
+    }
+  };
+
+  const handlePagesLoaded = (pages: number) => {
+    setInternalNumPages(pages);
+    onNumPagesChange?.(pages);
+  };
 
   const handleZoomIn = () => {
-    const next = Math.min(2.5, scale + 0.1);
+    const next = Math.min(2.5, Math.round((scale + 0.1) * 10) / 10);
     if (onScaleChange) onScaleChange(next);
     else setInternalScale(next);
   };
 
   const handleZoomOut = () => {
-    const next = Math.max(0.5, scale - 0.1);
+    const next = Math.max(0.5, Math.round((scale - 0.1) * 10) / 10);
     if (onScaleChange) onScaleChange(next);
     else setInternalScale(next);
   };
@@ -179,17 +202,17 @@ export default function PdfPreviewModal({
   };
 
   const handlePrevPage = () => {
-    setCurrentPage((prev) => Math.max(1, prev - 1));
+    handlePageChange(Math.max(1, currentPage - 1));
   };
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(numPages, prev + 1));
+    handlePageChange(Math.min(numPages || 1, currentPage + 1));
   };
 
   const handlePageInputBlur = () => {
     const val = parseInt(pageInput, 10);
-    if (!isNaN(val) && val >= 1 && val <= numPages) {
-      setCurrentPage(val);
+    if (!isNaN(val) && val >= 1 && (numPages === 0 || val <= numPages)) {
+      handlePageChange(val);
     } else {
       setPageInput(String(currentPage));
     }
@@ -250,7 +273,7 @@ export default function PdfPreviewModal({
   const attrs = user?.attributes;
 
   const safePdfUrl = pdfUrl ? encodeURI(pdfUrl) : '';
-  const proxiedPdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(safePdfUrl)}&contentType=${contentType}`;
+  const proxiedPdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(safePdfUrl)}&contentType=${contentType}&preview=1`;
 
   const watermarkText = useMemo(() => {
     const config = watermarkConfig?.config;
@@ -323,7 +346,7 @@ export default function PdfPreviewModal({
         expandToContainer={expandToContainer}
         scale={scale}
         currentPage={currentPage}
-        onPagesLoaded={setNumPages}
+        onPagesLoaded={handlePagesLoaded}
       />
     </div>
   );

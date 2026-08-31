@@ -59,7 +59,7 @@ export default function MyCoursesSection() {
           </div>
         )}
 
-        {!isLoading && !error && courses?.length === 0 && (
+        {!isLoading && !error && courses?.filter((c) => !courseIsLocked(c)).length === 0 && (
           <div className="col-span-full rounded-3xl border border-slate-200 bg-white px-8 py-10 text-center text-sm text-slate-600">
             {t("noCourses")}
           </div>
@@ -67,38 +67,39 @@ export default function MyCoursesSection() {
 
         {!isLoading &&
           !error &&
-          courses?.map((course, index) => {
-            if (index > 2) return null;
-            
-            const categoryName =
-              course.attributes.category?.data?.attributes?.name ?? "";
-            const instructorName =
-              course.attributes.instructor?.data?.attributes?.full_name ?? "";
-            const locationName =
-              course.attributes.center?.data?.attributes?.name ?? "";
-            const thumbnail = course.attributes.thumbnail || "/logo.svg";
-            const locked = courseIsLocked(course);
-            
-            return (
-              <StudentCourseCard
-                key={course.id}
-                image={thumbnail}
-                title={course.attributes.title}
-                instructor={instructorName}
-                location={locationName}
-                subTitle={course.attributes.sub_title ?? ""}
-                lectures={course.attributes.stats?.lectures ?? 0}
-                exams={course.attributes.stats?.exams ?? 0}
-                progress={getCourseProgress(course)}
-                typeLabel={categoryName}
-                statusLabel={String(course.attributes.status)}
-                statusCode={course.attributes.status}
-                locked={locked}
-                onView={locked ? undefined : () => goToCourse(course.id)}
-                onActivate={locked ? () => activation.openForCourse(course) : undefined}
-              />
-            );
-          })}
+          courses
+            ?.filter((c) => !courseIsLocked(c))
+            .slice(0, 3)
+            .map((course) => {
+              const categoryName =
+                course.attributes.category?.data?.attributes?.name ?? "";
+              const instructorName =
+                course.attributes.instructor?.data?.attributes?.full_name ?? "";
+              const locationName =
+                course.attributes.center?.data?.attributes?.name ?? "";
+              const thumbnail = course.attributes.thumbnail || "/logo.svg";
+              const locked = courseIsLocked(course);
+
+              return (
+                <StudentCourseCard
+                  key={course.id}
+                  image={thumbnail}
+                  title={course.attributes.title}
+                  instructor={instructorName}
+                  location={locationName}
+                  subTitle={course.attributes.sub_title ?? ""}
+                  lectures={course.attributes.stats?.lectures ?? 0}
+                  exams={course.attributes.stats?.exams ?? 0}
+                  progress={getCourseProgress(course)}
+                  typeLabel={categoryName}
+                  statusLabel={String(course.attributes.status)}
+                  statusCode={course.attributes.status}
+                  locked={locked}
+                  onView={locked ? undefined : () => goToCourse(course.id)}
+                  onActivate={locked ? () => activation.openForCourse(course) : undefined}
+                />
+              );
+            })}
       </div>
 
       <StudentCourseActivationModal

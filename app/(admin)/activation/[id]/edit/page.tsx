@@ -9,6 +9,7 @@ import { useCode, useUpdateCode } from '@/src/hooks';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
+import { useLiveRooms } from '@/src/hooks/useLiveRooms';
 import { useDepartments } from '@/src/hooks/useDepartments';
 
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
@@ -20,6 +21,7 @@ function useCodeTypes(t: any) {
     { value: 'App\\Models\\Course', label: t('activation.types.course') },
     { value: 'App\\Models\\Chapter', label: t('activation.types.chapter') },
     { value: 'App\\Models\\Library', label: t('activation.types.library') },
+    { value: 'App\\Models\\LiveRoom', label: t('activation.types.liveRoom') },
   ];
 }
 
@@ -35,9 +37,10 @@ export default function EditCodePage() {
   const { data: courses, isLoading: isLoadingCourses } = useCourses();
   const { data: chapters, isLoading: isLoadingChapters } = useChapters();
   const { data: libraries, isLoading: isLoadingLibraries } = useLibraries();
+  const { data: liveRooms, isLoading: isLoadingLiveRooms } = useLiveRooms();
   const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
 
-  const isLoadingItems = isLoadingCourses || isLoadingChapters || isLoadingLibraries || isLoadingDepartments;
+  const isLoadingItems = isLoadingCourses || isLoadingChapters || isLoadingLibraries || isLoadingLiveRooms || isLoadingDepartments;
 
   const [codeType, setCodeType] = useState('');
   const [itemId, setItemId] = useState('');
@@ -66,6 +69,8 @@ export default function EditCodePage() {
         return extractItems(chapters);
       case 'App\\Models\\Library':
         return extractItems(libraries);
+      case 'App\\Models\\LiveRoom':
+        return extractItems(liveRooms);
       case 'App\\Models\\Department':
         return extractItems(departments);
       default:

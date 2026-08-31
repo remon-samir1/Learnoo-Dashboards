@@ -32,11 +32,13 @@ function formatClock(sec: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-type QualityOption = {
-  index: number;
+export type QualityOption = {
+  id: string;
+  label: string;
   height?: number;
   bitrate?: number;
-  label: string;
+  realLevelIndex?: number;
+  isFake?: boolean;
 };
 
 const SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
@@ -51,9 +53,9 @@ export type HlsVideoCustomControlsProps = {
   /** Player shell — fullscreen targets this node so overlays / watermarks stay in the fullscreen subtree. */
   shellRef: RefObject<HTMLDivElement | null>;
   qualityOptions?: QualityOption[];
-  qualityValue?: number | 'auto';
+  qualityValue?: string | number | 'auto';
   visible?: boolean;
-  onQualityChange?: (value: number | 'auto') => void;
+  onQualityChange?: (value: string | 'auto') => void;
   /** Trailing actions (e.g. PDF toggle) — shown in the control row on small screens. */
   endAction?: React.ReactNode;
   onPrevChapter?: () => void;
@@ -196,7 +198,7 @@ export function HlsVideoCustomControls({
   );
 
   const onQualitySelect = useCallback(
-    (value: number | 'auto') => {
+    (value: string | 'auto') => {
       onQualityChange?.(value);
       setSubMenu(null);
       setSettingsOpen(false);
@@ -298,19 +300,30 @@ export function HlsVideoCustomControls({
 
   const currentQualityOption = useMemo(() => {
     if (qualityValue === 'auto') return null;
-    return qualityOptions.find((q) => q.index === qualityValue);
+    return (
+      qualityOptions.find(
+        (q) =>
+          q.id === qualityValue ||
+          q.label === qualityValue ||
+          (typeof qualityValue === 'number' && q.realLevelIndex === qualityValue)
+      ) ?? null
+    );
   }, [qualityValue, qualityOptions]);
+
+  const autoOptionLabel = useMemo(() => {
+    const heights = qualityOptions
+      .map((q) => q.height)
+      .filter((h): h is number => typeof h === 'number' && h > 0);
+    const maxHeight = heights.length > 0 ? Math.max(...heights) : null;
+    return maxHeight ? `Auto (${maxHeight}p)` : 'Auto';
+  }, [qualityOptions]);
 
   const qualityMenuLabel = useMemo(() => {
     if (qualityValue === 'auto') {
-      const heights = qualityOptions
-        .map((q) => q.height)
-        .filter((h): h is number => typeof h === 'number' && h > 0);
-      const maxHeight = heights.length > 0 ? Math.max(...heights) : null;
-      return maxHeight ? `Auto (${maxHeight}p)` : 'Auto';
+      return autoOptionLabel;
     }
-    return currentQualityOption?.label ?? 'Auto';
-  }, [qualityValue, qualityOptions, currentQualityOption]);
+    return currentQualityOption?.label ?? (typeof qualityValue === 'string' ? qualityValue : 'Auto');
+  }, [qualityValue, autoOptionLabel, currentQualityOption]);
 
 const speedMenuLabel =
   playbackSpeed === 1
@@ -521,37 +534,33 @@ const speedMenuLabel =
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 ${
                   qualityValue === 'auto' ? 'text-[#3ea6ff]' : 'text-white'
                 }`}
-                disabled={qualityOptions.length === 0 && qualityValue !== 'auto'}
               >
-                <span className="flex-1">{qualityMenuLabel}</span>
+                <span className="flex-1">{autoOptionLabel}</span>
                 {qualityValue === 'auto' ? (
                   <span className="text-xs font-bold uppercase tracking-wide">✓</span>
                 ) : null}
               </button>
-              {qualityOptions.length > 0
-                ? qualityOptions.map((opt) => {
-                    const active = qualityValue === opt.index;
-                    return (
-                      <button
-                        key={opt.index}
-                        type="button"
-                        onClick={() => onQualitySelect(opt.index)}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 ${
-                          active ? 'text-[#3ea6ff]' : 'text-white'
-                        }`}
-                      >
-                        <span className="flex-1">{opt.label}</span>
-                        {active ? (
-                          <span className="text-xs font-bold uppercase tracking-wide">✓</span>
-                        ) : null}
-                      </button>
-                    );
-                  })
-                : (
-                    <div className="px-3 py-2.5 text-xs text-white/60">
-                      {t('videoControlsQualityLoading')}
-                    </div>
-                  )}
+              {qualityOptions.map((opt) => {
+                const active =
+                  qualityValue === opt.id ||
+                  qualityValue === opt.label ||
+                  (typeof qualityValue === 'number' && opt.realLevelIndex === qualityValue);
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => onQualitySelect(opt.id)}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition hover:bg-white/10 ${
+                      active ? 'text-[#3ea6ff]' : 'text-white'
+                    }`}
+                  >
+                    <span className="flex-1">{opt.label}</span>
+                    {active ? (
+                      <span className="text-xs font-bold uppercase tracking-wide">✓</span>
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
