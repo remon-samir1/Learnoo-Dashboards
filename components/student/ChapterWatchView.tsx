@@ -660,19 +660,62 @@ export default function ChapterWatchView({
 
   useEffect(() => {
     const onFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-      setIsPdfFullscreen(document.fullscreenElement === pdfPanelRef.current);
+      const doc = document as any;
+      const fsEl =
+        document.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement;
+      setIsFullscreen(!!fsEl);
+      setIsPdfFullscreen(fsEl === pdfPanelRef.current);
     };
     document.addEventListener('fullscreenchange', onFsChange);
-    return () => document.removeEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('mozfullscreenchange', onFsChange);
+    document.addEventListener('MSFullscreenChange', onFsChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+      document.removeEventListener('mozfullscreenchange', onFsChange);
+      document.removeEventListener('MSFullscreenChange', onFsChange);
+    };
   }, []);
 
   const togglePdfFullscreen = () => {
-    if (!pdfPanelRef.current) return;
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
+    const el = pdfPanelRef.current as any;
+    if (!el) return;
+    const doc = document as any;
+    const isFs =
+      document.fullscreenElement ||
+      doc.webkitFullscreenElement ||
+      doc.mozFullScreenElement ||
+      doc.msFullscreenElement;
+    if (isFs) {
+      if (typeof document.exitFullscreen === 'function') {
+        void document.exitFullscreen().catch(() => {});
+      } else if (typeof doc.webkitExitFullscreen === 'function') {
+        try {
+          doc.webkitExitFullscreen();
+        } catch {
+          /* ignore */
+        }
+      }
     } else {
-      void pdfPanelRef.current.requestFullscreen();
+      const req =
+        el?.requestFullscreen?.bind(el) ??
+        el?.webkitRequestFullscreen?.bind(el) ??
+        el?.mozRequestFullScreen?.bind(el) ??
+        el?.msRequestFullscreen?.bind(el);
+      if (req) {
+        try {
+          const p = req();
+          if (p != null && typeof (p as Promise<void>).catch === 'function') {
+            void (p as Promise<void>).catch(() => {});
+          }
+        } catch {
+          /* ignore */
+        }
+      }
     }
   };
 

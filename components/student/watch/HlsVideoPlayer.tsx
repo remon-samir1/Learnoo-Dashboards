@@ -538,10 +538,12 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       if (!video || !wrapper || typeof document === 'undefined') return;
 
       const requestWrapperFullscreen = () => {
+        const wrapperEl = wrapper as any;
         const req =
-          wrapper.requestFullscreen?.bind(wrapper) ??
-          (wrapper as unknown as HTMLElement & { webkitRequestFullscreen?: () => void })
-            .webkitRequestFullscreen?.bind(wrapper);
+          wrapperEl?.requestFullscreen?.bind(wrapperEl) ??
+          wrapperEl?.webkitRequestFullscreen?.bind(wrapperEl) ??
+          wrapperEl?.mozRequestFullScreen?.bind(wrapperEl) ??
+          wrapperEl?.msRequestFullscreen?.bind(wrapperEl);
         if (!req) return;
         try {
           const p = req();
@@ -554,11 +556,25 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       };
 
       const redirectVideoFullscreen = () => {
-        const fs = document.fullscreenElement;
+        const doc = document as any;
+        const fs =
+          document.fullscreenElement ||
+          doc.webkitFullscreenElement ||
+          doc.mozFullScreenElement ||
+          doc.msFullscreenElement;
         if (fs === video) {
-          void document.exitFullscreen().then(() => {
-            requestWrapperFullscreen();
-          });
+          if (typeof document.exitFullscreen === 'function') {
+            void document.exitFullscreen().then(() => {
+              requestWrapperFullscreen();
+            }).catch(() => {});
+          } else if (typeof doc.webkitExitFullscreen === 'function') {
+            try {
+              doc.webkitExitFullscreen();
+              requestWrapperFullscreen();
+            } catch {
+              /* ignore */
+            }
+          }
         }
       };
 
@@ -568,13 +584,13 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       };
 
       document.addEventListener('fullscreenchange', redirectVideoFullscreen);
+      document.addEventListener('webkitfullscreenchange', redirectVideoFullscreen);
       video.addEventListener('dblclick', onDblClick);
-      video.addEventListener('webkitbeginfullscreen', redirectVideoFullscreen as EventListener);
 
       return () => {
         document.removeEventListener('fullscreenchange', redirectVideoFullscreen);
+        document.removeEventListener('webkitfullscreenchange', redirectVideoFullscreen);
         video.removeEventListener('dblclick', onDblClick);
-        video.removeEventListener('webkitbeginfullscreen', redirectVideoFullscreen as EventListener);
       };
     }, [showCustomControls]);
 
@@ -1141,8 +1157,12 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           '[&:fullscreen]:min-w-0 [&:fullscreen]:w-1/2 [&:fullscreen]:flex-[1_1_50%] [&:fullscreen]:basis-1/2',
         ].join(' ')}
       >
-        <div className={`group  relative w-full shrink-0 overflow-visible bg-black ${viewportClass}`} onMouseMove={revealControls}
-          onMouseEnter={revealControls}>
+        <div
+          className={`group relative w-full shrink-0 overflow-visible bg-black ${viewportClass}`}
+          onMouseMove={revealControls}
+          onMouseEnter={revealControls}
+          onTouchStart={revealControls}
+        >
           {videoStageGrid}
           {showCustomControls ? (
             <HlsVideoCustomControls

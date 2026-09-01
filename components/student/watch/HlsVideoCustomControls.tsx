@@ -69,11 +69,21 @@ export type HlsVideoCustomControlsProps = {
   onToggleTheater?: () => void;
 };
 
-function isShellFullscreen(shell: HTMLDivElement | null): boolean {
-  if (typeof document === 'undefined' || !shell) return false;
-  const fs = document.fullscreenElement;
-  if (!fs) return false;
-  return fs === shell || shell.contains(fs);
+function isShellFullscreen(shell: HTMLDivElement | null, video?: HTMLVideoElement | null): boolean {
+  if (typeof document === 'undefined') return false;
+  const doc = document as any;
+  const fs =
+    document.fullscreenElement ||
+    doc.webkitFullscreenElement ||
+    doc.mozFullScreenElement ||
+    doc.msFullscreenElement;
+  if (fs) {
+    return shell ? fs === shell || shell.contains(fs) : true;
+  }
+  if (video && (video as any).webkitDisplayingFullscreen) {
+    return true;
+  }
+  return false;
 }
 
 export function HlsVideoCustomControls({
@@ -147,11 +157,31 @@ export function HlsVideoCustomControls({
   }, [videoRef]);
 
   useEffect(() => {
-    const sync = () => setIsFullscreen(isShellFullscreen(shellRef.current));
+    const video = videoRef.current;
+    const sync = () => setIsFullscreen(isShellFullscreen(shellRef.current, videoRef.current));
     sync();
-    document.addEventListener('fullscreenchange', sync);
-    return () => document.removeEventListener('fullscreenchange', sync);
-  }, [shellRef]);
+
+    const events = [
+      'fullscreenchange',
+      'webkitfullscreenchange',
+      'mozfullscreenchange',
+      'MSFullscreenChange',
+    ];
+    events.forEach((e) => document.addEventListener(e, sync));
+
+    if (video) {
+      video.addEventListener('webkitbeginfullscreen', sync);
+      video.addEventListener('webkitendfullscreen', sync);
+    }
+
+    return () => {
+      events.forEach((e) => document.removeEventListener(e, sync));
+      if (video) {
+        video.removeEventListener('webkitbeginfullscreen', sync);
+        video.removeEventListener('webkitendfullscreen', sync);
+      }
+    };
+  }, [shellRef, videoRef]);
 
   // Derived: settings panel is only open while controls are visible.
   // (When `visible` flips false the panel is unmounted automatically.)
@@ -208,29 +238,115 @@ export function HlsVideoCustomControls({
 
   const toggleShellFullscreen = useCallback(() => {
     const shell = shellRef.current;
-    if (!shell || typeof document === 'undefined') return;
+    const video = videoRef.current;
+    if (typeof document === 'undefined') return;
 
-    if (isShellFullscreen(shell)) {
-      if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
-      return;
-    }
+    const isFs = isShellFullscreen(shell, video);
 
-    const req =
-      shell.requestFullscreen?.bind(shell) ??
-      (shell as unknown as HTMLElement & { webkitRequestFullscreen?: () => void }).webkitRequestFullscreen?.bind(
-        shell
-      );
-    if (req) {
+    if (isFs) {
+      const doc = document as any;
+      if (typeof document.exitFullscreen === 'function') {
+        void document.exitFullscreen().catch(() => {});
+      } else if (typeof doc.webkitExitFullscreen === 'function') {
+        try {
+          doc.webkitExitFullscreen();
+        } catch {
+          /* ignore */
+        }
+      } else if (typeof doc.mozCancelFullScreen === 'function') {
+        try {
+          doc.mozCancelFullScreen();
+        } catch {
+          /* ignore */
+        }
+      } else if (typeof doc.msExitFullscreen === 'function') {
+        try {
+          doc.msExitFullscreen();
+        } catch {
+          /* ignore */
+        }
+      }
+
+      if (
+        video &&
+        (video as any).webkitDisplayingFullscreen &&
+        typeof (video as any).webkitExitFullscreen === 'function'
+      ) {
+        try {
+          (video as any).webkitExitFullscreen();
+        } catch {
+          /* ignore */
+        }
+      }
+
+      // Unlock screen orientation on mobile
       try {
-        const p = req();
-        if (p != null && typeof (p as Promise<void>).catch === 'function') {
-          void (p as Promise<void>).catch(() => {});
+        if (
+          typeof screen !== 'undefined' &&
+          screen.orientation &&
+          typeof screen.orientation.unlock === 'function'
+        ) {
+          screen.orientation.unlock();
         }
       } catch {
         /* ignore */
       }
+      return;
     }
-  }, [shellRef]);
+
+    // Try HTML5 Fullscreen API on shell first (keeps watermarks and custom controls visible)
+    const shellEl = shell as any;
+    const req =
+      shellEl?.requestFullscreen?.bind(shellEl) ??
+      shellEl?.webkitRequestFullscreen?.bind(shellEl) ??
+      shellEl?.mozRequestFullScreen?.bind(shellEl) ??
+      shellEl?.msRequestFullscreen?.bind(shellEl);
+
+    if (req) {
+      try {
+        const p = req();
+        if (p != null && typeof (p as Promise<void>).catch === 'function') {
+          void (p as Promise<void>)
+            .then(() => {
+              // Try locking orientation to landscape on mobile devices
+              try {
+                if (
+                  typeof screen !== 'undefined' &&
+                  screen.orientation &&
+                  typeof (screen.orientation as any).lock === 'function'
+                ) {
+                  void (screen.orientation as any).lock('landscape').catch(() => {});
+                }
+              } catch {
+                /* ignore */
+              }
+            })
+            .catch(() => {
+              // Fallback to video element on mobile if shell fullscreen was rejected (e.g. iOS)
+              if (video && typeof (video as any).webkitEnterFullscreen === 'function') {
+                try {
+                  (video as any).webkitEnterFullscreen();
+                } catch {
+                  /* ignore */
+                }
+              }
+            });
+          return;
+        }
+      } catch {
+        /* fall through to video element */
+      }
+    }
+
+    // Fallback for iOS Safari (iPhone) where div.requestFullscreen is not supported
+    if (video && typeof (video as any).webkitEnterFullscreen === 'function') {
+      try {
+        (video as any).webkitEnterFullscreen();
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [shellRef, videoRef]);
 
   const onSeekInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
