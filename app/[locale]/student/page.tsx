@@ -125,7 +125,7 @@ export default async function StudentPage() {
 
       <ContinueWatchingSection progress={filteredProgress} />
 
-      <MySubjectSection categories={filteredCategories} />
+      <MySubjectSection categories={category} />
 
       <MyCoursesSection />
       <LatestPostsSection posts={latestPosts} />

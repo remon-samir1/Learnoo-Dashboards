@@ -111,16 +111,20 @@ export default function MySubjectSection({
     return new Map(categories.map((item) => [String(item.id), item]));
   }, [categories]);
 
-  // 👇 اتعدلت: بدل ما تجيب أي حاجة أبوها مش موجود في اللستة،
-  // بتجيب بس اللي parent_id بتاعها = facultyId بتاع اليوزر
   const rootCategories = useMemo(() => {
-    if (!facultyId) return [];
+    if (facultyId) {
+      const facultyFiltered = categories.filter(
+        (item) => String(item.attributes.parent_id) === String(facultyId),
+      );
+      if (facultyFiltered.length > 0) return facultyFiltered;
+    }
 
     return categories.filter(
       (item) =>
-        String(item.attributes.parent_id) === String(facultyId),
+        !item.attributes.parent_id ||
+        !categoryMap.has(String(item.attributes.parent_id)),
     );
-  }, [categories, facultyId]);
+  }, [categories, categoryMap, facultyId]);
 
   const selectedCategory = selectedId
     ? categoryMap.get(selectedId)
@@ -152,13 +156,13 @@ export default function MySubjectSection({
 
   const currentCourses = useMemo(() => {
     const rawCourses = selectedCategory?.attributes.courses || [];
-    const filtered = rawCourses.filter(
-      (c) =>
-        !c.attributes?.is_locked &&
-        ((c.attributes as any)?.status === 1 ||
-        (c.attributes as any)?.status === "active"),
-    );
-    return filtered;
+    return rawCourses.filter((c) => {
+      const status = (c.attributes as any)?.status;
+      if (status !== undefined && status !== null) {
+        return status === 1 || status === "active" || status === true;
+      }
+      return true;
+    });
   }, [selectedCategory]);
 
   const handleOpenCategory = (category: Category) => {
@@ -408,6 +412,19 @@ export default function MySubjectSection({
                   </div>
                 </div>
               );
+
+              if (locked) {
+                return (
+                  <button
+                    key={course.id}
+                    type="button"
+                    onClick={() => setActivationCourse(course)}
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white text-start shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
+                  >
+                    {content}
+                  </button>
+                );
+              }
 
               return (
                 <Link
