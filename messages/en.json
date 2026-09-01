@@ -534,8 +534,8 @@
         "students": "Students",
         "empty": "No content available here",
         "activation": {
-          "button": "Activate course",
-          "title": "Activate course",
+          "button": "Course Details",
+          "title": "Course Details",
           "description": "Enter the activation code for this course",
           "placeholder": "Enter activation code",
           "submit": "Activate now",
