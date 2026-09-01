@@ -1229,22 +1229,32 @@ function ChapterRow({
             )}
 
             {videoButton === "hidden" && pdfButton === "hidden" && (
-              /*
-               * CASE 2: is_locked===false but no video URL + no PDF found.
-               * This is an edge case (e.g. chapter content not yet uploaded).
-               * Still show Watch so the student can navigate to the watch page.
-               */
-              <Link
-                href={watchHref}
-                prefetch
-                className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-              >
-                {t("watch")}
-                <ChevronRight
-                  className="size-4 shrink-0 rtl:rotate-180"
-                  strokeWidth={2.5}
-                />
-              </Link>
+              isChapterFullyUnlocked(chapter, lockedCourse) ? (
+                <Link
+                  href={watchHref}
+                  prefetch
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
+                >
+                  {t("watch")}
+                  <ChevronRight
+                    className="size-4 shrink-0 rtl:rotate-180"
+                    strokeWidth={2.5}
+                  />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={openChapterActivation}
+                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
+                >
+                  <Power
+                    className="size-4 shrink-0 opacity-90"
+                    strokeWidth={2}
+                    aria-hidden
+                  />
+                  {t("activateChapter")}
+                </button>
+              )
             )}
           </>
         )}

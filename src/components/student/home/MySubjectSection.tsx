@@ -8,6 +8,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  GraduationCap,
   Loader2,
   Lock,
   Users,
@@ -17,6 +18,140 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { activateCourseCode } from "@/src/services/student/activation.service";
+
+const GRADIENTS = [
+  "linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%)",
+  "linear-gradient(135deg, #047857 0%, #0d9488 50%, #14b8a6 100%)",
+  "linear-gradient(135deg, #4338ca 0%, #6366f1 50%, #8b5cf6 100%)",
+  "linear-gradient(135deg, #be185d 0%, #ec4899 50%, #f472b6 100%)",
+  "linear-gradient(135deg, #0369a1 0%, #0284c7 50%, #38bdf8 100%)",
+  "linear-gradient(135deg, #c2410c 0%, #ea580c 50%, #f97316 100%)",
+  "linear-gradient(135deg, #6d28d9 0%, #9333ea 50%, #c084fc 100%)",
+];
+
+function getGradientStyle(seed: string) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % GRADIENTS.length;
+  return { background: GRADIENTS[index] };
+}
+
+function CategoryCardThumbnail({
+  image,
+  title,
+  coursesCount,
+  coursesLabel,
+}: {
+  image?: string | null;
+  title: string;
+  coursesCount: number;
+  coursesLabel: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const showFallback = !image || image.trim() === "" || hasError;
+
+  return (
+    <div className="relative h-52 w-full overflow-hidden bg-slate-900">
+      {!showFallback ? (
+        <Image
+          src={image!}
+          alt={title}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          onError={() => setHasError(true)}
+        />
+      ) : (
+        <div
+          style={getGradientStyle(title)}
+          className="relative flex h-full w-full flex-col justify-between overflow-hidden p-5 text-white transition-transform duration-500 group-hover:scale-[1.02]"
+        >
+          <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/20 blur-xl" />
+          <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-black/25 blur-xl" />
+
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 shadow-inner backdrop-blur-md">
+              <BookOpen size={20} className="text-white" />
+            </div>
+            <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur-md">
+              {coursesCount} {coursesLabel}
+            </span>
+          </div>
+
+          <div className="relative z-10 mt-auto pt-4">
+            <span className="line-clamp-2 text-base font-black tracking-tight text-white drop-shadow-md sm:text-lg">
+              {title}
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CourseCardThumbnail({
+  thumbnail,
+  title,
+  categoryName,
+  locked,
+}: {
+  thumbnail?: string | null;
+  title: string;
+  categoryName?: string;
+  locked?: boolean;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const showFallback = !thumbnail || thumbnail.trim() === "" || hasError;
+
+  return (
+    <div className="relative h-52 w-full overflow-hidden bg-slate-900">
+      {!showFallback ? (
+        <Image
+          src={thumbnail!}
+          alt={title}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          onError={() => setHasError(true)}
+        />
+      ) : (
+        <div
+          style={getGradientStyle(title)}
+          className="relative flex h-full w-full flex-col justify-between overflow-hidden p-5 text-white transition-transform duration-500 group-hover:scale-[1.02]"
+        >
+          <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/20 blur-xl" />
+          <div className="pointer-events-none absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-black/25 blur-xl" />
+
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 shadow-inner backdrop-blur-md">
+              <GraduationCap size={22} className="text-white" />
+            </div>
+            {categoryName && (
+              <span className="max-w-[65%] truncate rounded-full bg-white/20 px-3 py-1 text-xs font-semibold text-white shadow-sm backdrop-blur-md">
+                {categoryName}
+              </span>
+            )}
+          </div>
+
+          <div className="relative z-10 mt-auto pt-4">
+            <span className="line-clamp-2 text-base font-black tracking-tight text-white drop-shadow-md sm:text-lg">
+              {title}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {locked && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 backdrop-blur-[2px]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/95 text-slate-800 shadow-xl ring-4 ring-black/10 transition-transform duration-300 group-hover:scale-110">
+            <Lock size={22} className="text-[var(--primary)]" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Course = {
   id: string;
@@ -287,23 +422,12 @@ export default function MySubjectSection({
                   }
                   className="group flex min-h-[180px] flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white text-start shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
                 >
-                  <div className="relative h-52 w-full overflow-hidden bg-slate-100">
-                    {image ? (
-                      <Image
-                        src={image}
-                        alt={title}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-blue-50">
-                        <BookOpen
-                          size={48}
-                          className="text-[var(--primary)] opacity-50"
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <CategoryCardThumbnail
+                    image={image}
+                    title={title}
+                    coursesCount={coursesCount}
+                    coursesLabel={t("courses")}
+                  />
 
                   <div className="flex flex-1 flex-col p-4 sm:p-5 w-full">
                     <div className="flex items-start justify-between gap-3">
@@ -342,35 +466,12 @@ export default function MySubjectSection({
 
               const content = (
                 <div className="flex h-full flex-col w-full">
-                  <div className="relative h-52 w-full overflow-hidden bg-slate-100">
-                    {course.attributes.thumbnail ? (
-                      <Image
-                        src={
-                          course.attributes.thumbnail
-                        }
-                        alt={
-                          course.attributes.title
-                        }
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-blue-50">
-                        <BookOpen
-                          size={48}
-                          className="text-[var(--primary)] opacity-50"
-                        />
-                      </div>
-                    )}
-
-                    {locked && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/65">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 text-[var(--primary)] shadow-lg">
-                          <Lock size={24} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  <CourseCardThumbnail
+                    thumbnail={course.attributes.thumbnail}
+                    title={course.attributes.title}
+                    categoryName={selectedCategory?.attributes.name}
+                    locked={locked}
+                  />
 
                   <div className="flex flex-1 flex-col p-4 sm:p-5">
                     <h3 className="line-clamp-2 text-lg font-bold leading-snug tracking-tight text-[var(--text-dark)]">
@@ -412,19 +513,6 @@ export default function MySubjectSection({
                   </div>
                 </div>
               );
-
-              if (locked) {
-                return (
-                  <button
-                    key={course.id}
-                    type="button"
-                    onClick={() => setActivationCourse(course)}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white text-start shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[var(--primary)] hover:shadow-md"
-                  >
-                    {content}
-                  </button>
-                );
-              }
 
               return (
                 <Link
