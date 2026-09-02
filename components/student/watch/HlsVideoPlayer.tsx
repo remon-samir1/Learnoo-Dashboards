@@ -314,6 +314,21 @@ function isLikelyAppleNativeHlsCapable(): boolean {
   return /AppleWebKit/i.test(ua) && !/Chrome|CriOS|Edg|OPR|Firefox/i.test(ua);
 }
 
+/**
+ * Detect iOS (iPhone/iPad/iPod) Safari or any iOS browser (all use WebKit).
+ * On iOS, native HLS is far more reliable than MSE/hls.js and must be preferred.
+ * Also, `crossOrigin="anonymous"` on `<video>` breaks native HLS on iOS entirely.
+ */
+function isIOSDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  // Standard iOS device strings
+  if (/iPad|iPhone|iPod/i.test(ua)) return true;
+  // iPadOS 13+ reports as "Macintosh" with touch support
+  if (/Macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1) return true;
+  return false;
+}
+
 function logVideoElementError(
   video: HTMLVideoElement,
   mode: HlsPlaybackMode | 'rejected-non-hls'
@@ -449,6 +464,12 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
     const [selectedQuality, setSelectedQuality] = useState<string | 'auto'>('auto');
     const [autoQualityEnabled, setAutoQualityEnabled] = useState(true);
     const [showPlaybackSwitching, setShowPlaybackSwitching] = useState(false);
+    /**
+     * Tracks whether native HLS is being used (iOS). When true, we must NOT
+     * set `crossOrigin="anonymous"` on the `<video>` element because it
+     * breaks Safari's internal HLS player entirely.
+     */
+    const [usingNativeHls, setUsingNativeHls] = useState(() => isIOSDevice());
     const onFatalPlaybackErrorRef = useRef(onFatalPlaybackError);
     const hlsConfigRef = useRef(hlsConfig);
     const revealControls = useCallback(() => {
@@ -694,11 +715,20 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       let manifestM3u8FallbackAttempted = false;
       const mseSupported = Hls.isSupported();
       const nativeAdvertised = canPlayNativeHls(video) || isLikelyAppleNativeHlsCapable();
+      const iosDevice = isIOSDevice();
 
-      // Prefer MSE whenever hls.js can run. Chromium often reports canPlayType("…mpegurl") as
-      // "maybe" but native <video src> still fails (e.g. MEDIA_ERR_SRC_NOT_SUPPORTED on URLs
-      // without .m3u8). Native also cannot attach Authorization on segment requests.
-      if (mseSupported) {
+      // On iOS, ALWAYS prefer native HLS over MSE/hls.js:
+      // 1. Safari's native HLS player is far more reliable than hls.js MSE on iOS.
+      // 2. crossOrigin="anonymous" (needed for hls.js canvas capture) breaks native HLS entirely.
+      // 3. The same-origin proxy now extracts the auth token from cookies server-side,
+      //    so native HLS doesn't need JavaScript-injected Authorization headers.
+      if (iosDevice && nativeAdvertised) {
+        console.info(
+          `${LOG_PREFIX} iOS detected — forcing native HLS (skipping MSE) | nativeAdvertised=${String(nativeAdvertised)} | mseSupported=${String(mseSupported)} | src=${apiMasterUrl}`
+        );
+        setUsingNativeHls(true);
+        // Jump directly to the native HLS path below (skip the MSE block).
+      } else if (mseSupported) {
         const masterUrl = toProxiedLearnooHlsUrl(apiMasterUrl);
         if (masterUrl !== apiMasterUrl) {
           console.info(`${LOG_PREFIX} same-origin HLS proxy (avoids CORS / XHR status 0)`, {
@@ -1039,24 +1069,30 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       }
 
       if (nativeAdvertised) {
+        const isIOS = iosDevice;
         console.info(
-          `${LOG_PREFIX} playbackMode=native-hls (fallback: no MSE) | Hls.isSupported()=false | src=${apiMasterUrl}`
+          `${LOG_PREFIX} playbackMode=native-hls | Hls.isSupported()=${String(mseSupported)} | iOS=${String(isIOS)} | src=${apiMasterUrl}`
         );
+        setUsingNativeHls(true);
         logVideoState(video, 'before native assign');
         let detachMp4Native: (() => void) | null = null;
+        let nativeErrorFallbackDone = false;
         const onNativeError = () => {
+          if (nativeErrorFallbackDone) return;
           logVideoElementError(video, 'native-hls');
           const ve = video.error;
           const code = ve?.code;
           if (code == null || code === 0 || code === MediaError.MEDIA_ERR_ABORTED) {
             return;
           }
+          nativeErrorFallbackDone = true;
           if (mp4Fb && isMp4StreamUrl(mp4Fb)) {
             console.warn(`${LOG_PREFIX} native HLS failed; falling back to MP4 progressive`, { mp4Fb });
             setShowPlaybackSwitching(true);
             detachVideoSourceSoft(video);
             detachMp4Native = attachVideoErrorListener('mp4-progressive');
             video.src = toProxiedLearnooHlsUrl(mp4Fb);
+            video.load();
             const clearSwitching = () => setShowPlaybackSwitching(false);
             video.addEventListener('loadeddata', clearSwitching, { once: true });
             video.addEventListener('error', clearSwitching, { once: true });
@@ -1066,8 +1102,14 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         };
 
         video.addEventListener('error', onNativeError);
-        video.src = toProxiedLearnooHlsUrl(apiMasterUrl);
-        logVideoState(video, 'after native assign');
+        const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl);
+        console.info(`${LOG_PREFIX} native HLS: setting video.src`, { nativeUrl, apiMasterUrl });
+        detachVideoSourceSoft(video);
+        video.src = nativeUrl;
+        // On iOS Safari, explicitly calling load() after setting src is required
+        // for reliable playback start — without it the player can stall silently.
+        video.load();
+        logVideoState(video, 'after native assign + load()');
         return () => {
           video.removeEventListener('error', onNativeError);
           detachMp4Native?.();
@@ -1110,6 +1152,9 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           className="col-start-1 row-start-1 relative z-0 flex min-h-0 min-w-0 max-h-full max-w-full items-center justify-center"
           onClick={showCustomControls ? onVideoSurfaceClick : undefined}
         >
+          {/* crossOrigin="anonymous" is needed for canvas frame-capture (discussion screenshots)
+              but MUST be omitted on iOS native HLS — it completely breaks Safari's internal
+              HLS player and causes "internet connection" errors. */}
           <video
             id={id}
             ref={setRefs}
@@ -1118,12 +1163,12 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             controlsList={showCustomControls ? 'nofullscreen nodownload noremoteplayback' : undefined}
             disablePictureInPicture={showCustomControls}
             playsInline={playsInline}
-            {...({ 'webkit-playsinline': playsInline ? 'true' : 'false' } as any)}
+            {...({ 'webkit-playsinline': 'true' } as any)}
             preload={preload}
             autoPlay={autoPlay}
             muted={muted}
             poster={poster}
-            crossOrigin="anonymous"
+            {...(usingNativeHls ? {} : { crossOrigin: 'anonymous' as const })}
           >
             {children}
           </video>

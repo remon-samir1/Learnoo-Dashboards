@@ -179,3 +179,16 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
   }
   return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
 }
+
+/** CORS preflight — iOS Safari may send OPTIONS before HLS sub-resource requests. */
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': 'Authorization, Range, Content-Type',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
