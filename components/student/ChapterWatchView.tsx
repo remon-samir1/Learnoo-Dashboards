@@ -1188,13 +1188,13 @@ export default function ChapterWatchView({
                             <button
                               type="button"
                               onClick={() => setShowPdf((v) => !v)}
-                              className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-5 py-3 text-sm font-semibold text-white transition active:scale-[0.99] sm:min-h-0 sm:px-4 sm:py-2.5 ${showPdf
+                              className={`inline-flex shrink-0 items-center justify-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border px-3 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-white transition active:scale-[0.99] ${showPdf
                                 ? 'border-slate-500/90 bg-slate-800 hover:bg-slate-700'
                                 : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800'
                                 }`}
                             >
-                              <FileText className="size-4 shrink-0" aria-hidden />
-                              <span className="max-w-[4.5rem] truncate sm:max-w-none">
+                              <FileText className="size-3.5 sm:size-4 shrink-0" aria-hidden />
+                              <span className="max-w-[5.5rem] truncate sm:max-w-none">
                                 {showPdf ? t('hidePdf') : t('showPdf')}
                               </span>
                             </button>
@@ -1326,6 +1326,20 @@ export default function ChapterWatchView({
                 </div> */}
 
                   <div className="flex items-center justify-stretch gap-2 md:min-w-0 md:justify-end">
+                    {pdfToggleVisible ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowPdf((v) => !v)}
+                        className={`inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold text-white transition active:scale-[0.99] md:hidden ${showPdf
+                          ? 'border-[#2D43D1]/70 bg-[#2D43D1]/20 hover:bg-[#2D43D1]/30 text-white'
+                          : 'border-slate-600/90 bg-slate-800/90 hover:bg-slate-800 text-slate-200'
+                          }`}
+                      >
+                        <FileText className="size-4 shrink-0" aria-hidden />
+                        <span>{showPdf ? t('hidePdf') : t('showPdf')}</span>
+                      </button>
+                    ) : null}
+
                     <button
                       type="button"
                       onClick={() => setDiscussionsOpen((o) => !o)}
