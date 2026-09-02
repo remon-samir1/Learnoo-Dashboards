@@ -80,7 +80,23 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
   const range = req.headers.get('range');
 
   const outgoing = new Headers();
-  if (incomingAuth) outgoing.set('Authorization', incomingAuth);
+
+  // Resolve Authorization: prefer incoming header, fall back to 'token' cookie.
+  // This is vital for iOS Safari / native <video> which cannot send custom Authorization headers.
+  let resolvedAuth = incomingAuth;
+  if (!resolvedAuth) {
+    const tokenFromCookie = req.cookies.get('token')?.value;
+    if (tokenFromCookie && tokenFromCookie.trim()) {
+      resolvedAuth = `Bearer ${tokenFromCookie.trim()}`;
+    } else if (incomingCookie) {
+      const match = incomingCookie.match(/(?:^|;\s*)token=([^;]+)/);
+      if (match && match[1]) {
+        resolvedAuth = `Bearer ${decodeURIComponent(match[1].trim())}`;
+      }
+    }
+  }
+
+  if (resolvedAuth) outgoing.set('Authorization', resolvedAuth);
   if (incomingCookie) outgoing.set('Cookie', incomingCookie);
   if (range) outgoing.set('Range', range);
 
@@ -95,6 +111,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
     path: pathJoined,
     search: search || '(empty)',
     incomingAuthorization: incomingAuthDesc,
+    resolvedAuthorization: outgoingAuthDesc,
     incomingCookie: incomingCookieDesc,
     upstreamUrl,
   });
@@ -132,7 +149,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
     const out = new NextResponse(rewritten, {
       status: upstream.status,
       headers: {
-        'Content-Type': contentType || 'application/vnd.apple.mpegurl',
+        'Content-Type': 'application/vnd.apple.mpegurl',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*',
+        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
       },
     });
     const cc = upstream.headers.get('cache-control');
@@ -147,9 +167,15 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
     'accept-ranges',
     'content-range',
     'cache-control',
+    'access-control-allow-origin',
+    'access-control-allow-headers',
+    'access-control-allow-methods',
   ] as const) {
     const v = upstream.headers.get(name);
     if (v) outHeaders.set(name, v);
+  }
+  if (!outHeaders.has('access-control-allow-origin')) {
+    outHeaders.set('Access-Control-Allow-Origin', '*');
   }
   return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
 }

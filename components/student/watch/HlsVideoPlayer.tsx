@@ -1043,11 +1043,34 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           `${LOG_PREFIX} playbackMode=native-hls (fallback: no MSE) | Hls.isSupported()=false | src=${apiMasterUrl}`
         );
         logVideoState(video, 'before native assign');
-        const detachError = attachVideoErrorListener('native-hls');
+        let detachMp4Native: (() => void) | null = null;
+        const onNativeError = () => {
+          logVideoElementError(video, 'native-hls');
+          const ve = video.error;
+          const code = ve?.code;
+          if (code == null || code === 0 || code === MediaError.MEDIA_ERR_ABORTED) {
+            return;
+          }
+          if (mp4Fb && isMp4StreamUrl(mp4Fb)) {
+            console.warn(`${LOG_PREFIX} native HLS failed; falling back to MP4 progressive`, { mp4Fb });
+            setShowPlaybackSwitching(true);
+            detachVideoSourceSoft(video);
+            detachMp4Native = attachVideoErrorListener('mp4-progressive');
+            video.src = toProxiedLearnooHlsUrl(mp4Fb);
+            const clearSwitching = () => setShowPlaybackSwitching(false);
+            video.addEventListener('loadeddata', clearSwitching, { once: true });
+            video.addEventListener('error', clearSwitching, { once: true });
+            return;
+          }
+          notifyFatal(videoErrorMessage(code));
+        };
+
+        video.addEventListener('error', onNativeError);
         video.src = toProxiedLearnooHlsUrl(apiMasterUrl);
         logVideoState(video, 'after native assign');
         return () => {
-          detachError();
+          video.removeEventListener('error', onNativeError);
+          detachMp4Native?.();
           detachVideoSourceSoft(video);
         };
       }
@@ -1095,6 +1118,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             controlsList={showCustomControls ? 'nofullscreen nodownload noremoteplayback' : undefined}
             disablePictureInPicture={showCustomControls}
             playsInline={playsInline}
+            {...({ 'webkit-playsinline': playsInline ? 'true' : 'false' } as any)}
             preload={preload}
             autoPlay={autoPlay}
             muted={muted}
