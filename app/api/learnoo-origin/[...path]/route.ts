@@ -69,9 +69,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
   }
 
   const pathJoined = joinUpstreamPath(segments);
-  const search = req.nextUrl.search;
-  const upstreamUrl = `${learnooApiBaseUrl()}/${pathJoined}${search}`;
 
+  const queryToken = req.nextUrl.searchParams.get('token') || req.nextUrl.searchParams.get('auth');
   const incomingAuth =
     req.headers.get('authorization') ??
     req.headers.get('Authorization') ??
@@ -79,24 +78,42 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
   const incomingCookie = req.headers.get('cookie') ?? req.headers.get('Cookie');
   const range = req.headers.get('range');
 
-  const outgoing = new Headers();
-
-  // Resolve Authorization: prefer incoming header, fall back to 'token' cookie.
-  // This is vital for iOS Safari / native <video> which cannot send custom Authorization headers.
-  let resolvedAuth = incomingAuth;
-  if (!resolvedAuth) {
+  // Resolve raw Bearer token from header, query param, or cookies.
+  // Query param token is critical for iOS AVPlayer (mediaserverd) which doesn't share browser cookies.
+  let rawToken: string | null = null;
+  if (incomingAuth) {
+    const m = incomingAuth.trim().match(/^Bearer\s+(.+)$/i);
+    if (m && m[1]) rawToken = m[1].trim();
+    else rawToken = incomingAuth.trim();
+  }
+  if (!rawToken && queryToken) {
+    rawToken = queryToken.trim();
+  }
+  if (!rawToken) {
     const tokenFromCookie = req.cookies.get('token')?.value;
     if (tokenFromCookie && tokenFromCookie.trim()) {
-      resolvedAuth = `Bearer ${tokenFromCookie.trim()}`;
+      rawToken = tokenFromCookie.trim();
     } else if (incomingCookie) {
       const match = incomingCookie.match(/(?:^|;\s*)token=([^;]+)/);
       if (match && match[1]) {
-        resolvedAuth = `Bearer ${decodeURIComponent(match[1].trim())}`;
+        rawToken = decodeURIComponent(match[1].trim());
       }
     }
   }
 
-  if (resolvedAuth) outgoing.set('Authorization', resolvedAuth);
+  // Strip token from upstream search params
+  const upstreamSearchParams = new URLSearchParams(req.nextUrl.search);
+  upstreamSearchParams.delete('token');
+  upstreamSearchParams.delete('auth');
+  const searchStr = upstreamSearchParams.toString();
+  const search = searchStr ? `?${searchStr}` : '';
+  const upstreamUrl = `${learnooApiBaseUrl()}/${pathJoined}${search}`;
+
+  const outgoing = new Headers();
+  if (rawToken) {
+    const authHeader = rawToken.toLowerCase().startsWith('bearer ') ? rawToken : `Bearer ${rawToken}`;
+    outgoing.set('Authorization', authHeader);
+  }
   if (incomingCookie) outgoing.set('Cookie', incomingCookie);
   if (range) outgoing.set('Range', range);
 
@@ -110,6 +127,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
     kind,
     path: pathJoined,
     search: search || '(empty)',
+    queryTokenPresent: Boolean(queryToken),
     incomingAuthorization: incomingAuthDesc,
     resolvedAuthorization: outgoingAuthDesc,
     incomingCookie: incomingCookieDesc,
@@ -145,7 +163,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
 
   if (shouldRewriteBody) {
     const text = await upstream.text();
-    const rewritten = rewriteLearnooHlsPlaylistBody(text);
+    const rewritten = rewriteLearnooHlsPlaylistBody(text, rawToken);
     const out = new NextResponse(rewritten, {
       status: upstream.status,
       headers: {

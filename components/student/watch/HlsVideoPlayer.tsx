@@ -1101,8 +1101,9 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           notifyFatal(videoErrorMessage(code));
         };
 
+        const cookieToken = Cookies.get('token');
         video.addEventListener('error', onNativeError);
-        const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl);
+        const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl, cookieToken);
         console.info(`${LOG_PREFIX} native HLS: setting video.src`, { nativeUrl, apiMasterUrl });
         detachVideoSourceSoft(video);
         video.src = nativeUrl;
