@@ -838,6 +838,8 @@ export interface ChapterAttributes {
 
   video_mp4_url?: string | null;
 
+  main_video?: string | null;
+
 
 
   duration: string;

@@ -13,7 +13,7 @@ import {
 import Hls, { type ErrorData, ErrorDetails, Events, type HlsConfig } from 'hls.js';
 import { toProxiedLearnooHlsUrl } from '@/src/lib/learnoo-hls-proxy';
 import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
-import { isHlsStreamUrl, isMp4StreamUrl } from '@/src/lib/video-stream-detect';
+import { isHlsStreamUrl, isMp4StreamUrl, isIOSDevice } from '@/src/lib/video-stream-detect';
 import type { WatermarkContentType } from '@/src/types/watermark-config';
 import { HlsVideoCustomControls } from '@/components/student/watch/HlsVideoCustomControls';
 import { StudentVideoStaticOverlay } from '@/components/student/watch/StudentVideoStaticOverlay';
@@ -312,21 +312,6 @@ function isLikelyAppleNativeHlsCapable(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent;
   return /AppleWebKit/i.test(ua) && !/Chrome|CriOS|Edg|OPR|Firefox/i.test(ua);
-}
-
-/**
- * Detect iOS (iPhone/iPad/iPod) Safari or any iOS browser (all use WebKit).
- * On iOS, native HLS is far more reliable than MSE/hls.js and must be preferred.
- * Also, `crossOrigin="anonymous"` on `<video>` breaks native HLS on iOS entirely.
- */
-function isIOSDevice(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent;
-  // Standard iOS device strings
-  if (/iPad|iPhone|iPod/i.test(ua)) return true;
-  // iPadOS 13+ reports as "Macintosh" with touch support
-  if (/Macintosh/i.test(ua) && typeof navigator.maxTouchPoints === 'number' && navigator.maxTouchPoints > 1) return true;
-  return false;
 }
 
 function logVideoElementError(
@@ -628,6 +613,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       setQualityOptions(buildMergedQualityOptions([]));
       setSelectedQuality('auto');
       setAutoQualityEnabled(true);
+      let progressiveFallbackDone = false;
 
       const notifyFatal = (reason: string, hlsDetails?: ErrorDetails) => {
         const hlsPart = hlsDetails != null ? ` hlsDetails=${String(hlsDetails)}` : '';
@@ -647,6 +633,25 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             const veMp4 = video.error;
             const c = veMp4?.code;
             if (!veMp4 || c === MediaError.MEDIA_ERR_ABORTED) {
+              return;
+            }
+            const proxiedFb = mp4Fb ? toProxiedLearnooHlsUrl(mp4Fb) : '';
+            const currentSrc = video.getAttribute('src') || video.src;
+            if (
+              proxiedFb &&
+              !progressiveFallbackDone &&
+              proxiedFb !== currentSrc &&
+              mp4Fb !== trimmedSrc
+            ) {
+              progressiveFallbackDone = true;
+              console.warn(`${LOG_PREFIX} mp4-progressive error; falling back to alternative mp4Fb`, { mp4Fb });
+              setShowPlaybackSwitching(true);
+              detachVideoSourceSoft(video);
+              video.src = proxiedFb;
+              video.load();
+              const clearSwitching = () => setShowPlaybackSwitching(false);
+              video.addEventListener('loadeddata', clearSwitching, { once: true });
+              video.addEventListener('error', clearSwitching, { once: true });
               return;
             }
             notifyFatal(videoErrorMessage(c));
@@ -687,26 +692,18 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       }
 
       if (!isHls && !isMp4) {
-        if (mp4Fb && isMp4StreamUrl(mp4Fb)) {
-          console.warn(`${LOG_PREFIX} hybrid`, {
-            playbackMode: 'mp4',
-            fallbackTriggered: false,
-            note: 'primary URL unrecognized; using mp4FallbackUrl only',
-          });
-          const detach = attachVideoErrorListener('mp4-progressive');
-          detachVideoSourceSoft(video);
-          video.src = toProxiedLearnooHlsUrl(mp4Fb);
-          logVideoState(video, 'mp4-only-fallback assign');
-          return () => {
-            detach();
-            detachVideoSourceSoft(video);
-          };
-        }
-        console.error(`${LOG_PREFIX} unsupported source`, { src: trimmedSrc });
-        const detachErr = attachVideoErrorListener('rejected-non-hls');
-        notifyFatal('Video URL is not supported (expected HLS playlist or MP4).');
+        const candidateUrl = (mp4Fb && isMp4StreamUrl(mp4Fb)) ? mp4Fb : trimmedSrc;
+        console.warn(`${LOG_PREFIX} hybrid`, {
+          playbackMode: 'mp4',
+          fallbackTriggered: candidateUrl === mp4Fb,
+          note: 'attempting progressive playback for non-HLS source',
+        });
+        const detach = attachVideoErrorListener('mp4-progressive');
+        detachVideoSourceSoft(video);
+        video.src = toProxiedLearnooHlsUrl(candidateUrl);
+        logVideoState(video, 'mp4-fallback assign');
         return () => {
-          detachErr();
+          detach();
           detachVideoSourceSoft(video);
         };
       }
@@ -1086,7 +1083,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             return;
           }
           nativeErrorFallbackDone = true;
-          if (mp4Fb && isMp4StreamUrl(mp4Fb)) {
+          if (mp4Fb && (isMp4StreamUrl(mp4Fb) || mp4Fb !== apiMasterUrl)) {
             console.warn(`${LOG_PREFIX} native HLS failed; falling back to MP4 progressive`, { mp4Fb });
             setShowPlaybackSwitching(true);
             detachVideoSourceSoft(video);

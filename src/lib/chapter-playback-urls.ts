@@ -27,6 +27,7 @@ type ChapterAttrsLike = {
   playlist?: string | null;
   video_hls_url?: string | null;
   video_mp4_url?: string | null;
+  main_video?: string | null;
 };
 
 /**
@@ -35,7 +36,7 @@ type ChapterAttrsLike = {
 export function pickChapterStreams(chapterId: number, attrs: ChapterAttrsLike): ChapterStreamPick {
   const idOk = Number.isFinite(chapterId) && chapterId > 0;
   const explicitHls = (attrs.video_hls_url ?? attrs.playlist ?? '').trim();
-  const explicitMp4 = (attrs.video_mp4_url ?? '').trim();
+  const explicitMp4 = (attrs.main_video ?? attrs.video_mp4_url ?? '').trim();
   const video = (attrs.video ?? '').trim();
 
   const mp4FromVideo = isMp4StreamUrl(video) ? video : '';

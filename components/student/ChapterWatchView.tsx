@@ -25,6 +25,7 @@ import {
   Camera,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { isIOSDevice } from '@/src/lib/video-stream-detect';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import type { Chapter, Quiz } from '@/src/types';
 import { api, ApiError, API_BASE_URL } from '@/src/lib/api';
@@ -416,11 +417,22 @@ export default function ChapterWatchView({
       .replace(/([a-z])\/\/+/, '$1/');  // collapse duplicate slashes except after protocol
   }, []);
 
-  const videoSrc = useMemo(() => {
+  const [fallbackToMainVideo, setFallbackToMainVideo] = useState(false);
+
+  /** Direct progressive video from the `main_video` attribute */
+  const mainVideoSrc = useMemo(() => {
+    if (!chapter) return '';
+    const raw = (chapter.attributes as any)?.main_video;
+    const url = normaliseVideoUrl(raw);
+    return url && !isNoVideoUrl(url) ? url : '';
+  }, [chapter, normaliseVideoUrl]);
+
+  /** Primary video candidate before fallback */
+  const defaultVideoSrc = useMemo(() => {
     if (!chapter) return '';
     const attrs = chapter.attributes;
 
-    // Priority: explicit HLS URL → the `video` field (can be HLS playlist OR mp4) → mp4 URL → playlist field
+    // Priority: explicit HLS URL → the `video` field (can be HLS playlist OR mp4) → mp4 URL → main_video → playlist field
     const candidates = [
       attrs.video_hls_url,
       attrs.video,        // may be HLS playlist URL or mp4 – HlsVideoPlayer handles both
@@ -436,13 +448,21 @@ export default function ChapterWatchView({
     return '';
   }, [chapter, normaliseVideoUrl]);
 
+  const videoSrc = useMemo(() => {
+    if (fallbackToMainVideo && mainVideoSrc) {
+      return mainVideoSrc;
+    }
+    return defaultVideoSrc;
+  }, [fallbackToMainVideo, mainVideoSrc, defaultVideoSrc]);
+
   /** The mp4 to pass to HlsVideoPlayer as a progressive fallback if HLS fails */
   const mp4FallbackSrc = useMemo(() => {
     if (!chapter) return '';
     const attrs = chapter.attributes;
+    // Prefer main_video first as the primary progressive fallback candidate
     const candidates = [
-      attrs.video_mp4_url,
       (attrs as any).main_video,
+      attrs.video_mp4_url,
     ];
     for (const raw of candidates) {
       const url = normaliseVideoUrl(raw);
@@ -451,12 +471,20 @@ export default function ChapterWatchView({
     return '';
   }, [chapter, normaliseVideoUrl]);
 
-  // Update stableVideoSrc only when chapter.id changes (new chapter), not on discussion refreshes
+  // Reset fallback and update stableVideoSrc only when chapter.id changes (new chapter), not on discussion refreshes
   useEffect(() => {
     if (chapter && chapter.id) {
-      setStableVideoSrc(videoSrc);
+      setFallbackToMainVideo(false);
+      setStableVideoSrc(defaultVideoSrc);
     }
-  }, [chapter?.id, videoSrc]);
+  }, [chapter?.id, defaultVideoSrc]);
+
+  // Update stableVideoSrc immediately whenever fallbackToMainVideo is activated
+  useEffect(() => {
+    if (fallbackToMainVideo && mainVideoSrc) {
+      setStableVideoSrc(mainVideoSrc);
+    }
+  }, [fallbackToMainVideo, mainVideoSrc]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
 
@@ -606,17 +634,14 @@ export default function ChapterWatchView({
     },
   });
 
+  // Keep PDF closed by default; reset when chapter changes
+  useEffect(() => {
+    setShowPdf(false);
+  }, [chapterId]);
+
   useEffect(() => {
     if (!pdfPanelVisible) setShowPdf(false);
   }, [pdfPanelVisible]);
-
-
-  // If no video but PDF exists, auto-show PDF
-  useEffect(() => {
-    if (!stableVideoSrc && pdfUrl && pdfPanelVisible) {
-      setShowPdf(true);
-    }
-  }, [stableVideoSrc, pdfUrl, pdfPanelVisible]);
 
   // Track current video moment from native <video> element timeupdate
   useEffect(() => {
@@ -1156,6 +1181,7 @@ export default function ChapterWatchView({
                       </div>
                     ) : (
                       <HlsVideoPlayer
+                        key={`${stableVideoSrc}|${fallbackToMainVideo}`}
                         ref={hlsVideoRef}
                         src={stableVideoSrc}
                         mp4FallbackUrl={mp4FallbackSrc}
@@ -1192,7 +1218,28 @@ export default function ChapterWatchView({
                         theaterMode={theaterMode}
                         onToggleTheater={toggleTheater}
                         onFatalPlaybackError={({ reason }) => {
-                          console.error('[ChapterWatchView] Fatal HLS playback error:', reason);
+                          const isIOS = isIOSDevice();
+                          console.warn('[ChapterWatchView] Fatal playback error encountered', {
+                            reason,
+                            isIOS,
+                            currentSrc: stableVideoSrc,
+                            mainVideoSrc,
+                            fallbackToMainVideo,
+                          });
+
+                          // If playback fails (especially on iOS Safari where HLS in `video` key fails),
+                          // fallback to `main_video` key which contains the progressive MP4.
+                          if (!fallbackToMainVideo && mainVideoSrc && mainVideoSrc !== stableVideoSrc) {
+                            console.info('[ChapterWatchView] Fallback triggered: switching to main_video', {
+                              from: stableVideoSrc,
+                              to: mainVideoSrc,
+                            });
+                            setFallbackToMainVideo(true);
+                            setStableVideoSrc(mainVideoSrc);
+                            return;
+                          }
+
+                          console.error('[ChapterWatchView] Fatal playback error (fallback exhausted):', reason);
                           toast.error(t('hlsPlaybackError'));
                         }}
                       />
