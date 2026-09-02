@@ -5,11 +5,11 @@ export function learnooApiBaseUrl(): string {
   return (process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app').replace(/\/$/, '');
 }
 
-function appendTokenToUrl(url: string, token: string): string {
-  if (!token || !url.trim()) return url;
+export function appendTokenToUrl(url: string, token?: string | null): string {
+  if (!token || !token.trim() || !url || !url.trim()) return url;
   if (url.includes('token=')) return url;
   const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}token=${encodeURIComponent(token)}`;
+  return `${url}${separator}token=${encodeURIComponent(token.trim())}`;
 }
 
 /**

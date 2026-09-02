@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { isIOSDevice } from '@/src/lib/video-stream-detect';
+import { learnooChapterHlsPlaylistUrl } from '@/src/lib/chapter-playback-urls';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import type { Chapter, Quiz } from '@/src/types';
 import { api, ApiError, API_BASE_URL } from '@/src/lib/api';
@@ -417,74 +418,65 @@ export default function ChapterWatchView({
       .replace(/([a-z])\/\/+/, '$1/');  // collapse duplicate slashes except after protocol
   }, []);
 
-  const [fallbackToMainVideo, setFallbackToMainVideo] = useState(false);
-
-  /** Direct progressive video from the `main_video` attribute */
-  const mainVideoSrc = useMemo(() => {
-    if (!chapter) return '';
-    const raw = (chapter.attributes as any)?.main_video;
-    const url = normaliseVideoUrl(raw);
-    return url && !isNoVideoUrl(url) ? url : '';
-  }, [chapter, normaliseVideoUrl]);
-
-  /** Primary video candidate before fallback */
-  const defaultVideoSrc = useMemo(() => {
-    if (!chapter) return '';
+  /** Ordered list of unique video candidates for this chapter */
+  const videoCandidates = useMemo(() => {
+    if (!chapter) return [];
     const attrs = chapter.attributes;
-
-    // Priority: explicit HLS URL → the `video` field (can be HLS playlist OR mp4) → mp4 URL → main_video → playlist field
-    const candidates = [
+    const rawList = [
       attrs.video_hls_url,
-      attrs.video,        // may be HLS playlist URL or mp4 – HlsVideoPlayer handles both
-      attrs.video_mp4_url,
+      attrs.video,
       (attrs as any).main_video,
+      attrs.video_mp4_url,
       attrs.playlist,
+      Number.isFinite(chapterNumericId) && chapterNumericId > 0
+        ? learnooChapterHlsPlaylistUrl(chapterNumericId)
+        : '',
     ];
 
-    for (const raw of candidates) {
+    const seen = new Set<string>();
+    const list: string[] = [];
+    for (const raw of rawList) {
       const url = normaliseVideoUrl(raw);
-      if (url && !isNoVideoUrl(url)) return url;
+      if (url && !isNoVideoUrl(url) && !seen.has(url)) {
+        seen.add(url);
+        list.push(url);
+      }
     }
-    return '';
-  }, [chapter, normaliseVideoUrl]);
+    return list;
+  }, [chapter, chapterNumericId, normaliseVideoUrl]);
 
-  const videoSrc = useMemo(() => {
-    if (fallbackToMainVideo && mainVideoSrc) {
-      return mainVideoSrc;
+  const [candidateIndex, setCandidateIndex] = useState(0);
+
+  // Reset candidates and stableVideoSrc when chapter.id changes (new chapter)
+  useEffect(() => {
+    if (chapter && chapter.id) {
+      setCandidateIndex(0);
+      setStableVideoSrc(videoCandidates[0] || '');
     }
-    return defaultVideoSrc;
-  }, [fallbackToMainVideo, mainVideoSrc, defaultVideoSrc]);
+  }, [chapter?.id, videoCandidates]);
+
+  // Update stableVideoSrc when candidateIndex advances
+  useEffect(() => {
+    if (videoCandidates.length > 0 && candidateIndex < videoCandidates.length) {
+      setStableVideoSrc(videoCandidates[candidateIndex]);
+    }
+  }, [candidateIndex, videoCandidates]);
 
   /** The mp4 to pass to HlsVideoPlayer as a progressive fallback if HLS fails */
   const mp4FallbackSrc = useMemo(() => {
     if (!chapter) return '';
     const attrs = chapter.attributes;
-    // Prefer main_video first as the primary progressive fallback candidate
     const candidates = [
       (attrs as any).main_video,
       attrs.video_mp4_url,
+      attrs.video,
     ];
     for (const raw of candidates) {
       const url = normaliseVideoUrl(raw);
-      if (url && !isNoVideoUrl(url)) return url;
+      if (url && !isNoVideoUrl(url) && url !== stableVideoSrc) return url;
     }
     return '';
-  }, [chapter, normaliseVideoUrl]);
-
-  // Reset fallback and update stableVideoSrc only when chapter.id changes (new chapter), not on discussion refreshes
-  useEffect(() => {
-    if (chapter && chapter.id) {
-      setFallbackToMainVideo(false);
-      setStableVideoSrc(defaultVideoSrc);
-    }
-  }, [chapter?.id, defaultVideoSrc]);
-
-  // Update stableVideoSrc immediately whenever fallbackToMainVideo is activated
-  useEffect(() => {
-    if (fallbackToMainVideo && mainVideoSrc) {
-      setStableVideoSrc(mainVideoSrc);
-    }
-  }, [fallbackToMainVideo, mainVideoSrc]);
+  }, [chapter, normaliseVideoUrl, stableVideoSrc]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
 
@@ -1181,7 +1173,7 @@ export default function ChapterWatchView({
                       </div>
                     ) : (
                       <HlsVideoPlayer
-                        key={`${stableVideoSrc}|${fallbackToMainVideo}`}
+                        key={`${stableVideoSrc}|${candidateIndex}`}
                         ref={hlsVideoRef}
                         src={stableVideoSrc}
                         mp4FallbackUrl={mp4FallbackSrc}
@@ -1223,23 +1215,24 @@ export default function ChapterWatchView({
                             reason,
                             isIOS,
                             currentSrc: stableVideoSrc,
-                            mainVideoSrc,
-                            fallbackToMainVideo,
+                            candidateIndex,
+                            totalCandidates: videoCandidates.length,
                           });
 
-                          // If playback fails (especially on iOS Safari where HLS in `video` key fails),
-                          // fallback to `main_video` key which contains the progressive MP4.
-                          if (!fallbackToMainVideo && mainVideoSrc && mainVideoSrc !== stableVideoSrc) {
-                            console.info('[ChapterWatchView] Fallback triggered: switching to main_video', {
+                          // If there are more candidate URLs to try, advance to the next one
+                          if (candidateIndex + 1 < videoCandidates.length) {
+                            const nextUrl = videoCandidates[candidateIndex + 1];
+                            console.info('[ChapterWatchView] Fallback triggered: switching to next candidate', {
                               from: stableVideoSrc,
-                              to: mainVideoSrc,
+                              to: nextUrl,
+                              nextIndex: candidateIndex + 1,
                             });
-                            setFallbackToMainVideo(true);
-                            setStableVideoSrc(mainVideoSrc);
+                            setCandidateIndex((prev) => prev + 1);
+                            setStableVideoSrc(nextUrl);
                             return;
                           }
 
-                          console.error('[ChapterWatchView] Fatal playback error (fallback exhausted):', reason);
+                          console.error('[ChapterWatchView] Fatal playback error (all candidates exhausted):', reason);
                           toast.error(t('hlsPlaybackError'));
                         }}
                       />
