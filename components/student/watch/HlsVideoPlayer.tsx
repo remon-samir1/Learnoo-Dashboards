@@ -741,11 +741,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const candidateSrc = iosDevice
           ? appendTokenToUrl(candidateUrl, cookieToken)
           : toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
-        if (!iosDevice && !usingNativeHls) {
-          video.crossOrigin = 'anonymous';
-        } else {
-          video.removeAttribute('crossorigin');
-        }
+        video.crossOrigin = 'anonymous';
         video.src = candidateSrc;
         logVideoState(video, 'mp4-fallback assign');
         return () => {

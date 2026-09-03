@@ -388,6 +388,7 @@ export default function ChapterWatchView({
    * could be extracted (e.g., video not ready or canvas tainted).
    */
   const [composerFrameFile, setComposerFrameFile] = useState<File | null>(null);
+  const [frameDismissed, setFrameDismissed] = useState(false);
 
   const [framePreviewUrl, setFramePreviewUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -399,20 +400,6 @@ export default function ChapterWatchView({
       setFramePreviewUrl(null);
     }
   }, [composerFrameFile]);
-
-  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleImageFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
-        return;
-      }
-      setComposerFrameFile(file);
-    }
-    e.target.value = '';
-  }, []);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
@@ -844,27 +831,40 @@ export default function ChapterWatchView({
   // Capture a single frame directly from the video element
   const captureVideoFrame = useCallback((): File | null => {
     const video = hlsVideoRef.current;
-    if (!video || video.videoWidth === 0 || video.readyState < 2) {
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 2) {
       console.debug('[ChapterWatchView] Video not ready for frame capture', {
         hasVideo: Boolean(video),
         videoWidth: video?.videoWidth,
+        videoHeight: video?.videoHeight,
         readyState: video?.readyState,
       });
       return null;
     }
     try {
       const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Bound dimensions to prevent iOS Safari canvas memory exhaustion & blank frames
+      const maxDim = 1280;
+      let targetWidth = video.videoWidth;
+      let targetHeight = video.videoHeight;
+      if (targetWidth > maxDim || targetHeight > maxDim) {
+        if (targetWidth >= targetHeight) {
+          targetHeight = Math.round((targetHeight * maxDim) / targetWidth);
+          targetWidth = maxDim;
+        } else {
+          targetWidth = Math.round((targetWidth * maxDim) / targetHeight);
+          targetHeight = maxDim;
+        }
+      }
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
       const ctx = canvas.getContext('2d');
       if (!ctx) return null;
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
       let dataUrl: string;
       try {
         dataUrl = canvas.toDataURL('image/jpeg', 0.85);
       } catch (err) {
-        // Still tainted for some reason (e.g. cross-origin without CORS headers
-        // on the HLS segments) — fail gracefully instead of throwing.
+        // Tainted canvas (cross-origin without CORS headers) — fail gracefully
         console.warn('[ChapterWatchView] Canvas tainted, cannot export frame:', err);
         return null;
       }
@@ -901,14 +901,42 @@ export default function ChapterWatchView({
         // Closing — release the snapshot so a fresh one is taken next time.
         setComposerMoment(null);
         setComposerFrameFile(null);
+        setFrameDismissed(false);
         return false;
       }
+      setFrameDismissed(false);
       setComposerMoment(getCurrentVideoMoment());
       setComposerFrameFile(captureVideoFrame());
       return true;
     });
   }, [captureVideoFrame, getCurrentVideoMoment]);
 
+  // If the composer is opened while video is buffering or seeking, retry frame capture as soon as it's ready
+  useEffect(() => {
+    if (!composerOpen || composerFrameFile || frameDismissed) return;
+    const video = hlsVideoRef.current;
+    if (!video) return;
+
+    const tryCapture = () => {
+      if (!composerFrameFile && !frameDismissed) {
+        const frame = captureVideoFrame();
+        if (frame) {
+          setComposerFrameFile(frame);
+        }
+      }
+    };
+
+    const timer = setTimeout(tryCapture, 300);
+    video.addEventListener('loadeddata', tryCapture);
+    video.addEventListener('seeked', tryCapture);
+    video.addEventListener('canplay', tryCapture);
+    return () => {
+      clearTimeout(timer);
+      video.removeEventListener('loadeddata', tryCapture);
+      video.removeEventListener('seeked', tryCapture);
+      video.removeEventListener('canplay', tryCapture);
+    };
+  }, [composerOpen, composerFrameFile, frameDismissed, captureVideoFrame]);
 
   const submitComposer = async () => {
     if (!Number.isFinite(chapterIdForApi)) return;
@@ -919,7 +947,9 @@ export default function ChapterWatchView({
       // moment of the video. Fall back to a fresh capture only if none was
       // taken (e.g. the user opened the composer through some other path).
       const moment = composerMoment ?? getCurrentVideoMoment();
-      const frameFile = composerFrameFile ?? captureVideoFrame();
+      const frameFile = frameDismissed
+        ? null
+        : (composerFrameFile ?? captureVideoFrame());
 
       if (composerMode === 'voice') {
         if (!audioBlob) {
@@ -939,7 +969,7 @@ export default function ChapterWatchView({
         // mirroring how text discussions use it.
         formData.append('content', voiceFile, 'voice-note.webm');
         if (frameFile) {
-          formData.append('image', frameFile);
+          formData.append('image', frameFile, 'screenshot.jpg');
         }
         await api.discussions.create(formData);
         toast.success(t('discussionPosted'));
@@ -959,7 +989,7 @@ export default function ChapterWatchView({
         formData.append('moment', String(moment));
         formData.append('parent_id', '');
         if (frameFile) {
-          formData.append('image', frameFile);
+          formData.append('image', frameFile, 'screenshot.jpg');
         }
         await api.discussions.create(formData);
         toast.success(t('discussionPosted'));
@@ -969,6 +999,7 @@ export default function ChapterWatchView({
       // a fresh one.
       setComposerMoment(null);
       setComposerFrameFile(null);
+      setFrameDismissed(false);
       await refreshChapter();
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : t('discussionPostError');
@@ -1408,15 +1439,6 @@ export default function ChapterWatchView({
                     </button>
                   </div>
 
-                  {/* Hidden file input for manual screenshot/image attachment (especially on iOS) */}
-                  <input
-                    ref={imageFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageFileChange}
-                  />
-
                   {composerMode === 'text' ? (
                     <div className="flex gap-3">
                       <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
@@ -1442,8 +1464,9 @@ export default function ChapterWatchView({
                                 })
                                 : t('screenshotCaptured')}
                             </span>
-                            {framePreviewUrl ? (
+                            {framePreviewUrl && (
                               <div className="relative flex items-center">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={framePreviewUrl}
                                   alt="Screenshot preview"
@@ -1451,22 +1474,16 @@ export default function ChapterWatchView({
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => setComposerFrameFile(null)}
+                                  onClick={() => {
+                                    setComposerFrameFile(null);
+                                    setFrameDismissed(true);
+                                  }}
                                   className="ms-1.5 inline-flex size-5 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white text-xs transition"
-                                  title="Remove image"
+                                  title={locale === 'ar' ? 'إزالة الصورة' : 'Remove image'}
                                 >
                                   &times;
                                 </button>
                               </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => imageFileInputRef.current?.click()}
-                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                              >
-                                <Camera className="size-3 text-[#2D43D1]" />
-                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                              </button>
                             )}
                           </div>
                           <button
@@ -1497,8 +1514,9 @@ export default function ChapterWatchView({
                                   time: formatMomentSeconds(composerMoment) ?? '—',
                                 })}
                               </span>
-                              {framePreviewUrl ? (
+                              {framePreviewUrl && (
                                 <div className="relative flex items-center">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
                                     src={framePreviewUrl}
                                     alt="Screenshot preview"
@@ -1506,22 +1524,16 @@ export default function ChapterWatchView({
                                   />
                                   <button
                                     type="button"
-                                    onClick={() => setComposerFrameFile(null)}
+                                    onClick={() => {
+                                      setComposerFrameFile(null);
+                                      setFrameDismissed(true);
+                                    }}
                                     className="ms-1.5 inline-flex size-5 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white text-xs transition"
-                                    title="Remove image"
+                                    title={locale === 'ar' ? 'إزالة الصورة' : 'Remove image'}
                                   >
                                     &times;
                                   </button>
                                 </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => imageFileInputRef.current?.click()}
-                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                                >
-                                  <Camera className="size-3 text-[#2D43D1]" />
-                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                                </button>
                               )}
                             </div>
                           ) : null}
@@ -1565,8 +1577,9 @@ export default function ChapterWatchView({
                               <Mic className="size-4" />
                               Voice note recorded ({formatRecordingTime(recordingSeconds)})
                             </div>
-                            {framePreviewUrl ? (
+                            {framePreviewUrl && (
                               <div className="relative flex items-center">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={framePreviewUrl}
                                   alt="Screenshot preview"
@@ -1574,22 +1587,16 @@ export default function ChapterWatchView({
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => setComposerFrameFile(null)}
+                                  onClick={() => {
+                                    setComposerFrameFile(null);
+                                    setFrameDismissed(true);
+                                  }}
                                   className="ms-1.5 inline-flex size-5 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white text-xs transition"
-                                  title="Remove image"
+                                  title={locale === 'ar' ? 'إزالة الصورة' : 'Remove image'}
                                 >
                                   &times;
                                 </button>
                               </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => imageFileInputRef.current?.click()}
-                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                              >
-                                <Camera className="size-3 text-[#2D43D1]" />
-                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                              </button>
                             )}
                           </div>
                           {audioUrl && (
