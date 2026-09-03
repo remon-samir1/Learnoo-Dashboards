@@ -1237,11 +1237,6 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             </span>
           </div>
         ) : null}
-        {watchOverlay ? (
-          <div className="pointer-events-none absolute inset-x-0 top-2 z-50 col-start-1 row-start-1 flex justify-end px-2 sm:px-3 [&:fullscreen]:flex">
-            <div className="pointer-events-auto">{watchOverlay}</div>
-          </div>
-        ) : null}
       </div>
     );
 
