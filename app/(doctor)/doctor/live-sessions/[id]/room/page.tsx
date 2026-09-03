@@ -92,54 +92,59 @@ export default function DoctorLiveRoomPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0F172A]">
+    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-[#0F172A]">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-[#1E293B] border-b border-[#334155] shrink-0">
-        <div className="flex items-center gap-4">
-          <Link href="/doctor/live-sessions">
-            <button className="p-2 hover:bg-[#334155] rounded-full transition-colors">
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5 sm:px-6 sm:py-4 bg-[#1E293B] border-b border-[#334155] shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-4 min-w-0 flex-1">
+          <Link href="/doctor/live-sessions" className="shrink-0">
+            <button
+              type="button"
+              className="p-1.5 sm:p-2 hover:bg-[#334155] rounded-full transition-colors"
+              aria-label="Back to live sessions"
+            >
               <ChevronLeft className="w-5 h-5 text-white" />
             </button>
           </Link>
-          <div>
-            <h1 className="text-lg font-bold text-white">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-sm sm:text-base md:text-lg font-bold text-white truncate max-w-[140px] xs:max-w-[200px] sm:max-w-xs md:max-w-md">
               {liveRoom?.attributes?.title || 'Live Session'}
             </h1>
-            <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span>Live Now</span>
+            <div className="flex items-center gap-1.5 text-xs text-[#94A3B8]">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+              <span className="truncate">Live Now</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <button
+            type="button"
             onClick={toggleRecording}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${isRecording
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${isRecording
                 ? 'bg-red-500/10 text-red-500 border-red-500'
                 : 'bg-[#0F172A] text-white border-[#334155] hover:bg-[#334155]'
               }`}
           >
             {isRecording ? (
               <>
-                <Square className="w-4 h-4 fill-current" />
-                <span>إيقاف التسجيل</span>
+                <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current shrink-0" />
+                <span className="whitespace-nowrap">إيقاف التسجيل</span>
               </>
             ) : (
               <>
-                <Video className="w-4 h-4" />
-                <span>تسجيل كفيديو</span>
+                <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="whitespace-nowrap">تسجيل كفيديو</span>
               </>
             )}
           </button>
-          <div className="flex items-center gap-2 text-xs text-[#94A3B8] bg-[#0F172A] px-3 py-1.5 rounded-lg border border-[#334155]">
-            <span>Room ID:</span>
-            <code className="text-[#60A5FA] font-mono">{jitsiRoomName}</code>
+          <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#94A3B8] bg-[#0F172A] px-2.5 py-1.5 rounded-lg border border-[#334155]">
+            <span className="text-[#64748B]">Room:</span>
+            <code className="text-[#60A5FA] font-mono truncate max-w-[120px] md:max-w-none">{jitsiRoomName}</code>
           </div>
         </div>
       </div>
 
       {/* Jitsi Meeting Embed */}
-      <div className="flex-1 overflow-hidden">
+      <div className="min-h-0 flex-1 relative w-full overflow-hidden">
         <JitsiMeeting
           domain={JITSI_DOMAIN}
           roomName={jitsiRoomName}

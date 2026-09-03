@@ -52,7 +52,7 @@ export default async function StudentLiveSessionDetailPage({ params }: PageProps
   const studentName = fromApi.trim() || "Student";
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-7xl px-2.5 py-3 sm:px-6 sm:py-6 lg:px-8">
       <LiveSessionRoomClient room={roomRes.data} studentName={studentName} />
     </div>
   );

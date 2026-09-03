@@ -109,7 +109,7 @@ export default function LiveSessionRoomClient({
       </Link>
 
       {/* Session Header */}
-      <header className="flex flex-col gap-3 rounded-2xl border border-[var(--border-color)] bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-6">
+      <header className="flex flex-col gap-3 rounded-2xl border border-[var(--border-color)] bg-white p-3.5 sm:p-6 shadow-sm sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             {liveView && (
@@ -122,18 +122,18 @@ export default function LiveSessionRoomClient({
               {statusBadge()}
             </span>
           </div>
-          <h1 className="mt-2 text-xl font-bold text-[var(--text-dark)] sm:text-2xl">
+          <h1 className="mt-2 text-lg sm:text-2xl font-bold text-[var(--text-dark)] leading-snug">
             {title}
           </h1>
-          <p className="mt-1 text-sm text-[var(--text-muted)]">{instructor}</p>
-          <p className="mt-2 text-sm text-[var(--text-muted)]">{courseTitle}</p>
+          <p className="mt-1 text-xs sm:text-sm text-[var(--text-muted)]">{instructor}</p>
+          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[var(--text-muted)]">{courseTitle}</p>
           {thumb ? (
-            <div className="mt-3 overflow-hidden rounded-xl border border-[var(--border-color)]">
+            <div className="mt-3 max-w-sm overflow-hidden rounded-xl border border-[var(--border-color)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={thumb}
                 alt=""
-                className="h-28 w-full object-cover sm:h-32"
+                className="h-24 w-full object-cover sm:h-32"
               />
             </div>
           ) : null}
@@ -143,8 +143,8 @@ export default function LiveSessionRoomClient({
             </p>
           ) : null}
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-sm text-[var(--text-muted)]">
-          <Users size={18} className="text-[var(--primary)]" />
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-muted)]">
+          <Users size={16} className="text-[var(--primary)] sm:size-[18px]" />
           <span>
             {typeof attrs?.max_students === "number"
               ? `${attrs.max_students} ${t("maxStudentsLabel")}`
@@ -156,18 +156,18 @@ export default function LiveSessionRoomClient({
       {/* Live — Jitsi embed */}
       {liveView ? (
         <section className="overflow-hidden rounded-2xl border border-[var(--border-color)] shadow-sm">
-          <div className="relative" style={{ height: "min(75vh, 640px)" }}>
+          <div className="relative h-[65vh] min-h-[440px] sm:h-[72vh] sm:min-h-[520px] lg:h-[640px]">
             {watermarkEnabled ? (
-              <div className="absolute top-2 right-2 z-20 flex items-center gap-1.5 bg-blue-50 border border-blue-200 rounded-lg px-2.5 py-1.5">
-                <Droplets className="size-4 text-blue-600" aria-hidden />
-                <span className="text-xs font-semibold text-blue-700">Watermarked</span>
+              <div className="absolute top-2 end-2 z-20 flex items-center gap-1 sm:gap-1.5 bg-blue-50/95 border border-blue-200 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-sm">
+                <Droplets className="size-3.5 sm:size-4 text-blue-600" aria-hidden />
+                <span className="text-[10px] sm:text-xs font-semibold text-blue-700">Watermarked</span>
               </div>
             ) : null}
 
             {/* Whiteboard view-only notification badge */}
             {isWhiteboardOpen ? (
-              <div className="absolute top-2 left-2 z-20 flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/95 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold text-amber-800 shadow-sm">
-                <Eye className="size-4 text-amber-600" aria-hidden />
+              <div className="absolute top-2 start-2 z-20 flex items-center gap-1 sm:gap-1.5 rounded-lg border border-amber-200 bg-amber-50/95 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold text-amber-800 shadow-sm">
+                <Eye className="size-3.5 sm:size-4 text-amber-600" aria-hidden />
                 <span>{isRtl ? "السبورة التفاعلية (للعرض فقط)" : "Whiteboard (View Only)"}</span>
               </div>
             ) : null}
