@@ -773,6 +773,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         setUsingNativeHls(true);
         // Jump directly to the native HLS path below (skip the MSE block).
       } else if (mseSupported) {
+        setUsingNativeHls(false);
         const masterUrl = toProxiedLearnooHlsUrl(apiMasterUrl);
         if (masterUrl !== apiMasterUrl) {
           console.info(`${LOG_PREFIX} same-origin HLS proxy (avoids CORS / XHR status 0)`, {
@@ -1260,7 +1261,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             autoPlay={autoPlay}
             muted={muted}
             poster={poster}
-            {...(isIOSDevice() || usingNativeHls ? {} : { crossOrigin: 'anonymous' as const })}
+            {...(usingNativeHls ? {} : { crossOrigin: 'anonymous' as const })}
           >
             {children}
           </video>
