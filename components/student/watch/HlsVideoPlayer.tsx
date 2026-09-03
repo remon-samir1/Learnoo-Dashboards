@@ -759,14 +759,16 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       const mseSupported = Hls.isSupported();
       const nativeAdvertised = canPlayNativeHls(video) || isLikelyAppleNativeHlsCapable();
 
-      // On iOS, ALWAYS prefer native HLS over MSE/hls.js:
-      // 1. Safari's native HLS player is far more reliable than hls.js MSE on iOS.
-      // 2. crossOrigin="anonymous" (needed for hls.js canvas capture) breaks native HLS entirely.
-      // 3. The same-origin proxy now extracts the auth token from cookies server-side,
-      //    so native HLS doesn't need JavaScript-injected Authorization headers.
-      if (iosDevice && nativeAdvertised) {
+      // iOS playback strategy:
+      // - iOS 17.1+ supports Managed Media Source (MMS), so Hls.isSupported() returns true.
+      //   hls.js via MMS allows crossOrigin="anonymous" → canvas frame-capture works for
+      //   discussion screenshots. If hls.js/MMS fails, attemptMp4Fallback or native HLS
+      //   will catch it via the existing error-recovery chain.
+      // - Older iOS without MMS: Hls.isSupported() is false, skip straight to native HLS.
+      //   crossOrigin is omitted → video plays reliably but no auto screenshots (manual attach).
+      if (iosDevice && nativeAdvertised && !mseSupported) {
         console.info(
-          `${LOG_PREFIX} iOS detected — forcing native HLS (skipping MSE) | nativeAdvertised=${String(nativeAdvertised)} | mseSupported=${String(mseSupported)} | src=${apiMasterUrl}`
+          `${LOG_PREFIX} iOS detected (no MSE/MMS) — forcing native HLS | nativeAdvertised=${String(nativeAdvertised)} | mseSupported=false | src=${apiMasterUrl}`
         );
         setUsingNativeHls(true);
         // Jump directly to the native HLS path below (skip the MSE block).
@@ -880,6 +882,36 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           detachMp4Ui = attachVideoErrorListener('mp4-progressive');
           video.src = iosDevice ? appendTokenToUrl(fb, cookieToken) : toProxiedLearnooHlsUrl(fb, cookieToken);
           logVideoState(video, 'after HLS→MP4 fallback assign');
+          const clearSwitching = () => setShowPlaybackSwitching(false);
+          video.addEventListener('loadeddata', clearSwitching, { once: true });
+          video.addEventListener('error', clearSwitching, { once: true });
+          return true;
+        };
+
+        // iOS-only: if hls.js MSE/MMS fails and no MP4 fallback is available,
+        // fall back to native Safari HLS player (without crossOrigin) to ensure
+        // video playback still works. Screenshots won't work in this mode, but
+        // the user can still manually attach images.
+        let nativeHlsFallbackDone = false;
+        const attemptNativeHlsFallback = (reason: string): boolean => {
+          if (!iosDevice || !nativeAdvertised || nativeHlsFallbackDone) return false;
+          nativeHlsFallbackDone = true;
+          console.warn(`${LOG_PREFIX} iOS hls.js MSE failed; falling back to native HLS (no crossOrigin)`, { reason });
+          setShowPlaybackSwitching(true);
+          setUsingNativeHls(true);
+          detachHlsUiError();
+          try {
+            hlsInstanceRef.current?.destroy();
+          } catch {
+            /* ignore */
+          }
+          hlsInstanceRef.current = null;
+          detachVideoSourceSoft(video);
+          video.removeAttribute('crossorigin');
+          const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl, cookieToken);
+          video.src = nativeUrl;
+          video.load();
+          logVideoState(video, 'after hls.js→native HLS fallback');
           const clearSwitching = () => setShowPlaybackSwitching(false);
           video.addEventListener('loadeddata', clearSwitching, { once: true });
           video.addEventListener('error', clearSwitching, { once: true });
@@ -1059,6 +1091,9 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             if (attemptMp4Fallback(`network_fatal_${String(data.details)}_http_${String(http ?? 'na')}`)) {
               return;
             }
+            if (attemptNativeHlsFallback(`network_fatal_${String(data.details)}_http_${String(http ?? 'na')}`)) {
+              return;
+            }
 
             notifyFatal(
               data.error?.message ?? 'Fatal network error after recovery attempts (check 401/CORS/MIME in Network tab).',
@@ -1079,6 +1114,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
               return;
             }
             if (attemptMp4Fallback(`media_error_${String(data.details)}`)) return;
+            if (attemptNativeHlsFallback(`media_error_${String(data.details)}`)) return;
             notifyFatal(data.error?.message ?? 'Fatal media error after recovery attempts', data.details);
             hlsInstanceRef.current?.destroy();
             hlsInstanceRef.current = null;
@@ -1086,6 +1122,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           }
 
           if (attemptMp4Fallback(`fatal_other_${String(data.type)}_${String(data.details)}`)) return;
+          if (attemptNativeHlsFallback(`fatal_other_${String(data.type)}_${String(data.details)}`)) return;
 
           notifyFatal(data.error?.message ?? `Fatal HLS error (${data.type})`, data.details);
           hlsInstanceRef.current?.destroy();
@@ -1224,7 +1261,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             autoPlay={autoPlay}
             muted={muted}
             poster={poster}
-            {...(isIOSDevice() || usingNativeHls ? {} : { crossOrigin: 'anonymous' as const })}
+            {...(usingNativeHls ? {} : { crossOrigin: 'anonymous' as const })}
           >
             {children}
           </video>
