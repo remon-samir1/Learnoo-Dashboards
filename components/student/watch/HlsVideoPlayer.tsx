@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import Hls, { type ErrorData, ErrorDetails, Events, type HlsConfig } from 'hls.js';
-import { toProxiedLearnooHlsUrl, appendTokenToUrl } from '@/src/lib/learnoo-hls-proxy';
+import { toProxiedLearnooHlsUrl } from '@/src/lib/learnoo-hls-proxy';
 import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
 import { isHlsStreamUrl, isMp4StreamUrl, isIOSDevice } from '@/src/lib/video-stream-detect';
 import type { WatermarkContentType } from '@/src/types/watermark-config';
@@ -613,7 +613,6 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       setQualityOptions(buildMergedQualityOptions([]));
       setSelectedQuality('auto');
       setAutoQualityEnabled(true);
-      const cookieToken = Cookies.get('token');
       const iosDevice = isIOSDevice();
       let progressiveFallbackDone = false;
 
@@ -639,10 +638,10 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             }
 
             const currentSrc = video.getAttribute('src') || video.src;
-            const directOriginPrimary = appendTokenToUrl(trimmedSrc, cookieToken);
-            const proxiedPrimary = toProxiedLearnooHlsUrl(trimmedSrc, cookieToken);
+            const directOriginPrimary = trimmedSrc;
+            const proxiedPrimary = toProxiedLearnooHlsUrl(trimmedSrc);
 
-            // Step A: If we started with proxy and it errored on iOS/Safari, switch to direct origin URL with token
+            // Step A: If we started with proxy and it errored on iOS/Safari, switch to direct origin URL
             if (!progressiveFallbackDone && currentSrc === proxiedPrimary && directOriginPrimary !== currentSrc) {
               console.warn(`${LOG_PREFIX} proxied mp4 failed; switching to direct origin URL`, { directOriginPrimary });
               setShowPlaybackSwitching(true);
@@ -655,7 +654,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
               return;
             }
 
-            // Step B: If we started with direct origin and it errored, switch to proxied URL with token
+            // Step B: If we started with direct origin and it errored, switch to proxied URL
             if (!progressiveFallbackDone && currentSrc === directOriginPrimary && proxiedPrimary !== currentSrc) {
               console.warn(`${LOG_PREFIX} direct origin mp4 failed; switching to proxied URL`, { proxiedPrimary });
               setShowPlaybackSwitching(true);
@@ -672,8 +671,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             if (mp4Fb && mp4Fb !== trimmedSrc && !progressiveFallbackDone) {
               progressiveFallbackDone = true;
               const fallbackUrl = iosDevice
-                ? appendTokenToUrl(mp4Fb, cookieToken)
-                : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+                ? mp4Fb
+                : toProxiedLearnooHlsUrl(mp4Fb);
               console.warn(`${LOG_PREFIX} mp4 progressive error; falling back to mp4Fb`, { fallbackUrl });
               setShowPlaybackSwitching(true);
               detachVideoSourceSoft(video);
@@ -718,8 +717,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         // On iOS Safari, AVPlayer connects directly to origin server for byte-ranges;
         // on desktop/Android MSE, same-origin proxy is used.
         const progressiveSrc = iosDevice
-          ? appendTokenToUrl(trimmedSrc, cookieToken)
-          : toProxiedLearnooHlsUrl(trimmedSrc, cookieToken);
+          ? trimmedSrc
+          : toProxiedLearnooHlsUrl(trimmedSrc);
         video.src = progressiveSrc;
         logVideoState(video, 'mp4 primary assign');
         return () => {
@@ -739,8 +738,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
         const candidateSrc = iosDevice
-          ? appendTokenToUrl(candidateUrl, cookieToken)
-          : toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
+          ? candidateUrl
+          : toProxiedLearnooHlsUrl(candidateUrl);
         if (!iosDevice && !usingNativeHls) {
           video.crossOrigin = 'anonymous';
         } else {
@@ -880,7 +879,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           hlsInstanceRef.current = null;
           detachVideoSourceSoft(video);
           detachMp4Ui = attachVideoErrorListener('mp4-progressive');
-          video.src = iosDevice ? appendTokenToUrl(fb, cookieToken) : toProxiedLearnooHlsUrl(fb, cookieToken);
+          video.src = iosDevice ? fb : toProxiedLearnooHlsUrl(fb);
           logVideoState(video, 'after HLS→MP4 fallback assign');
           const clearSwitching = () => setShowPlaybackSwitching(false);
           video.addEventListener('loadeddata', clearSwitching, { once: true });
@@ -907,7 +906,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           hlsInstanceRef.current = null;
           detachVideoSourceSoft(video);
           video.removeAttribute('crossorigin');
-          const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl, cookieToken);
+          const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl);
           video.src = nativeUrl;
           video.load();
           logVideoState(video, 'after hls.js→native HLS fallback');
@@ -1169,7 +1168,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             setShowPlaybackSwitching(true);
             detachVideoSourceSoft(video);
             detachMp4Native = attachVideoErrorListener('mp4-progressive');
-            const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+            const fbSrc = iosDevice ? mp4Fb : toProxiedLearnooHlsUrl(mp4Fb);
             if (!iosDevice) {
               video.crossOrigin = 'anonymous';
             } else {
@@ -1185,9 +1184,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           notifyFatal(videoErrorMessage(code));
         };
 
-        const cookieToken = Cookies.get('token');
         video.addEventListener('error', onNativeError);
-        const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl, cookieToken);
+        const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl);
         console.info(`${LOG_PREFIX} native HLS: setting video.src`, { nativeUrl, apiMasterUrl });
         detachVideoSourceSoft(video);
         video.removeAttribute('crossorigin');
@@ -1214,7 +1212,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+        const fbSrc = iosDevice ? mp4Fb : toProxiedLearnooHlsUrl(mp4Fb);
         if (!iosDevice) {
           video.crossOrigin = 'anonymous';
         } else {
