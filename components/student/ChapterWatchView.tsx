@@ -709,7 +709,7 @@ export default function ChapterWatchView({
       doc.msFullscreenElement;
     if (isFs) {
       if (typeof document.exitFullscreen === 'function') {
-        void document.exitFullscreen().catch(() => {});
+        void document.exitFullscreen().catch(() => { });
       } else if (typeof doc.webkitExitFullscreen === 'function') {
         try {
           doc.webkitExitFullscreen();
@@ -727,7 +727,7 @@ export default function ChapterWatchView({
         try {
           const p = req();
           if (p != null && typeof (p as Promise<void>).catch === 'function') {
-            void (p as Promise<void>).catch(() => {});
+            void (p as Promise<void>).catch(() => { });
           }
         } catch {
           /* ignore */
@@ -831,7 +831,11 @@ export default function ChapterWatchView({
   const captureVideoFrame = useCallback((): File | null => {
     const video = hlsVideoRef.current;
     if (!video || video.videoWidth === 0 || video.readyState < 2) {
-      console.debug('[ChapterWatchView] Video not ready for frame capture');
+      console.debug('[ChapterWatchView] Video not ready for frame capture', {
+        hasVideo: Boolean(video),
+        videoWidth: video?.videoWidth,
+        readyState: video?.readyState,
+      });
       return null;
     }
     try {
@@ -847,7 +851,7 @@ export default function ChapterWatchView({
       } catch (err) {
         // Still tainted for some reason (e.g. cross-origin without CORS headers
         // on the HLS segments) — fail gracefully instead of throwing.
-        console.debug('[ChapterWatchView] Canvas tainted, cannot export frame:', err);
+        console.warn('[ChapterWatchView] Canvas tainted, cannot export frame:', err);
         return null;
       }
       const arr = dataUrl.split(',');
@@ -856,9 +860,17 @@ export default function ChapterWatchView({
       const bstr = atob(arr[1]);
       const u8arr = new Uint8Array(bstr.length);
       for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
-      return new File([u8arr], 'screenshot.jpg', { type: mime });
+      try {
+        return new File([u8arr], 'screenshot.jpg', { type: mime });
+      } catch {
+        const blob = new Blob([u8arr], { type: mime });
+        return Object.assign(blob, {
+          name: 'screenshot.jpg',
+          lastModified: Date.now(),
+        }) as unknown as File;
+      }
     } catch (err) {
-      console.debug('[ChapterWatchView] Frame capture failed:', err);
+      console.warn('[ChapterWatchView] Frame capture failed:', err);
       return null;
     }
   }, []);

@@ -738,9 +738,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        const candidateSrc = iosDevice
-          ? appendTokenToUrl(candidateUrl, cookieToken)
-          : toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
+        const candidateSrc = toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
+        video.crossOrigin = 'anonymous';
         video.src = candidateSrc;
         logVideoState(video, 'mp4-fallback assign');
         return () => {
@@ -1128,7 +1127,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             setShowPlaybackSwitching(true);
             detachVideoSourceSoft(video);
             detachMp4Native = attachVideoErrorListener('mp4-progressive');
-            video.src = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+            video.crossOrigin = 'anonymous';
+            video.src = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
             video.load();
             const clearSwitching = () => setShowPlaybackSwitching(false);
             video.addEventListener('loadeddata', clearSwitching, { once: true });
@@ -1143,6 +1143,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl, cookieToken);
         console.info(`${LOG_PREFIX} native HLS: setting video.src`, { nativeUrl, apiMasterUrl });
         detachVideoSourceSoft(video);
+        video.crossOrigin = 'anonymous';
         video.src = nativeUrl;
         // On iOS Safari, explicitly calling load() after setting src is required
         // for reliable playback start — without it the player can stall silently.
@@ -1166,7 +1167,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        video.src = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+        video.crossOrigin = 'anonymous';
+        video.src = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
         logVideoState(video, 'mp4 assign (no HLS support in browser)');
         return () => {
           detach();
@@ -1206,7 +1208,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             autoPlay={autoPlay}
             muted={muted}
             poster={poster}
-            {...(isIOSDevice() || usingNativeHls ? {} : { crossOrigin: 'anonymous' as const })}
+            crossOrigin="anonymous"
           >
             {children}
           </video>

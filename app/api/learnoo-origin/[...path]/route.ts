@@ -171,6 +171,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+        'Access-Control-Expose-Headers': 'Content-Range, Content-Length, Accept-Ranges, *',
       },
     });
     const cc = upstream.headers.get('cache-control');
@@ -185,27 +186,33 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path: strin
     'accept-ranges',
     'content-range',
     'cache-control',
-    'access-control-allow-origin',
-    'access-control-allow-headers',
-    'access-control-allow-methods',
   ] as const) {
     const v = upstream.headers.get(name);
     if (v) outHeaders.set(name, v);
   }
-  if (!outHeaders.has('access-control-allow-origin')) {
-    outHeaders.set('Access-Control-Allow-Origin', '*');
-  }
+  outHeaders.set('Access-Control-Allow-Origin', '*');
+  outHeaders.set('Access-Control-Allow-Headers', '*');
+  outHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  outHeaders.set('Access-Control-Expose-Headers', 'Content-Range, Content-Length, Accept-Ranges, *');
   return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
 }
 
+export async function HEAD(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
+  return GET(req, ctx);
+}
+
 /** CORS preflight — iOS Safari may send OPTIONS before HLS sub-resource requests. */
-export async function OPTIONS() {
+export async function OPTIONS(req: NextRequest) {
+  const reqHeaders =
+    req.headers.get('access-control-request-headers') ||
+    'Authorization, Range, Content-Type, Origin, X-Playback-Session-Id';
   return new NextResponse(null, {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Range, Content-Type',
+      'Access-Control-Allow-Headers': reqHeaders,
+      'Access-Control-Expose-Headers': 'Content-Range, Content-Length, Accept-Ranges, *',
       'Access-Control-Max-Age': '86400',
     },
   });
