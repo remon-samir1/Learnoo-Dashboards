@@ -400,6 +400,20 @@ export default function ChapterWatchView({
     }
   }, [composerFrameFile]);
 
+  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImageFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      setComposerFrameFile(file);
+    }
+    e.target.value = '';
+  }, []);
+
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
   const chapterIdForApi = Number.isFinite(chapterNumericId) ? chapterNumericId : NaN;
@@ -1394,6 +1408,15 @@ export default function ChapterWatchView({
                     </button>
                   </div>
 
+                  {/* Hidden file input for manual screenshot/image attachment (especially on iOS) */}
+                  <input
+                    ref={imageFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageFileChange}
+                  />
+
                   {composerMode === 'text' ? (
                     <div className="flex gap-3">
                       <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
@@ -1410,7 +1433,7 @@ export default function ChapterWatchView({
                           className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950/90 px-4 py-2.5 text-base text-white placeholder:text-slate-500 focus:border-[#2D43D1] focus:outline-none focus:ring-1 focus:ring-[#2D43D1] disabled:opacity-60 sm:text-sm"
                         />
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                             <span className="flex items-center gap-1 text-[11px] text-slate-500">
                               <Camera className="size-3" />
                               {composerMoment != null
@@ -1419,8 +1442,31 @@ export default function ChapterWatchView({
                                 })
                                 : t('screenshotCaptured')}
                             </span>
-                            {framePreviewUrl && (
-                              <img src={framePreviewUrl} alt="Screenshot preview" className="h-[48px] w-auto rounded border border-slate-700 shadow-sm opacity-80" />
+                            {framePreviewUrl ? (
+                              <div className="relative flex items-center">
+                                <img
+                                  src={framePreviewUrl}
+                                  alt="Screenshot preview"
+                                  className="h-[44px] w-auto rounded border border-slate-700 shadow-sm opacity-90 object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setComposerFrameFile(null)}
+                                  className="ms-1.5 inline-flex size-5 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white text-xs transition"
+                                  title="Remove image"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => imageFileInputRef.current?.click()}
+                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                              >
+                                <Camera className="size-3 text-[#2D43D1]" />
+                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                              </button>
                             )}
                           </div>
                           <button
@@ -1444,15 +1490,38 @@ export default function ChapterWatchView({
                       {!audioBlob ? (
                         <div className="flex flex-col items-center gap-4 py-4">
                           {composerMoment != null ? (
-                            <div className="flex items-center gap-3 self-start">
+                            <div className="flex flex-wrap items-center gap-2 self-start">
                               <span className="flex items-center gap-1 text-[11px] text-slate-500">
                                 <Camera className="size-3" />
                                 {t('composerMomentLabel', {
                                   time: formatMomentSeconds(composerMoment) ?? '—',
                                 })}
                               </span>
-                              {framePreviewUrl && (
-                                <img src={framePreviewUrl} alt="Screenshot preview" className="h-[48px] w-auto rounded border border-slate-700 shadow-sm opacity-80" />
+                              {framePreviewUrl ? (
+                                <div className="relative flex items-center">
+                                  <img
+                                    src={framePreviewUrl}
+                                    alt="Screenshot preview"
+                                    className="h-[44px] w-auto rounded border border-slate-700 shadow-sm opacity-90 object-cover"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setComposerFrameFile(null)}
+                                    className="ms-1.5 inline-flex size-5 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white text-xs transition"
+                                    title="Remove image"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => imageFileInputRef.current?.click()}
+                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                >
+                                  <Camera className="size-3 text-[#2D43D1]" />
+                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                                </button>
                               )}
                             </div>
                           ) : null}
@@ -1496,8 +1565,31 @@ export default function ChapterWatchView({
                               <Mic className="size-4" />
                               Voice note recorded ({formatRecordingTime(recordingSeconds)})
                             </div>
-                            {framePreviewUrl && (
-                              <img src={framePreviewUrl} alt="Screenshot preview" className="h-[48px] w-auto rounded border border-slate-700 shadow-sm opacity-80" />
+                            {framePreviewUrl ? (
+                              <div className="relative flex items-center">
+                                <img
+                                  src={framePreviewUrl}
+                                  alt="Screenshot preview"
+                                  className="h-[44px] w-auto rounded border border-slate-700 shadow-sm opacity-90 object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setComposerFrameFile(null)}
+                                  className="ms-1.5 inline-flex size-5 items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-red-600 hover:text-white text-xs transition"
+                                  title="Remove image"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => imageFileInputRef.current?.click()}
+                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                              >
+                                <Camera className="size-3 text-[#2D43D1]" />
+                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                              </button>
                             )}
                           </div>
                           {audioUrl && (
