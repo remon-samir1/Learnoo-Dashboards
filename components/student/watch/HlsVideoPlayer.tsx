@@ -647,6 +647,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
               console.warn(`${LOG_PREFIX} proxied mp4 failed; switching to direct origin URL`, { directOriginPrimary });
               setShowPlaybackSwitching(true);
               detachVideoSourceSoft(video);
+              setUsingNativeHls(false);
               video.src = directOriginPrimary;
               video.load();
               const clearSwitching = () => setShowPlaybackSwitching(false);
@@ -660,6 +661,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
               console.warn(`${LOG_PREFIX} direct origin mp4 failed; switching to proxied URL`, { proxiedPrimary });
               setShowPlaybackSwitching(true);
               detachVideoSourceSoft(video);
+              setUsingNativeHls(false);
               video.src = proxiedPrimary;
               video.load();
               const clearSwitching = () => setShowPlaybackSwitching(false);
@@ -671,12 +673,11 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             // Step C: Fall back to mp4Fb if available and distinct from trimmedSrc
             if (mp4Fb && mp4Fb !== trimmedSrc && !progressiveFallbackDone) {
               progressiveFallbackDone = true;
-              const fallbackUrl = iosDevice
-                ? appendTokenToUrl(mp4Fb, cookieToken)
-                : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+              const fallbackUrl = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
               console.warn(`${LOG_PREFIX} mp4 progressive error; falling back to mp4Fb`, { fallbackUrl });
               setShowPlaybackSwitching(true);
               detachVideoSourceSoft(video);
+              setUsingNativeHls(false);
               video.src = fallbackUrl;
               video.load();
               const clearSwitching = () => setShowPlaybackSwitching(false);
@@ -715,11 +716,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        // On iOS Safari, AVPlayer connects directly to origin server for byte-ranges;
-        // on desktop/Android MSE, same-origin proxy is used.
-        const progressiveSrc = iosDevice
-          ? appendTokenToUrl(trimmedSrc, cookieToken)
-          : toProxiedLearnooHlsUrl(trimmedSrc, cookieToken);
+        setUsingNativeHls(false);
+        const progressiveSrc = toProxiedLearnooHlsUrl(trimmedSrc, cookieToken);
         video.src = progressiveSrc;
         logVideoState(video, 'mp4 primary assign');
         return () => {
@@ -738,14 +736,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        const candidateSrc = iosDevice
-          ? appendTokenToUrl(candidateUrl, cookieToken)
-          : toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
-        if (!iosDevice && !usingNativeHls) {
-          video.crossOrigin = 'anonymous';
-        } else {
-          video.removeAttribute('crossorigin');
-        }
+        setUsingNativeHls(false);
+        const candidateSrc = toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
         video.src = candidateSrc;
         logVideoState(video, 'mp4-fallback assign');
         return () => {
@@ -865,6 +857,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           const fb = mp4Fb;
           if (!fb || !isMp4StreamUrl(fb)) return false;
           hlsToMp4Done = true;
+          setUsingNativeHls(false);
           console.info(`${LOG_PREFIX} hybrid`, {
             playbackMode: 'mp4',
             fallbackTriggered: true,
@@ -881,7 +874,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           hlsInstanceRef.current = null;
           detachVideoSourceSoft(video);
           detachMp4Ui = attachVideoErrorListener('mp4-progressive');
-          video.src = iosDevice ? appendTokenToUrl(fb, cookieToken) : toProxiedLearnooHlsUrl(fb, cookieToken);
+          video.src = toProxiedLearnooHlsUrl(fb, cookieToken);
           logVideoState(video, 'after HLS→MP4 fallback assign');
           const clearSwitching = () => setShowPlaybackSwitching(false);
           video.addEventListener('loadeddata', clearSwitching, { once: true });
@@ -1168,14 +1161,10 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           if (mp4Fb && (isMp4StreamUrl(mp4Fb) || mp4Fb !== apiMasterUrl)) {
             console.warn(`${LOG_PREFIX} native HLS failed; falling back to MP4 progressive`, { mp4Fb });
             setShowPlaybackSwitching(true);
+            setUsingNativeHls(false);
             detachVideoSourceSoft(video);
             detachMp4Native = attachVideoErrorListener('mp4-progressive');
-            const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
-            if (!iosDevice) {
-              video.crossOrigin = 'anonymous';
-            } else {
-              video.removeAttribute('crossorigin');
-            }
+            const fbSrc = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
             video.src = fbSrc;
             video.load();
             const clearSwitching = () => setShowPlaybackSwitching(false);
@@ -1215,12 +1204,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         });
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
-        const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
-        if (!iosDevice) {
-          video.crossOrigin = 'anonymous';
-        } else {
-          video.removeAttribute('crossorigin');
-        }
+        setUsingNativeHls(false);
+        const fbSrc = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
         video.src = fbSrc;
         logVideoState(video, 'mp4 assign (no HLS support in browser)');
         return () => {
