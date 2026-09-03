@@ -673,7 +673,9 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             // Step C: Fall back to mp4Fb if available and distinct from trimmedSrc
             if (mp4Fb && mp4Fb !== trimmedSrc && !progressiveFallbackDone) {
               progressiveFallbackDone = true;
-              const fallbackUrl = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+              const fallbackUrl = iosDevice
+                ? appendTokenToUrl(mp4Fb, cookieToken)
+                : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
               console.warn(`${LOG_PREFIX} mp4 progressive error; falling back to mp4Fb`, { fallbackUrl });
               setShowPlaybackSwitching(true);
               detachVideoSourceSoft(video);
@@ -717,7 +719,9 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
         setUsingNativeHls(false);
-        const progressiveSrc = toProxiedLearnooHlsUrl(trimmedSrc, cookieToken);
+        const progressiveSrc = iosDevice
+          ? appendTokenToUrl(trimmedSrc, cookieToken)
+          : toProxiedLearnooHlsUrl(trimmedSrc, cookieToken);
         video.src = progressiveSrc;
         logVideoState(video, 'mp4 primary assign');
         return () => {
@@ -737,7 +741,9 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
         setUsingNativeHls(false);
-        const candidateSrc = toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
+        const candidateSrc = iosDevice
+          ? appendTokenToUrl(candidateUrl, cookieToken)
+          : toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
         video.src = candidateSrc;
         logVideoState(video, 'mp4-fallback assign');
         return () => {
@@ -874,7 +880,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           hlsInstanceRef.current = null;
           detachVideoSourceSoft(video);
           detachMp4Ui = attachVideoErrorListener('mp4-progressive');
-          video.src = toProxiedLearnooHlsUrl(fb, cookieToken);
+          video.src = iosDevice ? appendTokenToUrl(fb, cookieToken) : toProxiedLearnooHlsUrl(fb, cookieToken);
           logVideoState(video, 'after HLS→MP4 fallback assign');
           const clearSwitching = () => setShowPlaybackSwitching(false);
           video.addEventListener('loadeddata', clearSwitching, { once: true });
@@ -1164,7 +1170,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             setUsingNativeHls(false);
             detachVideoSourceSoft(video);
             detachMp4Native = attachVideoErrorListener('mp4-progressive');
-            const fbSrc = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+            const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
             video.src = fbSrc;
             video.load();
             const clearSwitching = () => setShowPlaybackSwitching(false);
@@ -1205,7 +1211,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
         setUsingNativeHls(false);
-        const fbSrc = toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
+        const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
         video.src = fbSrc;
         logVideoState(video, 'mp4 assign (no HLS support in browser)');
         return () => {
