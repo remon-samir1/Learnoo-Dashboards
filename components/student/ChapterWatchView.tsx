@@ -401,6 +401,21 @@ export default function ChapterWatchView({
     }
   }, [composerFrameFile]);
 
+  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleImageFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      setComposerFrameFile(file);
+      setFrameDismissed(false);
+    }
+    e.target.value = '';
+  }, []);
+
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
   const chapterIdForApi = Number.isFinite(chapterNumericId) ? chapterNumericId : NaN;
@@ -831,7 +846,7 @@ export default function ChapterWatchView({
   // Capture a single frame directly from the video element
   const captureVideoFrame = useCallback((): File | null => {
     const video = hlsVideoRef.current;
-    if (!video || video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 2) {
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 1) {
       console.debug('[ChapterWatchView] Video not ready for frame capture', {
         hasVideo: Boolean(video),
         videoWidth: video?.videoWidth,
@@ -1439,6 +1454,15 @@ export default function ChapterWatchView({
                     </button>
                   </div>
 
+                  {/* Hidden file input for fallback if browser blocks auto-capture */}
+                  <input
+                    ref={imageFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageFileChange}
+                  />
+
                   {composerMode === 'text' ? (
                     <div className="flex gap-3">
                       <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
@@ -1464,7 +1488,7 @@ export default function ChapterWatchView({
                                 })
                                 : t('screenshotCaptured')}
                             </span>
-                            {framePreviewUrl && (
+                            {framePreviewUrl ? (
                               <div className="relative flex items-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1484,7 +1508,16 @@ export default function ChapterWatchView({
                                   &times;
                                 </button>
                               </div>
-                            )}
+                            ) : !frameDismissed ? (
+                              <button
+                                type="button"
+                                onClick={() => imageFileInputRef.current?.click()}
+                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                              >
+                                <Camera className="size-3 text-[#2D43D1]" />
+                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                              </button>
+                            ) : null}
                           </div>
                           <button
                             type="button"
@@ -1514,7 +1547,7 @@ export default function ChapterWatchView({
                                   time: formatMomentSeconds(composerMoment) ?? '—',
                                 })}
                               </span>
-                              {framePreviewUrl && (
+                              {framePreviewUrl ? (
                                 <div className="relative flex items-center">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
@@ -1534,7 +1567,16 @@ export default function ChapterWatchView({
                                     &times;
                                   </button>
                                 </div>
-                              )}
+                              ) : !frameDismissed ? (
+                                <button
+                                  type="button"
+                                  onClick={() => imageFileInputRef.current?.click()}
+                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                >
+                                  <Camera className="size-3 text-[#2D43D1]" />
+                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                                </button>
+                              ) : null}
                             </div>
                           ) : null}
                           {isRecording ? (
@@ -1577,7 +1619,7 @@ export default function ChapterWatchView({
                               <Mic className="size-4" />
                               Voice note recorded ({formatRecordingTime(recordingSeconds)})
                             </div>
-                            {framePreviewUrl && (
+                            {framePreviewUrl ? (
                               <div className="relative flex items-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1597,7 +1639,16 @@ export default function ChapterWatchView({
                                   &times;
                                 </button>
                               </div>
-                            )}
+                            ) : !frameDismissed ? (
+                              <button
+                                type="button"
+                                onClick={() => imageFileInputRef.current?.click()}
+                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                              >
+                                <Camera className="size-3 text-[#2D43D1]" />
+                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                              </button>
+                            ) : null}
                           </div>
                           {audioUrl && (
                             <audio controls src={audioUrl} className="w-full rounded-lg [&::-webkit-media-controls-panel]:bg-slate-900 [&::-webkit-media-controls-current-time-display]:text-white [&::-webkit-media-controls-time-remaining-display]:text-white" />

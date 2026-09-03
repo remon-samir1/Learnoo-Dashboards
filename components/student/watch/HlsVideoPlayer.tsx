@@ -741,7 +741,11 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const candidateSrc = iosDevice
           ? appendTokenToUrl(candidateUrl, cookieToken)
           : toProxiedLearnooHlsUrl(candidateUrl, cookieToken);
-        video.crossOrigin = 'anonymous';
+        if (!iosDevice && !usingNativeHls) {
+          video.crossOrigin = 'anonymous';
+        } else {
+          video.removeAttribute('crossorigin');
+        }
         video.src = candidateSrc;
         logVideoState(video, 'mp4-fallback assign');
         return () => {
@@ -761,8 +765,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       //   discussion screenshots. If hls.js/MMS fails, attemptMp4Fallback or native HLS
       //   will catch it via the existing error-recovery chain.
       // - Older iOS without MMS: Hls.isSupported() is false, skip straight to native HLS.
-      //   crossOrigin="anonymous" is kept because the same-origin proxy serves all HLS
-      //   resources with CORS headers, so canvas screenshots still work.
+      //   crossOrigin is omitted → video plays reliably on iOS Safari.
       if (iosDevice && nativeAdvertised && !mseSupported) {
         console.info(
           `${LOG_PREFIX} iOS detected (no MSE/MMS) — forcing native HLS | nativeAdvertised=${String(nativeAdvertised)} | mseSupported=false | src=${apiMasterUrl}`
@@ -886,8 +889,8 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         };
 
         // iOS-only: if hls.js MSE/MMS fails and no MP4 fallback is available,
-        // fall back to native Safari HLS player. crossOrigin="anonymous" is kept
-        // because the same-origin proxy handles CORS, so screenshots still work.
+        // fall back to native Safari HLS player (without crossOrigin) to ensure
+        // video playback still works reliably on iOS.
         let nativeHlsFallbackDone = false;
         const attemptNativeHlsFallback = (reason: string): boolean => {
           if (!iosDevice || !nativeAdvertised || nativeHlsFallbackDone) return false;
@@ -903,9 +906,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           }
           hlsInstanceRef.current = null;
           detachVideoSourceSoft(video);
-          // Keep crossOrigin="anonymous" — the same-origin proxy serves CORS headers,
-          // so canvas frame-capture (discussion screenshots) works even with native HLS.
-          video.crossOrigin = 'anonymous';
+          video.removeAttribute('crossorigin');
           const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl, cookieToken);
           video.src = nativeUrl;
           video.load();
@@ -1169,7 +1170,11 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             detachVideoSourceSoft(video);
             detachMp4Native = attachVideoErrorListener('mp4-progressive');
             const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
-            video.crossOrigin = 'anonymous';
+            if (!iosDevice) {
+              video.crossOrigin = 'anonymous';
+            } else {
+              video.removeAttribute('crossorigin');
+            }
             video.src = fbSrc;
             video.load();
             const clearSwitching = () => setShowPlaybackSwitching(false);
@@ -1185,9 +1190,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const nativeUrl = toProxiedLearnooHlsUrl(apiMasterUrl, cookieToken);
         console.info(`${LOG_PREFIX} native HLS: setting video.src`, { nativeUrl, apiMasterUrl });
         detachVideoSourceSoft(video);
-        // Keep crossOrigin="anonymous" — the same-origin proxy serves all HLS resources
-        // with CORS headers, so canvas frame-capture (discussion screenshots) still works.
-        video.crossOrigin = 'anonymous';
+        video.removeAttribute('crossorigin');
         video.src = nativeUrl;
         // On iOS Safari, explicitly calling load() after setting src is required
         // for reliable playback start — without it the player can stall silently.
@@ -1212,7 +1215,11 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         const detach = attachVideoErrorListener('mp4-progressive');
         detachVideoSourceSoft(video);
         const fbSrc = iosDevice ? appendTokenToUrl(mp4Fb, cookieToken) : toProxiedLearnooHlsUrl(mp4Fb, cookieToken);
-        video.crossOrigin = 'anonymous';
+        if (!iosDevice) {
+          video.crossOrigin = 'anonymous';
+        } else {
+          video.removeAttribute('crossorigin');
+        }
         video.src = fbSrc;
         logVideoState(video, 'mp4 assign (no HLS support in browser)');
         return () => {
@@ -1253,7 +1260,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             autoPlay={autoPlay}
             muted={muted}
             poster={poster}
-            crossOrigin="anonymous"
+            {...(isIOSDevice() || usingNativeHls ? {} : { crossOrigin: 'anonymous' as const })}
           >
             {children}
           </video>
