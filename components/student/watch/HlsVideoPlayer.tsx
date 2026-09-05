@@ -400,6 +400,8 @@ export type HlsVideoPlayerProps = {
   theaterMode?: boolean;
   /** Toggle theater mode. */
   onToggleTheater?: () => void;
+  /** Container ref for Level 2 DOM screenshot capture (targets the video stage). */
+  containerRef?: React.Ref<HTMLDivElement>;
 };
 
 export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
@@ -434,6 +436,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
       chapterInfoTitle,
       theaterMode,
       onToggleTheater,
+      containerRef,
     },
     forwardedRef
   ) {
@@ -483,6 +486,17 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         }
       },
       [forwardedRef]
+    );
+
+    const setContainerRef = useCallback(
+      (node: HTMLDivElement | null) => {
+        if (typeof containerRef === 'function') {
+          containerRef(node);
+        } else if (containerRef && 'current' in containerRef) {
+          (containerRef as MutableRefObject<HTMLDivElement | null>).current = node;
+        }
+      },
+      [containerRef]
     );
 
     const nativeVideoControls = !showCustomControls && controls;
@@ -1319,6 +1333,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         ].join(' ')}
       >
         <div
+          ref={setContainerRef}
           className={`group relative w-full shrink-0 overflow-visible bg-black ${viewportClass}`}
           onMouseMove={revealControls}
           onMouseEnter={revealControls}

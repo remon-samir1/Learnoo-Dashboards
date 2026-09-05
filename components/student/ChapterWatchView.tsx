@@ -23,9 +23,17 @@ import {
   Square,
   Trash2,
   Camera,
+  Smartphone,
+  ImageIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { isIOSDevice } from '@/src/lib/video-stream-detect';
+import {
+  captureScreenshotWithFallback,
+  captureDirectVideoFrame,
+  validateScreenshot,
+  type CaptureFallbackLevel,
+} from '@/src/lib/discussion-screenshot';
 import { learnooChapterHlsPlaylistUrl } from '@/src/lib/chapter-playback-urls';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import type { Chapter, Quiz } from '@/src/types';
@@ -373,6 +381,8 @@ export default function ChapterWatchView({
 
   const composerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const hlsVideoRef = useRef<HTMLVideoElement | null>(null);
+  /** Ref to the <div> wrapping <HlsVideoPlayer> — used as the Level 2 capture target. */
+  const videoContainerRef = useRef<HTMLDivElement | null>(null);
   const pdfPanelRef = useRef<HTMLDivElement | null>(null);
   const [currentVideoMoment, setCurrentVideoMoment] = useState<number>(0);
   /**
@@ -389,6 +399,10 @@ export default function ChapterWatchView({
    */
   const [composerFrameFile, setComposerFrameFile] = useState<File | null>(null);
   const [frameDismissed, setFrameDismissed] = useState(false);
+  /** Which fallback level produced the current screenshot (null = no attempt yet). */
+  const [captureFallbackLevel, setCaptureFallbackLevel] = useState<CaptureFallbackLevel>(null);
+  /** True while the async 3-level capture pipeline is running. */
+  const [isCapturingMoment, setIsCapturingMoment] = useState(false);
 
   const [framePreviewUrl, setFramePreviewUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -843,101 +857,96 @@ export default function ChapterWatchView({
     return `${m}:${String(s).padStart(2, '0')}`;
   };
 
-  // Capture a single frame directly from the video element
-  const captureVideoFrame = useCallback((): File | null => {
+  /**
+   * Synchronous Level-1-only capture helper for submit-time fallback.
+   * Does NOT run validation or Level 2 — just a best-effort grab.
+   */
+  const captureVideoFrameSync = useCallback((): File | null => {
     const video = hlsVideoRef.current;
-    if (!video || video.videoWidth === 0 || video.videoHeight === 0 || video.readyState < 1) {
-      console.debug('[ChapterWatchView] Video not ready for frame capture', {
-        hasVideo: Boolean(video),
-        videoWidth: video?.videoWidth,
-        videoHeight: video?.videoHeight,
-        readyState: video?.readyState,
-      });
-      return null;
-    }
-    try {
-      const canvas = document.createElement('canvas');
-      // Bound dimensions to prevent iOS Safari canvas memory exhaustion & blank frames
-      const maxDim = 1280;
-      let targetWidth = video.videoWidth;
-      let targetHeight = video.videoHeight;
-      if (targetWidth > maxDim || targetHeight > maxDim) {
-        if (targetWidth >= targetHeight) {
-          targetHeight = Math.round((targetHeight * maxDim) / targetWidth);
-          targetWidth = maxDim;
-        } else {
-          targetWidth = Math.round((targetWidth * maxDim) / targetHeight);
-          targetHeight = maxDim;
-        }
-      }
-      canvas.width = targetWidth;
-      canvas.height = targetHeight;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return null;
-      ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
-      let dataUrl: string;
-      try {
-        dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      } catch (err) {
-        // Tainted canvas (cross-origin without CORS headers) — fail gracefully
-        console.warn('[ChapterWatchView] Canvas tainted, cannot export frame:', err);
-        return null;
-      }
-      const arr = dataUrl.split(',');
-      const mimeMatch = arr[0].match(/:(.*?);/);
-      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-      const bstr = atob(arr[1]);
-      const u8arr = new Uint8Array(bstr.length);
-      for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
-      try {
-        return new File([u8arr], 'screenshot.jpg', { type: mime });
-      } catch {
-        const blob = new Blob([u8arr], { type: mime });
-        return Object.assign(blob, {
-          name: 'screenshot.jpg',
-          lastModified: Date.now(),
-        }) as unknown as File;
-      }
-    } catch (err) {
-      console.warn('[ChapterWatchView] Frame capture failed:', err);
-      return null;
-    }
+    if (!video) return null;
+    const { file } = captureDirectVideoFrame(video);
+    return file;
   }, []);
 
   /**
-   * Toggle the composer open/closed. When opening, snapshot the current
-   * video `moment` and grab a screenshot of the frame at that exact moment
-   * so the comment stays anchored to what the user wanted to ask about
-   * (regardless of how long they take to type).
+   * Toggle the composer open/closed. When opening, run the 3-level
+   * screenshot capture pipeline asynchronously.
+   *
+   * The video `moment` is snapshotted synchronously at click time so it
+   * always reflects the exact playback position the user wanted to ask about.
    */
   const handleAskMomentClick = useCallback(() => {
-    setComposerOpen((open) => {
-      if (open) {
-        // Closing — release the snapshot so a fresh one is taken next time.
-        setComposerMoment(null);
-        setComposerFrameFile(null);
-        setFrameDismissed(false);
-        return false;
-      }
+    // If already open, close it
+    if (composerOpen) {
+      setComposerMoment(null);
+      setComposerFrameFile(null);
       setFrameDismissed(false);
-      setComposerMoment(getCurrentVideoMoment());
-      setComposerFrameFile(captureVideoFrame());
-      return true;
-    });
-  }, [captureVideoFrame, getCurrentVideoMoment]);
+      setCaptureFallbackLevel(null);
+      setComposerOpen(false);
+      return;
+    }
 
-  // If the composer is opened while video is buffering or seeking, retry frame capture as soon as it's ready
+    // Snapshot moment synchronously before any async work
+    const moment = getCurrentVideoMoment();
+    setComposerMoment(moment);
+    setFrameDismissed(false);
+    setComposerFrameFile(null);
+    setCaptureFallbackLevel(null);
+    setComposerOpen(true);
+    setIsCapturingMoment(true);
+
+    // Run the 3-level capture pipeline
+    captureScreenshotWithFallback(
+      hlsVideoRef.current,
+      videoContainerRef.current
+    ).then((result) => {
+      // Log internally for debugging (never exposed to user)
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Discussion Screenshot] Pipeline result:', result.log);
+      }
+
+      setCaptureFallbackLevel(result.level);
+      setComposerFrameFile(result.file);
+      setIsCapturingMoment(false);
+
+      // If we ended up at Level 3 (manual), show a helpful toast
+      if (result.level === 'manual') {
+        const msg = isIOSDevice()
+          ? (locale === 'ar'
+            ? '📱 لم نتمكن من التقاط لقطة شاشة تلقائياً. اضغط على "إرفاق صورة" لاختيار صورة من الألبوم'
+            : '📱 Couldn\'t capture the video automatically on iPhone. Tap "Attach screenshot" to choose from your Photos.')
+          : (locale === 'ar'
+            ? 'لم نتمكن من التقاط لقطة شاشة تلقائياً. يمكنك إرفاق صورة يدوياً'
+            : 'Couldn\'t capture this video moment automatically. You can attach a screenshot manually.');
+        toast(msg, { duration: 4500, id: 'capture-fallback-hint' });
+      }
+    }).catch((err) => {
+      console.error('[Discussion Screenshot] Pipeline error:', err);
+      setCaptureFallbackLevel('manual');
+      setIsCapturingMoment(false);
+    });
+  }, [composerOpen, getCurrentVideoMoment, locale]);
+
+  // If the composer is opened while video is buffering or seeking, retry
+  // ONLY Level 1 (direct capture). Skip if Level 2/3 already determined
+  // the outcome, or if the user dismissed/replaced the frame.
   useEffect(() => {
     if (!composerOpen || composerFrameFile || frameDismissed) return;
+    // Only retry if no level was determined yet (pipeline still running or not started)
+    if (captureFallbackLevel && captureFallbackLevel !== 'direct') return;
     const video = hlsVideoRef.current;
     if (!video) return;
 
     const tryCapture = () => {
-      if (!composerFrameFile && !frameDismissed) {
-        const frame = captureVideoFrame();
-        if (frame) {
-          setComposerFrameFile(frame);
-        }
+      if (composerFrameFile || frameDismissed) return;
+      const { file } = captureDirectVideoFrame(video);
+      if (file) {
+        validateScreenshot(file).then((v) => {
+          if (v.valid) {
+            setComposerFrameFile(file);
+            setCaptureFallbackLevel('direct');
+          }
+        });
       }
     };
 
@@ -951,7 +960,7 @@ export default function ChapterWatchView({
       video.removeEventListener('seeked', tryCapture);
       video.removeEventListener('canplay', tryCapture);
     };
-  }, [composerOpen, composerFrameFile, frameDismissed, captureVideoFrame]);
+  }, [composerOpen, composerFrameFile, frameDismissed, captureFallbackLevel]);
 
   const submitComposer = async () => {
     if (!Number.isFinite(chapterIdForApi)) return;
@@ -964,7 +973,7 @@ export default function ChapterWatchView({
       const moment = composerMoment ?? getCurrentVideoMoment();
       const frameFile = frameDismissed
         ? null
-        : (composerFrameFile ?? captureVideoFrame());
+        : (composerFrameFile ?? (captureFallbackLevel === 'manual' ? null : captureVideoFrameSync()));
 
       if (composerMode === 'voice') {
         if (!audioBlob) {
@@ -1228,7 +1237,7 @@ export default function ChapterWatchView({
           <div className={`mx-auto w-full px-0 sm:px-6 lg:px-8 ${theaterMode ? 'max-w-[112rem]' : 'max-w-6xl'}`}>
             <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
               <div className="flex flex-col">
-                <div className="bg-black/50">
+                <div ref={videoContainerRef} className="bg-black/50">
                   {stableVideoSrc ? (
                     accessDenied ? (
                       <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
@@ -1247,6 +1256,7 @@ export default function ChapterWatchView({
                       <HlsVideoPlayer
                         key={`${stableVideoSrc}|${candidateIndex}`}
                         ref={hlsVideoRef}
+                        containerRef={videoContainerRef}
                         src={stableVideoSrc}
                         mp4FallbackUrl={mp4FallbackSrc}
                         showCustomControls
@@ -1488,7 +1498,12 @@ export default function ChapterWatchView({
                                 })
                                 : t('screenshotCaptured')}
                             </span>
-                            {framePreviewUrl ? (
+                            {isCapturingMoment && !framePreviewUrl ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                                <Loader2 className="size-3 animate-spin" />
+                                {locale === 'ar' ? 'جاري الالتقاط…' : 'Capturing…'}
+                              </span>
+                            ) : framePreviewUrl ? (
                               <div className="relative flex items-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1509,14 +1524,25 @@ export default function ChapterWatchView({
                                 </button>
                               </div>
                             ) : !frameDismissed ? (
-                              <button
-                                type="button"
-                                onClick={() => imageFileInputRef.current?.click()}
-                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                              >
-                                <Camera className="size-3 text-[#2D43D1]" />
-                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                              </button>
+                              captureFallbackLevel === 'manual' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => imageFileInputRef.current?.click()}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 hover:text-amber-100 active:scale-[0.98]"
+                                >
+                                  <Smartphone className="size-3.5" />
+                                  <span>{locale === 'ar' ? '📷 إرفاق صورة يدوياً' : '📷 Tap to attach a screenshot'}</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => imageFileInputRef.current?.click()}
+                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                >
+                                  <Camera className="size-3 text-[#2D43D1]" />
+                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                                </button>
+                              )
                             ) : null}
                           </div>
                           <button
@@ -1547,7 +1573,12 @@ export default function ChapterWatchView({
                                   time: formatMomentSeconds(composerMoment) ?? '—',
                                 })}
                               </span>
-                              {framePreviewUrl ? (
+                              {isCapturingMoment && !framePreviewUrl ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                                  <Loader2 className="size-3 animate-spin" />
+                                  {locale === 'ar' ? 'جاري الالتقاط…' : 'Capturing…'}
+                                </span>
+                              ) : framePreviewUrl ? (
                                 <div className="relative flex items-center">
                                   {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img
@@ -1568,14 +1599,25 @@ export default function ChapterWatchView({
                                   </button>
                                 </div>
                               ) : !frameDismissed ? (
-                                <button
-                                  type="button"
-                                  onClick={() => imageFileInputRef.current?.click()}
-                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                                >
-                                  <Camera className="size-3 text-[#2D43D1]" />
-                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                                </button>
+                                captureFallbackLevel === 'manual' ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => imageFileInputRef.current?.click()}
+                                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 hover:text-amber-100 active:scale-[0.98]"
+                                  >
+                                    <Smartphone className="size-3.5" />
+                                    <span>{locale === 'ar' ? '📷 إرفاق صورة يدوياً' : '📷 Tap to attach a screenshot'}</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => imageFileInputRef.current?.click()}
+                                    className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                  >
+                                    <Camera className="size-3 text-[#2D43D1]" />
+                                    <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                                  </button>
+                                )
                               ) : null}
                             </div>
                           ) : null}
@@ -1619,7 +1661,12 @@ export default function ChapterWatchView({
                               <Mic className="size-4" />
                               Voice note recorded ({formatRecordingTime(recordingSeconds)})
                             </div>
-                            {framePreviewUrl ? (
+                            {isCapturingMoment && !framePreviewUrl ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
+                                <Loader2 className="size-3 animate-spin" />
+                                {locale === 'ar' ? 'جاري الالتقاط…' : 'Capturing…'}
+                              </span>
+                            ) : framePreviewUrl ? (
                               <div className="relative flex items-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1640,14 +1687,25 @@ export default function ChapterWatchView({
                                 </button>
                               </div>
                             ) : !frameDismissed ? (
-                              <button
-                                type="button"
-                                onClick={() => imageFileInputRef.current?.click()}
-                                className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                              >
-                                <Camera className="size-3 text-[#2D43D1]" />
-                                <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                              </button>
+                              captureFallbackLevel === 'manual' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => imageFileInputRef.current?.click()}
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 hover:text-amber-100 active:scale-[0.98]"
+                                >
+                                  <Smartphone className="size-3.5" />
+                                  <span>{locale === 'ar' ? '📷 إرفاق صورة يدوياً' : '📷 Tap to attach a screenshot'}</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => imageFileInputRef.current?.click()}
+                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
+                                >
+                                  <Camera className="size-3 text-[#2D43D1]" />
+                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
+                                </button>
+                              )
                             ) : null}
                           </div>
                           {audioUrl && (
