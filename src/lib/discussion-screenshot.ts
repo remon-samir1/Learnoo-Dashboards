@@ -81,7 +81,8 @@ function analysePixelVariance(
   let transparentCount = 0;
   let totalSamples = 0;
   let centerSamples = 0;
-  let allCenterPureBlack = true;
+  let overallMax = 0;
+  let centerMax = 0;
 
   for (let gy = 0; gy < GRID; gy++) {
     for (let gx = 0; gx < GRID; gx++) {
@@ -99,14 +100,13 @@ function analysePixelVariance(
       // Standard luminance formula: Y = 0.299R + 0.587G + 0.114B
       const lum = 0.299 * r + 0.587 * g + 0.114 * b;
       luminances.push(lum);
+      if (lum > overallMax) overallMax = lum;
 
       // Analyze the center 50% region (where video content resides, away from badges/overlays)
       if (gx >= 3 && gx <= 8 && gy >= 3 && gy <= 8) {
         centerSamples++;
         centerLuminances.push(lum);
-        if (r > 2 || g > 2 || b > 2) {
-          allCenterPureBlack = false;
-        }
+        if (lum > centerMax) centerMax = lum;
       }
     }
   }
@@ -119,21 +119,32 @@ function analysePixelVariance(
   const sd = Math.sqrt(variance);
   const alphaRatio = totalSamples > 0 ? transparentCount / totalSamples : 0;
 
-  // Center region variance (prevents false positives from UI badges when video itself is empty)
+  // Center region variance and mean
   let centerSD = 0;
+  let cMean = 0;
   if (centerLuminances.length > 0) {
-    const cMean = centerLuminances.reduce((s, v) => s + v, 0) / centerLuminances.length;
+    cMean = centerLuminances.reduce((s, v) => s + v, 0) / centerLuminances.length;
     const cVar = centerLuminances.reduce((s, v) => s + (v - cMean) ** 2, 0) / centerLuminances.length;
     centerSD = Math.sqrt(cVar);
   }
 
-  // A component capture that rendered only UI overlays with a black/empty video box
-  // will have centerSD < 1.0 or allCenterPureBlack === true.
-  const isCenterEmpty = centerSamples > 0 && (allCenterPureBlack || centerSD < 1.0);
+  // Detect black / unrendered / blank images:
+  // 1. Overall image is essentially pitch black (mean < 15 or max pixel < 28)
+  // 2. The center video area is black (cMean < 18 or centerMax < 35) — this catches
+  //    Level 1 black frames AND Level 2 html2canvas captures where the video element is empty
+  //    even if surrounding UI badges (e.g. student ID) have text.
+  // 3. The entire image is completely uniform/flat (sd < 2.0)
+  // 4. The center area is completely flat and dark (centerSD < 2.0 && cMean < 40)
+  const isEssentiallyBlack = mean < 15 || overallMax < 28;
+  const isCenterBlackOrEmpty =
+    centerSamples > 0 && (cMean < 18 || centerMax < 35 || (centerSD < 2.0 && cMean < 40));
+  const isUniformFlat = sd < 2.0;
+
+  const isBlank = isEssentiallyBlack || isCenterBlackOrEmpty || isUniformFlat;
 
   return {
-    blank: sd < 1.5 || isCenterEmpty,
-    transparent: alphaRatio > 0.9,
+    blank: isBlank,
+    transparent: alphaRatio > 0.8,
     luminanceSD: sd,
     alphaRatio,
   };

@@ -858,17 +858,6 @@ export default function ChapterWatchView({
   };
 
   /**
-   * Synchronous Level-1-only capture helper for submit-time fallback.
-   * Does NOT run validation or Level 2 — just a best-effort grab.
-   */
-  const captureVideoFrameSync = useCallback((): File | null => {
-    const video = hlsVideoRef.current;
-    if (!video) return null;
-    const { file } = captureDirectVideoFrame(video);
-    return file;
-  }, []);
-
-  /**
    * Toggle the composer open/closed. When opening, run the 3-level
    * screenshot capture pipeline asynchronously.
    *
@@ -931,7 +920,7 @@ export default function ChapterWatchView({
   // ONLY Level 1 (direct capture). Skip if Level 2/3 already determined
   // the outcome, or if the user dismissed/replaced the frame.
   useEffect(() => {
-    if (!composerOpen || composerFrameFile || frameDismissed) return;
+    if (isIOSDevice() || !composerOpen || composerFrameFile || frameDismissed) return;
     // Only retry if no level was determined yet (pipeline still running or not started)
     if (captureFallbackLevel && captureFallbackLevel !== 'direct') return;
     const video = hlsVideoRef.current;
@@ -968,12 +957,9 @@ export default function ChapterWatchView({
     try {
       // Use the moment + frame snapshotted when the user clicked
       // "Ask about this moment" so the comment is anchored to that exact
-      // moment of the video. Fall back to a fresh capture only if none was
-      // taken (e.g. the user opened the composer through some other path).
+      // moment of the video.
       const moment = composerMoment ?? getCurrentVideoMoment();
-      const frameFile = frameDismissed
-        ? null
-        : (composerFrameFile ?? (captureFallbackLevel === 'manual' ? null : captureVideoFrameSync()));
+      const frameFile = frameDismissed ? null : composerFrameFile;
 
       if (composerMode === 'voice') {
         if (!audioBlob) {
