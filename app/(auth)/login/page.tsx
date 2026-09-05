@@ -114,7 +114,7 @@ export default function LoginPage() {
     try {
       // Use auth store login action - omit password entirely for student login
       // This will store token in state only (not cookies) - cookies will be set after OTP verification
-      const ph = phone.trim().replace(/\s+/g, '');
+      const ph = phone.trim().replace(/\s+/g, '').replace(/^0+/, '');
       const fullPhone = `${countryCode}${ph}`;
       await login({
         phone: fullPhone,

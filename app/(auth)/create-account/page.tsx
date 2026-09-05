@@ -50,7 +50,7 @@ export default function CreateAccountPage() {
     const fn = firstName.trim();
     const ln = lastName.trim();
     const em = email.trim();
-    const ph = phone.trim().replace(/\s+/g, '');
+    const ph = phone.trim().replace(/\s+/g, '').replace(/^0+/, '');
     const fullPhone = `${countryCode}${ph}`;
 
     if (!fn || !ln || !em || !ph) {

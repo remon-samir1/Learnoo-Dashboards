@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import {
   MessageCircle,
@@ -39,6 +39,7 @@ export default function AdminDiscussionsPage() {
   const [replyingTo, setReplyingTo] = useState<string | number | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | number | null>(null);
+  const [videoModalData, setVideoModalData] = useState<{ url: string; moment: number; title: string } | null>(null);
 
   const handleReplySuccess = () => {
     setReplyingTo(null);
@@ -161,6 +162,7 @@ export default function AdminDiscussionsPage() {
                 setPreviewImageUrl={setPreviewImageUrl}
                 playingAudioId={playingAudioId}
                 setPlayingAudioId={setPlayingAudioId}
+                setVideoModalData={setVideoModalData}
               />
             ))}
 
@@ -220,6 +222,17 @@ export default function AdminDiscussionsPage() {
           </div>
         </div>
       )}
+
+      {/* Video Moment Modal */}
+      {videoModalData && (
+        <VideoMomentModal
+          url={videoModalData.url}
+          moment={videoModalData.moment}
+          title={videoModalData.title}
+          onClose={() => setVideoModalData(null)}
+          formatMoment={formatMoment}
+        />
+      )}
     </div>
   );
 }
@@ -239,7 +252,8 @@ const DiscussionNode = ({
   previewImageUrl,
   setPreviewImageUrl,
   playingAudioId,
-  setPlayingAudioId
+  setPlayingAudioId,
+  setVideoModalData
 }: any) => {
   const [showReplies, setShowReplies] = useState(false);
   const hasReplies = discussion.replies?.length > 0;
@@ -293,11 +307,24 @@ const DiscussionNode = ({
                   </div>
                 )}
                 {discussion.attributes?.moment != null && (
-                  <div className="flex items-center gap-1 text-[#2137D6]">
+                  <button
+                    onClick={() => {
+                      const mainVideo = discussion.attributes?.chapter?.data?.attributes?.main_video;
+                      if (mainVideo) {
+                        setVideoModalData({
+                          url: mainVideo,
+                          moment: discussion.attributes.moment,
+                          title: discussion.attributes?.chapter?.data?.attributes?.title || 'Video',
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-1 text-[#2137D6] hover:text-[#1a2bb3] hover:bg-[#E0E7FF] rounded-md px-1.5 py-0.5 -mx-1.5 -my-0.5 transition-colors cursor-pointer"
+                    title={t('watchMoment') || 'Watch this moment'}
+                  >
                     <PlayCircle className="h-3 w-3" />
                     <span className="font-semibold text-[#64748B]">{t('at')}:</span>
                     {formatMoment(discussion.attributes.moment)}
-                  </div>
+                  </button>
                 )}
               </div>
             </div>
@@ -438,6 +465,7 @@ const DiscussionNode = ({
                     setPreviewImageUrl={setPreviewImageUrl}
                     playingAudioId={playingAudioId}
                     setPlayingAudioId={setPlayingAudioId}
+                    setVideoModalData={setVideoModalData}
                   />
                 ))}
               </div>
@@ -650,6 +678,75 @@ const AdminReplyComposer = ({ parentId, chapterId, moment, onCancel, onSuccess, 
           {isReplying && <Loader2 className="h-3 w-3 animate-spin" />}
           {t('reply')}
         </button>
+      </div>
+    </div>
+  );
+};
+
+const VideoMomentModal = ({ url, moment, title, onClose, formatMoment }: {
+  url: string;
+  moment: number;
+  title: string;
+  onClose: () => void;
+  formatMoment: (sec: number) => string | null;
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleLoadedMetadata = useCallback(() => {
+    if (videoRef.current && moment > 0) {
+      videoRef.current.currentTime = moment;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [moment]);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-4xl rounded-2xl bg-[#0F172A] shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3 bg-[#1E293B]/80 border-b border-[#334155]">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2137D6]/20">
+              <PlayCircle className="h-4 w-4 text-[#2137D6]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-white">{title}</h3>
+              <p className="text-[11px] text-[#94A3B8]">
+                Playing from {formatMoment(moment)}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-[#94A3B8] hover:bg-[#334155] hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Video */}
+        <div className="aspect-video bg-black">
+          <video
+            ref={videoRef}
+            src={url}
+            controls
+            className="h-full w-full"
+            onLoadedMetadata={handleLoadedMetadata}
+          />
+        </div>
       </div>
     </div>
   );
