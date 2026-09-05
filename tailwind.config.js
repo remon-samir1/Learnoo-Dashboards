@@ -23,6 +23,20 @@ module.exports = {
       fontFamily: {
         sans: ["Inter", "sans-serif"],
       },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0', transform: 'translateY(-4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(100%)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        fadeIn: 'fadeIn 0.15s ease-out',
+        slideUp: 'slideUp 0.2s ease-out',
+      },
     },
   },
   plugins: [],

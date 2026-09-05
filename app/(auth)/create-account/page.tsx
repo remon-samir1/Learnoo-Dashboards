@@ -9,18 +9,10 @@ import { ApiError, getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import Cookies from '@/lib/cookies';
 import AuthPageLayout from '../components/AuthLayout';
+import CountryCodeSelect, { DEFAULT_COUNTRY_CODE } from '../components/CountryCodeSelect';
 import TermsModal from '@/components/modals/TermsModal';
 
 const DEVICE_NAME = 'learnoo-web';
-
-const COUNTRY_CODES = [
-  { code: '20', flag: '🇪🇬', name: 'Egypt' },
-  { code: '966', flag: '🇸🇦', name: 'Saudi Arabia' },
-  { code: '971', flag: '🇦🇪', name: 'UAE' },
-  { code: '965', flag: '🇰🇼', name: 'Kuwait' },
-  { code: '974', flag: '🇶🇦', name: 'Qatar' },
-  { code: '962', flag: '🇯🇴', name: 'Jordan' },
-];
 
 function formatRegisterFieldErrors(errors: Record<string, string[]> | undefined): string | null {
   if (!errors || typeof errors !== 'object') return null;
@@ -45,7 +37,7 @@ export default function CreateAccountPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('20');
+  const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY_CODE);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -187,23 +179,13 @@ export default function CreateAccountPage() {
 
         <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('phone')}</label>
-          <div className="flex gap-2">
-            <select
-              value={countryCode}
-              onChange={(e) => setCountryCode(e.target.value)}
-              className="h-10 w-[140px] rounded-md border border-border-color bg-white px-2 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
-            >
-              {COUNTRY_CODES.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.flag} {country.code}
-                </option>
-              ))}
-            </select>
+          <div className="flex gap-2 min-w-0">
+            <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
             <input
               type="tel"
               name="phone"
               autoComplete="tel"
-              className="h-10 flex-1 rounded-md border border-border-color bg-white px-3 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors placeholder:text-text-placeholder focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
+              className="h-10 flex-1 min-w-0 rounded-md border border-border-color bg-white px-3 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors placeholder:text-text-placeholder focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
               placeholder={t('phonePlaceholder')}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}

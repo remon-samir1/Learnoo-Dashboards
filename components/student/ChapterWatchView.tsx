@@ -23,17 +23,10 @@ import {
   Square,
   Trash2,
   Camera,
-  Smartphone,
-  ImageIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { isIOSDevice } from '@/src/lib/video-stream-detect';
-import {
-  captureScreenshotWithFallback,
-  captureDirectVideoFrame,
-  validateScreenshot,
-  type CaptureFallbackLevel,
-} from '@/src/lib/discussion-screenshot';
+import { captureDiscussionScreenshot } from '@/src/lib/discussion-screenshot';
 import { learnooChapterHlsPlaylistUrl } from '@/src/lib/chapter-playback-urls';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import type { Chapter, Quiz } from '@/src/types';
@@ -399,10 +392,24 @@ export default function ChapterWatchView({
    */
   const [composerFrameFile, setComposerFrameFile] = useState<File | null>(null);
   const [frameDismissed, setFrameDismissed] = useState(false);
-  /** Which fallback level produced the current screenshot (null = no attempt yet). */
-  const [captureFallbackLevel, setCaptureFallbackLevel] = useState<CaptureFallbackLevel>(null);
   /** True while the async 3-level capture pipeline is running. */
   const [isCapturingMoment, setIsCapturingMoment] = useState(false);
+  /**
+   * Monotonic id for capture runs. Bumped whenever the composer closes, the
+   * chapter changes, or the user attaches an image manually — a still-pending
+   * pipeline from an older run sees a mismatched id and discards its result
+   * instead of clobbering newer state.
+   */
+  const captureSessionRef = useRef(0);
+  /** Live mirrors so async capture callbacks read fresh values, not stale closures. */
+  const frameDismissedRef = useRef(false);
+  const composerFrameFileRef = useRef<File | null>(null);
+  useEffect(() => {
+    frameDismissedRef.current = frameDismissed;
+  }, [frameDismissed]);
+  useEffect(() => {
+    composerFrameFileRef.current = composerFrameFile;
+  }, [composerFrameFile]);
 
   const [framePreviewUrl, setFramePreviewUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -414,21 +421,6 @@ export default function ChapterWatchView({
       setFramePreviewUrl(null);
     }
   }, [composerFrameFile]);
-
-  const imageFileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleImageFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
-        return;
-      }
-      setComposerFrameFile(file);
-      setFrameDismissed(false);
-    }
-    e.target.value = '';
-  }, []);
 
   const chapterIdValid = chapterId.trim().length > 0;
   const chapterNumericId = Number.parseInt(chapterId, 10);
@@ -645,6 +637,18 @@ export default function ChapterWatchView({
     setPlaybackBlockMessage(null);
   }, [chapterId]);
 
+  // Leaving a chapter invalidates the composer snapshot (the moment + frame
+  // belong to the previous video) — fully reset it and cancel any pending capture.
+  useEffect(() => {
+    captureSessionRef.current += 1;
+    setComposerOpen(false);
+    setComposerText('');
+    setComposerMoment(null);
+    setComposerFrameFile(null);
+    setFrameDismissed(false);
+    setIsCapturingMoment(false);
+  }, [chapterId]);
+
   useChapterViewRecording({
     chapterId: chapterIdForApi,
     videoRef: hlsVideoRef,
@@ -676,7 +680,9 @@ export default function ChapterWatchView({
     };
     video.addEventListener('timeupdate', onTimeUpdate);
     return () => video.removeEventListener('timeupdate', onTimeUpdate);
-  }, [stableVideoSrc]);
+    // `accessDenied` is a dep because the player unmounts/remounts when it
+    // toggles, and the listener must re-attach to the new <video> element.
+  }, [stableVideoSrc, accessDenied]);
 
   useEffect(() => {
     if (!Number.isFinite(chapterIdForApi) || watchAccessDenied) return;
@@ -792,23 +798,42 @@ export default function ChapterWatchView({
     }
   };
 
-  // Helper to get current video moment for discussions
+  // Helper to get current video moment for discussions.
+  // Read the live element first — the `timeupdate` state can lag or stop
+  // updating if the player remounts — and fall back to the tracked state.
   const getCurrentVideoMoment = useCallback((): number => {
+    const video = hlsVideoRef.current;
+    if (video && Number.isFinite(video.currentTime) && video.currentTime >= 0) {
+      return video.currentTime;
+    }
     return Number.isFinite(currentVideoMoment) && currentVideoMoment >= 0
       ? currentVideoMoment
       : 0;
   }, [currentVideoMoment]);
 
   const startRecording = useCallback(async () => {
+    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      toast.error(locale === 'ar' ? 'التسجيل الصوتي غير مدعوم على هذا المتصفح' : 'Voice recording is not supported in this browser');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioChunksRef.current = [];
-      const mr = new MediaRecorder(stream);
+      // iOS Safari's MediaRecorder produces audio/mp4, not webm — pick the
+      // first container the browser actually supports so the stored blob's
+      // mime matches its real contents.
+      const preferredMime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'].find(
+        (m) => typeof MediaRecorder.isTypeSupported === 'function' && MediaRecorder.isTypeSupported(m)
+      );
+      const mr = preferredMime
+        ? new MediaRecorder(stream, { mimeType: preferredMime })
+        : new MediaRecorder(stream);
       mr.ondataavailable = (e) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const mime = mr.mimeType || preferredMime || 'audio/webm';
+        const blob = new Blob(audioChunksRef.current, { type: mime });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((t) => t.stop());
@@ -821,9 +846,9 @@ export default function ChapterWatchView({
         setRecordingSeconds((s) => s + 1);
       }, 1000);
     } catch {
-      toast.error('Microphone access denied');
+      toast.error(locale === 'ar' ? 'تم رفض الوصول إلى الميكروفون' : 'Microphone access denied');
     }
-  }, []);
+  }, [locale]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -865,91 +890,67 @@ export default function ChapterWatchView({
    * always reflects the exact playback position the user wanted to ask about.
    */
   const handleAskMomentClick = useCallback(() => {
-    // If already open, close it
+    // If already open, close it and cancel any in-flight capture
     if (composerOpen) {
+      captureSessionRef.current += 1;
       setComposerMoment(null);
       setComposerFrameFile(null);
       setFrameDismissed(false);
-      setCaptureFallbackLevel(null);
+      setIsCapturingMoment(false);
       setComposerOpen(false);
       return;
     }
 
-    // Snapshot moment synchronously before any async work
+    // Snapshot the exact moment synchronously at click time — every capture
+    // retry inside the pipeline represents this moment, never a drifted one.
     const moment = getCurrentVideoMoment();
     setComposerMoment(moment);
     setFrameDismissed(false);
     setComposerFrameFile(null);
-    setCaptureFallbackLevel(null);
     setComposerOpen(true);
+
+    const session = ++captureSessionRef.current;
+    const video = hlsVideoRef.current;
+
+    // Without a mounted <video> (PDF-only chapter / placeholder) a snapshot is
+    // meaningless — post the discussion without an image, no user interaction.
+    if (!video) {
+      setIsCapturingMoment(false);
+      return;
+    }
+
     setIsCapturingMoment(true);
 
-    // Run the 3-level capture pipeline
-    captureScreenshotWithFallback(
-      hlsVideoRef.current,
-      videoContainerRef.current
-    ).then((result) => {
-      // Log internally for debugging (never exposed to user)
-      if (process.env.NODE_ENV === 'development') {
-        console.info('[Discussion Screenshot] Pipeline result:', result.log);
-      }
-
-      setCaptureFallbackLevel(result.level);
-      setComposerFrameFile(result.file);
-      setIsCapturingMoment(false);
-
-      // If we ended up at Level 3 (manual), show a helpful toast
-      if (result.level === 'manual') {
-        const msg = isIOSDevice()
-          ? (locale === 'ar'
-            ? '📱 لم نتمكن من التقاط لقطة شاشة تلقائياً. اضغط على "إرفاق صورة" لاختيار صورة من الألبوم'
-            : '📱 Couldn\'t capture the video automatically on iPhone. Tap "Attach screenshot" to choose from your Photos.')
-          : (locale === 'ar'
-            ? 'لم نتمكن من التقاط لقطة شاشة تلقائياً. يمكنك إرفاق صورة يدوياً'
-            : 'Couldn\'t capture this video moment automatically. You can attach a screenshot manually.');
-        toast(msg, { duration: 4500, id: 'capture-fallback-hint' });
-      }
-    }).catch((err) => {
-      console.error('[Discussion Screenshot] Pipeline error:', err);
-      setCaptureFallbackLevel('manual');
-      setIsCapturingMoment(false);
-    });
-  }, [composerOpen, getCurrentVideoMoment, locale]);
-
-  // If the composer is opened while video is buffering or seeking, retry
-  // ONLY Level 1 (direct capture). Skip if Level 2/3 already determined
-  // the outcome, or if the user dismissed/replaced the frame.
-  useEffect(() => {
-    if (isIOSDevice() || !composerOpen || composerFrameFile || frameDismissed) return;
-    // Only retry if no level was determined yet (pipeline still running or not started)
-    if (captureFallbackLevel && captureFallbackLevel !== 'direct') return;
-    const video = hlsVideoRef.current;
-    if (!video) return;
-
-    const tryCapture = () => {
-      if (composerFrameFile || frameDismissed) return;
-      const { file } = captureDirectVideoFrame(video);
-      if (file) {
-        validateScreenshot(file).then((v) => {
-          if (v.valid) {
-            setComposerFrameFile(file);
-            setCaptureFallbackLevel('direct');
-          }
-        });
-      }
-    };
-
-    const timer = setTimeout(tryCapture, 300);
-    video.addEventListener('loadeddata', tryCapture);
-    video.addEventListener('seeked', tryCapture);
-    video.addEventListener('canplay', tryCapture);
-    return () => {
-      clearTimeout(timer);
-      video.removeEventListener('loadeddata', tryCapture);
-      video.removeEventListener('seeked', tryCapture);
-      video.removeEventListener('canplay', tryCapture);
-    };
-  }, [composerOpen, composerFrameFile, frameDismissed, captureFallbackLevel]);
+    // Fully automatic pipeline: real frame → bounded retries → component
+    // capture → synthetic snapshot. It never requires user input.
+    captureDiscussionScreenshot({
+      video,
+      container: videoContainerRef.current,
+      timestamp: moment,
+      courseTitle: lectureTitle.trim() || undefined,
+      chapterTitle: chapter?.attributes?.title?.trim() || undefined,
+      thumbnailUrl: chapter?.attributes?.thumbnail?.trim() || null,
+      locale,
+    })
+      .then((result) => {
+        // Stale run — the composer was closed/reopened or the chapter changed.
+        if (captureSessionRef.current !== session) return;
+        setIsCapturingMoment(false);
+        // The user may have removed the frame while capture was running.
+        if (frameDismissedRef.current || composerFrameFileRef.current) return;
+        if (result.success && result.file) {
+          setComposerFrameFile(result.file);
+        }
+        // On total failure the discussion simply posts without a screenshot.
+      })
+      .catch((err) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[DiscussionCapture] pipeline error:', err);
+        }
+        if (captureSessionRef.current !== session) return;
+        setIsCapturingMoment(false);
+      });
+  }, [composerOpen, getCurrentVideoMoment, locale, lectureTitle, chapter]);
 
   const submitComposer = async () => {
     if (!Number.isFinite(chapterIdForApi)) return;
@@ -973,13 +974,19 @@ export default function ChapterWatchView({
         formData.append('moment', String(moment));
         formData.append('parent_id', '');
         formData.append('duration', String(recordingSeconds));
-        const voiceFile = new File([audioBlob], 'voice-note.webm', { type: 'audio/webm' });
+        // Extension must match the real recorded container: iOS Safari
+        // records audio/mp4, everything else webm/opus.
+        const voiceMime = audioBlob.type || 'audio/webm';
+        const voiceExt = /mp4|aac|m4a/i.test(voiceMime) ? 'm4a' : /ogg/i.test(voiceMime) ? 'ogg' : 'webm';
+        const voiceFile = new File([audioBlob], `voice-note.${voiceExt}`, { type: voiceMime });
         // Backend contract: the discussion endpoint does not expose a
         // separate `voice` key — the audio travels in the `content` field,
         // mirroring how text discussions use it.
-        formData.append('content', voiceFile, 'voice-note.webm');
+        formData.append('content', voiceFile, voiceFile.name);
         if (frameFile) {
-          formData.append('image', frameFile, 'screenshot.jpg');
+          // Keep the original name/extension for manually attached images
+          // (iOS Photos may hand us PNG/HEIC) so it matches the mime type.
+          formData.append('image', frameFile, frameFile.name || 'screenshot.jpg');
         }
         await api.discussions.create(formData);
         toast.success(t('discussionPosted'));
@@ -999,7 +1006,7 @@ export default function ChapterWatchView({
         formData.append('moment', String(moment));
         formData.append('parent_id', '');
         if (frameFile) {
-          formData.append('image', frameFile, 'screenshot.jpg');
+          formData.append('image', frameFile, frameFile.name || 'screenshot.jpg');
         }
         await api.discussions.create(formData);
         toast.success(t('discussionPosted'));
@@ -1450,15 +1457,6 @@ export default function ChapterWatchView({
                     </button>
                   </div>
 
-                  {/* Hidden file input for fallback if browser blocks auto-capture */}
-                  <input
-                    ref={imageFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageFileChange}
-                  />
-
                   {composerMode === 'text' ? (
                     <div className="flex gap-3">
                       <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800 sm:h-14 sm:w-14">
@@ -1509,26 +1507,6 @@ export default function ChapterWatchView({
                                   &times;
                                 </button>
                               </div>
-                            ) : !frameDismissed ? (
-                              captureFallbackLevel === 'manual' ? (
-                                <button
-                                  type="button"
-                                  onClick={() => imageFileInputRef.current?.click()}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 hover:text-amber-100 active:scale-[0.98]"
-                                >
-                                  <Smartphone className="size-3.5" />
-                                  <span>{locale === 'ar' ? '📷 إرفاق صورة يدوياً' : '📷 Tap to attach a screenshot'}</span>
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => imageFileInputRef.current?.click()}
-                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                                >
-                                  <Camera className="size-3 text-[#2D43D1]" />
-                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                                </button>
-                              )
                             ) : null}
                           </div>
                           <button
@@ -1584,26 +1562,6 @@ export default function ChapterWatchView({
                                     &times;
                                   </button>
                                 </div>
-                              ) : !frameDismissed ? (
-                                captureFallbackLevel === 'manual' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => imageFileInputRef.current?.click()}
-                                    className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 hover:text-amber-100 active:scale-[0.98]"
-                                  >
-                                    <Smartphone className="size-3.5" />
-                                    <span>{locale === 'ar' ? '📷 إرفاق صورة يدوياً' : '📷 Tap to attach a screenshot'}</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => imageFileInputRef.current?.click()}
-                                    className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                                  >
-                                    <Camera className="size-3 text-[#2D43D1]" />
-                                    <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                                  </button>
-                                )
                               ) : null}
                             </div>
                           ) : null}
@@ -1672,26 +1630,6 @@ export default function ChapterWatchView({
                                   &times;
                                 </button>
                               </div>
-                            ) : !frameDismissed ? (
-                              captureFallbackLevel === 'manual' ? (
-                                <button
-                                  type="button"
-                                  onClick={() => imageFileInputRef.current?.click()}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/20 hover:text-amber-100 active:scale-[0.98]"
-                                >
-                                  <Smartphone className="size-3.5" />
-                                  <span>{locale === 'ar' ? '📷 إرفاق صورة يدوياً' : '📷 Tap to attach a screenshot'}</span>
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => imageFileInputRef.current?.click()}
-                                  className="inline-flex items-center gap-1 rounded-md border border-slate-700 bg-slate-800/80 px-2 py-1 text-[11px] font-medium text-slate-300 transition hover:bg-slate-700 hover:text-white"
-                                >
-                                  <Camera className="size-3 text-[#2D43D1]" />
-                                  <span>{locale === 'ar' ? 'إرفاق صورة' : 'Attach image'}</span>
-                                </button>
-                              )
                             ) : null}
                           </div>
                           {audioUrl && (

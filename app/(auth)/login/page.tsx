@@ -9,12 +9,14 @@ import Cookies from '@/lib/cookies';
 import { getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
+import CountryCodeSelect, { DEFAULT_COUNTRY_CODE } from '../components/CountryCodeSelect';
 
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const router = useRouter();
   const { login, fetchCurrentUser } = useAuthActions();
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY_CODE);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [justRegistered, setJustRegistered] = useState(false);
@@ -45,13 +47,16 @@ export default function LoginPage() {
         {/* Phone */}
         <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('phone')}</label>
-          <input
-            type="tel"
-            className="w-full h-10 px-3 py-[9px] bg-white border border-border-color shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-sans text-sm leading-5 text-text-main outline-none focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)] transition-colors placeholder:text-text-placeholder"
-            placeholder={t('phonePlaceholder')}
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
+          <div className="flex gap-2 min-w-0">
+            <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
+            <input
+              type="tel"
+              className="flex-1 min-w-0 h-10 px-3 py-[9px] bg-white border border-border-color shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-sans text-sm leading-5 text-text-main outline-none focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)] transition-colors placeholder:text-text-placeholder"
+              placeholder={t('phonePlaceholder')}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
         </div>
 
         {error && (
@@ -109,8 +114,10 @@ export default function LoginPage() {
     try {
       // Use auth store login action - omit password entirely for student login
       // This will store token in state only (not cookies) - cookies will be set after OTP verification
+      const ph = phone.trim().replace(/\s+/g, '');
+      const fullPhone = `${countryCode}${ph}`;
       await login({
-        phone: phone,
+        phone: fullPhone,
         device_name: 'learnoo-web',
       } as any);
 
