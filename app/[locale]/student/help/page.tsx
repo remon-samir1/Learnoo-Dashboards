@@ -123,7 +123,7 @@ export default function HelpPage() {
   }, [activeCategory, searchValue, t]);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
 
@@ -177,7 +177,7 @@ export default function HelpPage() {
         )}
       </div>
 
-      <div className="rounded-xl bg-gradient-to-r from-blue-700 to-indigo-900 p-10 text-center text-white">
+      <div className="rounded-xl bg-gradient-to-r from-blue-700 to-indigo-900 p-6 text-center text-white sm:p-10">
         <MessageCircle className="mx-auto mb-4" size={32} />
 
         <h2 className="text-lg font-bold">{t("stillNeedHelp")}</h2>

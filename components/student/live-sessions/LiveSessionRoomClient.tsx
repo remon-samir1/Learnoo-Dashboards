@@ -267,7 +267,7 @@ export default function LiveSessionRoomClient({
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-[var(--border-color)] shadow-sm">
-            <div className="relative h-[65vh] min-h-[440px] sm:h-[72vh] sm:min-h-[520px] lg:h-[640px]">
+            <div className="relative h-[60svh] min-h-[360px] sm:h-[72vh] sm:min-h-[520px] lg:h-[640px]">
               {watermarkEnabled ? (
                 <div className="absolute top-2 end-2 z-20 flex items-center gap-1 sm:gap-1.5 bg-blue-50/95 border border-blue-200 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-sm">
                   <Droplets className="size-3.5 sm:size-4 text-blue-600" aria-hidden />

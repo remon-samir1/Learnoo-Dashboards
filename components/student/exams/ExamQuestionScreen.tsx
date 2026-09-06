@@ -183,7 +183,7 @@ export function ExamQuestionScreen({
       {...copyGuardProps}
     >
       {headerBleed ? (
-        <div className="-mx-5 -mt-5 mb-4 w-[calc(100%+2.5rem)] max-w-none shrink-0 lg:-mx-16 lg:w-[calc(100%+8rem)]">
+        <div className="-mx-4 -mt-4 mb-4 w-[calc(100%+2rem)] max-w-none shrink-0 sm:-mx-5 sm:-mt-5 sm:w-[calc(100%+2.5rem)] lg:-mx-16 lg:w-[calc(100%+8rem)]">
           {headerInner}
         </div>
       ) : (

@@ -213,7 +213,7 @@ export const updateUserProfile = async (data: UpdateProfileFormValues) => {
     if (!res.ok) {
       return {
         success: false,
-        message: payload?.message || "Failed to update profile",
+        message: payload?.errors?.phone?.[0] || payload?.message || "Failed to update profile",
       };
     }
 

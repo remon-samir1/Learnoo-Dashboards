@@ -511,17 +511,28 @@ const speedMenuLabel =
 
       {/* Settings overlay panel */}
       {visible && settingsOpen ? (
-      <div
-        ref={settingsWrapRef}
-        className={`
-          absolute bottom-16 right-3 z-20 sm:bottom-20 sm:right-4
-          pointer-events-auto min-w-[260px] max-w-[320px]
-          origin-bottom-right rounded-2xl bg-black/85 text-white shadow-2xl
-          ring-1 ring-white/10 backdrop-blur-md transition duration-150
-        `}
-        aria-hidden={!settingsOpen}
-      >
-        <div className="overflow-hidden rounded-2xl">
+        <>
+          <button
+            type="button"
+            aria-label={t('videoControlsBack')}
+            className="fixed inset-0 z-20 cursor-default bg-black/30 sm:hidden"
+            onClick={() => {
+              setSettingsOpen(false);
+              setSubMenu(null);
+            }}
+          />
+          <div
+            ref={settingsWrapRef}
+            className={`
+              fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30
+              pointer-events-auto max-h-[calc(100dvh-1.5rem)] overflow-y-auto
+              rounded-2xl bg-black/85 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md
+              transition duration-150 sm:absolute sm:inset-x-auto sm:bottom-20 sm:right-4 sm:z-20
+              sm:max-h-none sm:min-w-[260px] sm:max-w-[320px]
+            `}
+            aria-hidden={!settingsOpen}
+          >
+            <div className="overflow-hidden rounded-2xl">
           {subMenu === null && (
             <div className="flex flex-col gap-0.5 p-2">
               {/* Annotations row */}
@@ -679,8 +690,9 @@ const speedMenuLabel =
               })}
             </div>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
+        </>
       ) : null}
 
       {/* Bottom controls */}
@@ -720,13 +732,13 @@ const speedMenuLabel =
         </div>
 
         {/* Bottom row */}
-        <div className="mt-1 flex items-center gap-1 text-white sm:gap-2">
+        <div className="mt-1 flex flex-wrap items-center gap-1 text-white sm:flex-nowrap sm:gap-2">
           {/* Left controls */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex w-full items-center justify-between gap-1 sm:w-auto sm:justify-start sm:gap-2">
             <button
               type="button"
               onClick={togglePlay}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20"
               aria-label={paused ? t('videoControlsPlay') : t('videoControlsPause')}
             >
               {paused ? (
@@ -739,7 +751,7 @@ const speedMenuLabel =
               type="button"
               onClick={onPrevChapter}
               disabled={!canPrevChapter}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed sm:size-10"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label={t('videoControlsPrevChapter')}
               title={t('videoControlsPrevChapter')}
             >
@@ -749,7 +761,7 @@ const speedMenuLabel =
               type="button"
               onClick={onNextChapter}
               disabled={!canNextChapter}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed sm:size-10"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed"
               aria-label={t('videoControlsNextChapter')}
               title={t('videoControlsNextChapter')}
             >
@@ -758,7 +770,7 @@ const speedMenuLabel =
             <button
               type="button"
               onClick={toggleMute}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20"
               aria-label={muted ? t('videoControlsUnmute') : t('videoControlsMute')}
             >
               {muted ? (
@@ -782,7 +794,7 @@ const speedMenuLabel =
             <button
               type="button"
               onClick={() => setCaptionsEnabled((v) => !v)}
-              className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tracking-tight transition hover:bg-white/15 active:bg-white/20 sm:size-10 sm:text-xs ${
+              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold tracking-tight transition hover:bg-white/15 active:bg-white/20 ${
                 captionsEnabled ? 'bg-white/15' : ''
               }`}
               aria-label={captionsEnabled ? t('videoControlsCaptionsTurnOff') : t('videoControlsCaptionsTurnOn')}
@@ -798,7 +810,7 @@ const speedMenuLabel =
                 setSettingsOpen((v) => !v);
                 setSubMenu(null);
               }}
-              className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10 ${
+              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 ${
                 settingsOpen ? 'bg-white/15' : ''
               }`}
               aria-label={t('videoControlsSettings')}
@@ -812,7 +824,7 @@ const speedMenuLabel =
               <button
                 type="button"
                 onClick={onToggleTheater}
-                className={`inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10 ${
+                className={`hidden size-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:inline-flex ${
                   theaterMode ? 'bg-white/15' : ''
                 }`}
                 aria-label={
@@ -828,7 +840,7 @@ const speedMenuLabel =
             <button
               type="button"
               onClick={toggleShellFullscreen}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20 sm:size-10"
+              className="inline-flex size-10 shrink-0 items-center justify-center rounded-full text-white transition hover:bg-white/15 active:bg-white/20"
               aria-label={isFullscreen ? t('videoControlsExitFullscreen') : t('videoControlsFullscreen')}
               title={isFullscreen ? t('videoControlsExitFullscreen') : t('videoControlsFullscreen')}
             >

@@ -116,7 +116,7 @@ export default function StudentCommunityCreatePostModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white">
-        <div className="flex items-center justify-between border-b border-[#E2E8F0] p-6">
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] p-4 sm:p-6">
           <h3 className="text-lg font-bold text-[#1E293B]">
             {isReply ? tTags('replyModalTitle') : t('title')}
           </h3>
@@ -130,7 +130,7 @@ export default function StudentCommunityCreatePostModal({
           </button>
         </div>
 
-        <div className="space-y-4 p-6">
+        <div className="space-y-4 p-4 sm:p-6">
           {isReply ? (
             <p className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm text-[#475569]">
               <span className="font-semibold text-[#64748B]">{tTags('replyingTo')} </span>

@@ -192,6 +192,27 @@ export const DEFAULT_COUNTRY = COUNTRY_CODES[0];
 
 export { normalizeLocalPhone };
 
+export function splitPhoneNumber(value: string): {
+  country: CountryCode;
+  localNumber: string;
+} {
+  const phone = value.replace(/\D/g, '').replace(/^00/, '');
+  const country = [...COUNTRY_CODES]
+    .sort((a, b) => b.code.length - a.code.length)
+    .find(({ code }) => phone.startsWith(code));
+
+  if (!country) {
+    return { country: DEFAULT_COUNTRY, localNumber: phone };
+  }
+
+  const localNumber = phone.slice(country.code.length);
+
+  return {
+    country,
+    localNumber: country.iso === 'EG' ? `0${localNumber}` : localNumber,
+  };
+}
+
 interface CountryCodeSelectProps {
   value: CountryCode;
   onChange: (country: CountryCode) => void;

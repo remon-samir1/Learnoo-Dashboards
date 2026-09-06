@@ -116,9 +116,9 @@ const filteredNotifications = useMemo(() => {
 }, [notifications, search, activeFilter]);
 
   return (
-    <main className="min-h-screen bg-[#FAFAF8] p-6">
-      <div className="mb-4 flex items-start justify-between gap-4">
-        <div>
+    <main className="min-w-0 bg-[#FAFAF8] py-2 sm:py-6">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-3">
             <Bell size={24} className="text-[var(--primary)]" />
 
@@ -140,7 +140,7 @@ const filteredNotifications = useMemo(() => {
 
         <button
           type="button"
-          className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--border-color)] bg-white px-4 text-sm font-medium text-[var(--text-muted)] transition hover:bg-gray-50"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-[var(--border-color)] bg-white px-4 text-sm font-medium text-[var(--text-muted)] transition hover:bg-gray-50 sm:w-auto"
         >
           <CheckCircle2 size={16} />
           {t("markAllAsRead")}
@@ -216,25 +216,25 @@ const filteredNotifications = useMemo(() => {
               return (
                 <article
                   key={notification.id}
-                  className="flex min-h-[120px] items-start justify-between gap-4 px-5 py-6 transition hover:bg-[#FAFAF8]"
+                  className="flex min-h-[120px] flex-col gap-3 px-4 py-4 transition hover:bg-[#FAFAF8] sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:px-5 sm:py-6"
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex min-w-0 items-start gap-4">
                     <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 shadow-sm">
                       <Video size={18} />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <h2 className="text-sm font-bold text-[var(--text-dark)]">
                         {title}
                       </h2>
 
-                      <p className="mt-2 text-sm text-[var(--text-muted)]">
+                      <p className="mt-2 break-words text-sm text-[var(--text-muted)]">
                         {message}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-2 pt-1 text-xs text-[var(--text-placeholder)]">
+                  <div className="flex shrink-0 self-end items-center gap-2 text-xs text-[var(--text-placeholder)] sm:self-auto sm:pt-1">
                     {isUnread && (
                       <span className="size-2 rounded-full bg-[var(--primary)]" />
                     )}

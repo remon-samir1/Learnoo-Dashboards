@@ -109,7 +109,7 @@ export function StartExamIntro({
     <div className="w-full pb-10 pt-2" dir={dir}>
       <div className="mx-auto w-full max-w-[672px]">
         <article
-          className="flex w-full max-w-[672px] flex-col gap-8 overflow-y-auto rounded-2xl border border-[#E8ECF2] bg-white pt-8 pr-8 pl-8 pb-8 shadow-[0_4px_32px_rgba(15,23,42,0.07)] min-[700px]:min-h-[763px]"
+          className="flex w-full max-w-[672px] flex-col gap-6 overflow-y-auto rounded-2xl border border-[#E8ECF2] bg-white px-4 py-6 shadow-[0_4px_32px_rgba(15,23,42,0.07)] sm:gap-8 sm:p-8 min-[700px]:min-h-[763px]"
         >
           <header className="flex flex-col items-center gap-3 text-center">
             <div

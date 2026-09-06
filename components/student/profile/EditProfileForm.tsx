@@ -14,6 +14,10 @@ import {
 } from "@/src/schemas/profile.schema";
 import { updateUserProfile } from "@/src/services/student/user.service";
 import UniversityFacultyFields from "@/components/student/profile/UniversityFacultyFields";
+import CountryCodeSelect, {
+  normalizeLocalPhone,
+  splitPhoneNumber,
+} from "@/app/(auth)/components/CountryCodeSelect";
 
 type EditProfileFormProps = {
   defaultValues: {
@@ -35,8 +39,10 @@ export default function EditProfileForm({
   const router = useRouter();
   const locale = useLocale();
   const t = useTranslations("studentProfile.editProfileStudent");
+  const initialPhone = splitPhoneNumber(defaultValues.phone || "");
 
   const [preview, setPreview] = useState(defaultValues.image || "");
+  const [country, setCountry] = useState(initialPhone.country);
   const [universityId, setUniversityId] = useState(
     defaultValues.university_id || "",
   );
@@ -59,7 +65,7 @@ export default function EditProfileForm({
     defaultValues: {
       first_name: defaultValues.first_name || "",
       last_name: defaultValues.last_name || "",
-      phone: defaultValues.phone || "",
+      phone: initialPhone.localNumber,
       email: defaultValues.email || "",
       image: undefined,
       university_id: defaultValues.university_id || "",
@@ -103,6 +109,9 @@ export default function EditProfileForm({
 
     const res = await updateUserProfile({
       ...values,
+      phone: values.phone
+        ? `${country.code}${normalizeLocalPhone(values.phone)}`
+        : undefined,
       university_id: universityId,
       center_id: centerId,
       faculty_id: facultyId,
@@ -128,7 +137,7 @@ export default function EditProfileForm({
         {t("title")}
       </h1>
 
-      <div className="mb-6 flex items-center gap-5 border-b border-[var(--border-color)] pb-6">
+      <div className="mb-6 flex flex-col items-start gap-4 border-b border-[var(--border-color)] pb-6 sm:flex-row sm:items-center sm:gap-5">
         <div className="flex size-20 items-center justify-center overflow-hidden rounded-full bg-[var(--primary)] text-2xl font-bold text-white">
           {preview ? (
             <Image
@@ -233,10 +242,14 @@ export default function EditProfileForm({
             {t("fields.phone")}
           </label>
 
-          <input
-            {...register("phone")}
-            className="h-11 w-full rounded-xl border border-[var(--border-color)] px-4 text-sm outline-none focus:border-[var(--primary)]"
-          />
+          <div className="flex gap-2">
+            <CountryCodeSelect value={country} onChange={setCountry} />
+            <input
+              {...register("phone")}
+              type="tel"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--border-color)] px-4 text-sm outline-none focus:border-[var(--primary)]"
+            />
+          </div>
         </div>
       </div>
 
