@@ -1233,25 +1233,29 @@ export default function ChapterWatchView({
             <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
               <div className="flex flex-col">
                 <div ref={videoContainerRef} className="bg-black/50">
-                  {videoIsProcessing ? (
+                  {accessDenied ? (
+                    // Checked before videoIsProcessing/stableVideoSrc: a locked
+                    // chapter's API response typically omits the video URL
+                    // entirely, so without this ordering the messages below
+                    // (which imply the video will become available) would
+                    // show instead of the truth — access isn't granted yet.
+                    <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
+                      <p className="max-w-md text-sm font-medium text-slate-200">
+                        {playbackBlockMessage ?? t('watchAccessDenied')}
+                      </p>
+                      <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
+                      <Link
+                        href={backHref}
+                        className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                      >
+                        {tDetails('watchBack')}
+                      </Link>
+                    </div>
+                  ) : videoIsProcessing ? (
                     <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
                       <p className="text-sm font-medium text-slate-300">{t('videoProcessing')}</p>
                     </div>
                   ) : stableVideoSrc ? (
-                    accessDenied ? (
-                      <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
-                        <p className="max-w-md text-sm font-medium text-slate-200">
-                          {playbackBlockMessage ?? t('watchAccessDenied')}
-                        </p>
-                        <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
-                        <Link
-                          href={backHref}
-                          className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-                        >
-                          {tDetails('watchBack')}
-                        </Link>
-                      </div>
-                    ) : (
                       <HlsVideoPlayer
                         key={`${stableVideoSrc}|${candidateIndex}`}
                         ref={hlsVideoRef}
@@ -1317,7 +1321,6 @@ export default function ChapterWatchView({
                           toast.error(t('hlsPlaybackError'));
                         }}
                       />
-                    )
                   ) : (
                     // NO VIDEO CASE
                     pdfUrl && pdfPanelVisible ? (
