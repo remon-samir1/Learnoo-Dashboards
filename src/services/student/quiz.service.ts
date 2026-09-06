@@ -1,5 +1,6 @@
 import getUserDataFromJWT from '@/lib/server.utils';
 import type { Quiz } from '@/src/types';
+import { API_BASE_URL } from "@/src/lib/api";
 
 interface ServiceResponse<T> {
   success: boolean;
@@ -20,7 +21,7 @@ export const getQuizById = async (id: number | string): Promise<ServiceResponse<
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/quiz/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/v1/quiz/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',

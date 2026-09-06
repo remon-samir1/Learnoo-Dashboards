@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { BookOpen, FileText, NotebookPen, Search, Star } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { IStudentNote } from "@/src/interfaces/notes.interface";
 import Link from "next/link";
 
@@ -44,10 +45,13 @@ function formatDate(value?: string | null, locale?: string) {
 
 export default function NotesSummariesClient({
   notes,
+  loadFailed = false,
 }: {
   notes: IStudentNote[];
+  loadFailed?: boolean;
 }) {
   const t = useTranslations("notesSummaries");
+  const router = useRouter();
   const locale = useLocale();
   const dir = locale === "ar" ? "rtl" : "ltr";
   const [search, setSearch] = useState("");
@@ -137,7 +141,18 @@ export default function NotesSummariesClient({
               <FileText size={22} aria-hidden />
             </div>
 
-            <p className="text-sm font-medium text-[#64748B]">{t("noNotes")}</p>
+            <p className="text-sm font-medium text-[#64748B]">
+              {loadFailed ? t("loadFailed") : t("noNotes")}
+            </p>
+            {loadFailed ? (
+              <button
+                type="button"
+                onClick={() => router.refresh()}
+                className="mt-3 rounded-lg border border-[#E2E8F0] px-4 py-1.5 text-sm font-medium text-[#0F172A] transition hover:bg-gray-50"
+              >
+                {t("retry")}
+              </button>
+            ) : null}
           </div>
         </section>
       ) : (

@@ -75,6 +75,7 @@
       "registeredSuccess": "Account created successfully. Sign in with your phone number.",
       "errors": {
         "missingFields": "Please enter your phone number",
+        "localPhoneFormat": "For Egypt, enter your local number, such as 010..., without +20 or 020.",
         "loginFailed": "Login failed",
         "noToken": "No token received",
         "noPermission": "You do not have permission to access this platform"
@@ -241,7 +242,7 @@
         "noPermission": "You do not have permission to access this platform",
         "registerFailed": "Registration failed. Please try again.",
         "agreeToTerms": "You must agree to the Terms and Conditions",
-        "egyptPhoneFormat": "Egyptian phone number should not start with 0"
+        "localPhoneFormat": "For Egypt, enter your local number, such as 010..., without +20 or 020."
       }
     },
     "verification": {
@@ -254,7 +255,7 @@
       "success": "OTP verified successfully!",
       "connected": "Connected to OTP service",
       "errors": {
-        "codeRequired": "Please enter a valid 6-digit code",
+        "codeRequired": "Please enter a valid 6-character code",
         "verificationFailed": "Verification failed. Please try again."
       }
     },
@@ -764,7 +765,7 @@
       "declined": "Declined"
     },
     "studentPageTitle": "My Courses",
-    "studentPageDescription": "Browse your active courses, view progress, and open course details.",
+    "studentPageDescription": "Browse your active courses and open course details.",
     "studentTabs": {
       "all": "All",
       "courses": "Courses",
@@ -1044,6 +1045,7 @@
       "postReply": "Post Reply",
       "watchAccessDenied": "You can't watch this chapter.",
       "watchAccessDeniedHint": "Activate your course or chapter from the course page. If you opened this link directly, go back and open the chapter there so your access can update.",
+      "videoProcessing": "This video is being prepared. Please return shortly.",
       "hlsPlaybackError": "The video stream could not be played. Check your connection and try again.",
       "switchingPlaybackMethod": "Switching playback method…",
       "videoControlsGroup": "Video playback controls",
@@ -1124,6 +1126,7 @@
       "nextQuestion": "Next Question",
       "finishExam": "Finish",
       "finishError": "Could not submit the exam. Try again.",
+      "answerSaveFailed": "Could not save your answer. Check your connection and try again.",
       "selectMultipleHint": "Select all correct answers",
       "noReturnWarning": "You cannot return to previous questions. Make sure of your answer before proceeding.",
       "timeOutMessage": "Time is up. This attempt has ended.",
@@ -2163,6 +2166,8 @@
       "highlights": "Highlights",
       "notes": "Notes",
       "noNotes": "No notes found",
+      "loadFailed": "Could not load notes. Please try again.",
+      "retry": "Try again",
       "course": "Course",
       "lecture": "Lecture",
       "published": "Published",
@@ -3150,6 +3155,8 @@
     "markAllAsRead": "Mark all as read",
     "searchPlaceholder": "Search notifications...",
     "empty": "No notifications found.",
+    "loadFailed": "Could not load notifications. Please try again.",
+    "retry": "Try again",
     "fallbackTitle": "Notification",
     "fallbackMessage": "You have a new notification.",
     "justNow": "Just now",

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     ? clientAuth.substring(7)
     : cookieToken || "";
 
-  const apiUrl =  'https://api.learnoo.app';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app';
   const response = await fetch(
     `${apiUrl}/broadcasting/auth`,
     {

@@ -1,5 +1,6 @@
 import getUserDataFromJWT from "@/lib/server.utils"
 import type { CreateDiscussionRequest, Discussion } from "@/src/types"
+import { API_BASE_URL } from "@/src/lib/api";
 
 interface ServiceResponse<T> {
   success: boolean;
@@ -29,7 +30,7 @@ export const createDiscussion = async (
   }
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/discussion`, {
+    const res = await fetch(`${API_BASE_URL}/v1/discussion`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

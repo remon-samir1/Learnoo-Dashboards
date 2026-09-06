@@ -11,7 +11,6 @@ import { CourseCardSkeleton } from "@/src/components/ui/Skeleton";
 import { STUDENT_COURSES_LIST_PARAMS, useCourses } from "@/src/hooks/useCourses";
 import { useStudentCourseListActivation } from "@/src/hooks/useStudentCourseListActivation";
 import { courseIsLocked } from "@/src/lib/student-course-lock";
-import type { Course } from "@/src/types";
 import Link from "next/link";
 
 export default function MyCoursesSection() {
@@ -22,13 +21,6 @@ export default function MyCoursesSection() {
   const { data: courses, isLoading, error, refetch } = useCourses(STUDENT_COURSES_LIST_PARAMS);
   const activation = useStudentCourseListActivation();
    
-  function getCourseProgress(course: Course) {
-    const lectures = course.attributes.stats?.lectures ?? 0;
-    const exams = course.attributes.stats?.exams ?? 0;
-    const base = lectures * 8 + exams * 5;
-    return Math.min(98, Math.max(12, base || 35));
-  }
-
   const goToCourse = (courseId: string) => {
     router.push(`/${locale}/student/courses/course-details/${courseId}`);
   };
@@ -90,9 +82,8 @@ export default function MyCoursesSection() {
                   subTitle={course.attributes.sub_title ?? ""}
                   lectures={course.attributes.stats?.lectures ?? 0}
                   exams={course.attributes.stats?.exams ?? 0}
-                  progress={getCourseProgress(course)}
                   typeLabel={categoryName}
-                  statusLabel={String(course.attributes.status)}
+                  statusLabel={t(course.attributes.status === 1 ? "status.active" : "status.draft")}
                   statusCode={course.attributes.status}
                   locked={locked}
                   onView={locked ? undefined : () => goToCourse(course.id)}

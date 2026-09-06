@@ -186,17 +186,17 @@ export default function TakeExamRun({
     setShortTexts((prev) => ({ ...prev, [qid]: text }));
   };
 
-  /** Best-effort: POST first time, PUT thereafter, per (quiz_attempt_id, quiz_question_id). */
-  const persistAnswer = async (qid: string, answerText: string) => {
-    if (!attemptId || !qid || !answerText) return;
+  const persistAnswer = async (qid: string, answerText: string): Promise<boolean> => {
+    if (!attemptId || !qid || !answerText) return true;
     const existingId = answerRowIdsRef.current.get(qid);
     if (existingId != null) {
       try {
         await updateAnswer.mutateAsync({ id: existingId, data: { answer_text: answerText } });
+        return true;
       } catch (err) {
         console.error('[quiz-user-answer] update failed', err);
+        return false;
       }
-      return;
     }
     try {
       const res = await createAnswer.mutateAsync({
@@ -208,14 +208,16 @@ export default function TakeExamRun({
         ?? (res as { id?: string | number });
       const newId = payload?.id;
       if (newId != null) answerRowIdsRef.current.set(qid, newId);
+      return true;
     } catch (err) {
       console.error('[quiz-user-answer] create failed', err);
+      return false;
     }
   };
 
-  const flushCurrentAnswer = async (qid: string) => {
+  const flushCurrentAnswer = async (qid: string): Promise<boolean> => {
     const q = questions.find((x) => String(x.id) === qid);
-    if (!q) return;
+    if (!q) return true;
 
     let textToSave = '';
     if (isShortAnswer(q)) {
@@ -229,9 +231,7 @@ export default function TakeExamRun({
         .join(', ');
     }
 
-    if (textToSave) {
-      await persistAnswer(qid, textToSave);
-    }
+    return textToSave ? persistAnswer(qid, textToSave) : true;
   };
 
   const selectedForCurrent = current ? selections[String(current.id)] ?? [] : [];
@@ -244,7 +244,11 @@ export default function TakeExamRun({
     setIsGoingNext(true);
 
     try {
-      await flushCurrentAnswer(String(current.id));
+      const saved = await flushCurrentAnswer(String(current.id));
+      if (!saved) {
+        toast.error(t('answerSaveFailed'));
+        return;
+      }
       if (!isLast) setCurrentIndex((i) => Math.min(i + 1, total - 1));
     } finally {
       setIsGoingNext(false);
@@ -256,7 +260,15 @@ export default function TakeExamRun({
     isFinished.current = true;
 
     if (current) {
-      await flushCurrentAnswer(String(current.id));
+      const qid = String(current.id);
+      let saved = await flushCurrentAnswer(qid);
+      for (let attempt = 0; !saved && attempt < 2; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        saved = await flushCurrentAnswer(qid);
+      }
+      if (!saved) {
+        console.error('[quiz-user-answer] auto-submit: could not save the current answer after retries');
+      }
     }
 
     const { score, total_score } = computeExamScore(questions, selectionsRef.current, shortTextsRef.current);
@@ -279,7 +291,11 @@ export default function TakeExamRun({
 
     setFinishing(true);
     try {
-      await flushCurrentAnswer(String(current.id));
+      const saved = await flushCurrentAnswer(String(current.id));
+      if (!saved) {
+        toast.error(t('answerSaveFailed'));
+        return;
+      }
       const { score, total_score } = computeExamScore(questions, selectionsRef.current, shortTextsRef.current);
       isFinished.current = true;
 

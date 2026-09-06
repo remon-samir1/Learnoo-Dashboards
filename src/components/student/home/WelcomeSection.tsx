@@ -24,7 +24,7 @@ const WelcomeSection = ({
         {`${t("title")} ${student?.first_name || "Student"} 👋`}
       </h2>
       <p className="text-sm text-white/95 sm:text-base">
-        {student?.university?.data?.attributes.name || tC("notFound")}
+        {student?.university?.data?.attributes?.name || tC("notFound")}
       </p>
       <div className="flex flex-col gap-3 text-sm text-white/90 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2">
         <div className="flex min-h-11 items-center gap-2 rounded-xl bg-white/10 px-3 py-2 sm:min-h-0 sm:bg-transparent sm:px-0 sm:py-0">

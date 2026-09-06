@@ -1,7 +1,8 @@
 import getUserDataFromJWT from '@/lib/server.utils';
 import type { PlatformFeature } from '@/src/types';
+import { API_BASE_URL } from "@/src/lib/api";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '${API_BASE_URL}').replace(/\/$/, '');
 
 function asRecord(v: unknown): Record<string, unknown> | null {
   return v && typeof v === 'object' ? (v as Record<string, unknown>) : null;

@@ -1,6 +1,7 @@
 // src/services/student/exam.service.ts
 import getUserDataFromJWT from "@/lib/server.utils";
 import type { Quiz, QuizAttributes } from "@/src/types";
+import { API_BASE_URL } from "@/src/lib/api";
 
 export interface LatestExamSummary {
   id: string;
@@ -24,7 +25,7 @@ export type LatestExamsServiceResult = {
   message?: string;
 };
 
-const API_BASE = "https://api.learnoo.app/v1/quiz";
+const API_BASE = `${API_BASE_URL}/v1/quiz`;
 const DEFAULT_LIMIT = 4;
 
 function asRecord(value: unknown): Record<string, unknown> | null {

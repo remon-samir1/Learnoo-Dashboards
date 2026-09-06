@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 
+import { normalizeLocalPhone } from '@/src/lib/local-phone';
+
 export interface CountryCode {
   code: string;
   iso: string;
@@ -186,11 +188,13 @@ export const COUNTRY_CODES: CountryCode[] = [
   { code: '373', iso: 'MD', flag: '🇲🇩', name: 'Moldova' },
 ];
 
-export const DEFAULT_COUNTRY_CODE = '20'; // Egypt
+export const DEFAULT_COUNTRY = COUNTRY_CODES[0];
+
+export { normalizeLocalPhone };
 
 interface CountryCodeSelectProps {
-  value: string;
-  onChange: (code: string) => void;
+  value: CountryCode;
+  onChange: (country: CountryCode) => void;
   className?: string;
 }
 
@@ -201,10 +205,7 @@ export default function CountryCodeSelect({ value, onChange, className }: Countr
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const selectedCountry = useMemo(
-    () => COUNTRY_CODES.find((c) => c.code === value) ?? COUNTRY_CODES[0],
-    [value]
-  );
+  const selectedCountry = value;
 
   const filteredCountries = useMemo(() => {
     if (!search.trim()) return COUNTRY_CODES;
@@ -278,6 +279,9 @@ export default function CountryCodeSelect({ value, onChange, className }: Countr
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls="country-code-options"
         className="h-10 w-[100px] sm:w-[130px] flex items-center gap-1 sm:gap-1.5 rounded-md border border-border-color bg-white px-2 sm:px-2.5 py-[9px] font-sans text-sm leading-5 text-text-main shadow-[0px_1px_2px_rgba(0,0,0,0.05)] outline-none transition-colors hover:bg-gray-50 focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)]"
       >
         <span className="text-base leading-none">{selectedCountry.flag}</span>
@@ -322,21 +326,23 @@ export default function CountryCodeSelect({ value, onChange, className }: Countr
             </div>
 
             {/* List */}
-            <div ref={listRef} className="max-h-[50vh] sm:max-h-[240px] overflow-y-auto overscroll-contain">
+            <div id="country-code-options" ref={listRef} role="listbox" className="max-h-[50vh] sm:max-h-[240px] overflow-y-auto overscroll-contain">
               {filteredCountries.length === 0 ? (
                 <div className="px-3 py-6 sm:py-4 text-center font-sans text-sm sm:text-xs text-text-muted">
                   No countries found
                 </div>
               ) : (
                 filteredCountries.map((country) => {
-                  const isSelected = country.code === value && country.iso === selectedCountry.iso;
+                  const isSelected = country.iso === selectedCountry.iso;
                   return (
                     <button
                       key={`${country.iso}-${country.code}`}
                       type="button"
+                      role="option"
+                      aria-selected={isSelected}
                       data-selected={isSelected}
                       onClick={() => {
-                        onChange(country.code);
+                        onChange(country);
                         setIsOpen(false);
                         setSearch('');
                       }}
@@ -368,4 +374,3 @@ export default function CountryCodeSelect({ value, onChange, className }: Countr
     </div>
   );
 }
-

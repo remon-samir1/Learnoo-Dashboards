@@ -5,6 +5,7 @@ import {
 } from "@/src/lib/student-live-room";
 
 import type { PaginationMeta } from "@/src/types";
+import { API_BASE_URL } from "@/src/lib/api";
 
 export type StudentLiveRoomServiceResult<T> = {
   success: boolean;
@@ -13,7 +14,7 @@ export type StudentLiveRoomServiceResult<T> = {
   message?: string;
 };
 
-const API_BASE = "https://api.learnoo.app/v1/live-room";
+const API_BASE = `${API_BASE_URL}/v1/live-room`;
 
 export async function getStudentLiveRooms(params?: { page?: number }): Promise<
   StudentLiveRoomServiceResult<StudentLiveRoom[]>

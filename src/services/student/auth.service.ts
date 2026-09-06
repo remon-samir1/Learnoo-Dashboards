@@ -1,11 +1,12 @@
 import getUserDataFromJWT from "@/lib/server.utils";
+import { API_BASE_URL } from "@/src/lib/api";
 
 export const userLogout = async () => {
   const userData = await getUserDataFromJWT();
   const token = userData?.token;
 
   try {
-    const res = await fetch("https://api.learnoo.app/v1/auth/logout", {
+    const res = await fetch(`${API_BASE_URL}/v1/auth/logout`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

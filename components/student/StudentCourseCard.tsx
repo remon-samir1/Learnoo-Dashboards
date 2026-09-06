@@ -2,7 +2,6 @@
 
 import React, { useCallback } from 'react';
 import { BookOpen, FileText, Lock, MapPin } from 'lucide-react';
-import { ProgressBar } from '@/components/ProgressBar';
 import { useTranslations } from 'next-intl';
 
 function categoryBadgeClass(categoryName: string): string {
@@ -28,7 +27,6 @@ interface StudentCourseCardProps {
   subTitle?: string | null;
   lectures: number;
   exams: number;
-  progress: number;
   typeLabel: string;
   statusLabel: string;
   statusCode: number;
@@ -46,7 +44,6 @@ export const StudentCourseCard: React.FC<StudentCourseCardProps> = ({
   subTitle,
   lectures,
   exams,
-  progress,
   typeLabel,
   statusLabel,
   statusCode,
@@ -156,10 +153,6 @@ export const StudentCourseCard: React.FC<StudentCourseCardProps> = ({
             </span>
           </div>
         </div>
-
-        {!locked ? (
-          <ProgressBar label={t('card.progress')} value={progress} colorClass="bg-[#3B82F6]" percentagePosition="top" />
-        ) : null}
 
         {locked ? (
           <button

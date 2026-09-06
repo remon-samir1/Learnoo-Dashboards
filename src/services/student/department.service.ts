@@ -1,4 +1,5 @@
 import getUserDataFromJWT from "@/lib/server.utils";
+import { API_BASE_URL } from "@/src/lib/api";
 
 
 export const getCategories = async () => {
@@ -7,7 +8,7 @@ export const getCategories = async () => {
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/department`, {
+    const res = await fetch(`${API_BASE_URL}/v1/department`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

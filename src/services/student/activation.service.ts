@@ -1,4 +1,5 @@
 import getUserDataFromJWT from "@/lib/server.utils"
+import { API_BASE_URL } from "@/src/lib/api";
 
 interface ServiceResponse<T> {
   success: boolean;
@@ -25,7 +26,7 @@ export const activateCourseCode = async (
       : Number.parseInt(courseId, 10)
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/code/activate`, {
+    const res = await fetch(`${API_BASE_URL}/v1/code/activate`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

@@ -68,7 +68,7 @@ export default function VerificationCodePage() {
 
   const handleVerify = async () => {
     if (!code || code.length !== 6) {
-      toast.error(t('errors.codeRequired') || 'Please enter a valid 6-digit code');
+      toast.error(t('errors.codeRequired') || 'Please enter a valid 6-character code');
       return;
     }
 
@@ -149,10 +149,10 @@ export default function VerificationCodePage() {
           <input
             type="text"
             className="w-full h-10 px-3 py-[9px] bg-white border border-border-color shadow-[0px_1px_2px_rgba(0,0,0,0.05)] rounded-md font-sans text-sm leading-5 text-text-main outline-none focus:border-primary focus:shadow-[0px_0px_0px_3px_rgba(33,55,214,0.1)] transition-colors placeholder:text-text-placeholder tracking-[2px] placeholder:tracking-normal"
-            placeholder="Enter 6-digit code"
+            placeholder="Enter 6-character code"
             maxLength={6}
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+            onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
             autoComplete="one-time-code"
           />
         </div>

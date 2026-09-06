@@ -109,13 +109,13 @@ const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
  
  if (!res.success) {
   toast.error(res.message || t("errors.changePasswordFailed"));
- } else {
-  toast.success(res.message || t("passwordChanged"));
+  return;
  }
+
+ toast.success(res.message || t("passwordChanged"));
   setPasswordErrors({});
   setPasswords({ password: "", confirmPassword: "" });
   setOpenPassword(false);
-  toast.success(t("passwordChanged"));
 };
 
   return (

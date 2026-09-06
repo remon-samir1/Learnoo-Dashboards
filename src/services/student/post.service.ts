@@ -1,4 +1,5 @@
 import getUserDataFromJWT from "@/lib/server.utils";
+import { API_BASE_URL } from "@/src/lib/api";
 
 export interface Post {
   id: number;
@@ -45,7 +46,7 @@ export const getLatestGeneralPosts = async (limit: number = 5): Promise<ServiceR
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/post`, {
+    const res = await fetch(`${API_BASE_URL}/v1/post`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

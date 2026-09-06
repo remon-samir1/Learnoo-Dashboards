@@ -2,6 +2,7 @@
 import getUserDataFromJWT from "@/lib/server.utils";
 import { appendStudentAcademicFormFields } from "@/src/lib/student-academic-update";
 import { UpdateProfileFormValues } from "@/src/schemas/profile.schema";
+import { API_BASE_URL } from "@/src/lib/api";
 
 export const getStudentData = async () => {
   const userData = await getUserDataFromJWT();
@@ -9,7 +10,7 @@ export const getStudentData = async () => {
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/auth/me`, {
+    const res = await fetch(`${API_BASE_URL}/v1/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -41,7 +42,7 @@ export const getStudentProgression = async () => {
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/user-progress`, {
+    const res = await fetch(`${API_BASE_URL}/v1/user-progress`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -77,7 +78,7 @@ export const getStudentCourses = async (categoryId?: number | string) => {
     if (categoryId != null && String(categoryId).trim() !== "") {
       params.set("category_id", String(categoryId));
     }
-    const res = await fetch(`https://api.learnoo.app/v1/course?${params.toString()}`, {
+    const res = await fetch(`${API_BASE_URL}/v1/course?${params.toString()}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -112,7 +113,7 @@ export const getStudentNotes = async () => {
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/note`, {
+    const res = await fetch(`${API_BASE_URL}/v1/note`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -147,7 +148,7 @@ export const getUserProfileData = async () => {
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/auth/me`, {
+    const res = await fetch(`${API_BASE_URL}/v1/auth/me`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -198,7 +199,7 @@ export const updateUserProfile = async (data: UpdateProfileFormValues) => {
   }
 
   try {
-    const res = await fetch("https://api.learnoo.app/v1/auth/update", {
+    const res = await fetch(`${API_BASE_URL}/v1/auth/update`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -234,7 +235,7 @@ export const getStudentNotifications = async () => {
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/notifications`, {
+    const res = await fetch(`${API_BASE_URL}/v1/notifications`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -272,7 +273,7 @@ export const updateUserPassword = async (password: string) => {
 
 
   try {
-    const res = await fetch("https://api.learnoo.app/v1/auth/update", {
+    const res = await fetch(`${API_BASE_URL}/v1/auth/update`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,

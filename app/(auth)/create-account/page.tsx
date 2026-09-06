@@ -9,7 +9,8 @@ import { ApiError, getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import Cookies from '@/lib/cookies';
 import AuthPageLayout from '../components/AuthLayout';
-import CountryCodeSelect, { DEFAULT_COUNTRY_CODE } from '../components/CountryCodeSelect';
+import CountryCodeSelect, { DEFAULT_COUNTRY } from '../components/CountryCodeSelect';
+import { isValidLocalPhone, normalizeLocalPhone } from '@/src/lib/local-phone';
 import TermsModal from '@/components/modals/TermsModal';
 
 const DEVICE_NAME = 'learnoo-web';
@@ -37,7 +38,7 @@ export default function CreateAccountPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY_CODE);
+  const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -50,11 +51,16 @@ export default function CreateAccountPage() {
     const fn = firstName.trim();
     const ln = lastName.trim();
     const em = email.trim();
-    const ph = phone.trim().replace(/\s+/g, '').replace(/^0+/, '');
-    const fullPhone = `${countryCode}${ph}`;
+    const ph = normalizeLocalPhone(phone);
+    const fullPhone = `${country.code}${ph}`;
 
     if (!fn || !ln || !em || !ph) {
       setError(t('errors.missingFields'));
+      return;
+    }
+
+    if (!isValidLocalPhone(country.iso, phone)) {
+      setError(t('errors.localPhoneFormat'));
       return;
     }
 
@@ -69,12 +75,6 @@ export default function CreateAccountPage() {
       setError(t('errors.agreeToTerms'));
       return;
     }
-
-    // Egyptian phone validation: should not start with 0
-    // if (countryCode === '+20' && ph.startsWith('0')) {
-    //   setError(t('errors.egyptPhoneFormat'));
-    //   return;
-    // }
 
     setLoading(true);
     try {
@@ -180,7 +180,7 @@ export default function CreateAccountPage() {
         <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('phone')}</label>
           <div className="flex gap-2 min-w-0">
-            <CountryCodeSelect value={countryCode} onChange={setCountryCode} />
+            <CountryCodeSelect value={country} onChange={setCountry} />
             <input
               type="tel"
               name="phone"

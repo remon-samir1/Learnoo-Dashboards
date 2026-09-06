@@ -1,6 +1,7 @@
 // src/services/student/note.service.ts
 import getUserDataFromJWT from '@/lib/server.utils';
 import type { CreateNoteRequest, Note } from '@/src/types';
+import { API_BASE_URL } from "@/src/lib/api";
 
 interface ServiceResponse<T> {
   success: boolean;
@@ -48,13 +49,13 @@ export const updateNote = async (
       }
       formData.append('attachment', data.attachment);
 
-      res = await fetch(`https://api.learnoo.app/v1/note/${id}`, {
+      res = await fetch(`${API_BASE_URL}/v1/note/${id}`, {
         method: 'PUT',
         headers: authHeaders,
         body: formData,
       });
     } else {
-      res = await fetch(`https://api.learnoo.app/v1/note/${id}`, {
+      res = await fetch(`${API_BASE_URL}/v1/note/${id}`, {
         method: 'PUT',
         headers: {
           ...authHeaders,
@@ -94,7 +95,7 @@ export const deleteNote = async (id: number | string): Promise<ServiceResponse<N
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/note/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/v1/note/${id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -131,7 +132,7 @@ export const getStudentNoteById = async (
   const token = userData?.token;
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/note/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/v1/note/${id}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

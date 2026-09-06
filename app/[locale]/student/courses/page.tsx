@@ -12,7 +12,6 @@ import { CourseCardSkeleton } from '@/src/components/ui/Skeleton';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useStudentCourseListActivation } from '@/src/hooks/useStudentCourseListActivation';
 import { courseIsLocked } from '@/src/lib/student-course-lock';
-import type { Course } from '@/src/types';
 
 export default function StudentCoursesPage() {
   const router = useRouter();
@@ -23,13 +22,6 @@ export default function StudentCoursesPage() {
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   const displayCourses = useMemo(() => courses ?? [], [courses]);
-
-  function getCourseProgress(course: Course) {
-    const lectures = course.attributes.stats?.lectures ?? 0;
-    const exams = course.attributes.stats?.exams ?? 0;
-    const base = lectures * 8 + exams * 5;
-    return Math.min(98, Math.max(12, base || 35));
-  }
 
   const resultsSummary = t('studentResultsCount', { count: displayCourses.length });
 
@@ -88,9 +80,8 @@ export default function StudentCoursesPage() {
                 subTitle={course.attributes.sub_title ?? ''}
                 lectures={course.attributes.stats?.lectures ?? 0}
                 exams={course.attributes.stats?.exams ?? 0}
-                progress={getCourseProgress(course)}
                 typeLabel={categoryName}
-                statusLabel={String(course.attributes.status)}
+                statusLabel={t(course.attributes.status === 1 ? 'status.active' : 'status.draft')}
                 statusCode={course.attributes.status}
                 locked={locked}
                 onView={() => goToCourse(course.id)}

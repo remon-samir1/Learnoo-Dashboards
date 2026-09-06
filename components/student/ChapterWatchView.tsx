@@ -501,6 +501,8 @@ export default function ChapterWatchView({
   }, [chapter, normaliseVideoUrl, stableVideoSrc]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
+  const videoIsProcessing =
+    chapter?.attributes.video_ready === false || chapter?.attributes.video_status === 'processing';
 
   const partChapters = useMemo(() => {
     if (lectureChapters.length > 0) return lectureChapters;
@@ -1231,7 +1233,11 @@ export default function ChapterWatchView({
             <div className="overflow-hidden border-y border-slate-700 bg-[#070d18] shadow-xl sm:rounded-2xl sm:border sm:border-slate-700">
               <div className="flex flex-col">
                 <div ref={videoContainerRef} className="bg-black/50">
-                  {stableVideoSrc ? (
+                  {videoIsProcessing ? (
+                    <div className="flex aspect-video flex-col items-center justify-center gap-3 bg-slate-950 px-6 text-center">
+                      <p className="text-sm font-medium text-slate-300">{t('videoProcessing')}</p>
+                    </div>
+                  ) : stableVideoSrc ? (
                     accessDenied ? (
                       <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
                         <p className="max-w-md text-sm font-medium text-slate-200">
@@ -1751,4 +1757,3 @@ export default function ChapterWatchView({
     </>
   );
 }
-

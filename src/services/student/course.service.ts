@@ -1,5 +1,6 @@
 import getUserDataFromJWT from "@/lib/server.utils"
 import type { Course } from "@/src/types"
+import { API_BASE_URL } from "@/src/lib/api";
 
 interface ServiceResponse<T> {
   success: boolean;
@@ -26,7 +27,7 @@ export const getCourses = async (): Promise<ServiceListResponse<Course>> => {
   const token = userData?.token
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/course?activated=1`, {
+    const res = await fetch(`${API_BASE_URL}/v1/course?activated=1`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -61,7 +62,7 @@ export const getCourseById = async (id: number | string): Promise<ServiceRespons
   const token = userData?.token
 
   try {
-    const res = await fetch(`https://api.learnoo.app/v1/course/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/v1/course/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

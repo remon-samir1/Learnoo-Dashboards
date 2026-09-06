@@ -1,5 +1,6 @@
 import getUserDataFromJWT from "@/lib/server.utils";
 import type { CurrentUser } from "@/src/interfaces/current-user.interface";
+import { API_BASE_URL } from "@/src/lib/api";
 
 export type GetCurrentUserResult = {
   success: boolean;
@@ -16,7 +17,7 @@ export async function getCurrentUser(): Promise<GetCurrentUserResult> {
   }
 
   try {
-    const res = await fetch("https://api.learnoo.app/v1/auth/me", {
+    const res = await fetch(`${API_BASE_URL}/v1/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

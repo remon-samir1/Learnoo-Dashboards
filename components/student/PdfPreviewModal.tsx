@@ -358,16 +358,28 @@ export default function PdfPreviewModal({
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
       <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#E5E7EB] bg-[#F8F9FB] px-4 py-3">
-          <div className="flex items-center gap-2">
-            <FileText className="size-5 text-[#2D43D1]" />
-            <div>
-              <p className="text-sm font-bold text-[#0F172A]">{title}</p>
-              <p className="text-xs text-[#64748B]">PDF Preview</p>
+        <div className="flex flex-col gap-2 border-b border-[#E5E7EB] bg-[#F8F9FB] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center justify-between gap-2 sm:justify-start">
+            <div className="flex min-w-0 items-center gap-2">
+              <FileText className="size-5 shrink-0 text-[#2D43D1]" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-[#0F172A]">{title}</p>
+                <p className="text-xs text-[#64748B]">PDF Preview</p>
+              </div>
             </div>
+
+            {onClose ? (
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-[#64748B] transition hover:bg-[#EEF2FF] sm:hidden"
+              >
+                <X className="size-5" />
+              </button>
+            ) : null}
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end sm:gap-6">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -401,7 +413,7 @@ export default function PdfPreviewModal({
                 <ChevronRight className="size-4" />
               </button>
             </div>
-            <div className="mr-4 flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1">
+            <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 sm:mr-4">
               <button
                 type="button"
                 onClick={handleZoomOut}
@@ -436,7 +448,7 @@ export default function PdfPreviewModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex size-9 items-center justify-center rounded-full bg-white text-[#64748B] transition hover:bg-[#EEF2FF]"
+                className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-white text-[#64748B] transition hover:bg-[#EEF2FF] sm:flex"
               >
                 <X className="size-5" />
               </button>
@@ -449,4 +461,3 @@ export default function PdfPreviewModal({
     </div>
   );
 }
-

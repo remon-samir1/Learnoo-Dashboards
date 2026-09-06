@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bell, CheckCircle2, Search, Video } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { getPusherClient } from "@/src/lib/pusher.client";
 
 export type NotificationItem = {
@@ -41,16 +42,23 @@ type FilterType = "all" | "live" | "course" | "exam" | "general";
 
 export default function NotificationsClient({
   initialNotifications,
+  loadFailed = false,
 }: {
   initialNotifications: NotificationItem[];
+  loadFailed?: boolean;
 }) {
   const t = useTranslations("notifications");
+  const router = useRouter();
 
   const [notifications, setNotifications] =
     useState<NotificationItem[]>(initialNotifications);
 
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    setNotifications(initialNotifications);
+  }, [initialNotifications]);
 
   useEffect(() => {
     const pusher = getPusherClient();
@@ -180,8 +188,17 @@ const filteredNotifications = useMemo(() => {
         </div>
 
         {filteredNotifications.length === 0 ? (
-          <div className="flex min-h-[360px] items-center justify-center p-8 text-center text-sm text-[var(--text-muted)]">
-            {t("empty")}
+          <div className="flex min-h-[360px] flex-col items-center justify-center gap-3 p-8 text-center text-sm text-[var(--text-muted)]">
+            {loadFailed ? t("loadFailed") : t("empty")}
+            {loadFailed ? (
+              <button
+                type="button"
+                onClick={() => router.refresh()}
+                className="rounded-lg border border-[var(--border-color)] px-4 py-1.5 text-sm font-medium text-[var(--text-dark)] transition hover:bg-gray-50"
+              >
+                {t("retry")}
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className="divide-y divide-[var(--border-color)]">

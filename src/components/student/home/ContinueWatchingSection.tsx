@@ -21,7 +21,7 @@ export default function ContinueWatchingSection({
   const locale = useLocale();
 
   const list = Array.isArray(progress) ? progress : [];
-  const latest = list.length > 0 ? list[list.length - 1] : undefined;
+  const latest = list[0];
   const lastChapter = latest?.attributes?.chapter?.data?.attributes;
   const chapterProgressId = latest?.attributes?.chapter?.data?.id;
   const chapterNumericId = useMemo(() => {
@@ -98,7 +98,9 @@ export default function ContinueWatchingSection({
   const detailHref =
     courseDetails?.id != null
       ? `/${locale}/student/courses/course-details/${courseDetails.id}`
-      : "#";
+      : courseId != null
+        ? `/${locale}/student/courses/course-details/${courseId}`
+        : "#";
 
   return (
     <section className="rounded-2xl  border border-[var(--border-color)] bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-4">

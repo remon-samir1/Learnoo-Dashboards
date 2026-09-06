@@ -14,6 +14,7 @@ import { readStudentQuizResultPayload } from '@/src/lib/student-quiz-cache';
 import type { Quiz } from '@/src/types';
 import { formatTimeTakenForDisplay } from '@/src/lib/quiz-finish-result-fields';
 import {
+  isExamPassed,
   passingMarksPercentage,
   readPercentageWithScoreFallback,
 } from '@/src/lib/student-exam-score';
@@ -99,7 +100,6 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
   const results: any = payload?.results ?? payload?.data?.attempt ?? (payload?.attempt as any)?.data ?? payload?.attempt;
   const quizInfo: any = payload?.quiz_info ?? payload?.data?.quiz ?? payload?.quiz;
 
-  const passed = results?.passed === true;
   const yourPct =
     results != null
       ? readPercentageWithScoreFallback(
@@ -112,6 +112,7 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
     quizInfo != null && (typeof quizInfo.passing_marks === 'number' || typeof quizInfo?.attributes?.passing_marks === 'number')
       ? passingMarksPercentage(quizInfo.passing_marks ?? quizInfo?.attributes?.passing_marks, quizInfo.total_marks ?? quizInfo?.attributes?.total_marks)
       : null;
+  const passed = isExamPassed(results?.passed, yourPct, passPct);
   const timeTakenVal = results != null && 'time_taken' in results ? formatTimeTakenForDisplay(results.time_taken as number | string | null | undefined) : null;
 
   const scoreMarksLine = useMemo(() => {

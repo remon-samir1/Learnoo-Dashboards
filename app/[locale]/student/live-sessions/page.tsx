@@ -34,6 +34,7 @@ import { useCourses, STUDENT_COURSES_LIST_PARAMS } from "@/src/hooks/useCourses"
 import { courseIsLocked } from "@/src/lib/student-course-lock";
 import { StudentCourseActivationModal } from "@/components/student/StudentCourseActivationModal";
 import type { PaginationMeta } from "@/src/types";
+import { API_BASE_URL } from "@/src/lib/api";
 
 const labels = {
   ar: {
@@ -284,10 +285,10 @@ export default function StudentLiveSessionsPage() {
         if (!token) return;
 
         const [meRes, deptRes] = await Promise.all([
-          fetch("https://api.learnoo.app/v1/auth/me", {
+          fetch(`${API_BASE_URL}/v1/auth/me`, {
             headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
           }),
-          fetch("https://api.learnoo.app/v1/department", {
+          fetch(`${API_BASE_URL}/v1/department`, {
             headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
           }),
         ]);

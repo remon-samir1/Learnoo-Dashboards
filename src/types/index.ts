@@ -840,6 +840,10 @@ export interface ChapterAttributes {
 
   main_video?: string | null;
 
+  video_ready?: boolean;
+
+  video_status?: 'none' | 'processing' | 'ready';
+
 
 
   duration: string;
@@ -5550,6 +5554,5 @@ export interface CreateAppVersionRequest {
 
 
 }
-
 
 

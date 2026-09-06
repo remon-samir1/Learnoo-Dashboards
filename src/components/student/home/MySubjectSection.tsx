@@ -18,6 +18,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { activateCourseCode } from "@/src/services/student/activation.service";
+import { API_BASE_URL } from "@/src/lib/api";
 
 const GRADIENTS = [
   "linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #60a5fa 100%)",
@@ -211,7 +212,7 @@ export default function MySubjectSection({
         const token = Cookies.get('token');
 
         const res = await fetch(
-          "https://api.learnoo.app/v1/auth/me",
+          `${API_BASE_URL}/v1/auth/me`,
           {
             method: "GET",
             headers: {

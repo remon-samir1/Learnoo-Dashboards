@@ -1,4 +1,5 @@
 import getUserDataFromJWT from "@/lib/server.utils";
+import { API_BASE_URL } from "@/src/lib/api";
 
 export type SearchType =
   | "courses"
@@ -64,7 +65,7 @@ export const globalSearch = async ({
     if (type) params.append("type", type);
 
     const res = await fetch(
-      `https://api.learnoo.app/v1/search?${params.toString()}`,
+      `${API_BASE_URL}/v1/search?${params.toString()}`,
       {
         method: "GET",
         headers: {
