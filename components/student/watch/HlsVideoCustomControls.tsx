@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import {
   Captions,
@@ -67,6 +68,10 @@ export type HlsVideoCustomControlsProps = {
   /** Theater mode (wider player). When true the theater icon is "active". */
   theaterMode?: boolean;
   onToggleTheater?: () => void;
+  /** Notified whenever the settings menu opens/closes, so the parent can suspend
+   *  its auto-hide timer — otherwise the control bar (and this menu with it) can
+   *  disappear mid-interaction while the viewer is still reading the options. */
+  onSettingsOpenChange?: (open: boolean) => void;
 };
 
 function isShellFullscreen(shell: HTMLDivElement | null, video?: HTMLVideoElement | null): boolean {
@@ -101,6 +106,7 @@ export function HlsVideoCustomControls({
   chapterInfoTitle,
   theaterMode = false,
   onToggleTheater,
+  onSettingsOpenChange,
 }: HlsVideoCustomControlsProps) {
   const t = useTranslations('courses.studentWatch');
 
@@ -118,9 +124,43 @@ export function HlsVideoCustomControls({
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number>(0);
   const [sleepRemaining, setSleepRemaining] = useState<number>(0);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [desktopPanelPos, setDesktopPanelPos] = useState<{ bottom: number; right: number } | null>(null);
 
   const sleepCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const settingsWrapRef = useRef<HTMLDivElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+
+  // The settings panel is portaled to document.body (see below), so on wide
+  // screens — where it anchors near the gear button instead of becoming a
+  // full-width bottom sheet — its on-screen position has to be computed
+  // from the player's bounding box rather than relying on a CSS-positioned
+  // ancestor that no longer exists once portaled.
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const updatePos = () => {
+      const root = rootRef.current;
+      if (!root || window.innerWidth < 640) {
+        setDesktopPanelPos(null);
+        return;
+      }
+      const rect = root.getBoundingClientRect();
+      setDesktopPanelPos({
+        bottom: Math.max(8, window.innerHeight - rect.bottom + 80),
+        right: Math.max(8, window.innerWidth - rect.right + 16),
+      });
+    };
+    updatePos();
+    window.addEventListener('resize', updatePos);
+    return () => window.removeEventListener('resize', updatePos);
+  }, [settingsOpen]);
+
+  // Tell the parent so it can suspend its auto-hide timer — without this,
+  // the whole control bar (and this menu) can vanish a couple seconds into
+  // reading the settings options, since the parent's timer isn't otherwise
+  // aware a menu is open.
+  useEffect(() => {
+    onSettingsOpenChange?.(settingsOpen);
+  }, [settingsOpen, onSettingsOpenChange]);
 
   // ────────── Sync playback state from <video> ──────────
   useEffect(() => {
@@ -472,6 +512,7 @@ const speedMenuLabel =
 
   return (
     <div
+      ref={rootRef}
       className={`
         absolute inset-0 z-[9999]
         flex flex-col justify-end
@@ -509,8 +550,12 @@ const speedMenuLabel =
         </button>
       </div>
 
-      {/* Settings overlay panel */}
-      {visible && settingsOpen ? (
+      {/* Settings overlay panel.
+          Portaled to document.body: iOS Safari treats an ancestor with an
+          animated `opacity` (the root controls wrapper above) as a
+          containing block for `position: fixed` descendants, which traps
+          this panel inside the video area instead of the viewport. */}
+      {visible && settingsOpen ? createPortal(
         <>
           <button
             type="button"
@@ -524,12 +569,17 @@ const speedMenuLabel =
           <div
             ref={settingsWrapRef}
             className={`
-              fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30
+              fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[9999]
               pointer-events-auto max-h-[calc(100dvh-1.5rem)] overflow-y-auto
               rounded-2xl bg-black/85 text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-md
-              transition duration-150 sm:absolute sm:inset-x-auto sm:bottom-20 sm:right-4 sm:z-20
+              transition duration-150 sm:inset-x-auto
               sm:max-h-none sm:min-w-[260px] sm:max-w-[320px]
             `}
+            style={
+              desktopPanelPos
+                ? { bottom: desktopPanelPos.bottom, right: desktopPanelPos.right }
+                : undefined
+            }
             aria-hidden={!settingsOpen}
           >
             <div className="overflow-hidden rounded-2xl">
@@ -692,7 +742,8 @@ const speedMenuLabel =
           )}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       ) : null}
 
       {/* Bottom controls */}

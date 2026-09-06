@@ -471,6 +471,24 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
         setShowControls(false);
       }, 2000);
     }, []);
+    // While the settings menu is open, suspend the auto-hide countdown
+    // entirely — otherwise the control bar (and the open menu with it) can
+    // disappear a couple seconds in, mid-interaction. Resume the normal
+    // 2s-after-last-activity behavior once it's closed.
+    const handleSettingsOpenChange = useCallback(
+      (open: boolean) => {
+        if (open) {
+          if (controlsTimeoutRef.current) {
+            clearTimeout(controlsTimeoutRef.current);
+            controlsTimeoutRef.current = null;
+          }
+          setShowControls(true);
+        } else {
+          revealControls();
+        }
+      },
+      [revealControls]
+    );
     useEffect(() => {
       onFatalPlaybackErrorRef.current = onFatalPlaybackError;
       hlsConfigRef.current = hlsConfig;
@@ -1343,6 +1361,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
               qualityOptions={qualityOptions}
               qualityValue={selectedQuality}
               onQualityChange={setQualityLevel}
+              onSettingsOpenChange={handleSettingsOpenChange}
               endAction={watchOverlay}
               onPrevChapter={onPrevChapter}
               onNextChapter={onNextChapter}
