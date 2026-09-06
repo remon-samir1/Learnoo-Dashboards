@@ -192,11 +192,11 @@ export const DEFAULT_COUNTRY = COUNTRY_CODES[0];
 
 export { normalizeLocalPhone };
 
-export function splitPhoneNumber(value: string): {
+export function splitPhoneNumber(value: string | number): {
   country: CountryCode;
   localNumber: string;
 } {
-  const phone = value.replace(/\D/g, '').replace(/^00/, '');
+  const phone = String(value).replace(/\D/g, '').replace(/^00/, '');
   const country = [...COUNTRY_CODES]
     .sort((a, b) => b.code.length - a.code.length)
     .find(({ code }) => phone.startsWith(code));
