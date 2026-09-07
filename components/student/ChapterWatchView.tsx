@@ -441,8 +441,11 @@ export default function ChapterWatchView({
   }, [chapter?.id, videoSrc]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
-  const videoIsProcessing =
-    chapter?.attributes.video_ready === false || chapter?.attributes.video_status === 'processing';
+  // `video_ready` now covers both "real HLS is ready" and "the temporary
+  // original-file fallback is playable" (see ChapterResource on the
+  // backend) — a bare `video_status === 'processing'` check would otherwise
+  // still block rendering even when a fallback stream is available.
+  const videoIsProcessing = chapter?.attributes.video_ready === false;
 
   const partChapters = useMemo(() => {
     if (lectureChapters.length > 0) return lectureChapters;
@@ -469,7 +472,6 @@ export default function ChapterWatchView({
   const canOpenChapter = (candidate: Chapter | null): boolean =>
     candidate?.attributes.watch_access_state === 'available' &&
     candidate.attributes.video_ready !== false &&
-    candidate.attributes.video_status !== 'processing' &&
     !isNoVideoUrl(candidate.attributes.video);
   const canPrevChapter = canOpenChapter(prevChapter);
   const canNextChapter = canOpenChapter(nextChapter);

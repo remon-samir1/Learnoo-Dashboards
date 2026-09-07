@@ -1,3 +1,5 @@
+import { isChapterOriginalVideoUrl } from '@/src/lib/video-stream-detect';
+
 /** Same-origin proxy path; must match `app/api/learnoo-origin/[...path]/route.ts`. */
 export const LEARNOO_API_PROXY_PREFIX = '/api/learnoo-origin';
 
@@ -36,7 +38,10 @@ export function toProxiedLearnooHlsUrl(apiPlaylistUrl: string, _token?: string |
     const u = new URL(trimmed);
     const base = new URL(learnooApiBaseUrl());
     if (u.hostname !== base.hostname) return trimmed;
-    if (!u.pathname.startsWith('/hls/') && !u.pathname.startsWith('/storage/')) return trimmed;
+    const isChapterOriginalVideo = isChapterOriginalVideoUrl(trimmed);
+    if (!u.pathname.startsWith('/hls/') && !u.pathname.startsWith('/storage/') && !isChapterOriginalVideo) {
+      return trimmed;
+    }
 
     return `${LEARNOO_API_PROXY_PREFIX}${u.pathname}${u.search}`;
   } catch {

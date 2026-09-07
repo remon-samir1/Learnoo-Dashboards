@@ -1,3 +1,18 @@
+/**
+ * Temporary original-file fallback route (`/v1/chapter/{id}/original-video`)
+ * served while a chapter's real HLS conversion hasn't finished yet — see
+ * `ChapterController::streamOriginalVideo()` on the backend. It carries no
+ * recognizable file extension, so it needs an explicit path match rather
+ * than the extension/`/storage/`+`/uploads/` sniffing below.
+ */
+export function isChapterOriginalVideoUrl(url: string): boolean {
+  try {
+    return /^\/v1\/chapter\/\d+\/original-video\/?$/.test(new URL(url.trim()).pathname);
+  } catch {
+    return false;
+  }
+}
+
 /** HLS master or media playlist (not progressive MP4). */
 export function isHlsStreamUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -21,6 +36,7 @@ export function isMp4StreamUrl(url: string): boolean {
   const trimmed = url.trim();
   if (!trimmed || trimmed.startsWith('data:')) return false;
   if (/\.(mp4|m4v|mov|webm|m4a|mkv)(\?|#|$)/i.test(trimmed)) return true;
+  if (isChapterOriginalVideoUrl(trimmed)) return true;
   try {
     const path = new URL(trimmed).pathname.toLowerCase();
     // Learnoo storage/upload video files that are not HLS playlists are progressive video files

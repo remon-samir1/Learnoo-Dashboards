@@ -78,10 +78,13 @@ export default function ContinueWatchingSection({
     : 0;
 
   const videoSrc = lastChapter.video ?? "";
+  // `video_ready` covers both real HLS and the temporary original-file
+  // fallback (see ChapterResource on the backend) — requiring
+  // video_status === "ready" on top of it would block resuming a lesson
+  // that's watchable right now via the fallback stream.
   const canContinue =
     lastChapter.watch_access_state === "available" &&
     lastChapter.video_ready &&
-    lastChapter.video_status === "ready" &&
     Boolean(videoSrc) &&
     chapterProgressId != null;
   const watchHref = canContinue
