@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -8,7 +8,6 @@ import { useLocale } from 'next-intl';
 import { toast } from 'sonner';
 import { useAuthActions, useAuthStore } from '@/src/stores/authStore';
 import { authApi, getApiErrorMessage } from '@/src/lib/api';
-import { useEchoOTP } from '@/src/hooks/useEchoOTP';
 import AuthPageLayout from '../components/AuthLayout';
 
 export default function VerificationCodePage() {
@@ -19,20 +18,13 @@ export default function VerificationCodePage() {
   const [code, setCode] = useState('');
   const [timeLeft, setTimeLeft] = useState(81);
   const [isLoading, setIsLoading] = useState(false);
-  const { otp, isConnected, clearOTP } = useEchoOTP();
   const { activateSession } = useAuthActions();
 
-  const otpProcessedRef = useRef(false);
-  // Call verification-notification API on mount to trigger OTP send
   useEffect(() => {
     const sendVerificationNotification = async () => {
       try {
         const response = await authApi.sendPhoneVerification();
-        // @ts-ignore - The type is updated but sometimes inference is slow
-        const receivedOtp = response?.user?.otp;
-        if (receivedOtp) {
-          setCode(receivedOtp);
-        }
+        setCode(response.code);
       } catch (err: unknown) {
         const message = getApiErrorMessage(err, t('errors.verificationFailed') || 'Failed to send verification code');
         toast.error(message);
@@ -40,17 +32,7 @@ export default function VerificationCodePage() {
     };
 
     sendVerificationNotification();
-  }, []); // runs once on mount
-  useEffect(() => {
-    if (otp && !otpProcessedRef.current) {
-      otpProcessedRef.current = true;
-      setCode(otp);
-      clearOTP();
-    }
-    if (!otp) {
-      otpProcessedRef.current = false;
-    }
-  }, [otp, clearOTP]);
+  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -136,14 +118,6 @@ export default function VerificationCodePage() {
       subtitle={t('subtitle')}
     >
       <div className="flex flex-col gap-6">
-        {isConnected && (
-          <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
-            <p className="font-sans text-xs leading-5 text-emerald-800">
-              {t('connected') || 'Connected to OTP service'}
-            </p>
-          </div>
-        )}
-
         <div className="flex flex-col gap-2">
           <label className="font-sans font-medium text-[11.9px] leading-5 text-text-main">{t('code')}</label>
           <input

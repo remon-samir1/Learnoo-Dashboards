@@ -485,7 +485,7 @@ export const authApi = {
     post<ApiResponse<{ message: string }>>('/v1/auth/email/verification-notification'),
 
   sendPhoneVerification: () =>
-    post<ApiResponse<{ message: string }> & { user?: { otp: string } }>('/v1/auth/phone/verification-notification'),
+    post<{ message: string; code: string }>('/v1/auth/phone/verification-notification'),
 
   verifyPhone: (code: string) =>
     post<ApiResponse<{ message: string }>>('/v1/auth/phone/verify', { code }, true, true),
