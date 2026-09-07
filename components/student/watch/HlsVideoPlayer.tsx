@@ -176,46 +176,67 @@ function parseHlsQualityLevelsFromManifest(
   return levels;
 }
 
+/**
+ * Product requirement: 1080p / 720p / 480p must always be offered in the
+ * quality menu, even when the source only has a single real rendition (the
+ * current disk-constrained 480p-only recovery mode). Picking an unavailable
+ * quality silently plays the closest real rendition at or below it.
+ */
+const ALWAYS_OFFERED_QUALITY_HEIGHTS = [1080, 720, 480] as const;
+
 function buildMergedQualityOptions(
   realLevels: Array<{ height?: number; bitrate?: number; index?: number }> = []
 ): QualityOption[] {
-  const result: QualityOption[] = [];
+  if (realLevels.length === 0) return [];
+
+  const byHeight = new Map<number, { index: number; bitrate?: number }>();
+  const unknownLevels: Array<{ index: number; bitrate?: number }> = [];
 
   for (let i = 0; i < realLevels.length; i += 1) {
     const level = realLevels[i];
     const index = level.index ?? i;
     const height = level.height;
-    const bitrate = level.bitrate;
-
-    let label = 'Unknown';
     if (typeof height === 'number' && height > 0) {
-      label = `${height}p`;
-    } else if (bitrate != null && bitrate > 0) {
-      label = `${Math.round(bitrate / 1000)} kbps`;
+      const existing = byHeight.get(height);
+      if (!existing || (level.bitrate ?? 0) > (existing.bitrate ?? 0)) {
+        byHeight.set(height, { index, bitrate: level.bitrate });
+      }
     } else {
-      label = `Level ${index + 1}`;
+      unknownLevels.push({ index, bitrate: level.bitrate });
     }
-
-    result.push({
-      id: height ? `${height}p` : `level-${index}`,
-      label,
-      height,
-      bitrate,
-      realLevelIndex: index,
-    });
   }
 
-  // Sort descending: highest resolution/height at top (e.g. 1080p, 720p, 480p, 360p)
-  result.sort((a, b) => {
-    const hA = a.height ?? 0;
-    const hB = b.height ?? 0;
-    if (hA !== hB) return hB - hA;
-    const bA = a.bitrate ?? 0;
-    const bB = b.bitrate ?? 0;
-    return bB - bA;
-  });
+  const sortedRealHeightsDesc = [...byHeight.keys()].sort((a, b) => b - a);
+  const closestRealLevelIndex = (target: number): number | undefined => {
+    const atOrBelow = sortedRealHeightsDesc.find((h) => h <= target);
+    const fallbackHeight = atOrBelow ?? sortedRealHeightsDesc[sortedRealHeightsDesc.length - 1];
+    return fallbackHeight != null ? byHeight.get(fallbackHeight)?.index : undefined;
+  };
 
-  return result;
+  const displayHeights = new Set<number>([...ALWAYS_OFFERED_QUALITY_HEIGHTS, ...sortedRealHeightsDesc]);
+  const heightOptions: QualityOption[] = [...displayHeights]
+    .sort((a, b) => b - a)
+    .map((height) => {
+      const real = byHeight.get(height);
+      return {
+        id: `${height}p`,
+        label: `${height}p`,
+        height,
+        bitrate: real?.bitrate,
+        realLevelIndex: real ? real.index : closestRealLevelIndex(height),
+      };
+    });
+
+  const unknownOptions: QualityOption[] = unknownLevels
+    .sort((a, b) => (b.bitrate ?? 0) - (a.bitrate ?? 0))
+    .map(({ index, bitrate }) => ({
+      id: `level-${index}`,
+      label: bitrate ? `${Math.round(bitrate / 1000)} kbps` : `Level ${index + 1}`,
+      bitrate,
+      realLevelIndex: index,
+    }));
+
+  return [...heightOptions, ...unknownOptions];
 }
 
 function logHlsError(data: ErrorData, masterUrl: string): void {
