@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import { useChapters } from '@/src/hooks/useChapters';
+import { useChapters, useRetryChapterConversion } from '@/src/hooks/useChapters';
 
 import { useLectures } from '@/src/hooks/useLectures';
 
@@ -23,6 +23,17 @@ export default function ChaptersPage() {
   const { data: chapters, isLoading, error, refetch } = useChapters();
 
   const { data: lectures } = useLectures();
+
+  const { mutate: retryConversion, isLoading: isRetrying } = useRetryChapterConversion();
+
+  const handleRetryConversion = async (chapterId: number) => {
+    try {
+      await retryConversion(chapterId);
+      refetch();
+    } catch {
+      // Error surfaced by the mutation hook itself.
+    }
+  };
 
   const getLectureName = (lectureId: number) => {
 
@@ -79,6 +90,66 @@ export default function ChaptersPage() {
       header: 'Duration',
 
       render: (item) => item.attributes.duration,
+
+    },
+
+    {
+
+      key: 'video_status',
+
+      header: 'Video',
+
+      render: (item) => {
+
+        const status = item.attributes.video_status ?? 'none';
+
+        if (status === 'none') return <span className="text-gray-400">—</span>;
+
+        const badgeClass: Record<string, string> = {
+          ready: 'bg-green-100 text-green-700',
+          queued: 'bg-blue-100 text-blue-700',
+          processing: 'bg-blue-100 text-blue-700',
+          failed: 'bg-red-100 text-red-700',
+        };
+
+        return (
+
+          <div className="flex flex-col gap-1">
+
+            <span
+              className={`inline-flex w-fit px-2 py-1 rounded-full text-xs font-medium ${badgeClass[status] ?? 'bg-gray-100 text-gray-700'}`}
+              title={item.attributes.video_status_reason ?? undefined}
+            >
+
+              {status}
+
+            </span>
+
+            {status === 'failed' && (
+
+              <button
+
+                type="button"
+
+                onClick={() => handleRetryConversion(parseInt(item.id))}
+
+                disabled={isRetrying}
+
+                className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-50"
+
+              >
+
+                Retry conversion
+
+              </button>
+
+            )}
+
+          </div>
+
+        );
+
+      },
 
     },
 

@@ -3383,14 +3383,22 @@
       "lecture": "Lecture",
       "duration": "Duration",
       "freePreview": "Free Preview",
-      "created": "Created"
+      "created": "Created",
+      "video": "Video"
     },
     "yes": "Yes",
     "no": "No",
     "error": "Failed to load chapters",
     "retry": "Retry",
     "emptyMessage": "No chapters found. Create your first chapter!",
-    "deleteTitle": "Delete Chapter"
+    "deleteTitle": "Delete Chapter",
+    "videoStatus": {
+      "ready": "Ready",
+      "queued": "Queued",
+      "processing": "Processing",
+      "failed": "Failed"
+    },
+    "retryConversion": "Retry conversion"
   },
   "levels": {
     "pageTitle": "Levels Management",

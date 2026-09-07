@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Lock, Play } from "lucide-react";
+import { Lock, Play } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { HlsVideoPlayer } from "@/components/student/watch/HlsVideoPlayer";
 import { IUserProgress } from "@/src/interfaces/progress.interface";
@@ -92,10 +92,8 @@ export default function ContinueWatchingSection({
       ? t("activationRequired")
       : lastChapter.watch_access_state === "view_limit_reached"
         ? t("viewLimitReached")
-        : lastChapter.watch_access_state === "not_published"
-          ? t("notPublished")
-          : t("videoPreparing");
-  const UnavailableIcon = lastChapter.video_status === "processing" ? Clock : Lock;
+        : t("notPublished");
+  const UnavailableIcon = Lock;
 
   return (
     <section className="rounded-2xl  border border-[var(--border-color)] bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-4">

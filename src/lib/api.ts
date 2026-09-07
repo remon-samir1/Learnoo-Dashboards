@@ -568,6 +568,9 @@ export const chaptersApi = {
   delete: (id: number) => del<ApiResponse<Chapter>>(`/v1/chapter/${id}`),
 
   copy: (id: number, lectureId?: number) => post<ApiResponse<Chapter>>(`/v1/chapter/${id}/copy`, { lecture_id: lectureId }),
+
+  /** Instructor/admin only — re-queues a failed or stuck video conversion. */
+  retryConversion: (id: number) => post<ApiResponse<Chapter>>(`/v1/chapter/${id}/retry-conversion`, {}),
 };
 
 // ============================================

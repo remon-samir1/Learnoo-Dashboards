@@ -1186,9 +1186,16 @@ export default function ChapterWatchView({
                     // show instead of the truth — access isn't granted yet.
                     <div className="flex aspect-video flex-col items-center justify-center gap-4 bg-slate-950 px-6 text-center">
                       <p className="max-w-md text-sm font-medium text-slate-200">
-                        {playbackBlockMessage ?? t('watchAccessDenied')}
+                        {playbackBlockMessage ??
+                          (chapter?.attributes.watch_access_state === 'video_not_ready' ||
+                          chapter?.attributes.watch_access_state === 'not_published'
+                            ? tDetails('chapterNotAvailable')
+                            : t('watchAccessDenied'))}
                       </p>
-                      <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
+                      {chapter?.attributes.watch_access_state !== 'video_not_ready' &&
+                      chapter?.attributes.watch_access_state !== 'not_published' ? (
+                        <p className="max-w-md text-xs text-slate-500">{t('watchAccessDeniedHint')}</p>
+                      ) : null}
                       <Link
                         href={backHref}
                         className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"

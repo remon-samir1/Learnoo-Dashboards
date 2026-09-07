@@ -43,9 +43,10 @@ export interface IUserProgressChapterAttributes {
     | "activation_required"
     | "view_limit_reached"
     | "not_published"
+    | "video_not_ready"
     | "authentication_required";
   video_ready: boolean;
-  video_status: "ready" | "processing" | "none";
+  video_status: "none" | "queued" | "processing" | "ready" | "failed";
   created_at: string;
   updated_at: string;
 }

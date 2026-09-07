@@ -109,3 +109,8 @@ export const useDeleteChapter = createMutationHook(
 export const useCopyChapter = createMutationHook(
   (id: number, lectureId?: number) => api.chapters.copy(id, lectureId).then(res => res.data)
 );
+
+// Hook for retrying a failed/stuck video conversion
+export const useRetryChapterConversion = createMutationHook(
+  (id: number) => api.chapters.retryConversion(id).then(res => res.data)
+);

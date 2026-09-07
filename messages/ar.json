@@ -3386,14 +3386,22 @@
       "lecture": "المحاضرة",
       "duration": "المدة",
       "freePreview": "معاينة مجانية",
-      "created": "تم الإنشاء"
+      "created": "تم الإنشاء",
+      "video": "الفيديو"
     },
     "yes": "نعم",
     "no": "لا",
     "error": "فشل تحميل الفصول",
     "retry": "إعادة المحاولة",
     "emptyMessage": "لم يتم العثور على فصول. أنشئ أول فصل!",
-    "deleteTitle": "حذف الفصل"
+    "deleteTitle": "حذف الفصل",
+    "videoStatus": {
+      "ready": "جاهز",
+      "queued": "في الانتظار",
+      "processing": "قيد المعالجة",
+      "failed": "فشل"
+    },
+    "retryConversion": "إعادة محاولة التحويل"
   },
   "levels": {
     "pageTitle": "إدارة المستويات",

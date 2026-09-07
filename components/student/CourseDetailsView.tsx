@@ -1021,9 +1021,12 @@ function ChapterRow({
       })
       : t("viewsUnlimited");
   const viewsExhausted = watchAccessState === "view_limit_reached";
-  const videoIsProcessing =
-    videoPlayable &&
-    (attrs.video_ready === false || attrs.video_status === "processing");
+  // A chapter's video isn't shown as watchable until the backend's access
+  // decision says "available" — which itself already requires a completed
+  // HLS conversion — so an unfinished video is never distinguishable from
+  // "not available yet" here (see Chapter::watchAccessState on the backend).
+  const chapterNotYetAvailable =
+    watchAccessState === "not_published" || watchAccessState === "video_not_ready";
 
   // Some chapters are PDF-only — only show a video button when there is actual playable video.
   const hasVideoContent =
@@ -1032,15 +1035,10 @@ function ChapterRow({
     !isNoVideoUrl(attrs.video_hls_url ?? null) ||
     !isNoVideoUrl(attrs.video_mp4_url ?? null);
 
-  const videoButton:
-    | "watch"
-    | "preparing"
-    | "activate"
-    | "hidden" = (() => {
-      if (!videoPlayable) return videoRequiresActivation ? "activate" : "hidden";
-      if (videoIsProcessing) return "preparing";
-      return hasVideoContent ? "watch" : "hidden";
-    })();
+  const videoButton: "watch" | "activate" | "hidden" = (() => {
+    if (!videoPlayable) return videoRequiresActivation ? "activate" : "hidden";
+    return hasVideoContent ? "watch" : "hidden";
+  })();
 
   /**
    * Independent PDF button state.
@@ -1060,7 +1058,7 @@ function ChapterRow({
   let iconWrap =
     "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] sm:size-12";
   let iconColor = C_PRIMARY;
-  let IconEl: typeof Play | typeof Lock | typeof Clock = Play;
+  let IconEl: typeof Play | typeof Lock = Play;
 
   const isEffectivelyLocked = !videoPlayable;
   const needsAnyActivation = videoButton === "activate" || pdfButton === "activate";
@@ -1075,11 +1073,6 @@ function ChapterRow({
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12";
     iconColor = "#94A3B8";
     IconEl = Lock;
-  } else if (videoIsProcessing) {
-    iconWrap =
-      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#475569] sm:size-12";
-    iconColor = "#475569";
-    IconEl = Clock;
   }
 
   const heading = t("chapterItemHeading", {
@@ -1147,14 +1140,9 @@ function ChapterRow({
                 {t("watchAccessPending")}
               </span>
             ) : null}
-            {watchAccessState === "not_published" ? (
+            {chapterNotYetAvailable ? (
               <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-semibold leading-tight text-slate-700">
                 {t("chapterNotAvailable")}
-              </span>
-            ) : null}
-            {videoIsProcessing ? (
-              <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-semibold leading-tight text-slate-700">
-                {t("videoPreparing")}
               </span>
             ) : null}
             {viewsExhausted ? (
@@ -1204,13 +1192,6 @@ function ChapterRow({
                   strokeWidth={2.5}
                 />
               </Link>
-            )}
-
-            {videoButton === "preparing" && (
-              <span className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600 sm:min-h-10 sm:py-2.5">
-                <Clock className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                {t("videoPreparing")}
-              </span>
             )}
 
             {pdfButton === "open" && pdfUrl && (

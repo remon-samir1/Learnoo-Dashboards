@@ -842,7 +842,10 @@ export interface ChapterAttributes {
 
   video_ready?: boolean;
 
-  video_status?: 'none' | 'processing' | 'ready';
+  video_status?: 'none' | 'queued' | 'processing' | 'ready' | 'failed';
+
+  /** Only populated for instructor/admin/support roles. */
+  video_status_reason?: string | null;
 
 
 
@@ -880,6 +883,7 @@ export interface ChapterAttributes {
     | 'activation_required'
     | 'view_limit_reached'
     | 'not_published'
+    | 'video_not_ready'
     | 'authentication_required';
 
 
