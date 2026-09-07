@@ -39,7 +39,6 @@ export type QualityOption = {
   height?: number;
   bitrate?: number;
   realLevelIndex?: number;
-  isFake?: boolean;
 };
 
 const SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
@@ -123,6 +122,7 @@ export function HlsVideoCustomControls({
   const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number>(0);
   const [sleepRemaining, setSleepRemaining] = useState<number>(0);
+  const canSelectQuality = qualityOptions.length > 1;
   const [infoOpen, setInfoOpen] = useState(false);
   const [desktopPanelPos, setDesktopPanelPos] = useState<{ bottom: number; right: number } | null>(null);
 
@@ -633,7 +633,7 @@ const speedMenuLabel =
               </button>
 
               {/* Quality row */}
-              {onQualityChange ? (
+              {canSelectQuality && onQualityChange ? (
                 <button
                   type="button"
                   onClick={() => setSubMenu('quality')}
@@ -702,7 +702,7 @@ const speedMenuLabel =
             </div>
           )}
 
-          {subMenu === 'quality' && onQualityChange && (
+          {subMenu === 'quality' && canSelectQuality && onQualityChange && (
             <div className="flex flex-col gap-0.5 p-2">
               {backRow}
               <button

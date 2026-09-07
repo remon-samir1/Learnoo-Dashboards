@@ -139,8 +139,6 @@ function logVideoState(video: HTMLVideoElement, label: string): void {
   );
 }
 
-const DEFAULT_FAKE_QUALITIES = [720, 480, 360];
-
 function parseHlsQualityLevelsFromManifest(
   manifestText: string
 ): Array<{ height?: number; bitrate?: number; index: number }> {
@@ -182,7 +180,6 @@ function buildMergedQualityOptions(
   realLevels: Array<{ height?: number; bitrate?: number; index?: number }> = []
 ): QualityOption[] {
   const result: QualityOption[] = [];
-  const handledHeights = new Set<number>();
 
   for (let i = 0; i < realLevels.length; i += 1) {
     const level = realLevels[i];
@@ -193,7 +190,6 @@ function buildMergedQualityOptions(
     let label = 'Unknown';
     if (typeof height === 'number' && height > 0) {
       label = `${height}p`;
-      handledHeights.add(height);
     } else if (bitrate != null && bitrate > 0) {
       label = `${Math.round(bitrate / 1000)} kbps`;
     } else {
@@ -206,20 +202,7 @@ function buildMergedQualityOptions(
       height,
       bitrate,
       realLevelIndex: index,
-      isFake: false,
     });
-  }
-
-  for (const fakeHeight of DEFAULT_FAKE_QUALITIES) {
-    if (!handledHeights.has(fakeHeight)) {
-      result.push({
-        id: `${fakeHeight}p`,
-        label: `${fakeHeight}p`,
-        height: fakeHeight,
-        realLevelIndex: undefined,
-        isFake: true,
-      });
-    }
   }
 
   // Sort descending: highest resolution/height at top (e.g. 1080p, 720p, 480p, 360p)
@@ -352,7 +335,6 @@ type QualityOption = {
   height?: number;
   bitrate?: number;
   realLevelIndex?: number;
-  isFake?: boolean;
 };
 
 export type HlsVideoPlayerProps = {
@@ -554,7 +536,6 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           hls.nextLevel = value as any;
         }
 
-        // Even if fake, activate gracefully in the UI without breaking playback
         setAutoQualityEnabled(false);
         setSelectedQuality(value);
       },
@@ -1355,6 +1336,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
           {videoStageGrid}
           {showCustomControls ? (
             <HlsVideoCustomControls
+              key={src}
               visible={showControls}
               videoRef={localRef}
               shellRef={videoWrapperRef}
