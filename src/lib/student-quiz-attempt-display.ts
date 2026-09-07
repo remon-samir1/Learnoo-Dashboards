@@ -76,7 +76,7 @@ export function readAttemptPassState(attempt: QuizAttempt): boolean | null {
   const q = nestedQuizAttributesFromAttempt(attempt);
   if (!q) return null;
   const percentage = readAttemptPercentage(attempt);
-  const threshold = passingMarksPercentage(q.passing_marks, q.total_marks);
+  const threshold = passingMarksPercentage(q.passing_marks);
   if (percentage == null || threshold == null) return null;
   return percentage >= threshold - 1e-9;
 }

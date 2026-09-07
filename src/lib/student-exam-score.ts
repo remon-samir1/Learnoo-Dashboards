@@ -21,8 +21,8 @@ export function readPercentageWithScoreFallback(
   return clampPercentage(percentage) ?? percentageFromScore(score, total);
 }
 
-export function passingMarksPercentage(passingMarks: unknown, totalMarks: unknown): number | null {
-  return percentageFromScore(passingMarks, totalMarks);
+export function passingMarksPercentage(passingMarks: unknown): number | null {
+  return clampPercentage(passingMarks);
 }
 
 export function isExamPassed(passed: unknown, score: number | null, passingScore: number | null): boolean {

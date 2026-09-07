@@ -110,7 +110,7 @@ export default function ExamResultView({ locale, quizId }: { locale: string; qui
       : null;
   const passPct =
     quizInfo != null && (typeof quizInfo.passing_marks === 'number' || typeof quizInfo?.attributes?.passing_marks === 'number')
-      ? passingMarksPercentage(quizInfo.passing_marks ?? quizInfo?.attributes?.passing_marks, quizInfo.total_marks ?? quizInfo?.attributes?.total_marks)
+      ? passingMarksPercentage(quizInfo.passing_marks ?? quizInfo?.attributes?.passing_marks)
       : null;
   const passed = isExamPassed(results?.passed, yourPct, passPct);
   const timeTakenVal = results != null && 'time_taken' in results ? formatTimeTakenForDisplay(results.time_taken as number | string | null | undefined) : null;
