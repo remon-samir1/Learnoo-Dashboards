@@ -27,7 +27,6 @@ import {
 import toast from 'react-hot-toast';
 import { isIOSDevice } from '@/src/lib/video-stream-detect';
 import { captureDiscussionScreenshot } from '@/src/lib/discussion-screenshot';
-import { learnooChapterHlsPlaylistUrl } from '@/src/lib/chapter-playback-urls';
 import { useChapterViewRecording } from '@/src/hooks/useChapterViewRecording';
 import type { Chapter, Quiz } from '@/src/types';
 import { api, ApiError, API_BASE_URL } from '@/src/lib/api';
@@ -44,12 +43,7 @@ import {
   normalizeDiscussions,
   type WatchDiscussionItem,
 } from '@/components/student/watch/watchChapterDiscussionUtils';
-import {
-  coerceCanWatchExplicitTrue,
-  isNoVideoUrl,
-  isStudentChapterPdfVisible,
-  isStudentChapterVideoPlayable,
-} from '@/src/lib/student-chapter-access';
+import { isNoVideoUrl, isStudentChapterPdfVisible } from '@/src/lib/student-chapter-access';
 import PdfPreviewModal from './PdfPreviewModal';
 import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
 import { HlsVideoPlayer } from '@/components/student/watch/HlsVideoPlayer';
@@ -440,65 +434,11 @@ export default function ChapterWatchView({
       .replace(/([a-z])\/\/+/, '$1/');  // collapse duplicate slashes except after protocol
   }, []);
 
-  /** Ordered list of unique video candidates for this chapter */
-  const videoCandidates = useMemo(() => {
-    if (!chapter) return [];
-    const attrs = chapter.attributes;
-    const rawList = [
-      attrs.video_hls_url,
-      attrs.video,
-      (attrs as any).main_video,
-      attrs.video_mp4_url,
-      attrs.playlist,
-      Number.isFinite(chapterNumericId) && chapterNumericId > 0
-        ? learnooChapterHlsPlaylistUrl(chapterNumericId)
-        : '',
-    ];
+  const videoSrc = useMemo(() => normaliseVideoUrl(chapter?.attributes.video), [chapter?.attributes.video, normaliseVideoUrl]);
 
-    const seen = new Set<string>();
-    const list: string[] = [];
-    for (const raw of rawList) {
-      const url = normaliseVideoUrl(raw);
-      if (url && !isNoVideoUrl(url) && !seen.has(url)) {
-        seen.add(url);
-        list.push(url);
-      }
-    }
-    return list;
-  }, [chapter, chapterNumericId, normaliseVideoUrl]);
-
-  const [candidateIndex, setCandidateIndex] = useState(0);
-
-  // Reset candidates and stableVideoSrc when chapter.id changes (new chapter)
   useEffect(() => {
-    if (chapter && chapter.id) {
-      setCandidateIndex(0);
-      setStableVideoSrc(videoCandidates[0] || '');
-    }
-  }, [chapter?.id, videoCandidates]);
-
-  // Update stableVideoSrc when candidateIndex advances
-  useEffect(() => {
-    if (videoCandidates.length > 0 && candidateIndex < videoCandidates.length) {
-      setStableVideoSrc(videoCandidates[candidateIndex]);
-    }
-  }, [candidateIndex, videoCandidates]);
-
-  /** The mp4 to pass to HlsVideoPlayer as a progressive fallback if HLS fails */
-  const mp4FallbackSrc = useMemo(() => {
-    if (!chapter) return '';
-    const attrs = chapter.attributes;
-    const candidates = [
-      (attrs as any).main_video,
-      attrs.video_mp4_url,
-      attrs.video,
-    ];
-    for (const raw of candidates) {
-      const url = normaliseVideoUrl(raw);
-      if (url && !isNoVideoUrl(url) && url !== stableVideoSrc) return url;
-    }
-    return '';
-  }, [chapter, normaliseVideoUrl, stableVideoSrc]);
+    setStableVideoSrc(videoSrc);
+  }, [chapter?.id, videoSrc]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
   const videoIsProcessing =
@@ -526,16 +466,21 @@ export default function ChapterWatchView({
     return partChapters[currentPartIndex + 1] ?? null;
   }, [partChapters, currentPartIndex]);
 
-  const canPrevChapter = prevChapter != null;
-  const canNextChapter = nextChapter != null;
+  const canOpenChapter = (candidate: Chapter | null): boolean =>
+    candidate?.attributes.watch_access_state === 'available' &&
+    candidate.attributes.video_ready !== false &&
+    candidate.attributes.video_status !== 'processing' &&
+    !isNoVideoUrl(candidate.attributes.video);
+  const canPrevChapter = canOpenChapter(prevChapter);
+  const canNextChapter = canOpenChapter(nextChapter);
 
   const goPrevChapter = useCallback(() => {
-    if (!prevChapter?.id) return;
+    if (!canOpenChapter(prevChapter) || !prevChapter?.id) return;
     router.push(`/${locale}/student/courses/watch/${prevChapter.id}`);
   }, [router, locale, prevChapter]);
 
   const goNextChapter = useCallback(() => {
-    if (!nextChapter?.id) return;
+    if (!canOpenChapter(nextChapter) || !nextChapter?.id) return;
     router.push(`/${locale}/student/courses/watch/${nextChapter.id}`);
   }, [router, locale, nextChapter]);
 
@@ -656,7 +601,7 @@ export default function ChapterWatchView({
     videoRef: hlsVideoRef,
     videoSrc: stableVideoSrc,
     viewByMinute: chapter?.attributes?.view_by_minute ?? 0,
-    enabled: Number.isFinite(chapterIdForApi) && !accessDenied,
+    enabled: Number.isFinite(chapterIdForApi) && !accessDenied && !videoIsProcessing && Boolean(stableVideoSrc),
     onViewRecordError: (msg) => {
       toast.error(msg, { id: 'view-record-error' });
     },
@@ -693,7 +638,7 @@ export default function ChapterWatchView({
       try {
         const res = await api.chapters.get(chapterIdForApi, { skipAuthRedirect: true });
         if (cancelled) return;
-        if (!coerceCanWatchExplicitTrue(res.data.attributes.can_watch)) {
+        if (res.data.attributes.watch_access_state !== 'available') {
           setClientPlaybackBlocked(true);
           setPlaybackBlockMessage(null);
         } else {
@@ -1257,11 +1202,10 @@ export default function ChapterWatchView({
                     </div>
                   ) : stableVideoSrc ? (
                       <HlsVideoPlayer
-                        key={`${stableVideoSrc}|${candidateIndex}`}
+                        key={stableVideoSrc}
                         ref={hlsVideoRef}
                         containerRef={videoContainerRef}
                         src={stableVideoSrc}
-                        mp4FallbackUrl={mp4FallbackSrc}
                         showCustomControls
                         showWatermark
                         watermarkContentType="chapters"
@@ -1300,24 +1244,9 @@ export default function ChapterWatchView({
                             reason,
                             isIOS,
                             currentSrc: stableVideoSrc,
-                            candidateIndex,
-                            totalCandidates: videoCandidates.length,
                           });
 
-                          // If there are more candidate URLs to try, advance to the next one
-                          if (candidateIndex + 1 < videoCandidates.length) {
-                            const nextUrl = videoCandidates[candidateIndex + 1];
-                            console.info('[ChapterWatchView] Fallback triggered: switching to next candidate', {
-                              from: stableVideoSrc,
-                              to: nextUrl,
-                              nextIndex: candidateIndex + 1,
-                            });
-                            setCandidateIndex((prev) => prev + 1);
-                            setStableVideoSrc(nextUrl);
-                            return;
-                          }
-
-                          console.error('[ChapterWatchView] Fatal playback error (all candidates exhausted):', reason);
+                          console.error('[ChapterWatchView] Fatal playback error:', reason);
                           toast.error(t('hlsPlaybackError'));
                         }}
                       />

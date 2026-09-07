@@ -1,5 +1,4 @@
 import ChapterWatchView from '@/components/student/ChapterWatchView';
-import { coerceCanWatchExplicitTrue } from '@/src/lib/student-chapter-access';
 import { resolveEnabledWatermarkBucket } from '@/src/lib/watermark-from-features';
 import { getChapterById } from '@/src/services/student/chapter.service';
 import { getLectureById } from '@/src/services/student/lecture.service';
@@ -17,16 +16,16 @@ interface WatchChapterPageProps {
 
 function chapterFromServiceResponse(
   res: Awaited<ReturnType<typeof getChapterById>>
-): { chapter: Chapter | null; loadError: string | null } {
+): { chapter: Chapter | null; loadError: string | null; status: number | null } {
   if (!res.success) {
-    return { chapter: null, loadError: res.message ?? 'Failed to load chapter' };
+    return { chapter: null, loadError: res.message ?? 'Failed to load chapter', status: res.status ?? null };
   }
   const payload = res.data as { data?: Chapter } | undefined;
   const entity = payload?.data;
   if (!entity) {
-    return { chapter: null, loadError: 'Chapter not found' };
+    return { chapter: null, loadError: 'Chapter not found', status: null };
   }
-  return { chapter: entity, loadError: null };
+  return { chapter: entity, loadError: null, status: null };
 }
 
 function lectureFromServiceResponse(
@@ -40,7 +39,7 @@ function lectureFromServiceResponse(
 export default async function WatchChapterPage({ params }: WatchChapterPageProps) {
   const { chapterId } = await params;
   const result = await getChapterById(chapterId);
-  const { chapter, loadError } = chapterFromServiceResponse(result);
+  const { chapter, loadError, status } = chapterFromServiceResponse(result);
 
   let lectureChapters: Chapter[] = [];
   let lectureTitle = '';
@@ -55,7 +54,7 @@ export default async function WatchChapterPage({ params }: WatchChapterPageProps
   }
 
   const watchAccessDenied =
-    chapter != null && !coerceCanWatchExplicitTrue(chapter.attributes.can_watch);
+    status === 403 || (chapter != null && chapter.attributes.watch_access_state !== 'available');
 
   let courseLocked = false;
   if (chapter?.attributes?.course_id != null) {

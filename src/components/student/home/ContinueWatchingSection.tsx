@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Play } from "lucide-react";
+import { Clock, Lock, Play } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { HlsVideoPlayer } from "@/components/student/watch/HlsVideoPlayer";
-import { pickChapterStreams } from "@/src/lib/chapter-playback-urls";
 import { IUserProgress } from "@/src/interfaces/progress.interface";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { getCourseById } from "@/src/services/student/course.service";
 import { ICourse } from "@/src/interfaces/courses.interface";
 
@@ -24,23 +23,6 @@ export default function ContinueWatchingSection({
   const latest = list[0];
   const lastChapter = latest?.attributes?.chapter?.data?.attributes;
   const chapterProgressId = latest?.attributes?.chapter?.data?.id;
-  const chapterNumericId = useMemo(() => {
-    if (chapterProgressId == null) return NaN;
-    const n = Number.parseInt(String(chapterProgressId), 10);
-    return Number.isFinite(n) ? n : NaN;
-  }, [chapterProgressId]);
-
-  const { primarySrc: previewPlaybackSrc, mp4FallbackUrl: previewMp4Fallback } = useMemo(() => {
-    if (!lastChapter || !Number.isFinite(chapterNumericId)) {
-      return { primarySrc: "", mp4FallbackUrl: "" };
-    }
-    return pickChapterStreams(chapterNumericId, {
-      video: lastChapter.video,
-      playlist: lastChapter.playlist,
-      video_hls_url: lastChapter.video_hls_url,
-      video_mp4_url: lastChapter.video_mp4_url,
-    });
-  }, [chapterNumericId, lastChapter]);
 
   const courseId = lastChapter?.course_id;
 
@@ -95,12 +77,25 @@ export default function ContinueWatchingSection({
     ? Math.min((watchedSeconds / totalSeconds) * 100, 100)
     : 0;
 
-  const detailHref =
-    courseDetails?.id != null
-      ? `/${locale}/student/courses/course-details/${courseDetails.id}`
-      : courseId != null
-        ? `/${locale}/student/courses/course-details/${courseId}`
-        : "#";
+  const videoSrc = lastChapter.video ?? "";
+  const canContinue =
+    lastChapter.watch_access_state === "available" &&
+    lastChapter.video_ready &&
+    lastChapter.video_status === "ready" &&
+    Boolean(videoSrc) &&
+    chapterProgressId != null;
+  const watchHref = canContinue
+    ? `/${locale}/student/courses/watch/${chapterProgressId}`
+    : null;
+  const unavailableMessage =
+    lastChapter.watch_access_state === "activation_required"
+      ? t("activationRequired")
+      : lastChapter.watch_access_state === "view_limit_reached"
+        ? t("viewLimitReached")
+        : lastChapter.watch_access_state === "not_published"
+          ? t("notPublished")
+          : t("videoPreparing");
+  const UnavailableIcon = lastChapter.video_status === "processing" ? Clock : Lock;
 
   return (
     <section className="rounded-2xl  border border-[var(--border-color)] bg-white px-4 py-4 shadow-sm sm:px-6 sm:py-4">
@@ -120,20 +115,19 @@ export default function ContinueWatchingSection({
       <div className="grid grid-cols-1 gap-4 rounded-xl bg-[#F7F8FA] p-3 sm:p-4 lg:grid lg:grid-cols-4 lg:items-center lg:gap-4">
         <div className="relative w-full min-w-0 overflow-hidden rounded-2xl bg-black lg:col-span-1">
           <div className="relative aspect-video w-full max-h-[40vh] sm:max-h-[20rem] lg:max-h-none">
-            {previewPlaybackSrc ? (
+            {watchHref ? (
               <HlsVideoPlayer
-                key={`${previewPlaybackSrc}|${previewMp4Fallback}`}
-                src={previewPlaybackSrc}
-                mp4FallbackUrl={previewMp4Fallback}
                 className="absolute inset-0 h-full w-full object-cover"
+                src={videoSrc}
                 controls={false}
                 muted
                 playsInline
                 preload="metadata"
               />
             ) : (
-              <div className="absolute  inset-0 flex items-center justify-center bg-slate-800">
-                <span className="text-xs text-white/70">—</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-800 px-4 text-center text-xs font-medium text-white/80">
+                <UnavailableIcon className="size-6" aria-hidden />
+                <span>{unavailableMessage}</span>
               </div>
             )}
 
@@ -143,15 +137,13 @@ export default function ContinueWatchingSection({
               {lastChapter.duration}
             </div>
 
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex size-14 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white/90 p-3 shadow-lg transition duration-300 active:scale-95 sm:hover:scale-105">
+            {watchHref ? (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="flex size-14 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white/90 p-3 shadow-lg transition duration-300 active:scale-95 sm:hover:scale-105">
                 <Link
-                  href={detailHref}
+                  href={watchHref}
                   className="flex items-center justify-center"
                   aria-label={t("continue")}
-                  onClick={(e) => {
-                    if (detailHref === "#") e.preventDefault();
-                  }}
                 >
                   <Play
                     size={24}
@@ -159,8 +151,9 @@ export default function ContinueWatchingSection({
                     className="ms-0.5 text-[var(--primary)] rtl:ms-0 rtl:me-0.5"
                   />
                 </Link>
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
 
@@ -187,21 +180,20 @@ export default function ContinueWatchingSection({
             </div>
           </div>
 
-          <Link
-            href={detailHref}
-            className="mt-3 inline-flex w-full sm:w-auto"
-            onClick={(e) => {
-              if (detailHref === "#") e.preventDefault();
-            }}
-          >
-            <button
-              type="button"
-              className="flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-4 text-sm font-medium text-white transition hover:opacity-90 sm:w-auto"
+          {watchHref ? (
+            <Link
+              href={watchHref}
+              className="mt-3 inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-4 text-sm font-medium text-white transition hover:opacity-90 sm:w-auto"
             >
               <Play size={15} />
               {t("continue")}
-            </button>
-          </Link>
+            </Link>
+          ) : (
+            <span className="mt-3 inline-flex h-11 min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 text-sm font-medium text-slate-600 sm:w-auto">
+              <UnavailableIcon size={15} />
+              {unavailableMessage}
+            </span>
+          )}
         </div>
       </div>
     </section>

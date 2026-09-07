@@ -27,9 +27,6 @@ import {
   isNoVideoUrl,
   isStudentChapterPdfVisible,
   isStudentChapterPdfRequiresActivation,
-  isStudentChapterVideoPlayable,
-  isStudentChapterVideoRequiresActivation,
-  isChapterFullyUnlocked,
 } from "@/src/lib/student-chapter-access";
 import { courseIsLocked } from "@/src/lib/student-course-lock";
 import {
@@ -1004,9 +1001,10 @@ function ChapterRow({
   const attrs = chapter.attributes;
   const hasPdf = hasPdfAttachment(chapter);
   const pdfUrl = getFirstPdfUrl(chapter);
-  const videoPlayable = isStudentChapterVideoPlayable(chapter, lockedCourse);
+  const watchAccessState = attrs.watch_access_state;
+  const videoPlayable = watchAccessState === "available";
   const pdfVisible = isStudentChapterPdfVisible(chapter, lockedCourse);
-  const videoRequiresActivation = isStudentChapterVideoRequiresActivation(chapter, lockedCourse);
+  const videoRequiresActivation = watchAccessState === "activation_required";
   const pdfRequiresActivation = isStudentChapterPdfRequiresActivation(chapter, lockedCourse);
 
   const chapterTitleForModal = attrs.title?.trim() ?? "";
@@ -1022,7 +1020,10 @@ function ChapterRow({
         max: maxViews,
       })
       : t("viewsUnlimited");
-  const viewsExhausted = maxViews != null && maxViews > 0 && currentViews >= maxViews;
+  const viewsExhausted = watchAccessState === "view_limit_reached";
+  const videoIsProcessing =
+    videoPlayable &&
+    (attrs.video_ready === false || attrs.video_status === "processing");
 
   // Some chapters are PDF-only — only show a video button when there is actual playable video.
   const hasVideoContent =
@@ -1031,21 +1032,14 @@ function ChapterRow({
     !isNoVideoUrl(attrs.video_hls_url ?? null) ||
     !isNoVideoUrl(attrs.video_mp4_url ?? null);
 
-  /**
-   * Independent video button state.
-   * CASE 2: is_locked===false → videoPlayable is true → "watch".
-   * CASE 1: locked, is_free_preview → "watch"; no is_free_preview → "hidden" (Activate button shown separately).
-   * CASE 3: viewsExhausted → handled separately, videoButton/pdfButton not used in that branch.
-   */
   const videoButton:
     | "watch"
+    | "preparing"
     | "activate"
     | "hidden" = (() => {
-      // These branches are only rendered when neither chapterLocked nor viewsExhausted.
-      if (!hasVideoContent) return "hidden";
-      if (videoPlayable && !videoRequiresActivation) return "watch";
-      if (videoRequiresActivation) return "activate";
-      return "hidden";
+      if (!videoPlayable) return videoRequiresActivation ? "activate" : "hidden";
+      if (videoIsProcessing) return "preparing";
+      return hasVideoContent ? "watch" : "hidden";
     })();
 
   /**
@@ -1066,9 +1060,9 @@ function ChapterRow({
   let iconWrap =
     "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] sm:size-12";
   let iconColor = C_PRIMARY;
-  let IconEl: typeof Play | typeof Lock = Play;
+  let IconEl: typeof Play | typeof Lock | typeof Clock = Play;
 
-  const isEffectivelyLocked = videoButton !== "watch" && pdfButton !== "open";
+  const isEffectivelyLocked = !videoPlayable;
   const needsAnyActivation = videoButton === "activate" || pdfButton === "activate";
 
   if (viewsExhausted) {
@@ -1081,11 +1075,11 @@ function ChapterRow({
       "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#94A3B8] sm:size-12";
     iconColor = "#94A3B8";
     IconEl = Lock;
-  } else if (needsAnyActivation) {
+  } else if (videoIsProcessing) {
     iconWrap =
-      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#FFFBEB] text-[#D97706] sm:size-12";
-    iconColor = "#D97706";
-    IconEl = Play;
+      "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#F1F5F9] text-[#475569] sm:size-12";
+    iconColor = "#475569";
+    IconEl = Clock;
   }
 
   const heading = t("chapterItemHeading", {
@@ -1114,8 +1108,8 @@ function ChapterRow({
         ) : (
           <div
             className={`${iconWrap} shrink-0`}
-            style={{ color: isEffectivelyLocked || needsAnyActivation ? undefined : iconColor }}
-            aria-hidden={isEffectivelyLocked || needsAnyActivation}
+            style={{ color: isEffectivelyLocked ? undefined : iconColor }}
+            aria-hidden={isEffectivelyLocked}
           >
             <IconEl
               className="size-[22px] sm:size-5"
@@ -1151,6 +1145,16 @@ function ChapterRow({
             {videoRequiresActivation ? (
               <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-amber-50 text-amber-900">
                 {t("watchAccessPending")}
+              </span>
+            ) : null}
+            {watchAccessState === "not_published" ? (
+              <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-semibold leading-tight text-slate-700">
+                {t("chapterNotAvailable")}
+              </span>
+            ) : null}
+            {videoIsProcessing ? (
+              <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-semibold leading-tight text-slate-700">
+                {t("videoPreparing")}
               </span>
             ) : null}
             {viewsExhausted ? (
@@ -1202,6 +1206,13 @@ function ChapterRow({
               </Link>
             )}
 
+            {videoButton === "preparing" && (
+              <span className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600 sm:min-h-10 sm:py-2.5">
+                <Clock className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                {t("videoPreparing")}
+              </span>
+            )}
+
             {pdfButton === "open" && pdfUrl && (
               <button
                 type="button"
@@ -1228,33 +1239,10 @@ function ChapterRow({
               </button>
             )}
 
-            {videoButton === "hidden" && pdfButton === "hidden" && (
-              isChapterFullyUnlocked(chapter, lockedCourse) ? (
-                <Link
-                  href={watchHref}
-                  prefetch
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-0.5 rounded-xl bg-[#2D43D1] px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#2436b0] sm:min-h-10 sm:py-2.5"
-                >
-                  {t("watch")}
-                  <ChevronRight
-                    className="size-4 shrink-0 rtl:rotate-180"
-                    strokeWidth={2.5}
-                  />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={openChapterActivation}
-                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#475569] transition hover:bg-[#EFF6FF] sm:min-h-10 sm:py-2.5"
-                >
-                  <Power
-                    className="size-4 shrink-0 opacity-90"
-                    strokeWidth={2}
-                    aria-hidden
-                  />
-                  {t("activateChapter")}
-                </button>
-              )
+            {videoButton === "hidden" && pdfButton === "hidden" && !needsAnyActivation && !isEffectivelyLocked && (
+              <span className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600 sm:min-h-10 sm:py-2.5">
+                {t("watchNoVideo")}
+              </span>
             )}
           </>
         )}

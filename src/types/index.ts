@@ -875,6 +875,13 @@ export interface ChapterAttributes {
 
   can_watch: boolean;
 
+  watch_access_state:
+    | 'available'
+    | 'activation_required'
+    | 'view_limit_reached'
+    | 'not_published'
+    | 'authentication_required';
+
 
 
   view_by_minute?: number | null;
@@ -5554,5 +5561,4 @@ export interface CreateAppVersionRequest {
 
 
 }
-
 

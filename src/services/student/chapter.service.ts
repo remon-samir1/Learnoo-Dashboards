@@ -8,6 +8,7 @@ interface ServiceResponse<T> {
     data: T;
   };
   message?: string;
+  status?: number;
 }
 
 interface ServiceListResponse<T> {
@@ -73,7 +74,8 @@ export const getChapterById = async (id: number | string): Promise<ServiceRespon
 
     if (!res.ok) return {
       success: false,
-      message: data.message
+      message: data.message,
+      status: res.status,
     }
 
     return {

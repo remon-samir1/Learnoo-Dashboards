@@ -38,6 +38,14 @@ export interface IUserProgressChapterAttributes {
   is_activated: boolean;
   is_locked: boolean;
   can_watch: boolean;
+  watch_access_state:
+    | "available"
+    | "activation_required"
+    | "view_limit_reached"
+    | "not_published"
+    | "authentication_required";
+  video_ready: boolean;
+  video_status: "ready" | "processing" | "none";
   created_at: string;
   updated_at: string;
 }

@@ -29,13 +29,6 @@ export function coercePreviewFlag(value: unknown): boolean {
   return Boolean(value);
 }
 
-/** True only when the backend explicitly allows watching (`true` / `1` / `"1"` / `"true"`). */
-export function coerceCanWatchExplicitTrue(value: unknown): boolean {
-  if (value === true || value === 1 || value === '1') return true;
-  if (typeof value === 'string' && value.trim().toLowerCase() === 'true') return true;
-  return false;
-}
-
 /**
  * Determines if a chapter is genuinely fully unlocked via user purchase/activation.
  * We CANNOT just rely on `chapter.attributes.is_locked === false` because the API
@@ -52,25 +45,8 @@ export function isChapterFullyUnlocked(chapter: Chapter, courseLocked: boolean):
 /**
  * Whether the chapter VIDEO is currently playable.
  */
-export function isStudentChapterVideoPlayable(chapter: Chapter, courseLocked: boolean): boolean {
-  if (isChapterFullyUnlocked(chapter, courseLocked)) return true;
-
-  const attrs = chapter.attributes;
-  if (coercePreviewFlag(attrs.is_free_preview)) return true;
-  return coerceCanWatchExplicitTrue(attrs.can_watch);
-}
-
-/**
- * Whether the video requires an activation prompt (i.e. currently locked/unaccessible).
- */
-export function isStudentChapterVideoRequiresActivation(chapter: Chapter, courseLocked: boolean): boolean {
-  if (isChapterFullyUnlocked(chapter, courseLocked)) return false;
-
-  const attrs = chapter.attributes;
-  if (coercePreviewFlag(attrs.is_free_preview)) return false;
-  if (coerceCanWatchExplicitTrue(attrs.can_watch)) return false;
-
-  return true;
+export function isStudentChapterVideoPlayable(chapter: Chapter): boolean {
+  return chapter.attributes.watch_access_state === 'available';
 }
 
 /**
