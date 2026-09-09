@@ -693,8 +693,14 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             }
 
             const currentSrc = video.getAttribute('src') || video.src;
-            const directOriginPrimary = trimmedSrc;
             const proxiedPrimary = toProxiedLearnooHlsUrl(trimmedSrc);
+            // Our authenticated original-file fallback route must never be
+            // retried as a raw, unproxied request — iOS media playback can't
+            // carry the auth token to a genuinely cross-origin URL, so that
+            // always 401s. Collapsing this to the same value as proxiedPrimary
+            // makes Steps A/B below no-ops for it instead of alternating
+            // between a working and a permanently-broken URL.
+            const directOriginPrimary = isChapterOriginalVideoUrl(trimmedSrc) ? proxiedPrimary : trimmedSrc;
 
             // Step A: If we started with proxy and it errored on iOS/Safari, switch to direct origin URL
             if (!progressiveFallbackDone && currentSrc === proxiedPrimary && directOriginPrimary !== currentSrc) {
@@ -725,9 +731,7 @@ export const HlsVideoPlayer = forwardRef<HTMLVideoElement, HlsVideoPlayerProps>(
             // Step C: Fall back to mp4Fb if available and distinct from trimmedSrc
             if (mp4Fb && mp4Fb !== trimmedSrc && !progressiveFallbackDone) {
               progressiveFallbackDone = true;
-              const fallbackUrl = iosDevice
-                ? mp4Fb
-                : toProxiedLearnooHlsUrl(mp4Fb);
+              const fallbackUrl = resolveMediaSrcForPlatform(mp4Fb, iosDevice);
               console.warn(`${LOG_PREFIX} mp4 progressive error; falling back to mp4Fb`, { fallbackUrl });
               setShowPlaybackSwitching(true);
               detachVideoSourceSoft(video);
