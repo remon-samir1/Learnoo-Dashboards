@@ -65,12 +65,11 @@ function PdfPreviewContent({
 
     fetch(proxiedPdfUrl, { cache: 'no-store', signal: controller.signal })
       .then((response) => {
-        if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status}`);
+        if (!response.ok) throw new Error('Failed to fetch PDF');
         return response.arrayBuffer();
       })
       .then(setPdfData)
       .catch((error: unknown) => {
-        console.error('PDF fetch error:', error);
         if ((error as Error).name !== 'AbortError') setLoadError(true);
       });
 
@@ -116,7 +115,6 @@ function PdfPreviewContent({
         file={pdfData}
         error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
         onLoadSuccess={handleLoadSuccess}
-        onLoadError={(error) => console.error('PDF viewer error:', error)}
       >
         <div className="flex flex-col items-center gap-4 py-1 sm:gap-5 sm:py-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
@@ -269,7 +267,7 @@ export default function PdfPreviewModal({
   }, [open, chapterId, viewByMinute]);
   // ────────────────────────────────────────────────────────────────────────
 
-  const proxiedPdfUrl = pdfUrl ? encodeURI(pdfUrl) : '';
+  const proxiedPdfUrl = pdfUrl ?? '';
 
   if (!open || !pdfUrl) return null;
 
