@@ -50,10 +50,31 @@ function PdfPreviewContent({
 }) {
   const [pageWidth, setPageWidth] = useState(720);
   const [totalPages, setTotalPages] = useState(0);
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
 
   const effectiveScale = scale ?? 1.0;
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setPdfData(null);
+    setLoadError(false);
+
+    fetch(proxiedPdfUrl, { cache: 'no-store', signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error('Failed to fetch PDF');
+        return response.arrayBuffer();
+      })
+      .then(setPdfData)
+      .catch((error: unknown) => {
+        if ((error as Error).name !== 'AbortError') setLoadError(true);
+      });
+
+    return () => controller.abort();
+  }, [proxiedPdfUrl]);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -85,9 +106,13 @@ function PdfPreviewContent({
 
   return (
     <div ref={contentRef} className="min-h-0 w-full">
+      {loadError ? (
+        <p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>
+      ) : !pdfData ? (
+        <p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>
+      ) : (
       <Document
-        file={proxiedPdfUrl}
-        loading={<p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>}
+        file={pdfData}
         error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
         onLoadSuccess={handleLoadSuccess}
       >
@@ -111,6 +136,7 @@ function PdfPreviewContent({
           ))}
         </div>
       </Document>
+      )}
     </div>
   );
 }
