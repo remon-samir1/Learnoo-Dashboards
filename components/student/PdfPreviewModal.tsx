@@ -2,11 +2,8 @@
 
 import { FileText, X, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { useCurrentUser } from '@/src/hooks';
-import { resolveEnabledWatermarkBucket, WatermarkResolution } from '@/src/lib/watermark-from-features';
-import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
 import { api } from '@/src/lib/api';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -40,16 +37,12 @@ type Props = {
 
 function PdfPreviewContent({
   proxiedPdfUrl,
-  watermarkText,
-  watermarkStyle,
   expandToContainer = false,
   scale,
   currentPage,
   onPagesLoaded,
 }: {
   proxiedPdfUrl: string;
-  watermarkText: string;
-  watermarkStyle: { color: string; opacity: number };
   expandToContainer?: boolean;
   scale?: number;
   currentPage: number;
@@ -114,25 +107,6 @@ function PdfPreviewContent({
                 className="[&_canvas]:!h-auto [&_canvas]:!w-full"
               />
 
-              {watermarkText ? (
-                <div
-                  className="pointer-events-none absolute inset-0 z-10 overflow-hidden select-none"
-                  aria-hidden
-                >
-                  <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <div key={i} className="flex items-center justify-center">
-                        <span
-                          className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
-                          style={watermarkStyle}
-                        >
-                          {watermarkText}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           ))}
         </div>
@@ -154,7 +128,6 @@ export default function PdfPreviewModal({
   onPageChange,
   numPages: externalNumPages,
   onNumPagesChange,
-  contentType = 'chapters',
   chapterId,
   viewByMinute = 0,
 }: Props) {
@@ -268,70 +241,7 @@ export default function PdfPreviewModal({
   }, [open, chapterId, viewByMinute]);
   // ────────────────────────────────────────────────────────────────────────
 
-  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
-  const { user } = useCurrentUser();
-  const attrs = user?.attributes;
-
-  const safePdfUrl = pdfUrl ? encodeURI(pdfUrl) : '';
-  const proxiedPdfUrl = `/api/pdf-proxy?url=${encodeURIComponent(safePdfUrl)}&contentType=${contentType}&preview=1`;
-
-  const watermarkText = useMemo(() => {
-    const config = watermarkConfig?.config;
-    if (!config?.enabled) return '';
-
-    const parts: string[] = [];
-
-    if (config.useStudentCode && attrs?.student_code) {
-      parts.push(String(attrs.student_code).trim());
-    }
-
-    if (config.usePhoneNumber && attrs?.phone) {
-      parts.push(String(attrs.phone).trim());
-    }
-
-    // Fall back to the static text configured in admin if no dynamic parts
-    let text = parts.length > 0 ? parts.join(' · ') : config.text;
-
-    // Append student code for traceability (matches server-side PDF watermark behavior)
-    const studentCodeForTrace = attrs?.student_code != null ? String(attrs.student_code).trim() : '';
-    if (studentCodeForTrace && !text.includes(studentCodeForTrace)) {
-      text = text ? `${text} · ${studentCodeForTrace}` : studentCodeForTrace;
-    }
-
-    return text;
-  }, [watermarkConfig, attrs, user]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadWatermark = async () => {
-      try {
-        const platformFeatures = await getStudentPlatformFeatures();
-        const resolution = resolveEnabledWatermarkBucket(platformFeatures, contentType);
-
-        if (mounted) {
-          setWatermarkConfig(resolution);
-        }
-      } catch (error) {
-        console.error('Failed to load watermark config:', error);
-      }
-    };
-
-    loadWatermark();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const watermarkStyle = useMemo(() => {
-    const config = watermarkConfig?.config;
-
-    return {
-      color: config?.color ?? '#666666',
-      opacity: (config?.opacity ?? 50) / 100,
-    };
-  }, [watermarkConfig]);
+  const proxiedPdfUrl = pdfUrl ? encodeURI(pdfUrl) : '';
 
   if (!open || !pdfUrl) return null;
 
@@ -341,8 +251,6 @@ export default function PdfPreviewModal({
     >
       <PdfPreviewContent
         proxiedPdfUrl={proxiedPdfUrl}
-        watermarkText={watermarkText}
-        watermarkStyle={watermarkStyle}
         expandToContainer={expandToContainer}
         scale={scale}
         currentPage={currentPage}

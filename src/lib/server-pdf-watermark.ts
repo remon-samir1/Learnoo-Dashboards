@@ -1,6 +1,9 @@
 'use server';
 
-import { PDFDocument, rgb, degrees } from 'pdf-lib';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import fontkit from '@pdf-lib/fontkit';
+import { PDFDocument, PDFFont, rgb, degrees } from 'pdf-lib';
 import type { User } from '@/src/types';
 import type { WatermarkConfig } from '@/src/types/watermark-config';
 
@@ -18,61 +21,44 @@ export async function addWatermarkToPdf(
     return pdfBuffer;
   }
 
-  try {
-    const pdfDoc = await PDFDocument.load(Buffer.from(pdfBuffer));
-    const pages = pdfDoc.getPages();
-    const rgb_color = hexToRgb(watermarkConfig.color);
+  const pdfDoc = await PDFDocument.load(Buffer.from(pdfBuffer));
+  pdfDoc.registerFontkit(fontkit);
+  const font = await pdfDoc.embedFont(
+    await readFile(path.join(process.cwd(), 'node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf'))
+  );
+  const pages = pdfDoc.getPages();
+  const rgb_color = hexToRgb(watermarkConfig.color);
 
-    // Build watermark text — mirrors PdfPreviewModal client logic exactly
-    const parts: string[] = [];
+  const parts: string[] = [];
 
-    if (watermarkConfig.useStudentCode && studentCode) {
-      parts.push(studentCode);
-    }
-
-    if (watermarkConfig.usePhoneNumber && user?.attributes?.phone) {
-      const phone = String(user.attributes.phone).trim();
-      if (phone) parts.push(phone);
-    }
-
-    // Fall back to the static text configured in admin if no dynamic parts
-    let watermarkText = parts.length > 0 ? parts.join(' · ') : watermarkConfig.text;
-
-    // Append student code for traceability (matches client-side PdfPreviewModal behavior)
-    const studentCodeForTrace = studentCode?.trim() || '';
-    if (studentCodeForTrace && !watermarkText.includes(studentCodeForTrace)) {
-      watermarkText = watermarkText ? `${watermarkText} · ${studentCodeForTrace}` : studentCodeForTrace;
-    }
-
-    const opacity = watermarkConfig.opacity / 100;
-    const fontSize = calculateFontSize(watermarkConfig.size);
-    const rotationDegrees = watermarkConfig.rotation;
-
-    for (const page of pages) {
-      const { width, height } = page.getSize();
-
-      // Always use full-grid watermarks — the client-side PdfPreviewModal
-      // always renders a 3×4 CSS grid regardless of the `position` config,
-      // so we mirror that here so the downloaded PDF looks identical.
-      addGridWatermarks(
-        page,
-        watermarkText,
-        rgb_color,
-        opacity,
-        fontSize,
-        rotationDegrees,
-        width,
-        height,
-        watermarkConfig.dynamicPosition
-      );
-    }
-
-    const watermarkedBytes = await pdfDoc.save();
-    return watermarkedBytes.buffer.slice(watermarkedBytes.byteOffset, watermarkedBytes.byteOffset + watermarkedBytes.byteLength) as ArrayBuffer;
-  } catch (error) {
-    console.error('Failed to add watermark to PDF:', error);
-    return pdfBuffer;
+  if (watermarkConfig.useStudentCode && studentCode) {
+    parts.push(studentCode);
   }
+
+  if (watermarkConfig.usePhoneNumber && user?.attributes?.phone) {
+    const phone = String(user.attributes.phone).trim();
+    if (phone) parts.push(phone);
+  }
+
+  let watermarkText = parts.length > 0 ? parts.join(' · ') : watermarkConfig.text;
+
+  const studentCodeForTrace = studentCode?.trim() || '';
+  if (studentCodeForTrace && !watermarkText.includes(studentCodeForTrace)) {
+    watermarkText = watermarkText ? `${watermarkText} · ${studentCodeForTrace}` : studentCodeForTrace;
+  }
+
+  watermarkText = prepareWatermarkText(watermarkText);
+
+  const opacity = watermarkConfig.opacity / 100;
+
+  for (const page of pages) {
+    const { width, height } = page.getSize();
+
+    addGridWatermarks(page, watermarkText, font, rgb_color, opacity, width, height);
+  }
+
+  const watermarkedBytes = await pdfDoc.save();
+  return watermarkedBytes.buffer.slice(watermarkedBytes.byteOffset, watermarkedBytes.byteOffset + watermarkedBytes.byteLength) as ArrayBuffer;
 }
 
 function hexToRgb(hex: string): { red: number; green: number; blue: number } {
@@ -87,42 +73,21 @@ function hexToRgb(hex: string): { red: number; green: number; blue: number } {
   return { red: 0, green: 0, blue: 0 };
 }
 
-function calculateFontSize(size: 'small' | 'medium' | 'large'): number {
-  switch (size) {
-    case 'small':
-      return 18;
-    case 'medium':
-      return 28;
-    case 'large':
-      return 40;
-    default:
-      return 28;
-  }
+function prepareWatermarkText(text: string): string {
+  if (!/[\u0600-\u06FF]/.test(text)) return text;
+
+  return text.replace(/[0-9٠-٩]+/g, (digits) => [...digits].reverse().join(''));
 }
 
 function addGridWatermarks(
   page: any,
   text: string,
+  font: PDFFont,
   color: { red: number; green: number; blue: number },
   opacity: number,
-  _fontSize: number,
-  _rotationDegrees: number,
   pageWidth: number,
   pageHeight: number,
-  _dynamicPosition: boolean
 ) {
-  // ── Exact mirror of PdfPreviewModal client-side CSS overlay ──────────────
-  //
-  // Client CSS (PdfPreviewContent):
-  //   <div class="absolute inset-0">
-  //     <div class="grid h-full w-full grid-cols-3 gap-16 p-10">
-  //       12 × <span class="rotate-[-25deg] text-2xl font-bold">
-  //     </div>
-  //   </div>
-  //
-  // The CSS grid fills the entire page container. We use proportional
-  // spacing so the layout scales correctly to any PDF page size.
-
   const COLS = 3;
   const ROWS = 4;
   const FONT_SIZE = 24;  // CSS text-2xl
@@ -153,60 +118,11 @@ function addGridWatermarks(
         x: cx - approxTextWidth / 2,
         y: cy - FONT_SIZE / 2,
         size: FONT_SIZE,
+        font,
         color: rgb(color.red, color.green, color.blue),
         opacity,
         rotate: degrees(ROTATION),
       });
     }
   }
-}
-
-
-
-
-function addSingleWatermark(
-  page: any,
-  text: string,
-  color: { red: number; green: number; blue: number },
-  opacity: number,
-  fontSize: number,
-  rotationDegrees: number,
-  pageWidth: number,
-  pageHeight: number,
-  position: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center'
-) {
-  const padding = 20;
-  let x = pageWidth / 2;
-  let y = pageHeight / 2;
-
-  switch (position) {
-    case 'topLeft':
-      x = padding;
-      y = pageHeight - padding - fontSize;
-      break;
-    case 'topRight':
-      x = pageWidth - padding - fontSize * text.length * 0.6;
-      y = pageHeight - padding - fontSize;
-      break;
-    case 'bottomLeft':
-      x = padding;
-      y = padding;
-      break;
-    case 'bottomRight':
-      x = pageWidth - padding - fontSize * text.length * 0.6;
-      y = padding;
-      break;
-    case 'center':
-      // keep center
-      break;
-  }
-
-  page.drawText(text, {
-    x: x,
-    y: y,
-    size: fontSize,
-    color: rgb(color.red, color.green, color.blue),
-    opacity: opacity,
-    rotate: degrees(rotationDegrees),
-  });
 }

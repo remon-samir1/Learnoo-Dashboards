@@ -1,31 +1,35 @@
 import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
-import { getJwtUserDataFromToken } from '@/src/lib/jwt-decode';
-import { normalizePlatformFeatureList } from '@/src/services/student/platform-feature.service';
 import { parseWatermarkConfigFromFeatures } from '@/src/lib/watermark-from-features';
 import { addWatermarkToPdf } from '@/src/lib/server-pdf-watermark';
+import type { User } from '@/src/types';
 import type { WatermarkContentType } from '@/src/types/watermark-config';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app').replace(/\/$/, '');
 
 export async function GET(req: NextRequest) {
-  const pdfUrl = req.nextUrl.searchParams.get('url');
-  const contentTypeParam = req.nextUrl.searchParams.get('contentType');
+  const source = req.nextUrl.searchParams.get('source');
 
-  // Validate contentType against allowed values
-  const validContentTypes: WatermarkContentType[] = ['chapters', 'library', 'liveStreams', 'videos', 'files', 'exams'];
-  const contentType: WatermarkContentType = (
-    contentTypeParam && validContentTypes.includes(contentTypeParam as WatermarkContentType)
-      ? contentTypeParam as WatermarkContentType
-      : 'library'
-  );
-
-  if (!pdfUrl) {
-    return new Response('Missing PDF URL', { status: 400 });
+  if (!source) {
+    return new Response('Missing PDF source', { status: 400 });
   }
 
   try {
-    const response = await fetch(pdfUrl);
+    const sourceUrl = new URL(source);
+    const apiUrl = new URL(API_BASE);
+    const key = process.env.PDF_PROXY_KEY;
+
+    if (sourceUrl.origin !== apiUrl.origin || !sourceUrl.pathname.startsWith('/v1/attachment/')) {
+      return new Response('Invalid PDF source', { status: 400 });
+    }
+
+    if (!key) {
+      return new Response('PDF protection is unavailable', { status: 503 });
+    }
+
+    const response = await fetch(sourceUrl, {
+      headers: { 'X-PDF-Proxy-Key': key },
+      cache: 'no-store',
+    });
 
     if (!response.ok) {
       return new Response('Failed to fetch PDF', {
@@ -33,73 +37,24 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    const features = response.headers.get('X-PDF-Watermark-Features');
+    const viewer = response.headers.get('X-PDF-Viewer');
+    const contentType = response.headers.get('X-PDF-Content-Type') as WatermarkContentType | null;
+
+    if (!features || !viewer || !contentType) {
+      return new Response('PDF protection is unavailable', { status: 503 });
+    }
+
     let pdfBuffer = await response.arrayBuffer();
+    const watermarkConfig = parseWatermarkConfigFromFeatures(
+      JSON.parse(Buffer.from(features, 'base64').toString()),
+      contentType,
+    );
 
-    // When preview=1, skip server-side watermark — the client-side CSS overlay
-    // in PdfPreviewModal already renders the visual watermark for the preview.
-    // Server watermark is only embedded for actual file downloads.
-    const isPreview = req.nextUrl.searchParams.get('preview') === '1';
-
-    // Apply watermark if enabled (download only, not preview)
-    if (!isPreview) try {
-      const cookieStore = await cookies();
-      const token = cookieStore.get('token')?.value;
-
-      if (token) {
-        // Get user data from JWT
-        const userData = getJwtUserDataFromToken(token);
-
-        // Fetch platform features to check if watermark is enabled
-        const featuresRes = await fetch(`${API_BASE}/v1/feature`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-          cache: 'no-store',
-        });
-
-        if (featuresRes.ok) {
-          const featuresJson = await featuresRes.json();
-          const features = normalizePlatformFeatureList(featuresJson);
-
-          // Parse watermark config for the specified content type
-          const watermarkConfig = parseWatermarkConfigFromFeatures(features, contentType);
-
-          console.log('[PDF Proxy] watermarkConfig:', JSON.stringify(watermarkConfig));
-
-          if (watermarkConfig.enabled) {
-            // Fetch full user data for student code and phone
-            try {
-              const userRes = await fetch(`${API_BASE}/v1/auth/me`, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  Accept: 'application/json',
-                },
-                cache: 'no-store',
-              });
-
-              if (userRes.ok) {
-                const userJson = await userRes.json();
-                const user = userJson?.data;
-                // Extract student code from user attributes
-                const studentCode = String(user?.attributes?.student_code ?? '').trim() || undefined;
-                // Apply watermark
-                pdfBuffer = await addWatermarkToPdf(pdfBuffer, watermarkConfig, user, studentCode);
-              } else {
-                // Apply watermark without user-specific info
-                pdfBuffer = await addWatermarkToPdf(pdfBuffer, watermarkConfig, null);
-              }
-            } catch (userError) {
-              console.error('Failed to fetch user profile for watermark:', userError);
-              // Continue without user-specific watermark info
-              pdfBuffer = await addWatermarkToPdf(pdfBuffer, watermarkConfig, null);
-            }
-          }
-        }
-      }
-    } catch (watermarkError) {
-      console.error('Failed to apply PDF watermark:', watermarkError);
-      // Continue with original PDF if watermarking fails
+    if (watermarkConfig.enabled) {
+      const user = { attributes: JSON.parse(Buffer.from(viewer, 'base64').toString()) } as User;
+      const studentCode = String(user.attributes?.student_code ?? '').trim() || undefined;
+      pdfBuffer = await addWatermarkToPdf(pdfBuffer, watermarkConfig, user, studentCode);
     }
 
     return new Response(pdfBuffer, {

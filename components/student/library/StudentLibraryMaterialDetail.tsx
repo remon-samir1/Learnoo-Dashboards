@@ -291,7 +291,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
           </div>
           {selected?.attributes?.path && canAccessAttachment ? (
             <a
-              href={`/api/pdf-proxy?url=${encodeURIComponent(selected.attributes.path)}&contentType=library`}
+              href={selected.attributes.path}
               download={selected.attributes.name}
               target="_blank"
               rel="noopener noreferrer"
@@ -452,7 +452,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
               <p className="text-lg font-bold text-[#1E293B]">{t('previewUnavailableTitle')}</p>
               <p className="max-w-md text-sm text-[#64748B]">{t('previewUnavailableBody')}</p>
               <a
-                href={`/api/pdf-proxy?url=${encodeURIComponent(selected.attributes.path)}&contentType=library`}
+                href={selected.attributes.path}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex rounded-xl bg-[#2137D6] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#1a2bb3]"

@@ -12,9 +12,11 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@jitsi/react-sdk": "^1.4.4",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@tanstack/react-query": "^5.99.0",
     "@tanstack/react-query-devtools": "^5.99.0",
     "@types/xlsx": "^0.0.35",
+    "dejavu-fonts-ttf": "^2.37.3",
     "framer-motion": "^12.38.0",
     "hls.js": "^1.6.16",
     "html2canvas": "^1.4.1",
