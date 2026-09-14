@@ -65,7 +65,7 @@ function PdfPreviewContent({
 
     fetch(proxiedPdfUrl, { cache: 'no-store', signal: controller.signal })
       .then((response) => {
-        if (!response.ok) throw new Error('Failed to fetch PDF');
+        if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status}`);
         return response.arrayBuffer();
       })
       .then(setPdfData)
