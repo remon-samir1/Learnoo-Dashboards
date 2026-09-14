@@ -70,6 +70,7 @@ function PdfPreviewContent({
       })
       .then(setPdfData)
       .catch((error: unknown) => {
+        console.error('PDF fetch error:', error);
         if ((error as Error).name !== 'AbortError') setLoadError(true);
       });
 
@@ -115,6 +116,7 @@ function PdfPreviewContent({
         file={pdfData}
         error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
         onLoadSuccess={handleLoadSuccess}
+        onLoadError={(error) => console.error('PDF viewer error:', error)}
       >
         <div className="flex flex-col items-center gap-4 py-1 sm:gap-5 sm:py-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
