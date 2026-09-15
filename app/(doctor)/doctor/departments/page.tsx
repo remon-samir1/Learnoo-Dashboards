@@ -4740,7 +4740,9 @@ function AddModal({
   progress = 0,
   lessonCreateType = "video-pdf",
 }: AddModalProps) {
-  const [formData, setFormData] = useState<Record<string, any>>({});
+  const [formData, setFormData] = useState<Record<string, any>>(
+    type === "chapter" ? { view_by_minute: 30 } : {},
+  );
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -5909,7 +5911,7 @@ function AddModal({
                   type="number"
                   min="0"
                   step="1"
-                  value={formData.view_by_minute || ""}
+                  value={formData.view_by_minute ?? ""}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
