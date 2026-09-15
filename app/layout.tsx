@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
 import Providers from "./providers";
 import { Toaster } from "sonner";
@@ -35,10 +35,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
+  const headerStore = await headers();
+  const pathLocale = headerStore.get("x-learnoo-locale");
   const cookieLocale = cookieStore.get("locale")?.value;
 
   const locale =
-    cookieLocale === "ar" || cookieLocale === "en" ? cookieLocale : "en";
+    pathLocale === "ar" || pathLocale === "en"
+      ? pathLocale
+      : cookieLocale === "ar" || cookieLocale === "en"
+        ? cookieLocale
+        : "en";
 
   const isRTL = locale === "ar";
 

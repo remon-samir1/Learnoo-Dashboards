@@ -395,7 +395,10 @@
     "notesSummaries": "Notes & Summaries",
     "electronicLibrary": "Electronic Library",
     "support": "Support",
-    "activation": "Activation"
+    "activation": "Activation",
+    "adminDashboard": "Admin Dashboard",
+    "doctorDashboard": "Instructor Dashboard",
+    "parentDashboard": "Parent Dashboard"
   },
   "issues": {
     "title": "Technical Support",

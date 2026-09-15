@@ -13,8 +13,27 @@ import {
 
 const AUTH_COOKIE_NAMES = ['token', 'user_role', 'user_data'] as const;
 
+function getPathLocale(request: NextRequest) {
+  const locale = request.nextUrl.pathname.split('/')[1];
+  return locale === 'ar' || locale === 'en' ? locale : null;
+}
+
 function redirectTo(request: NextRequest, href: string) {
-  return NextResponse.redirect(new URL(href, request.url));
+  const response = NextResponse.redirect(new URL(href, request.url));
+  const locale = getPathLocale(request);
+  if (locale) response.cookies.set('locale', locale, { maxAge: 31536000, path: '/' });
+  return response;
+}
+
+function nextForRequest(request: NextRequest) {
+  const locale = getPathLocale(request);
+  if (!locale) return NextResponse.next();
+
+  const headers = new Headers(request.headers);
+  headers.set('x-learnoo-locale', locale);
+  const response = NextResponse.next({ request: { headers } });
+  response.cookies.set('locale', locale, { maxAge: 31536000, path: '/' });
+  return response;
 }
 
 function clearSessionAndRedirectToLogin(request: NextRequest) {
@@ -33,7 +52,7 @@ export function proxy(request: NextRequest) {
   // --- Auth / marketing entry (login, register, home) ---
   if (zone === 'auth') {
     if (!auth.token) {
-      return NextResponse.next();
+      return nextForRequest(request);
     }
     if (!auth.role || !isSupportedRole(auth.role)) {
       return clearSessionAndRedirectToLogin(request);
@@ -49,7 +68,7 @@ export function proxy(request: NextRequest) {
     if (!auth.token) {
       return redirectTo(request, '/login');
     }
-    return NextResponse.next();
+    return nextForRequest(request);
   }
 
   // --- Protected zones ---
@@ -81,7 +100,7 @@ export function proxy(request: NextRequest) {
       // If a `user_role` cookie exists and resolves to 'Student', allow access
       // to the student area immediately (skip the profile gate).
       if (auth.role === 'Student' || (typeof auth.role === 'string' && auth.role.toLowerCase() === 'student')) {
-        return NextResponse.next();
+        return nextForRequest(request);
       }
 
       const profileGate = getStudentProfileGateRedirect(
@@ -93,7 +112,7 @@ export function proxy(request: NextRequest) {
         return redirectTo(request, profileGate);
       }
     }
-    return NextResponse.next();
+    return nextForRequest(request);
   }
 
   // Wrong role for this area → own dashboard
@@ -105,7 +124,7 @@ export function proxy(request: NextRequest) {
   }
 
   // Unclassified path: allow if authenticated (static assets already excluded by matcher)
-  return NextResponse.next();
+  return nextForRequest(request);
 }
 
 export const config = {
