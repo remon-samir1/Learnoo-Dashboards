@@ -42,6 +42,7 @@ export default function DeleteAccountPage() {
               <li>{t('effects.profile')}</li>
               <li>{t('effects.content')}</li>
               <li>{t('effects.access')}</li>
+              <li>{t('effects.financialRecord')}</li>
               <li>{t('effects.irreversible')}</li>
             </ul>
           </div>
