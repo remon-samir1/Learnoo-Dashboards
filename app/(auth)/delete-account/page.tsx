@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
+import Cookies from '@/lib/cookies';
 import { authApi, getApiErrorMessage } from '@/src/lib/api';
 import { useAuthActions } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
@@ -17,7 +18,7 @@ const inputClass =
 
 export default function DeleteAccountPage() {
   const t = useTranslations('auth.deleteAccount');
-  const { login, logout } = useAuthActions();
+  const { login } = useAuthActions();
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
@@ -133,8 +134,11 @@ export default function DeleteAccountPage() {
     setError('');
     try {
       await authApi.deleteAccount(code);
+      // The session belongs to an account that no longer exists: drop it here
+      // instead of the store's logout, which would navigate away from this page.
+      sessionStorage.clear();
+      for (const name of ['token', 'user_data', 'user_role', 'auth_flow']) Cookies.remove(name);
       setStep('done');
-      await logout();
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, t('errors.failed'));
       setError(message);
