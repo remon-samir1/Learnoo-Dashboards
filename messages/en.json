@@ -253,7 +253,7 @@
         "profile": "Your profile (name, phone number, email and photo) is deleted.",
         "content": "Your posts, comments, questions, progress and exam attempts are deleted.",
         "access": "Your course activations are removed and you are signed out on every device.",
-        "irreversible": "Deletion happens 7 days after your request. Signing in before then cancels it. After that it cannot be undone; courses and content you were enrolled in are not affected."
+        "irreversible": "Deletion happens 7 days after your request. You can cancel it from this page before then. After that it cannot be undone; courses and content you were enrolled in are not affected."
       },
       "phone": "Phone number of the account to delete",
       "phonePlaceholder": "Enter your phone number",
@@ -263,7 +263,7 @@
       "confirmLabel": "I understand that my Learnoo account and its data will be permanently deleted.",
       "deleteButton": "Request permanent deletion",
       "deleting": "Deleting...",
-      "done": "Your request is recorded. Your Learnoo account and its data will be permanently deleted on {date}. If you change your mind, sign in before that date and cancel.",
+      "done": "Your request is recorded. Your Learnoo account and its data will be permanently deleted on {date}. If you change your mind, come back to this page before that date and cancel the request.",
       "backToLogin": "Back to sign in",
       "errors": {
         "phone": "Please enter a valid phone number.",
