@@ -495,7 +495,10 @@ export const authApi = {
       method: 'DELETE',
       headers: createHeaders(),
       body: JSON.stringify({ code }),
-    }).then((response) => handleResponse<{ message: string }>(response, true)),
+    }).then((response) => handleResponse<{ message: string; scheduled_for: string }>(response, true)),
+
+  cancelAccountDeletion: () =>
+    post<{ message: string }>('/v1/auth/account/restore', {}, true, true),
 
   verifyEmail: (code: string) =>
     post<ApiResponse<{ message: string }>>('/v1/auth/email/verify', { code }),
