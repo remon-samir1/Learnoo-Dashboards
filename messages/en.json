@@ -245,6 +245,31 @@
         "localPhoneFormat": "For Egypt, enter your local number, such as 010..., without +20 or 020."
       }
     },
+    "deleteAccount": {
+      "title": "Delete your Learnoo account",
+      "subtitle": "Students can permanently delete their Learnoo account here, with or without the app installed.",
+      "whatHappens": "What happens when you delete your account:",
+      "effects": {
+        "profile": "Your profile (name, phone number, email and photo) is deleted.",
+        "content": "Your posts, comments, questions, progress and exam attempts are deleted.",
+        "access": "Your course activations are removed and you are signed out on every device.",
+        "irreversible": "This cannot be undone. Courses and content you were enrolled in are not affected."
+      },
+      "phone": "Phone number of the account to delete",
+      "phonePlaceholder": "Enter your phone number",
+      "sendCode": "Continue",
+      "sending": "Please wait...",
+      "code": "Verification code",
+      "confirmLabel": "I understand that my Learnoo account and its data will be permanently deleted.",
+      "deleteButton": "Delete my account permanently",
+      "deleting": "Deleting...",
+      "done": "Your Learnoo account and its data have been deleted.",
+      "backToLogin": "Back to sign in",
+      "errors": {
+        "phone": "Please enter a valid phone number.",
+        "failed": "We could not complete the request. Please try again."
+      }
+    },
     "verification": {
       "title": "Verification Code",
       "subtitle": "Wait for the verification code to shown here, then verify your account",

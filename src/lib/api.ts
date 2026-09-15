@@ -490,6 +490,13 @@ export const authApi = {
   verifyPhone: (code: string) =>
     post<ApiResponse<{ message: string }>>('/v1/auth/phone/verify', { code }, true, true),
 
+  deleteAccount: (code: string) =>
+    fetch(buildUrl('/v1/auth/account'), {
+      method: 'DELETE',
+      headers: createHeaders(),
+      body: JSON.stringify({ code }),
+    }).then((response) => handleResponse<{ message: string }>(response, true)),
+
   verifyEmail: (code: string) =>
     post<ApiResponse<{ message: string }>>('/v1/auth/email/verify', { code }),
 };

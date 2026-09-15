@@ -37,6 +37,7 @@ export const AUTH_ROUTE_PREFIXES = [
   '/forgot-password',
   '/reset-password',
   '/verification-code',
+  '/delete-account',
 ] as const;
 
 /** Post-register onboarding (token required). */
