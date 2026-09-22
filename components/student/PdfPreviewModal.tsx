@@ -52,6 +52,7 @@ function PdfPreviewContent({
   const [totalPages, setTotalPages] = useState(0);
   const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [useNativeViewer, setUseNativeViewer] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
 
@@ -62,6 +63,7 @@ function PdfPreviewContent({
 
     setPdfData(null);
     setLoadError(false);
+    setUseNativeViewer(false);
 
     fetch(proxiedPdfUrl, { cache: 'no-store', signal: controller.signal })
       .then((response) => {
@@ -110,11 +112,21 @@ function PdfPreviewContent({
         <p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>
       ) : !pdfData ? (
         <p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>
+      ) : useNativeViewer ? (
+        <iframe
+          className="h-[70vh] w-full border-0"
+          src={proxiedPdfUrl}
+          title="PDF Preview"
+        />
       ) : (
       <Document
         file={pdfData}
         error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
         onLoadSuccess={handleLoadSuccess}
+        onLoadError={(error) => {
+          console.error('PDF viewer error:', error);
+          setUseNativeViewer(true);
+        }}
       >
         <div className="flex flex-col items-center gap-4 py-1 sm:gap-5 sm:py-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
