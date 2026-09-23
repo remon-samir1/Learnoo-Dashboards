@@ -51,28 +51,32 @@ function PdfPreviewContent({
   const [pageWidth, setPageWidth] = useState(720);
   const [totalPages, setTotalPages] = useState(0);
   const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
-  const [loadError, setLoadError] = useState(false);
-  const [useNativeViewer, setUseNativeViewer] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
 
   const effectiveScale = scale ?? 1.0;
 
+  const reportError = (stage: string, error: unknown) => {
+    const detail = `${stage}: ${String(error).replace(/https?:\/\/\S+/g, '[URL]').slice(0, 180)}`;
+    console.error('PDF viewer error:', detail);
+    setLoadError(detail);
+  };
+
   useEffect(() => {
     const controller = new AbortController();
 
     setPdfData(null);
-    setLoadError(false);
-    setUseNativeViewer(false);
+    setLoadError(null);
 
     fetch(proxiedPdfUrl, { cache: 'no-store', signal: controller.signal })
       .then((response) => {
-        if (!response.ok) throw new Error('Failed to fetch PDF');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.arrayBuffer();
       })
       .then(setPdfData)
       .catch((error: unknown) => {
-        if ((error as Error).name !== 'AbortError') setLoadError(true);
+        if ((error as Error).name !== 'AbortError') reportError('fetch', error);
       });
 
     return () => controller.abort();
@@ -108,23 +112,21 @@ function PdfPreviewContent({
 
   return (
     <div ref={contentRef} className="min-h-0 w-full">
-      {loadError || useNativeViewer ? (
-        <iframe
-          className="h-[70vh] w-full border-0"
-          src={proxiedPdfUrl}
-          title="PDF Preview"
-        />
+      {loadError ? (
+        <div className="flex min-h-48 flex-col items-center justify-center gap-4 text-center">
+          <p className="text-sm text-slate-600">تعذر عرض الملف داخل الصفحة.</p>
+          <p className="text-xs text-slate-500">صوّر رمز الخطأ وأرسله للدعم:</p>
+          <code dir="ltr" className="max-w-full break-all rounded bg-slate-100 p-2 text-xs text-slate-700">{loadError}</code>
+        </div>
       ) : !pdfData ? (
         <p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>
       ) : (
       <Document
         file={pdfData}
-        error={<p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>}
+        error={<p className="py-12 text-sm text-red-600">تعذر عرض ملف PDF.</p>}
         onLoadSuccess={handleLoadSuccess}
-        onLoadError={(error) => {
-          console.error('PDF viewer error:', error);
-          setUseNativeViewer(true);
-        }}
+        onSourceError={(error) => reportError('source', error)}
+        onLoadError={(error) => reportError('document', error)}
       >
         <div className="flex flex-col items-center gap-4 py-1 sm:gap-5 sm:py-2">
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
@@ -139,6 +141,8 @@ function PdfPreviewContent({
                 width={pageWidth}
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
+                onLoadError={(error) => reportError('page', error)}
+                onRenderError={(error) => reportError('render', error)}
                 className="[&_canvas]:!h-auto [&_canvas]:!w-full"
               />
 
@@ -324,7 +328,7 @@ export default function PdfPreviewModal({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end sm:gap-6">
-            <div className="flex items-center gap-2">
+            {numPages > 0 && <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={handlePrevPage}
@@ -356,8 +360,8 @@ export default function PdfPreviewModal({
               >
                 <ChevronRight className="size-4" />
               </button>
-            </div>
-            <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 sm:mr-4">
+            </div>}
+            {numPages > 0 && <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-1 sm:mr-4">
               <button
                 type="button"
                 onClick={handleZoomOut}
@@ -386,7 +390,7 @@ export default function PdfPreviewModal({
               >
                 <RotateCcw className="size-4" />
               </button>
-            </div>
+            </div>}
 
             {onClose ? (
               <button
