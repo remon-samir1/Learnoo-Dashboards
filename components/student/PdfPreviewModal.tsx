@@ -281,7 +281,8 @@ export default function PdfPreviewModal({
   }, [open, chapterId, viewByMinute]);
   // ────────────────────────────────────────────────────────────────────────
 
-  const proxiedPdfUrl = pdfUrl ?? '';
+  const sourceUrl = pdfUrl ? new URL(pdfUrl) : null;
+  const proxiedPdfUrl = sourceUrl ? `${sourceUrl.pathname}${sourceUrl.search}` : '';
 
   if (!open || !pdfUrl) return null;
 
