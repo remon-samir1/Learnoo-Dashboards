@@ -108,16 +108,14 @@ function PdfPreviewContent({
 
   return (
     <div ref={contentRef} className="min-h-0 w-full">
-      {loadError ? (
-        <p className="py-12 text-sm text-red-600">Failed to load PDF file.</p>
-      ) : !pdfData ? (
-        <p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>
-      ) : useNativeViewer ? (
+      {loadError || useNativeViewer ? (
         <iframe
           className="h-[70vh] w-full border-0"
           src={proxiedPdfUrl}
           title="PDF Preview"
         />
+      ) : !pdfData ? (
+        <p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>
       ) : (
       <Document
         file={pdfData}
