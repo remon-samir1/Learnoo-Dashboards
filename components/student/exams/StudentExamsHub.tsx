@@ -117,11 +117,6 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
         set.add(String(course.id).trim());
       }
     }
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.__debugEnrolledCourseIds = Array.from(set);
-      console.log('[DEBUG] enrolledCourseIds:', Array.from(set));
-    }
     return set;
   }, [enrolledCourses]);
 
@@ -206,18 +201,6 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
       }
 
       const b = classifyHubQuizRow(row, now, enrolledCourseIds);
-      if (typeof window !== 'undefined' && String(row.id) === '146') {
-        const attrs = hubQuizAttrs(row);
-        const cids = readHubQuizCourseIds(row);
-        console.log('[DEBUG] classify 146:', {
-          isPublic: attrs.is_public,
-          courses_ids: attrs.courses_ids,
-          parsedCids: cids,
-          hasEnrolled: cids.some(cid => enrolledCourseIds.has(cid)),
-          enrolledCourseIds: Array.from(enrolledCourseIds),
-          bucket: b,
-        });
-      }
       switch (b) {
         case 'available':
           buckets.available.push(row);

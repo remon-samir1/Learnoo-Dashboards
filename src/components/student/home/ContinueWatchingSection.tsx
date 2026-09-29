@@ -5,6 +5,8 @@ import { Lock, Play } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { HlsVideoPlayer } from "@/components/student/watch/HlsVideoPlayer";
 import { IUserProgress } from "@/src/interfaces/progress.interface";
+import { isChapterHiddenFromStudent } from "@/src/lib/student-chapter-access";
+import type { Chapter } from "@/src/types";
 import { useEffect, useState } from "react";
 import { getCourseById } from "@/src/services/student/course.service";
 import { ICourse } from "@/src/interfaces/courses.interface";
@@ -19,7 +21,14 @@ export default function ContinueWatchingSection({
   const t = useTranslations("students.home.continueWatching");
   const locale = useLocale();
 
-  const list = Array.isArray(progress) ? progress : [];
+  // A chapter the server marks as not published (or still scheduled) must never
+  // surface in the student UI, so "continue watching" resumes the most recent
+  // lesson that is actually visible instead of blindly taking the newest row.
+  const list = (Array.isArray(progress) ? progress : []).filter((entry) => {
+    const chapterData = entry?.attributes?.chapter?.data;
+    if (!chapterData) return false;
+    return !isChapterHiddenFromStudent(chapterData as unknown as Chapter);
+  });
   const latest = list[0];
   const lastChapter = latest?.attributes?.chapter?.data?.attributes;
   const chapterProgressId = latest?.attributes?.chapter?.data?.id;
