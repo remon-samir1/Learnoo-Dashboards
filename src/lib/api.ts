@@ -100,6 +100,10 @@ import type {
   StudentViewData,
   StudentQuestion,
 } from '@/src/types';
+import type {
+  StudentNotificationCountResponse,
+  StudentNotificationListResponse,
+} from '@/src/types/student-notification';
 
 // ============================================
 // Configuration
@@ -399,6 +403,21 @@ async function putMultipart<T>(path: string, formData: FormData, onProgress?: (p
 
   // Fallback to fetch if no progress callback
   return put<T>(path, formData, true);
+}
+
+async function patch<T>(
+  path: string,
+  data?: unknown,
+  options?: { keepalive?: boolean }
+): Promise<T> {
+  const response = await fetch(buildUrl(path), {
+    method: 'PATCH',
+    headers: createHeaders(),
+    body: data !== undefined && data !== null ? JSON.stringify(data) : undefined,
+    keepalive: options?.keepalive,
+  });
+
+  return handleResponse<T>(response);
 }
 
 async function del<T>(path: string, options?: { keepalive?: boolean }): Promise<T> {
@@ -1219,6 +1238,32 @@ export const searchApi = {
 };
 
 // ============================================
+// Notifications API
+// ============================================
+
+/**
+ * Student notifications. Same endpoints the mobile app calls
+ * (`lib/core/network/api_constants.dart`), so both clients stay in sync.
+ */
+export const notificationsApi = {
+  list: (params?: { page?: number }) =>
+    get<StudentNotificationListResponse>('/v1/notifications', params),
+
+  listUnread: (params?: { page?: number }) =>
+    get<StudentNotificationListResponse>('/v1/notifications/unread', params),
+
+  unreadCount: () => get<StudentNotificationCountResponse>('/v1/notifications/count'),
+
+  markAsRead: (id: string) =>
+    patch<{ message?: string }>(`/v1/notifications/${encodeURIComponent(id)}/read`),
+
+  markAllAsRead: () => patch<{ message?: string }>('/v1/notifications/read-all'),
+
+  delete: (id: string) =>
+    del<{ message?: string }>(`/v1/notifications/${encodeURIComponent(id)}`),
+};
+
+// ============================================
 // Dashboard API (Mock endpoints for now)
 // ============================================
 
@@ -1455,6 +1500,7 @@ export const api = {
   libraries: librariesApi,
   liveRooms: liveRoomsApi,
   notes: notesApi,
+  notifications: notificationsApi,
   instructorDashboard: instructorDashboardApi,
   posts: postsApi,
   comments: commentsApi,

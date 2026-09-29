@@ -1,5 +1,9 @@
 import getUserDataFromJWT from "@/lib/server.utils";
 import { API_BASE_URL } from "@/src/lib/api";
+import {
+  isTopLevelPublishedCommunityPost,
+  sortCommunityPostsNewestFirst,
+} from "@/src/lib/student-community-posts";
 
 export interface Post {
   id: number;
@@ -9,6 +13,9 @@ export interface Post {
     type: 'post' | 'question' | 'summary';
     status: 'draft' | 'published';
     course_id: number | null;
+    /** Multi-course community posts carry the ids / inlined course objects. */
+    course_ids?: (number | string)[];
+    courses?: { id: string | number; attributes?: { title?: string } }[];
     parent_id: number | null;
     created_at: string;
     updated_at: string;
@@ -38,10 +45,16 @@ interface ServiceResponse<T> {
 }
 
 /**
- * Get latest posts that don't have a course_id (general community posts).
- * Server-side service for use in Server Components.
+ * Community posts for the student home section (Server Components only).
+ *
+ * `GET /v1/post` returns posts *and* replies — a comment is a post carrying a
+ * parent reference, which is how `commentsApi.list` reads them — for every
+ * course on the platform. The home section has to apply the same rules the
+ * community page applies, so they live in `student-community-posts`: drop
+ * replies, drop drafts, newest first. Scoping to the student's own courses is
+ * left to the caller, which is the side that knows the enrolled course ids.
  */
-export const getLatestGeneralPosts = async (limit: number = 5): Promise<ServiceResponse<Post[]>> => {
+export const getCommunityPosts = async (): Promise<ServiceResponse<Post[]>> => {
   const userData = await getUserDataFromJWT();
   const token = userData?.token;
 
@@ -64,29 +77,14 @@ export const getLatestGeneralPosts = async (limit: number = 5): Promise<ServiceR
       };
     }
 
-    // Filter posts that don't have a course_id and are published top-level posts
-    // Note: API response structure is { data: Post[] }
-    const allPosts: Post[] = result.data || [];
-    const generalPosts = allPosts.filter((post: Post) => {
-      const isTopLevel = post.attributes.parent_id == null || post.attributes.parent_id === 0;
-      const isPublished = post.attributes.status === 'published';
-      const courseId = post.attributes.course_id;
-      // Consider it general if course_id is null, undefined, or 0
-      const hasNoCourse = courseId == null || Number(courseId) === 0;
-      return isTopLevel && isPublished && hasNoCourse;
-    });
-
-    // Sort by created_at descending and limit
-    const sortedPosts = generalPosts.sort((a, b) => {
-      return new Date(b.attributes.created_at).getTime() - new Date(a.attributes.created_at).getTime();
-    });
-
-    const limitedPosts = sortedPosts.slice(0, limit);
+    // API response structure is { data: Post[] } and mixes posts with replies.
+    const allPosts: Post[] = Array.isArray(result?.data) ? result.data : [];
+    const topLevelPosts = allPosts.filter(isTopLevelPublishedCommunityPost);
 
     return {
       success: true,
       data: {
-        data: limitedPosts,
+        data: sortCommunityPostsNewestFirst(topLevelPosts),
       },
     };
   } catch (error) {

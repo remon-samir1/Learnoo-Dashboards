@@ -475,7 +475,10 @@
       "time1": "منذ 5 دقائق",
       "time2": "منذ ساعة",
       "time3": "اليوم"
-    }
+    },
+    "markAllAsRead": "تحديد الكل كمقروء",
+    "browserNotifications": "إشعارات المتصفح",
+    "browserNotificationsBlocked": "محظورة من إعدادات المتصفح."
   },
   "header": {
     "titles": {
@@ -3209,7 +3212,11 @@
       "course": "الكورسات",
       "exam": "الاختبارات",
       "general": "عام"
-    }
+    },
+    "unreadBadge": "غير مقروء",
+    "markedAllAsRead": "تم تحديد كل الإشعارات كمقروءة.",
+    "markAllFailed": "تعذّر تحديد الإشعارات كمقروءة.",
+    "loading": "جارٍ تحميل الإشعارات..."
   },
   "studentSettings": {
     "title": "الإعدادات",
@@ -3227,7 +3234,8 @@
       "title": "التفضيلات",
       "notifications": {
         "title": "الإشعارات",
-        "description": "استقبال الإشعارات الفورية"
+        "description": "استقبال الإشعارات الفورية",
+        "blocked": "محظورة من إعدادات المتصفح."
       },
       "darkMode": {
         "title": "الوضع الداكن",

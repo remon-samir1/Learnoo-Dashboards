@@ -2,17 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import Navbar, { type NotificationItem } from "@/components/student/Navbar";
+import Navbar from "@/components/student/Navbar";
 import Sidebar from "@/components/student/Sidebar";
+import StudentNotificationsRuntime from "@/components/student/notifications/StudentNotificationsRuntime";
 import { StudentToaster } from "@/components/student/StudentToaster";
 import type { CurrentUser } from "@/src/interfaces/current-user.interface";
+import type { StudentNotification } from "@/src/types/student-notification";
 import { useAuth } from "@/src/stores/authStore";
 
 type StudentLayoutShellProps = {
   locale: string;
   isAcademicProfileComplete: boolean;
   currentUser: CurrentUser | null;
-  initialNotifications: NotificationItem[];
+  initialNotifications: StudentNotification[];
   children: React.ReactNode;
 };
 
@@ -88,11 +90,10 @@ export default function StudentLayoutShell({
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar currentUser={currentUser} />
 
+      <StudentNotificationsRuntime initialNotifications={initialNotifications} />
+
       <div className="flex h-screen min-w-0 flex-1 flex-col overflow-y-auto">
-        <Navbar
-          initialNotifications={initialNotifications}
-          currentUser={currentUser}
-        />
+        <Navbar currentUser={currentUser} />
 
         <main className="min-w-0 flex-1 px-4 py-4 pb-6 sm:px-5 sm:py-5 lg:px-16 lg:py-5">
           {children}

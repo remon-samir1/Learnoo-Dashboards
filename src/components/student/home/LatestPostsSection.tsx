@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowRight, MessageSquare, ThumbsUp, User } from "lucide-react";
+import { ArrowRight, BookOpen, MessageSquare, ThumbsUp, User } from "lucide-react";
 import type { Post } from "@/src/services/student/post.service";
+import { readCommunityPostCourseNames } from "@/src/lib/student-community-posts";
 
 function isLikelyInstructorRole(role: string | undefined): boolean {
   if (!role?.trim()) return false;
@@ -36,8 +37,11 @@ function getPostRelativeTime(isoString: string, locale: string): string {
 
 export default function LatestPostsSection({
   posts = [],
+  courseTitleById = {},
 }: {
   posts: Post[];
+  /** `courseId -> title`, so a post can show the course it belongs to. */
+  courseTitleById?: Readonly<Record<string, string>>;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -74,6 +78,7 @@ export default function LatestPostsSection({
             const typeLabel = t(`community.posts.type.${typeKey}`);
             const comments = post.attributes.comments_count ?? 0;
             const reactions = post.attributes.reactions_count ?? 0;
+            const courseNames = readCommunityPostCourseNames(post, courseTitleById);
 
             return (
               <Link
@@ -102,6 +107,20 @@ export default function LatestPostsSection({
                             {typeLabel}
                           </span>
                         </div>
+
+                        {courseNames.length > 0 ? (
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {courseNames.map((name) => (
+                              <span
+                                key={name}
+                                className="inline-flex items-center gap-1 rounded-full bg-[#EEF2FF] px-2.5 py-0.5 text-[11px] font-semibold text-[#2137D6]"
+                              >
+                                <BookOpen size={12} className="shrink-0" aria-hidden />
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
 
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--text-muted)]">
                           <span className="flex items-center gap-1">

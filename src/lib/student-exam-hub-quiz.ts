@@ -8,6 +8,7 @@ import {
   readQuizOwningCourseIds,
   readRemainingAttemptsFromQuizAttributes,
 } from '@/src/lib/student-quiz-activation-lock';
+import { isWithinStudentCourses, readRecordCourseIds } from '@/src/lib/student-course-scope';
 
 export type HubQuizListRow = {
   id: string;
@@ -57,7 +58,44 @@ export function hubQuizAttrs(row: HubQuizListRow): Record<string, unknown> {
  * import this one file.
  */
 export function readHubQuizCourseIds(row: HubQuizListRow): string[] {
-  return readQuizOwningCourseIds(hubQuizAttrs(row));
+  const attrs = hubQuizAttrs(row);
+  const direct = readQuizOwningCourseIds(attrs);
+  if (direct.length > 0) return direct;
+  // An exam created on a chapter carries its course only through the chapter
+  // relation; without this it would look like a course-less platform exam.
+  return readRecordCourseIds(attrs);
+}
+
+/**
+ * Is this exam one of the student's own? An exam that names no course at all
+ * belongs to the platform at large, not to this student, so it is out of
+ * scope — the same rule the mobile app's exam filter applies.
+ */
+export function hubQuizIsInStudentCourses(
+  row: HubQuizListRow,
+  studentCourseIds: ReadonlySet<string>,
+): boolean {
+  return isWithinStudentCourses(readHubQuizCourseIds(row), studentCourseIds);
+}
+
+/**
+ * `start_time` / `end_time` as epoch ms. The API has sent ISO strings,
+ * `YYYY-MM-DD HH:mm:ss` (which older parsers reject) and epoch numbers; an
+ * unparsed `end_time` used to leave an exam that already ended in the
+ * available bucket.
+ */
+export function parseHubQuizTime(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    // Seconds-precision epochs are still in the 10-digit range.
+    return value < 1e11 ? value * 1000 : value;
+  }
+  if (typeof value !== 'string') return NaN;
+  const raw = value.trim();
+  if (!raw) return NaN;
+  const direct = new Date(raw).getTime();
+  if (!Number.isNaN(direct)) return direct;
+  const isoish = raw.replace(' ', 'T');
+  return new Date(isoish).getTime();
 }
 
 export function readHubQuizMaxAttempts(row: HubQuizListRow): number | null {
@@ -156,6 +194,13 @@ export function classifyHubQuizRow(
   enrolledCourseIds?: ReadonlySet<string> | Iterable<string> | null
 ): HubQuizBucket {
   const attrs = hubQuizAttrs(row);
+  const endsAt = parseHubQuizTime(attrs.end_time);
+  // An exam whose window already closed is expired whatever its lock state:
+  // offering to activate a course for an exam nobody can sit any more only
+  // made ended exams look available.
+  if (!Number.isNaN(endsAt) && endsAt < nowMs) {
+    return 'expired';
+  }
   // The enrolled-aware helper returns `true` when the student hasn't met the
   // requirements to bypass the lock (i.e. course not enrolled for 'included',
   // or hasn't entered a code for 'false').
@@ -171,10 +216,7 @@ export function classifyHubQuizRow(
   const status = String(attrs.status ?? '')
     .trim()
     .toLowerCase();
-  const startRaw = attrs.start_time;
-  const endRaw = attrs.end_time;
-  const start = typeof startRaw === 'string' && startRaw.trim() ? new Date(startRaw).getTime() : NaN;
-  const end = typeof endRaw === 'string' && endRaw.trim() ? new Date(endRaw).getTime() : NaN;
+  const start = parseHubQuizTime(attrs.start_time);
 
   const rem = readHubQuizRemainingAttempts(row);
 
@@ -184,9 +226,6 @@ export function classifyHubQuizRow(
 
   if (!Number.isNaN(start) && start > nowMs) {
     return 'upcoming';
-  }
-  if (!Number.isNaN(end) && end < nowMs) {
-    return 'expired';
   }
   if (rem === 0) {
     return 'locked';

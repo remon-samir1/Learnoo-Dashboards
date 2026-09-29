@@ -3,6 +3,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { getCurrentUser } from "@/src/services/auth/me.service";
 import { getStudentNotifications, getUserProfileData } from "@/src/services/student/user.service";
 import { isStudentAcademicProfileComplete } from "@/src/lib/student-profile-completeness";
+import { normalizeStudentNotifications } from "@/src/lib/student-notification-target";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -24,9 +25,7 @@ export default async function StudentLayout({ children, params }: LayoutProps) {
       getUserProfileData(),
     ]);
 
-  const notifications = Array.isArray(notificationsResponse?.data)
-    ? notificationsResponse.data
-    : notificationsResponse?.data?.data || [];
+  const notifications = normalizeStudentNotifications(notificationsResponse?.data);
 
   const currentUser =
     userResponse.success && userResponse.data ? userResponse.data : null;

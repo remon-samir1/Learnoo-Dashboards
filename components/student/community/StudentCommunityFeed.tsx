@@ -11,6 +11,11 @@ import { pickPostImageUrl } from '@/src/lib/community-post-media';
 import { useCreateComment } from '@/src/hooks/useComments';
 import { useCreatePost, usePosts, useReactToPost } from '@/src/hooks/usePosts';
 import { useCourses } from '@/src/hooks/useCourses';
+import {
+  isTopLevelPublishedCommunityPost,
+  readCommunityPostCourseNames,
+} from '@/src/lib/student-community-posts';
+import { studentCourseTitleMap } from '@/src/lib/student-course-scope';
 import type { Course, CreatePostRequest, Post, SocialLink } from '@/src/types';
 
 const POST_TIME_AGO_PREFIX = 'community.posts.timeAgo';
@@ -31,12 +36,6 @@ export type StudentCommunityFeedProps = {
 };
 
 type FeedTab = 'all' | 'post' | 'summary' | 'question';
-
-function isTopLevelPublishedPost(p: Post): boolean {
-  const pid = p.attributes.parent_id;
-  if (pid != null && pid !== 0) return false;
-  return p.attributes.status === 'published';
-}
 
 function isLikelyInstructorRole(role: string | undefined): boolean {
   if (!role?.trim()) return false;
@@ -142,6 +141,9 @@ export default function StudentCommunityFeed({
   const { mutate: reactToPost } = useReactToPost();
 
   const { data: allCourses } = useCourses();
+  // The posts list does not always inline the `courses` relation; when it only
+  // sends the ids, the course name on a post card is resolved from here.
+  const courseTitleById = useMemo(() => studentCourseTitleMap(allCourses), [allCourses]);
   const draftCourseIds = useMemo(() => {
     if (!allCourses) return new Set<number>();
     return new Set<number>(
@@ -160,7 +162,7 @@ export default function StudentCommunityFeed({
 
   const topPosts = useMemo(() => {
     const list = postsRaw ?? [];
-    let roots = list.filter(isTopLevelPublishedPost);
+    let roots = list.filter(isTopLevelPublishedCommunityPost);
     if (scopedCourseId != null) {
       roots = roots.filter(
         (p) =>
@@ -372,9 +374,7 @@ export default function StudentCommunityFeed({
             const liked = Boolean(post.attributes.user_reaction);
             const tags = post.attributes.tags ?? [];
             const postImageSrc = pickPostImageUrl(post.attributes);
-            const courseNames = (post.attributes.courses ?? []).map(
-              (c) => c.attributes?.title || null,
-            ).filter(Boolean) as string[];
+            const courseNames = readCommunityPostCourseNames(post, courseTitleById);
 
             const cardTone = instructor
               ? 'border-amber-200 bg-amber-50/90'

@@ -212,5 +212,6 @@ export * from './useCourses';
 export * from './useAppVersions';
 export * from './useExamCheatingGuard';
 export * from './useEchoOTP';
+export * from './useStudentNotifications';
 export * from './useParent';
 

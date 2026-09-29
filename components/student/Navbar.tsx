@@ -3,11 +3,21 @@
 import Cookies from "@/lib/cookies";
 import type { CurrentUser } from "@/src/interfaces/current-user.interface";
 import { getUserAttributes, getUserInitials } from "@/src/lib/current-user";
-import { getPusherClient } from "@/src/lib/pusher.client";
+import { useBrowserNotificationToggle } from "@/src/hooks/useStudentNotifications";
+import {
+  getStudentNotificationCategory,
+  resolveStudentNotificationHref,
+} from "@/src/lib/student-notification-target";
 import { userLogout } from "@/src/services/student/auth.service";
+import {
+  useNotificationActions,
+  useNotifications,
+} from "@/src/stores/notificationStore";
+import type { StudentNotification } from "@/src/types/student-notification";
 import {
   Bell,
   BookOpen,
+  CheckCheck,
   ChevronDown,
   FileText,
   Globe2,
@@ -27,52 +37,22 @@ import SearchBox from "./SearchBox";
 
 type DropdownType = "language" | "notifications" | "profile" | null;
 
-export type NotificationItem = {
-  id: string;
-
-  type: string;
-
-  notifiable_type: string;
-
-  notifiable_id: string;
-
-  data: {
-    title: string;
-
-    message: string;
-
-    type: string;
-
-    device?: string;
-
-    ip_address?: string;
-
-    created_at: string;
-  };
-
-  read_at: string | null;
-
-  created_at: string;
-
-  updated_at: string;
-};
-
 const languages = [
   { code: "en", label: "English", short: "EN" },
   { code: "ar", label: "العربية", short: "AR" },
 ];
 
-function getNotificationIcon(type?: string | null) {
-  if (type === "live") return Video;
-  if (type === "course") return BookOpen;
-  if (type === "exam") return FileText;
+function getNotificationIcon(category: string) {
+  if (category === "live") return Video;
+  if (category === "course") return BookOpen;
+  if (category === "exam") return FileText;
   return MessageCircle;
 }
 
-function getNotificationStyle(type?: string | null) {
-  if (type === "live") return "bg-red-100 text-red-500";
-  if (type === "course") return "bg-green-100 text-green-500";
-  if (type === "exam") return "bg-orange-100 text-orange-500";
+function getNotificationStyle(category: string) {
+  if (category === "live") return "bg-red-100 text-red-500";
+  if (category === "course") return "bg-green-100 text-green-500";
+  if (category === "exam") return "bg-orange-100 text-orange-500";
   return "bg-blue-100 text-primary";
 }
 
@@ -90,10 +70,8 @@ function formatNotificationDate(value?: string | null) {
 }
 
 export default function Navbar({
-  initialNotifications = [],
   currentUser = null,
 }: {
-  initialNotifications?: NotificationItem[];
   currentUser?: CurrentUser | null;
 }) {
   const router = useRouter();
@@ -149,8 +127,11 @@ export default function Navbar({
 
   const [search, setSearch] = useState("");
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
-  const [notifications, setNotifications] =
-    useState<NotificationItem[]>(initialNotifications);
+
+  // Shared with the notifications page, so marking one read there updates this badge.
+  const { notifications, unreadCount, isMarkingAll } = useNotifications();
+  const { markAsRead, markAllAsRead } = useNotificationActions();
+  const browserNotifications = useBrowserNotificationToggle();
 
   const debounced = useDebouncedCallback((value: string) => {
     setSearch(value);
@@ -162,23 +143,21 @@ export default function Navbar({
     };
   }, [pathname]);
 
-  useEffect(() => {
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe("global");
-    channel.bind_global((eventName: string, data: unknown) => {
-      if (eventName.includes("pusher_internal")) return;
-      setNotifications((prev) => [data as NotificationItem, ...prev]);
-    });
-    return () => {
-      channel.unbind_global();
-      pusher.unsubscribe("global");
-    };
-  }, []);
+  const latestNotifications = useMemo(
+    () => notifications.slice(0, 4),
+    [notifications],
+  );
 
-  const unreadCount = useMemo(() => {
-    return notifications.filter((item) => !item.read_at).length;
-  }, [notifications]);
-  const latestNotifications = notifications.slice(0, 4);
+  const handleNotificationClick = (notification: StudentNotification) => {
+    setOpenDropdown(null);
+
+    if (!notification.read_at) {
+      void markAsRead(notification.id);
+    }
+
+    const href = resolveStudentNotificationHref(notification, locale);
+    router.push(href ?? `/${locale}/student/notifications`);
+  };
 
   const currentLanguage =
     languages.find((language) => language.code === locale) || languages[0];
@@ -252,17 +231,22 @@ export default function Navbar({
             type="button"
             onClick={() => toggleDropdown("notifications")}
             className="relative flex size-9 items-center justify-center rounded-full bg-gray-50 text-[var(--text-muted)] transition hover:bg-blue-50 hover:text-primary sm:size-10"
+            aria-label={t("notifications")}
+            aria-expanded={openDropdown === "notifications"}
+            aria-haspopup="true"
           >
             <Bell className="size-[17px] sm:size-[19px]" />
 
             {unreadCount > 0 && (
-              <span className="absolute end-2.5 top-2.5 size-2 rounded-full bg-red-500 ring-2 ring-white" />
+              <span className="absolute -end-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
             )}
           </button>
 
           {openDropdown === "notifications" && (
             <div className="absolute end-0 top-11 z-50 w-[min(100vw-1.5rem,350px)] overflow-hidden rounded-xl border border-[var(--border-color)] bg-[var(--card-bg)] shadow-xl sm:top-12">
-              <div className="flex items-center justify-between px-4 py-4">
+              <div className="flex items-center justify-between gap-2 px-4 pb-2 pt-4">
                 <h3 className="text-base font-bold text-dark">
                   {t("notifications")}
                 </h3>
@@ -274,14 +258,66 @@ export default function Navbar({
                 )}
               </div>
 
+              {unreadCount > 0 && (
+                <div className="px-4 pb-3">
+                  <button
+                    type="button"
+                    onClick={() => void markAllAsRead()}
+                    disabled={isMarkingAll}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition hover:underline disabled:opacity-50"
+                  >
+                    <CheckCheck size={14} className="shrink-0" />
+                    {t("markAllAsRead")}
+                  </button>
+                </div>
+              )}
+
+              {browserNotifications.isSupported && (
+                <div className="flex items-center justify-between gap-3 border-t border-[var(--border-color)] bg-gray-50/60 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-dark">
+                      {t("browserNotifications")}
+                    </p>
+
+                    {browserNotifications.isBlocked && (
+                      <p className="mt-0.5 text-[11px] text-[var(--text-placeholder)]">
+                        {t("browserNotificationsBlocked")}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={browserNotifications.isEnabled}
+                    aria-label={t("browserNotifications")}
+                    disabled={browserNotifications.isBlocked}
+                    onClick={() => void browserNotifications.toggle()}
+                    className={`relative h-5 w-9 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                      browserNotifications.isEnabled
+                        ? "bg-[var(--primary)]"
+                        : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-all ${
+                        browserNotifications.isEnabled
+                          ? "start-[18px]"
+                          : "start-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
+
               {latestNotifications.length === 0 ? (
                 <div className="border-t border-[var(--border-color)] px-4 py-8 text-center text-sm text-[var(--text-muted)]">
                   {t("noNotifications")}
                 </div>
               ) : (
-                latestNotifications.map((item, index) => {
-                  const type = item.notifiable_type || item.type || "general";
-                  const Icon = getNotificationIcon(type);
+                latestNotifications.map((item) => {
+                  const category = getStudentNotificationCategory(item);
+                  const Icon = getNotificationIcon(category);
 
                   const title =
                     item?.data?.title || t("notificationFallbackTitle");
@@ -290,13 +326,17 @@ export default function Navbar({
                     item?.data?.message || t("notificationFallbackMessage");
 
                   return (
-                    <div
-                      key={index}
-                      className="flex gap-3 border-t border-[var(--border-color)] px-4 py-3 transition hover:bg-gray-50"
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleNotificationClick(item)}
+                      className={`flex w-full gap-3 border-t border-[var(--border-color)] px-4 py-3 text-start transition hover:bg-gray-50 ${
+                        item.read_at ? "" : "bg-blue-50/50"
+                      }`}
                     >
                       <div
                         className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${getNotificationStyle(
-                          type,
+                          category,
                         )}`}
                       >
                         <Icon size={18} />
@@ -322,7 +362,7 @@ export default function Navbar({
                             t("justNow")}
                         </span>
                       </div>
-                    </div>
+                    </button>
                   );
                 })
               )}

@@ -6,7 +6,9 @@ import { useCallback, useMemo, useState } from 'react';
 import { Key, Loader2, Lock, Search, Unlock } from 'lucide-react';
 import { StudentCourseActivationModal } from '@/components/student/StudentCourseActivationModal';
 import { formatLibraryAttachmentSize, isStudentLibraryPublished, librarySearchHaystack } from '@/src/lib/student-library-utils';
+import { isWithinStudentCourses, readRowCourseIds, studentCourseIdSet } from '@/src/lib/student-course-scope';
 import { useLibraries } from '@/src/hooks/useLibraries';
+import { useCourses, STUDENT_COURSES_LIST_PARAMS } from '@/src/hooks/useCourses';
 import type { Attachment, Library, MaterialType } from '@/src/types';
 
 type LibraryMaterialFilter = 'all' | MaterialType;
@@ -31,6 +33,11 @@ export default function StudentElectronicLibrary() {
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const t = useTranslations('courses.studentLibrary');
   const { data: rawList, isLoading, error, refetch } = useLibraries();
+  // The library endpoint returns every material on the platform, including
+  // other universities'. Materials are attached to courses through
+  // `course_ids` (several at a time), so the list is scoped here.
+  const { data: studentCourses, isLoading: coursesLoading } = useCourses(STUDENT_COURSES_LIST_PARAMS);
+  const studentCourseIds = useMemo(() => studentCourseIdSet(studentCourses), [studentCourses]);
 
   const [tab, setTab] = useState<LibraryMaterialFilter>('all');
   const [q, setQ] = useState('');
@@ -41,8 +48,12 @@ export default function StudentElectronicLibrary() {
 
   const publishedMaterials = useMemo(() => {
     const list = rawList ?? [];
-    return list.filter(isStudentLibraryPublished);
-  }, [rawList]);
+    return list.filter(
+      (lib) =>
+        isStudentLibraryPublished(lib) &&
+        isWithinStudentCourses(readRowCourseIds(lib), studentCourseIds),
+    );
+  }, [rawList, studentCourseIds]);
 
   const searchNeedle = q.trim().toLowerCase();
 
@@ -172,7 +183,7 @@ export default function StudentElectronicLibrary() {
         </div>
       ) : null}
 
-      {isLoading ? (
+      {isLoading || coursesLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="size-10 animate-spin text-[#2137D6]" aria-hidden />
         </div>

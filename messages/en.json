@@ -365,7 +365,10 @@
       "time1": "5 min ago",
       "time2": "1 hour ago",
       "time3": "Today"
-    }
+    },
+    "markAllAsRead": "Mark all as read",
+    "browserNotifications": "Browser notifications",
+    "browserNotificationsBlocked": "Blocked in your browser settings."
   },
   "studentDownloads": {
     "title": "Downloads",
@@ -3209,7 +3212,11 @@
       "course": "Courses",
       "exam": "Exams",
       "general": "General"
-    }
+    },
+    "unreadBadge": "Unread",
+    "markedAllAsRead": "All notifications marked as read.",
+    "markAllFailed": "Could not mark the notifications as read.",
+    "loading": "Loading notifications..."
   },
   "studentSettings": {
     "title": "Settings",
@@ -3227,7 +3234,8 @@
       "title": "Preferences",
       "notifications": {
         "title": "Notifications",
-        "description": "Receive push notifications"
+        "description": "Receive push notifications",
+        "blocked": "Blocked in your browser settings."
       },
       "darkMode": {
         "title": "Dark Mode",

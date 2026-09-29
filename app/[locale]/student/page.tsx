@@ -10,9 +10,15 @@ import WelcomeSection from "@/src/components/student/home/WelcomeSection";
 import { getCategories } from "@/src/services/student/department.service";
 import { getLatestStudentExams } from "@/src/services/student/exam.service";
 import { getLibrary } from "@/src/services/student/library.service";
-import { getLatestGeneralPosts } from "@/src/services/student/post.service";
+import { getCommunityPosts } from "@/src/services/student/post.service";
 import { getStudentLiveRooms } from "@/src/services/student/live-room.service";
 import { getLiveRoomCourseIds } from "@/src/lib/student-live-room";
+import { isCommunityPostInStudentCourses } from "@/src/lib/student-community-posts";
+import {
+  isWithinStudentCourses,
+  readRowCourseIds,
+  studentCourseTitleMap,
+} from "@/src/lib/student-course-scope";
 import {
   getStudentCourses,
   getStudentData,
@@ -46,15 +52,19 @@ export default async function StudentPage() {
   const categoryResult = await getCategories();
   const category = categoryResult.success ? categoryResult.data?.data ?? [] : [];
 
-  const postsResult = await getLatestGeneralPosts(3);
-  const latestPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
+  const postsResult = await getCommunityPosts();
+  const communityPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
 
   const examsResult = await getLatestStudentExams(4);
   const latestExams = examsResult.success ? examsResult.data ?? [] : [];
 
-  const enrolledCourseIds = new Set(
+  // `getStudentCourses` already drops courses that are not active (draft), so
+  // this set is the same "enrolled + published course" scope the community
+  // page derives on the client.
+  const enrolledCourseIds = new Set<string>(
     (courses || []).map((c: { id: string | number }) => String(c.id))
   );
+  const courseTitleById = studentCourseTitleMap(courses);
 
   // 1. Filter continue watching progress by enrolled courses
   const filteredProgress = (progress || []).filter((p: any) => {
@@ -95,11 +105,12 @@ export default async function StudentPage() {
       enrolledCourseIds.has(String(note.attributes.course_id))
   );
 
-  // 5. Filter library materials by enrolled courses
-  const filteredLibrary = rawLibrary.filter((item: any) => {
-    const cid = item?.attributes?.course_id ?? item?.course_id;
-    return cid != null && enrolledCourseIds.has(String(cid));
-  });
+  // 5. Filter library materials by enrolled courses. Materials are attached to
+  // several courses at once, so the ids live in `course_ids` / `courses` and
+  // only older rows carry a single `course_id`.
+  const filteredLibrary = rawLibrary.filter((item: unknown) =>
+    isWithinStudentCourses(readRowCourseIds(item), enrolledCourseIds)
+  );
 
   // 6. Filter exams by enrolled courses
   const filteredLatestExams = latestExams.filter((exam) => {
@@ -110,6 +121,12 @@ export default async function StudentPage() {
     if (examCids.length === 0) return false;
     return examCids.some((cid) => enrolledCourseIds.has(String(cid)));
   });
+
+  // 7. Only show community posts published under one of the student's own
+  // courses. Replies and drafts were already dropped by the service.
+  const latestPosts = communityPosts
+    .filter((post) => isCommunityPostInStudentCourses(post, enrolledCourseIds))
+    .slice(0, 3);
 
   const coursesCount = courses?.length ?? 0;
   const liveSessionsCount = filteredLiveSessions.length;
@@ -128,7 +145,7 @@ export default async function StudentPage() {
       <MySubjectSection categories={category} />
 
       <MyCoursesSection />
-      <LatestPostsSection posts={latestPosts} />
+      <LatestPostsSection posts={latestPosts} courseTitleById={courseTitleById} />
       <NewestExams exams={filteredLatestExams} />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
         <div className="min-w-0">

@@ -43,6 +43,7 @@ import {
   hubQuizPassMarks,
   hubQuizQuestionCount,
   hubQuizTitle,
+  hubQuizIsInStudentCourses,
   hubQuizTypeLabel,
   readHubQuizCourseIds,
   type HubQuizListRow,
@@ -197,11 +198,11 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     if (!quizList?.length) return buckets;
     const now = Date.now();
     for (const row of quizList) {
-      const cids = readHubQuizCourseIds(row);
-      const isVisibleCourse = cids.length === 0 || cids.some(cid => visibleCourseIds.has(cid));
-
-      if (!isVisibleCourse) {
-        continue; // Do not show exams that belong to courses completely hidden from the student
+      // Only exams of the student's own courses. An exam that names no course
+      // (or a course the student does not have) belongs to the rest of the
+      // platform and used to leak into this list.
+      if (!hubQuizIsInStudentCourses(row, visibleCourseIds)) {
+        continue;
       }
 
       const b = classifyHubQuizRow(row, now, enrolledCourseIds);

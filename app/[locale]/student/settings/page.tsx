@@ -34,6 +34,7 @@ import {
 import Cookies from "@/lib/cookies";
 import { toast } from "sonner";
 import { updateUserPassword } from "@/src/services/student/user.service";
+import { useBrowserNotificationToggle } from "@/src/hooks/useStudentNotifications";
 
 type ToggleKey = "notifications" | "darkMode" | "autoDownload";
 
@@ -53,6 +54,9 @@ export default function StudentSettingsPage() {
     darkMode: false,
     autoDownload: true,
   });
+
+  // Browser notifications: permission is only requested from this toggle's click.
+  const browserNotifications = useBrowserNotificationToggle();
 
   const [openPassword, setOpenPassword] = useState(false);
   const [openLanguage, setOpenLanguage] = useState(false);
@@ -160,6 +164,26 @@ const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
             onClick={() => toggleValue("autoDownload")}
           />
         </section> */}
+
+        {browserNotifications.isSupported && (
+          <section className="overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white shadow-sm">
+            <SectionTitle title={t("preferences.title")} />
+
+            <SettingToggle
+              icon={<Bell size={18} />}
+              iconClass="bg-blue-50 text-[var(--primary)]"
+              title={t("preferences.notifications.title")}
+              description={
+                browserNotifications.isBlocked
+                  ? t("preferences.notifications.blocked")
+                  : t("preferences.notifications.description")
+              }
+              checked={browserNotifications.isEnabled}
+              disabled={browserNotifications.isBlocked}
+              onClick={() => void browserNotifications.toggle()}
+            />
+          </section>
+        )}
 
         <section className="mt-5 overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white shadow-sm">
           <SectionTitle title={t("account.title")} />
@@ -400,6 +424,7 @@ function SettingToggle({
   description,
   checked,
   onClick,
+  disabled = false,
 }: {
   icon: React.ReactNode;
   iconClass: string;
@@ -407,6 +432,7 @@ function SettingToggle({
   description: string;
   checked: boolean;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between border-t border-[var(--border-color)] px-5 py-5">
@@ -425,8 +451,12 @@ function SettingToggle({
 
       <button
         type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={title}
         onClick={onClick}
-        className={`relative h-6 w-11 rounded-full transition ${
+        disabled={disabled}
+        className={`relative h-6 w-11 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${
           checked ? "bg-[var(--primary)]" : "bg-gray-300"
         }`}
       >
