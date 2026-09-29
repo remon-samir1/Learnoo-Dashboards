@@ -223,11 +223,6 @@ export default function StudentElectronicLibrary() {
                     )}
                   </div>
                   <div className="flex flex-1 flex-col gap-0.5 overflow-hidden p-4 pt-3 sm:min-h-0 sm:flex-1 sm:p-3 sm:pt-2">
-                    {locked ? (
-                      <p className="mb-1 line-clamp-2 text-xs font-medium leading-snug text-amber-800 sm:text-[10px]">
-                        {t('activateCourseHint')}
-                      </p>
-                    ) : null}
                     <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#0F172A] sm:text-[13px]">{a.title}</h3>
                     <p className="mt-0.5 line-clamp-1 text-xs font-medium text-[#64748B] sm:text-[10px]">
                       {t('courseRef', { id: a.course_ids?.join(', ') })}

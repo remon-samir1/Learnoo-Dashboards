@@ -2228,6 +2228,11 @@
     "loadError": "Failed to load notes. Please try again.",
     "noNotes": "No notes found.",
     "deleteConfirm": "Are you sure you want to delete this note?",
+    "attachment": {
+      "imageAlt": "Note attachment",
+      "openFullSize": "View full size",
+      "download": "Download attachment"
+    },
     "create": {
       "pageTitle": "Add New Note",
       "pageDescription": "Create a new note or summary.",

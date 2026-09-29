@@ -23,8 +23,9 @@ import {
 } from "lucide-react";
 import { useCourse } from "@/src/hooks/useCourses";
 import {
+  chapterHasVideo,
   coercePreviewFlag,
-  isNoVideoUrl,
+  isChapterHiddenFromStudent,
   isStudentChapterPdfVisible,
   isStudentChapterPdfRequiresActivation,
 } from "@/src/lib/student-chapter-access";
@@ -922,18 +923,10 @@ function LecturesTab({
   return (
     <div className="flex flex-col gap-8 sm:gap-10">
       {lectures.map((lecture) => {
+        // A lesson scheduled for later must not appear at all — not even greyed
+        // out — so it is dropped before the rows and the part counter are built.
         const chapters = (lecture.attributes.chapters ?? []).filter(
-          (ch) => {
-            const attrs = ch.attributes as any;
-            let schedulePassed = true;
-            if (attrs?.schedule) {
-              const scheduleTime = new Date(attrs.schedule.replace(' ', 'T')).getTime();
-              if (!Number.isNaN(scheduleTime)) {
-                schedulePassed = scheduleTime <= Date.now();
-              }
-            }
-            return schedulePassed;
-          }
+          (ch) => !isChapterHiddenFromStudent(ch),
         );
         const partCount = chapters.length;
 
@@ -1021,23 +1014,24 @@ function ChapterRow({
       })
       : t("viewsUnlimited");
   const viewsExhausted = watchAccessState === "view_limit_reached";
-  // A chapter's video isn't shown as watchable until the backend's access
-  // decision says "available" — which itself already requires a completed
-  // HLS conversion — so an unfinished video is never distinguishable from
-  // "not available yet" here (see Chapter::watchAccessState on the backend).
-  const chapterNotYetAvailable =
-    watchAccessState === "not_published" || watchAccessState === "video_not_ready";
+  // A video still being converted is worth telling the student about.
+  // `not_published` is NOT handled here: a lesson scheduled for later is
+  // filtered out of the list altogether rather than shown greyed out.
+  const chapterNotYetAvailable = watchAccessState === "video_not_ready";
 
-  // Some chapters are PDF-only — only show a video button when there is actual playable video.
-  const hasVideoContent =
-    !isNoVideoUrl(attrs.video ?? null) ||
-    !isNoVideoUrl(attrs.playlist ?? null) ||
-    !isNoVideoUrl(attrs.video_hls_url ?? null) ||
-    !isNoVideoUrl(attrs.video_mp4_url ?? null);
+  // Some chapters are PDF-only — they must never show a video control, not even
+  // an "activate" one. The backend withholds the video URLs while a lesson is
+  // locked, so the URL probe alone cannot tell "PDF-only" from "locked video";
+  // `video_status: "none"` is the backend's explicit "this lesson has no video"
+  // marker, and a non-empty duration is the fallback signal for payloads that
+  // predate it (a real video always reports a duration, a PDF-only part never
+  // does).
+  const hasVideoContent = chapterHasVideo(attrs);
 
   const videoButton: "watch" | "activate" | "hidden" = (() => {
+    if (!hasVideoContent) return "hidden";
     if (!videoPlayable) return videoRequiresActivation ? "activate" : "hidden";
-    return hasVideoContent ? "watch" : "hidden";
+    return "watch";
   })();
 
   /**
@@ -1058,10 +1052,14 @@ function ChapterRow({
   let iconWrap =
     "flex size-[52px] shrink-0 items-center justify-center rounded-xl bg-[#EFF6FF] sm:size-12";
   let iconColor = C_PRIMARY;
-  let IconEl: typeof Play | typeof Lock = Play;
+  let IconEl: typeof Play | typeof Lock | typeof FileText = Play;
 
-  const isEffectivelyLocked = !videoPlayable;
+  // Locked means "nothing on this row can be opened" — a PDF-only part whose
+  // file is free stays unlocked even though its (non-existent) video is not.
+  const isEffectivelyLocked = videoButton !== "watch" && pdfButton !== "open";
   const needsAnyActivation = videoButton === "activate" || pdfButton === "activate";
+
+  if (!hasVideoContent && pdfButton === "open") IconEl = FileText;
 
   if (viewsExhausted) {
     iconWrap =
@@ -1135,12 +1133,12 @@ function ChapterRow({
                 {t("hasExam")}
               </span>
             )}
-            {videoRequiresActivation ? (
+            {videoRequiresActivation && hasVideoContent ? (
               <span className="inline-flex items-center justify-center rounded-md px-2.5 py-1 text-[11px] font-semibold leading-tight bg-amber-50 text-amber-900">
                 {t("watchAccessPending")}
               </span>
             ) : null}
-            {chapterNotYetAvailable ? (
+            {chapterNotYetAvailable && hasVideoContent ? (
               <span className="inline-flex items-center justify-center rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-semibold leading-tight text-slate-700">
                 {t("chapterNotAvailable")}
               </span>
@@ -1220,7 +1218,7 @@ function ChapterRow({
               </button>
             )}
 
-            {videoButton === "hidden" && pdfButton === "hidden" && !needsAnyActivation && !isEffectivelyLocked && (
+            {videoButton === "hidden" && pdfButton === "hidden" && !needsAnyActivation && videoPlayable && (
               <span className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600 sm:min-h-10 sm:py-2.5">
                 {t("watchNoVideo")}
               </span>

@@ -1,4 +1,4 @@
-import type { Chapter } from '@/src/types';
+import type { Chapter, ChapterAttributes } from '@/src/types';
 
 /**
  * Student chapter / part access — **trust the backend** for video.
@@ -78,4 +78,58 @@ export function isNoVideoUrl(url: string | null | undefined): boolean {
   const s = url.trim();
   if (!s) return true;
   return s === 'https://api.learnoo.app/storage' || s === 'https://api.learnoo.app/storage/';
+}
+
+/** A duration string that actually describes a video (not "", "—", "0" or "00:00"). */
+function hasPlayableDuration(duration: unknown): boolean {
+  if (typeof duration !== 'string') return false;
+  const s = duration.trim();
+  if (!s || s === '—' || s === '-') return false;
+  // "0", "0:00", "00:00:00" … all mean "nothing to play".
+  return !/^[0:.\s]*$/.test(s);
+}
+
+/**
+ * Whether a chapter has a video at all — as opposed to being a PDF-only part.
+ *
+ * The backend withholds the video URLs while a lesson is locked, so probing the
+ * URL fields alone cannot tell "PDF-only" apart from "locked video". Order of
+ * trust:
+ *   1. `video_status` — `"none"` is the backend's explicit "no video" marker.
+ *   2. Any non-placeholder video URL.
+ *   3. A non-zero `duration`, which stays populated even while the URLs are
+ *      withheld and is only ever set for parts that carry a video.
+ */
+export function chapterHasVideo(attrs: ChapterAttributes): boolean {
+  if (attrs.video_status === 'none') return false;
+  if (attrs.video_status != null) return true;
+  if (
+    !isNoVideoUrl(attrs.video ?? null) ||
+    !isNoVideoUrl(attrs.playlist ?? null) ||
+    !isNoVideoUrl(attrs.video_hls_url ?? null) ||
+    !isNoVideoUrl(attrs.video_mp4_url ?? null)
+  ) {
+    return true;
+  }
+  return hasPlayableDuration(attrs.duration);
+}
+
+/**
+ * Whether a chapter must be hidden from the student entirely — lectures list,
+ * part counters, next/previous navigation and search alike.
+ *
+ * `not_published` is the backend's decision for a lesson whose schedule has not
+ * arrived yet; the legacy `schedule` / `schedule_start` timestamps are kept as a
+ * fallback for payloads that do not carry `watch_access_state`.
+ */
+export function isChapterHiddenFromStudent(chapter: Chapter): boolean {
+  const attrs = chapter.attributes;
+  if (attrs.watch_access_state === 'not_published') return true;
+
+  const scheduledAt = attrs.schedule ?? attrs.schedule_start ?? null;
+  if (scheduledAt) {
+    const time = new Date(String(scheduledAt).replace(' ', 'T')).getTime();
+    if (!Number.isNaN(time) && time > Date.now()) return true;
+  }
+  return false;
 }

@@ -5,6 +5,7 @@ import { getLectureById } from '@/src/services/student/lecture.service';
 import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
 import { getCourseById } from '@/src/services/student/course.service';
 import { courseIsLocked } from '@/src/lib/student-course-lock';
+import { isChapterHiddenFromStudent } from '@/src/lib/student-chapter-access';
 import type { Chapter, Lecture } from '@/src/types';
 
 interface WatchChapterPageProps {
@@ -49,7 +50,11 @@ export default async function WatchChapterPage({ params }: WatchChapterPageProps
     const lecture = lectureFromServiceResponse(lecRes);
     if (lecture?.attributes) {
       lectureTitle = lecture.attributes.title?.trim() ?? '';
-      lectureChapters = lecture.attributes.chapters ?? [];
+      // Lessons scheduled for later are invisible to the student, so the parts
+      // strip and the previous/next navigation must skip over them too.
+      lectureChapters = (lecture.attributes.chapters ?? []).filter(
+        (ch) => String(ch.id) === String(chapterId) || !isChapterHiddenFromStudent(ch),
+      );
     }
   }
 

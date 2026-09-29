@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,6 +17,7 @@ import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 import { deleteNote, updateNote } from "@/src/services/student/note.service";
 import { IStudentNote } from "@/src/interfaces/notes.interface";
+import NoteAttachmentPreview from "@/components/student/notes-summaries/NoteAttachmentPreview";
 
 type NoteType = "note" | "summary" | "highlights";
 
@@ -166,48 +166,13 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
             </div>
           ) : (
             <article className="max-w-none text-base leading-7 text-[#475569] sm:text-sm sm:leading-7">
-              {note.attributes?.attachment?.url && (() => {
-                const url = note.attributes.attachment.url;
-                const ext = (note.attributes.attachment.extension ||
-                  url.split('.').pop() || '').toLowerCase();
-                const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext);
-                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
-
-                return (
-                  <div className="mb-6 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-                    {isVideo ? (
-                      <video
-                        src={url}
-                        controls
-                        className="w-full max-h-[500px] object-contain"
-                        preload="metadata"
-                      />
-                    ) : isImage ? (
-                      <div className="flex items-center justify-center max-h-[500px] overflow-hidden">
-                        <Image
-                          src={url}
-                          alt={note.attributes?.title || "Note attachment"}
-                          width={800}
-                          height={500}
-                          className="h-auto w-full max-h-[500px] object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3 px-5 py-4">
-                        <Download size={18} className="shrink-0 text-blue-600" aria-hidden />
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-blue-600 hover:underline truncate"
-                        >
-                          {note.attributes.attachment.name || "Download attachment"}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+              {note.attributes?.attachment?.url ? (
+                <NoteAttachmentPreview
+                  attachment={note.attributes.attachment}
+                  title={note.attributes?.title}
+                  size="full"
+                />
+              ) : null}
               <p className="whitespace-pre-line break-words">
                 {note.attributes?.content || "No content available."}
               </p>
