@@ -25,7 +25,7 @@ export function sanitizeNumericCourseQueryParam(raw: string | undefined | null):
 
 export function isLikelyQuizAccessDeniedError(args: { httpStatus?: number; message?: string }): boolean {
   const s = args.httpStatus;
-  if (s === 403 || s === 401) return true;
+  if (s === 403 || s === 401 || s === 404) return true;
   const m = (args.message ?? '').toLowerCase();
   if (m.includes('do not have access')) return true;
   if (m.includes('access') && m.includes('quiz')) return true;

@@ -114,7 +114,7 @@ export function useUpdateQuiz() {
 export function useDeleteQuiz() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (id: number) => api.quizzes.delete(id).then((response) => response.data),
+    mutationFn: (id: number) => api.quizzes.delete(id),
     onSuccess: async (_data, id) => {
       queryClient.removeQueries({ queryKey: quizKeys.detail(id) });
       await queryClient.invalidateQueries({ queryKey: quizKeys.lists() });

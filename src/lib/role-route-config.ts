@@ -65,6 +65,7 @@ export const ADMIN_ROUTE_PREFIXES = [
   '/faculties',
   '/feature-control',
   '/instructors',
+  '/issues',
   '/lectures',
   '/levels',
   '/live-sessions',

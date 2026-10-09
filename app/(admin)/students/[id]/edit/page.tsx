@@ -49,7 +49,6 @@ export default function EditStudentPage() {
     last_name: '',
     phone: '',
     email: '',
-    password: '',
     university_id: '',
     faculty_id: '',
     center_ids: [] as number[],
@@ -71,7 +70,6 @@ export default function EditStudentPage() {
         last_name: attrs.last_name || '',
         phone: attrs.phone?.toString() || '',
         email: attrs.email || '',
-        password: '', // Don't pre-fill password
         university_id: attrs.university?.data?.id?.toString() ?? '',
         faculty_id: attrs.faculty?.data?.id?.toString() ?? '',
         center_ids: attrs.centers?.map((c: any) => parseInt(c.id)) || [],
@@ -126,7 +124,6 @@ export default function EditStudentPage() {
         university_id: formData.university_id ? parseInt(formData.university_id) : undefined,
         faculty_id: formData.faculty_id ? parseInt(formData.faculty_id) : undefined,
         image: formData.image || undefined,
-        password: formData.password || undefined // Only send password if changed
       };
 
       await updateStudent(studentId, payload);
@@ -218,16 +215,7 @@ export default function EditStudentPage() {
                 required
               />
             </div>
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.passwordOptional')}</label>
-              <input
-                type="password"
-                placeholder={t('students.form.fields.placeholders.password')}
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
+
           </div>
         </section>
 

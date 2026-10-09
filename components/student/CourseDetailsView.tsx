@@ -158,6 +158,8 @@ function classifyExamBucket(
 ): StudentExamBucket | null {
   const s = normalizeExamStatusToken(exam?.attributes?.status);
 
+  if (s === "draft") return null;
+
   if (examRequiresCourseActivation(exam, lockedCourse)) return "locked";
 
   const rawAttrs = (exam?.attributes ?? {}) as Record<string, unknown>;
@@ -193,7 +195,7 @@ function classifyExamBucket(
   }
 
   // Align with student Exams hub (`classifyHubQuizRow`): `active` still respects start window.
-  if (s === "active" || s === "draft") {
+  if (s === "active") {
     if (!Number.isNaN(startTs) && startTs > now) return "upcoming";
     return "active";
   }
@@ -924,15 +926,12 @@ function LecturesTab({
       {lectures.map((lecture) => {
         const chapters = (lecture.attributes.chapters ?? []).filter(
           (ch) => {
-            const attrs = ch.attributes as any;
-            let schedulePassed = true;
-            if (attrs?.schedule) {
-              const scheduleTime = new Date(attrs.schedule.replace(' ', 'T')).getTime();
-              if (!Number.isNaN(scheduleTime)) {
-                schedulePassed = scheduleTime <= Date.now();
-              }
-            }
-            return schedulePassed;
+            const attrs = ch.attributes;
+            const now = Date.now();
+            return attrs.watch_access_state !== 'not_published'
+              && attrs.watch_access_state !== 'outside_schedule'
+              && (!attrs.schedule_start || new Date(attrs.schedule_start).getTime() <= now)
+              && (!attrs.schedule_end || now < new Date(attrs.schedule_end).getTime());
           }
         );
         const partCount = chapters.length;

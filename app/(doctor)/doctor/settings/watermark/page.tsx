@@ -28,7 +28,6 @@ const contentTypes: { key: ContentType; labelKey: string }[] = [
   { key: 'exams', labelKey: 'applyToExams' },
   { key: 'library', labelKey: 'applyToLibrary' },
   { key: 'videos', labelKey: 'applyToVideos' },
-  { key: 'liveStreams', labelKey: 'applyToLiveStreams' },
   { key: 'files', labelKey: 'applyToFiles' },
 ];
 

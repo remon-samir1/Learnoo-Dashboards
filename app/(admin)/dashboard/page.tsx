@@ -6,6 +6,7 @@ import StatCard from '@/components/StatCard';
 import QuickAction from '@/components/QuickAction';
 import ActivityChart from '@/components/dashboard/ActivityChart';
 import EngagementChart from '@/components/dashboard/EngagementChart';
+import StaffActivitySummary from '@/components/dashboard/StaffActivitySummary';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import { useDashboardStats, useActivityData, useEngagementData, useRecentActivity } from '@/src/hooks/useDashboard';
 import { StatCardSkeleton, QuickActionSkeleton, ChartSkeleton, ActivityItemSkeleton, Skeleton } from '@/src/components/ui/Skeleton';
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const { data: engagementResponse, isLoading: engagementLoading } = useEngagementData('week', {});
   const { data: recentActivityResponse, isLoading: activityListLoading } = useRecentActivity(10, {});
 
+  const formatGrowth = (growth: number | string | undefined) => growth == null ? undefined : `${Number(growth) > 0 ? '+' : ''}${growth}%`;
   const stats = statsResponse?.data;
   const activityData = activityResponse?.data;
   const engagementData = engagementResponse?.data;
@@ -44,7 +46,7 @@ export default function DashboardPage() {
             <StatCard
               label={t('stats.totalStudents')}
               value={stats?.total_students?.value?.toLocaleString() || '0'}
-              trend={stats?.total_students?.trend === 'up' ? `+${stats?.total_students?.growth}%` : stats?.total_students?.growth ? `-${stats?.total_students?.growth}%` : undefined}
+              trend={formatGrowth(stats?.total_students?.growth)}
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2137D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
@@ -54,7 +56,7 @@ export default function DashboardPage() {
             <StatCard
               label={t('stats.activeCourses')}
               value={stats?.active_courses?.value?.toString() || '0'}
-              trend={stats?.active_courses?.growth ? `+${stats?.active_courses?.growth}` : undefined}
+              trend={formatGrowth(stats?.active_courses?.growth)}
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2137D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
@@ -73,7 +75,7 @@ export default function DashboardPage() {
             <StatCard
               label={t('stats.notesCreated')}
               value={stats?.notes_created?.value?.toLocaleString() || '0'}
-              trend={stats?.notes_created?.growth ? `+${stats?.notes_created?.growth}%` : undefined}
+              trend={formatGrowth(stats?.notes_created?.growth)}
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2137D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>
@@ -83,7 +85,7 @@ export default function DashboardPage() {
             <StatCard
               label={t('stats.monthlyRevenue')}
               value={`EGP ${stats?.monthly_revenue?.value?.toLocaleString() || '0'}`}
-              trend={stats?.monthly_revenue?.growth ? `+${stats?.monthly_revenue?.growth}%` : undefined}
+              trend={formatGrowth(stats?.monthly_revenue?.growth)}
               icon={
                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2137D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
@@ -93,7 +95,7 @@ export default function DashboardPage() {
             <StatCard
               label={t('stats.communityPosts')}
               value={stats?.community_posts?.value?.toLocaleString() || '0'}
-              trend={stats?.community_posts?.growth ? `+${stats?.community_posts?.growth}%` : undefined}
+              trend={formatGrowth(stats?.community_posts?.growth)}
               icon={
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2137D6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                    <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/>
@@ -181,7 +183,7 @@ export default function DashboardPage() {
               </div>
             </div>
           ) : (
-            <RecentActivity activities={recentActivities || []} />
+            role === 'Super Admin' ? <StaffActivitySummary /> : <RecentActivity activities={recentActivities || []} />
           )}
         </div>
       </div>

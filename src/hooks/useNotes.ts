@@ -21,7 +21,7 @@ export const useCreateNote = createMutationHook(
 );
 
 export const useUpdateNote = createMutationHook(
-  (id: number, data: CreateNoteRequest) => 
+  (id: number, data: Partial<CreateNoteRequest>) =>
     api.notes.update(id, data).then(res => res.data)
 );
 

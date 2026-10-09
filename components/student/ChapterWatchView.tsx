@@ -33,6 +33,7 @@ import { api, ApiError, API_BASE_URL } from '@/src/lib/api';
 import { quizStudentMustActivateOrReactivate } from '@/src/lib/student-quiz-activation-lock';
 import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import {
+  buildDiscussionTree,
   discussionAuthorName,
   discussionContent,
   discussionCreatedAt,
@@ -143,6 +144,7 @@ function DiscussionNode({
 
   return (
     <article
+      id={`discussion-${d.id}`}
       className={`${isReply
         ? 'mt-3 rounded-xl bg-slate-800/30 p-3.5 ring-1 ring-white/5 shadow-sm transition-all hover:bg-slate-800/40'
         : 'rounded-xl border border-slate-700/80 bg-slate-900/50 p-3.5 shadow-sm sm:p-4'
@@ -344,6 +346,7 @@ export default function ChapterWatchView({
   // Store videoSrc in state to prevent iframe reload on discussion updates
   // Only updates when chapter.id changes, not on every chapter object refresh
   const [stableVideoSrc, setStableVideoSrc] = useState<string>('');
+  const videoChapterIdRef = useRef<string | number | undefined>(undefined);
   // Image preview modal
   const [previewImageUrl, setPreviewImageUrl] = useState<string | undefined>(undefined);
   // Composer mode: 'text' | 'voice'
@@ -437,8 +440,10 @@ export default function ChapterWatchView({
   const videoSrc = useMemo(() => normaliseVideoUrl(chapter?.attributes.video), [chapter?.attributes.video, normaliseVideoUrl]);
 
   useEffect(() => {
+    if (videoChapterIdRef.current === chapter?.id && stableVideoSrc) return;
+    videoChapterIdRef.current = chapter?.id;
     setStableVideoSrc(videoSrc);
-  }, [chapter?.id, videoSrc]);
+  }, [chapter?.id, videoSrc, stableVideoSrc]);
 
   const pdfUrl = useMemo(() => (chapter ? firstPdfUrl(chapter) : null), [chapter]);
   // `video_ready` now covers both "real HLS is ready" and "the temporary
@@ -508,36 +513,15 @@ export default function ChapterWatchView({
     }
   }, []);
 
-  const discussions = useMemo(() => {
-    if (!chapter) return [];
-    const flat = normalizeDiscussions(chapter.attributes.discussions);
-    const map = new Map<string, WatchDiscussionItem>();
-    const roots: WatchDiscussionItem[] = [];
+  const discussions = useMemo(() => buildDiscussionTree(normalizeDiscussions(chapter?.attributes.discussions)), [chapter]);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('discussion');
+    if (id && /^\d+$/.test(id)) {
+      setDiscussionsOpen(true);
+      requestAnimationFrame(() => document.getElementById(`discussion-${id}`)?.scrollIntoView({ block: 'center' }));
+    }
+  }, [discussions]);
 
-    flat.forEach((d) => {
-      if (d.id == null) return;
-      map.set(String(d.id), { ...d, replies: [] });
-    });
-
-    flat.forEach((d) => {
-      if (d.id == null) return;
-      const parentId = d.attributes?.parent_id;
-      if (parentId != null) {
-        const parent = map.get(String(parentId));
-        if (parent) {
-          parent.replies = parent.replies || [];
-          parent.replies.push(map.get(String(d.id)) || d);
-        } else {
-          // Parent not found (e.g., filtered/deleted), push to roots as fallback
-          roots.push(map.get(String(d.id)) || d);
-        }
-      } else {
-        roots.push(map.get(String(d.id)) || d);
-      }
-    });
-
-    return roots;
-  }, [chapter]);
 
   const quizzes = useMemo(() => (chapter ? chapterQuizzes(chapter) : []), [chapter]);
 
@@ -1284,7 +1268,7 @@ export default function ChapterWatchView({
 
               {/* Under video: stacked on small screens; desktop = one row like design (Ask | Lecture parts inline | Discussions). */}
               <div className="border-t border-slate-800/80 bg-[#050915] px-0 py-0 sm:px-6 sm:py-3.5">
-                <div className="flex flex-col gap-3 px-4 pb-6 pt-5 sm:px-5 sm:pb-7 sm:pt-7 md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
+                <div className="flex flex-col gap-3 px-4 pb-6 pt-5 sm:px-5 sm:pb-7 sm:pt-7 md:grid md:grid-cols-1 lg:grid-cols-[auto_minmax(0,1fr)] md:items-center md:gap-5 md:px-5 md:py-3.5 md:pb-3.5 md:pt-3.5 lg:gap-6 lg:px-6">
                   <div className="flex justify-stretch max-md:border-b max-md:border-slate-800/90 md:min-w-0 md:justify-start">
                     {Number.isFinite(chapterIdForApi) ? (
                       <button

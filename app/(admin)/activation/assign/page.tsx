@@ -76,6 +76,8 @@ export default function AssignCodePage() {
       'App\\Models\\Course': t('activation.types.course'),
       'App\\Models\\Chapter': t('activation.types.chapter'),
       'App\\Models\\Library': t('activation.types.library'),
+      'App\\Models\\LiveRoom': t('activation.types.liveRoom'),
+      'App\\Models\\Quiz': t('activation.types.quiz'),
     };
     return labels[type] || type;
   };

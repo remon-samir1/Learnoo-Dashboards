@@ -200,7 +200,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
       <header className="mb-6 flex flex-col gap-4 border-b border-[#E5E7EB] pb-6 max-lg:gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-bold leading-tight tracking-tight text-[#0F172A] sm:text-2xl lg:text-3xl">{a.title}</h1>
-          <p className="mt-1.5 text-sm font-medium text-[#64748B]">{t('courseRef', { id: a.course_ids?.join(', ') })}</p>
+          <p className="mt-1.5 text-sm font-medium text-[#64748B]">{a.course_titles?.join('، ') || '—'}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold">
             <span className="rounded-full bg-[#EEF2FF] px-2.5 py-1 text-[#4338CA]">{materialTypeLabel(a.material_type)}</span>
             <span className="text-[#64748B]">
@@ -404,7 +404,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
 
           {locked ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-950">{t('activateCourseHint')}</p>
+
               <button
                 type="button"
                 onClick={() => setActivationOpen(true)}
@@ -421,7 +421,7 @@ export default function StudentLibraryMaterialDetail({ materialId }: { materialI
             <div className="flex min-h-[480px] flex-col items-center justify-center gap-3 bg-slate-900/5 px-6 py-16 text-center">
               <Lock className="size-14 text-[#94A3B8]" aria-hidden />
               <p className="text-sm font-semibold text-[#64748B]">{t('lockedMaterial')}</p>
-              <p className="max-w-md text-sm text-[#94A3B8]">{t('activateCourseHint')}</p>
+
             </div>
           ) : showPdfFrame && selected?.attributes?.path ? (
             <div className="relative w-full p-2 sm:p-4">

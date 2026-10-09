@@ -1,38 +1,29 @@
 import React from 'react';
+import { useLocale } from 'next-intl';
 import type { ActivityData } from '@/src/types';
 
 interface EngagementChartProps {
-  data?: ActivityData[] | null;
+  data?: ActivityData | null;
 }
 
 export default function EngagementChart({ data }: EngagementChartProps) {
-  const defaultBars = [
-    { day: 'Mon', value: '180px' },
-    { day: 'Tue', value: '120px' },
-    { day: 'Wed', value: '250px' },
-    { day: 'Thu', value: '150px' },
-    { day: 'Fri', value: '170px' },
-    { day: 'Sat', value: '160px' },
-    { day: 'Sun', value: '175px' },
-  ];
-
-  const bars = data && Array.isArray(data) ? data.map((item, i) => ({
-    day: item.date ? new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }) : defaultBars[i]?.day || '',
-    value: `${Math.max(20, (item.engagement || 0) / 4)}px`,
-  })) : defaultBars;
+  const locale = useLocale();
+  const ar = locale === 'ar';
+  const values = data?.datasets[0]?.data ?? [];
+  const maximum = Math.ceil(Math.max(4, ...values) / 4) * 4;
+  const bars = (data?.labels ?? []).map((day, index) => ({
+    day,
+    value: `${((values[index] ?? 0) / maximum) * 100}%`,
+  }));
 
   return (
     <div className="bg-white border border-[#EEEEEE] rounded-xl p-8 shadow-sm flex flex-col gap-6 h-[404px]">
-      <h4 className="text-[15.3px] font-medium text-[#111827]">Course Engagement</h4>
+      <h4 className="text-[15.3px] font-medium text-[#111827]">{ar ? 'التفاعل مع الكورسات' : 'Course Engagement'}</h4>
       
       <div className="flex-1 relative mt-4">
         {/* Y-Axis Labels */}
         <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-[12px] text-[#6B7280] w-8">
-          <span>1000</span>
-          <span>750</span>
-          <span>500</span>
-          <span>250</span>
-          <span>0</span>
+          {[1, 0.75, 0.5, 0.25, 0].map((fraction) => <span key={fraction}>{fraction * maximum}</span>)}
         </div>
 
         {/* Chart Area */}
@@ -47,7 +38,7 @@ export default function EngagementChart({ data }: EngagementChartProps) {
 
           {/* Bar elements */}
           {bars.map((bar, i) => (
-            <div key={i} className="group relative w-12 flex flex-col items-center z-10 hover:scale-105 transition-transform duration-200">
+            <div key={i} className="group relative h-full w-12 flex flex-col justify-end items-center z-10 hover:scale-105 transition-transform duration-200">
                <div 
                 className="w-10 bg-[#2137D6] rounded-t-lg shadow-sm group-hover:bg-[#4F39F6] transition-colors" 
                 style={{ height: typeof bar.value === 'string' ? bar.value : `${bar.value}px` }}

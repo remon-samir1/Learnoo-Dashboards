@@ -10,6 +10,7 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "edit": "Edit",
+    "copy": "Copy",
     "view": "View",
     "search": "Search",
     "filter": "Filter",
@@ -73,6 +74,11 @@
       "adminLink": "Admin or Instructor? Sign in with password",
       "forgotPassword": "Forgot password?",
       "registeredSuccess": "Account created successfully. Sign in with your phone number.",
+      "sendDeviceRequest": "Send the administrator a request to use this device",
+      "sendingDeviceRequest": "Sending request...",
+      "deviceRequestSent": "Your request was sent to the administrator. Once approved, sign in on this device.",
+      "deviceChanged": "This session ended because the approved device changed. Sign in to continue.",
+      "sessionExpired": "Your session expired. Please sign in again.",
       "errors": {
         "missingFields": "Please enter your phone number",
         "localPhoneFormat": "For Egypt, enter your local number, such as 010..., without +20 or 020.",
@@ -373,6 +379,10 @@
     "description": "This feature is under development."
   },
   "sidebar": {
+    "attendance": "Attendance",
+    "courseProgress": "Course progress",
+    "engagement": "Engagement",
+    "teacherFeedback": "Teacher feedback",
     "mainMenu": "MAIN MENU",
     "dashboard": "Dashboard",
     "instructors": "Instructors",
@@ -399,7 +409,10 @@
     "activation": "Activation",
     "adminDashboard": "Admin Dashboard",
     "doctorDashboard": "Instructor Dashboard",
-    "parentDashboard": "Parent Dashboard"
+    "parentDashboard": "Parent Dashboard",
+    "schedules": "Schedules and documents",
+    "activity": "Staff activity and devices",
+    "guardians": "Guardians"
   },
   "issues": {
     "title": "Technical Support",
@@ -1239,7 +1252,7 @@
       "createPost": "Create post",
       "postsEmpty": "No posts match this filter yet.",
       "postsError": "Could not load posts. Please try again later.",
-      "toastCreated": "Your post was published.",
+      "toastCreated": "Your post was submitted. It will appear after approval.",
       "toastCreateFailed": "Could not create the post. Please try again.",
       "toastReactFailed": "Could not update your reaction. Please try again.",
       "badgeInstructor": "Instructor",
@@ -2015,6 +2028,10 @@
     "ai": {
       "title": "Extract Questions",
       "description": "Upload a PDF to extract questions with AI.",
+      "language": "Question language",
+      "sourceLanguage": "Same as the file",
+      "arabic": "Arabic",
+      "english": "English",
       "questionCount": "Number of questions",
       "questionCountPlaceholder": "e.g. 5",
       "pdfFile": "PDF file",
@@ -2023,6 +2040,13 @@
       "openButton": "Extract with AI",
       "selectFileError": "Please select a PDF file first.",
       "extractError": "Failed to extract questions.",
+      "rateLimitReached": "The free daily or temporary provider limit has been reached. Other OpenRouter usage on this account may share the allowance. Try again later.",
+      "dailyUsageLoading": "Checking today's AI request allowance...",
+      "dailyUsageUnavailable": "Today's AI request allowance is unavailable.",
+      "dailyUsageRemaining": "{remaining} of {limit} Learnoo AI generations remaining today",
+      "dailyUsageUsed": "{used} of {limit} requests used by Learnoo today.",
+      "dailyUsageEstimate": "Estimate for Learnoo only; other usage on this OpenRouter account may use the shared free allowance. Resets at midnight UTC.",
+      "dailyUsageReached": "Learnoo has reached its daily AI generation allowance. It resets at midnight UTC.",
       "invalidResponse": "The AI service returned an invalid question format.",
       "extractSuccess": "Questions extracted successfully from the PDF.",
       "replaceTitle": "New Questions Extracted",
@@ -2462,7 +2486,11 @@
     "notifications": {
       "deleted": "Discussion deleted successfully",
       "replied": "Reply sent successfully"
-    }
+    },
+    "microphoneDenied": "Microphone access denied",
+    "recordVoiceFirst": "Please record a voice note first",
+    "showReplies": "Show replies",
+    "hideReplies": "Hide replies"
   },
   "universities": {
     "pageTitle": "Universities Management",
@@ -2622,7 +2650,15 @@
     "noteUpdatedSuccess": "Note updated successfully",
     "noteCreatedSuccess": "Note created successfully",
     "noteUpdateFailed": "Failed to update note",
-    "noteCreateFailed": "Failed to create note"
+    "noteCreateFailed": "Failed to create note",
+    "noteTypes": {
+      "summary": "Summary",
+      "highlight": "Highlight",
+      "key_point": "Key point",
+      "important_notice": "Important notice"
+    },
+    "viewerExplanation": "Students who watched: {count}. Each Student has an independent view count; this is not the course enrollment total.",
+    "recordedViews": "Recorded views"
   },
   "language": {
     "switcher": "Language",
@@ -2929,9 +2965,9 @@
         "technical": "Technical"
       },
       "faqs": {
-        "resetPassword": {
-          "question": "How do I reset my password?",
-          "answer": "Go to Settings > Change Password, enter your current password and create a new one. You can also use the Forgot Password link on the login page."
+        "otpLogin": {
+          "question": "How do I sign in to my Student account?",
+          "answer": "Enter your registered phone number, continue to the verification page, then confirm the verification code. Student accounts do not use passwords."
         },
         "accessPurchasedCourses": {
           "question": "How can I access my purchased courses?",
@@ -3095,7 +3131,6 @@
     "communityPosts": "Community Posts",
     "pageTitle": "My Profile",
     "pageDescription": "Manage your personal information and account details",
-    "download": "Download",
     "backToProfile": "Back to Profile",
     "academic": {
       "university": "University",
@@ -3178,12 +3213,6 @@
       "liveAttendance": "Live Attendance",
       "communityPosts": "Community Posts",
       "settings": "Settings"
-    },
-    "qr": {
-      "title": "Student QR Code",
-      "description": "Scan to verify student identity",
-      "downloadSuccess": "QR Code downloaded successfully",
-      "downloadError": "Failed to download QR Code"
     }
   },
   "notifications": {
@@ -3377,6 +3406,7 @@
       "viewAll": "View all",
       "upcomingLiveClasses": "Upcoming Live Classes",
       "students": "students",
+      "progress": "Progress",
       "studentsNeedingAttention": "Students Needing Attention",
       "noDataAvailable": "No data available"
     },

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/stores/authStore';
 import { isProfileComplete } from '@/src/lib/profile-completeness';
+import { authApi } from '@/src/lib/api';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,6 +17,22 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, isInitialized } = useAuth();
+
+  useEffect(() => {
+    if (!isInitialized || !isAuthenticated || user?.attributes.role !== 'Student') return;
+    const checkSession = () => {
+      if (document.visibilityState === 'visible') authApi.me().catch(() => {});
+    };
+    checkSession();
+    const timer = window.setInterval(checkSession, 30000);
+    window.addEventListener('focus', checkSession);
+    document.addEventListener('visibilitychange', checkSession);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', checkSession);
+      document.removeEventListener('visibilitychange', checkSession);
+    };
+  }, [isInitialized, isAuthenticated, user?.attributes.role]);
 
   useEffect(() => {
     if (!isInitialized || isLoading) return;

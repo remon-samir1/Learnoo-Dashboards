@@ -24,7 +24,7 @@ import {
 import type { QuizAttempt } from '@/src/types';
 import { api, ApiError } from '@/src/lib/api';
 import {
-  isAttemptRecordCompleted,
+  isCompletedAttemptForEnrolledCourses,
   nestedQuizAttributesFromAttempt,
   readAttemptFinishedAtIso,
   readAttemptPassState,
@@ -116,22 +116,6 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
         set.add(String(course.id).trim());
       }
     }
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.__debugEnrolledCourseIds = Array.from(set);
-      console.log('[DEBUG] enrolledCourseIds:', Array.from(set));
-    }
-    return set;
-  }, [enrolledCourses]);
-
-  const visibleCourseIds = useMemo<Set<string>>(() => {
-    const set = new Set<string>();
-    if (!enrolledCourses) return set;
-    for (const course of enrolledCourses) {
-      if (course?.id != null && String(course.id).trim() !== '') {
-        set.add(String(course.id).trim());
-      }
-    }
     return set;
   }, [enrolledCourses]);
 
@@ -198,25 +182,13 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     const now = Date.now();
     for (const row of quizList) {
       const cids = readHubQuizCourseIds(row);
-      const isVisibleCourse = cids.length === 0 || cids.some(cid => visibleCourseIds.has(cid));
+      const isVisibleCourse = cids.length > 0 && cids.some(cid => enrolledCourseIds.has(cid));
 
       if (!isVisibleCourse) {
         continue; // Do not show exams that belong to courses completely hidden from the student
       }
 
       const b = classifyHubQuizRow(row, now, enrolledCourseIds);
-      if (typeof window !== 'undefined' && String(row.id) === '146') {
-        const attrs = hubQuizAttrs(row);
-        const cids = readHubQuizCourseIds(row);
-        console.log('[DEBUG] classify 146:', {
-          isPublic: attrs.is_public,
-          courses_ids: attrs.courses_ids,
-          parsedCids: cids,
-          hasEnrolled: cids.some(cid => enrolledCourseIds.has(cid)),
-          enrolledCourseIds: Array.from(enrolledCourseIds),
-          bucket: b,
-        });
-      }
       switch (b) {
         case 'available':
           buckets.available.push(row);
@@ -238,17 +210,17 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
       }
     }
     return buckets;
-  }, [quizList, enrolledCourseIds, visibleCourseIds]);
+  }, [quizList, enrolledCourseIds]);
 
   const completedAttempts = useMemo(() => {
     if (!attemptList?.length) return [];
-    const done = attemptList.filter(isAttemptRecordCompleted);
+    const done = attemptList.filter(attempt => isCompletedAttemptForEnrolledCourses(attempt, enrolledCourseIds));
     return [...done].sort((a, b) => {
       const fa = readAttemptFinishedAtIso(a) ?? '';
       const fb = readAttemptFinishedAtIso(b) ?? '';
       return new Date(fb).getTime() - new Date(fa).getTime();
     });
-  }, [attemptList]);
+  }, [attemptList, enrolledCourseIds]);
 
   const tExams = useCallback(
     (key: string, values?: Record<string, string | number>) =>
@@ -515,63 +487,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
           )}
         </section>
 
-        <section className="space-y-4 sm:space-y-5">
-          <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
-            {tDetails('examsExpiredTitle')}
-          </h2>
-          {loading ? (
-            <p className="rounded-xl border border-[#E5E7EB] bg-white px-5 py-10 text-center text-sm text-[#64748B]">
-              {t('loadingQuizzes')}
-            </p>
-          ) : expired.length === 0 ? (
-            <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-5 py-8 text-center text-sm text-[#64748B]">
-              {t('emptyExpired')}
-            </p>
-          ) : (
-            <ul className={STUDENT_EXAM_GRID}>
-              {expired.map((row) => {
-                const title = hubQuizTitle(row);
-                const attrs = hubQuizAttrs(row);
-                const endRaw = attrs.end_time;
-                const endStr =
-                  typeof endRaw === 'string' && endRaw.trim() ? formatIsoDate(endRaw, locale) : null;
-                return (
-                  <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} border-rose-100`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-base font-bold leading-snug text-[#0F172A] sm:text-lg">{title}</h3>
-                      </div>
-                      <span className="shrink-0 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-800 sm:text-xs">
-                        {tDetails('examsExpiredBadge')}
-                      </span>
-                    </div>
-                    <div className="mt-3 rounded-lg border border-rose-200/90 bg-rose-50/90 px-3 py-2.5">
-                      <div className="flex gap-2">
-                        <XCircle className="mt-0.5 size-4 shrink-0 text-rose-700" strokeWidth={2} aria-hidden />
-                        <p className="text-sm font-medium leading-snug text-rose-950">
-                          {tDetails('examsExpiredHint')}
-                        </p>
-                      </div>
-                      {endStr ? (
-                        <p className="mt-2 text-xs font-medium text-rose-900/90">
-                          {tDetails('examsEndedOn', { date: endStr })}
-                        </p>
-                      ) : null}
-                    </div>
-                    {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
-                    <button
-                      type="button"
-                      disabled
-                      className="mt-5 w-full cursor-not-allowed rounded-lg bg-[#F1F5F9] py-3 text-center text-sm font-semibold text-[#94A3B8] sm:mt-6"
-                    >
-                      {tDetails('examsExpiredClosed')}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+
 
         <section className="space-y-4 sm:space-y-5">
           <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">

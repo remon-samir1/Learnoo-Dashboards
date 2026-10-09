@@ -6,6 +6,7 @@ export type GetCurrentUserResult = {
   success: boolean;
   data?: CurrentUser | null;
   message?: string;
+  sessionReason?: 'device-changed' | 'expired';
 };
 
 export async function getCurrentUser(): Promise<GetCurrentUserResult> {
@@ -21,11 +22,16 @@ export async function getCurrentUser(): Promise<GetCurrentUserResult> {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       cache: "no-store",
     });
 
-    const body = await res.json();
+    const body = await res.json().catch(() => ({}));
+
+    if (res.status === 401) {
+      return { success: false, data: null, sessionReason: body.code === 'device_session_revoked' ? 'device-changed' : 'expired' };
+    }
 
     if (!res.ok) {
       return {

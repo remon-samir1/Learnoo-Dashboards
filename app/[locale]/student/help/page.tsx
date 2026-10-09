@@ -16,7 +16,7 @@ const categories = [
 const faqs = [
   {
     category: "account",
-    key: "resetPassword",
+    key: "otpLogin",
   },
   {
     category: "courses",

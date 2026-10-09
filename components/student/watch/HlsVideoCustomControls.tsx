@@ -5,7 +5,6 @@ import type { RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslations } from 'next-intl';
 import {
-  Captions,
   ChevronLeft,
   ChevronRight,
   Gauge,
@@ -119,7 +118,6 @@ export function HlsVideoCustomControls({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [subMenu, setSubMenu] = useState<SettingsSubMenu>(null);
   const [annotationsEnabled, setAnnotationsEnabled] = useState(true);
-  const [captionsEnabled, setCaptionsEnabled] = useState(false);
   const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number>(0);
   const [sleepRemaining, setSleepRemaining] = useState<number>(0);
   const canSelectQuality = qualityOptions.length > 1;
@@ -841,19 +839,6 @@ const speedMenuLabel =
           {/* Right controls */}
           <div className="flex items-center gap-1 sm:gap-2">
             {endAction ? <div className="hidden md:block">{endAction}</div> : null}
-
-            <button
-              type="button"
-              onClick={() => setCaptionsEnabled((v) => !v)}
-              className={`inline-flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold tracking-tight transition hover:bg-white/15 active:bg-white/20 ${
-                captionsEnabled ? 'bg-white/15' : ''
-              }`}
-              aria-label={captionsEnabled ? t('videoControlsCaptionsTurnOff') : t('videoControlsCaptionsTurnOn')}
-              aria-pressed={captionsEnabled}
-              title={t('videoControlsCaptions')}
-            >
-              <Captions className="size-5 sm:size-6" strokeWidth={1.6} />
-            </button>
 
             <button
               type="button"

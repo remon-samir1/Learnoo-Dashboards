@@ -1,4 +1,5 @@
 "use client";
+import NoteAttachment from './NoteAttachment';
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -139,16 +140,16 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
 
           <div className="mt-3 flex flex-col gap-1.5 text-xs leading-relaxed text-white/95 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:text-sm">
             <span className="break-words">
-              {note.attributes?.course_title || "No course"}
+              {note.attributes?.course_title}
             </span>
-            <span className="hidden text-white/50 sm:inline" aria-hidden>
+            {(note.attributes?.lecture_title || note.attributes?.linked_lecture) && <><span className="hidden text-white/50 sm:inline" aria-hidden>
               •
             </span>
             <span className="break-words">
               {note.attributes?.lecture_title ||
-                note.attributes?.linked_lecture ||
-                "No lecture"}
+                note.attributes?.linked_lecture}
             </span>
+            </>}
           </div>
         </div>
 
@@ -166,48 +167,7 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
             </div>
           ) : (
             <article className="max-w-none text-base leading-7 text-[#475569] sm:text-sm sm:leading-7">
-              {note.attributes?.attachment?.url && (() => {
-                const url = note.attributes.attachment.url;
-                const ext = (note.attributes.attachment.extension ||
-                  url.split('.').pop() || '').toLowerCase();
-                const isVideo = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(ext);
-                const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext);
-
-                return (
-                  <div className="mb-6 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
-                    {isVideo ? (
-                      <video
-                        src={url}
-                        controls
-                        className="w-full max-h-[500px] object-contain"
-                        preload="metadata"
-                      />
-                    ) : isImage ? (
-                      <div className="flex items-center justify-center max-h-[500px] overflow-hidden">
-                        <Image
-                          src={url}
-                          alt={note.attributes?.title || "Note attachment"}
-                          width={800}
-                          height={500}
-                          className="h-auto w-full max-h-[500px] object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3 px-5 py-4">
-                        <Download size={18} className="shrink-0 text-blue-600" aria-hidden />
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-blue-600 hover:underline truncate"
-                        >
-                          {note.attributes.attachment.name || "Download attachment"}
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+              <div className="mb-6"><NoteAttachment attachment={note.attributes?.attachment} title={note.attributes?.title || 'Note'} /></div>
               <p className="whitespace-pre-line break-words">
                 {note.attributes?.content || "No content available."}
               </p>

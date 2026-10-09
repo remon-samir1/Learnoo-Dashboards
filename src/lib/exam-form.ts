@@ -1,3 +1,4 @@
+import { toApiDateTime } from './platform-date-time';
 import type { GeneratedExamQuestion } from '@/src/lib/exam-ai';
 import type { Course } from '@/src/types';
 
@@ -145,8 +146,8 @@ function appendExamFields(formData: FormData, details: ExamFormDetails) {
   formData.append('max_attempts', details.maxAttempts);
   formData.append('is_public', details.is_public);
   formData.append('status', details.status.toLowerCase());
-  if (details.startTime) formData.append('start_time', details.startTime);
-  if (details.endTime) formData.append('end_time', details.endTime);
+  formData.append('start_time', toApiDateTime(details.startTime));
+  formData.append('end_time', toApiDateTime(details.endTime));
 }
 
 function isNewQuestionId(id: string) {
@@ -174,6 +175,9 @@ export function buildExamFormData(
     formData.append(`${questionKey}[auto_correct]`, question.autoCorrect ? '1' : '0');
     formData.append(`${questionKey}[order]`, String(questionIndex + 1));
     if (question.image instanceof File) formData.append(`${questionKey}[image]`, question.image);
+    if (mode === 'edit' && question.image === null && !question.imagePreview) {
+      formData.append(`${questionKey}[remove_image]`, '1');
+    }
 
     if (question.type === 'short_answer') return;
 
@@ -184,11 +188,72 @@ export function buildExamFormData(
       formData.append(`${answerKey}[is_correct]`, answer.isCorrect ? '1' : '0');
       if (answer.reason) formData.append(`${answerKey}[reason]`, answer.reason);
       if (answer.image instanceof File) formData.append(`${answerKey}[image]`, answer.image);
+      if (mode === 'edit' && answer.image === null && !answer.imagePreview) {
+        formData.append(`${answerKey}[remove_image]`, '1');
+      }
       if (answer.reason_image instanceof File) {
         formData.append(`${answerKey}[reason_image]`, answer.reason_image);
+      }
+      if (mode === 'edit' && answer.reason_image === null && !answer.reasonImagePreview) {
+        formData.append(`${answerKey}[remove_reason_image]`, '1');
       }
     });
   });
 
   return formData;
+}
+
+export function focusExamField(id: string) {
+  requestAnimationFrame(() => {
+    const element = document.getElementById(id);
+    const input = element?.matches('input,textarea,select,button') ? element : element?.querySelector<HTMLElement>('input,textarea,select,button');
+    input?.focus({ preventScroll: true });
+    (input ?? element)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+}
+
+export function getExamErrorField(errors: Record<string, unknown>, questions: ExamFormQuestion[]): string {
+  const field = Object.keys(errors)[0] ?? '';
+  const parts = field.replace(/\[(\w+)\]/g, '.$1').split('.');
+  if (parts[0] === 'questions') {
+    const question = questions[Number(parts[1])];
+    if (!question) return 'exam-questions';
+    if (parts[2] === 'answers' && question.answers[Number(parts[3])]) {
+      const answer = question.answers[Number(parts[3])];
+      return `${parts[4] === 'is_correct' ? 'correct' : 'answer'}-${question.id}-${answer.id}`;
+    }
+    return `${parts[2] === 'score' ? 'score' : 'question'}-${question.id}`;
+  }
+  const fields: Record<string, string> = { course_id: 'courses', course_ids: 'courses', total_marks: 'totalMarks', passing_marks: 'passingMarks', max_attempts: 'maxAttempts', start_time: 'startTime', end_time: 'endTime', chapter_id: 'chapter', is_public: 'is_public' };
+  return `exam-${fields[parts[0]] ?? parts[0]}`;
+}
+
+export function validateExamQuestions(questions: ExamFormQuestion[]) {
+  const questionIds = new Set<string>();
+  const answerIds = new Set<string>();
+  const noCorrectAnswerIds = new Set<string>();
+  let firstInvalid: ExamFormQuestion | undefined;
+  let firstInvalidField = '';
+  let firstInvalidType: 'question' | 'answer' | 'correct' | undefined;
+  for (const question of questions) {
+    if (!question.text.trim()) questionIds.add(question.id);
+    if (question.type !== 'short_answer') {
+      if (!question.answers.some(answer => answer.isCorrect)) noCorrectAnswerIds.add(question.id);
+      for (const answer of question.answers) {
+        if (!answer.text.trim()) answerIds.add(`${question.id}:${answer.id}`);
+      }
+    }
+    if (!firstInvalid) {
+      const answer = question.answers.find(answer => answerIds.has(`${question.id}:${answer.id}`));
+      if (questionIds.has(question.id)) {
+        firstInvalidType = 'question'; firstInvalidField = `question-${question.id}`;
+      } else if (answer) {
+        firstInvalidType = 'answer'; firstInvalidField = `answer-${question.id}-${answer.id}`;
+      } else if (noCorrectAnswerIds.has(question.id)) {
+        firstInvalidType = 'correct'; firstInvalidField = `correct-${question.id}-${question.answers[0]?.id}`;
+      }
+      if (firstInvalidField) firstInvalid = question;
+    }
+  }
+  return { questionIds, answerIds, noCorrectAnswerIds, firstInvalid, firstInvalidField, firstInvalidType };
 }

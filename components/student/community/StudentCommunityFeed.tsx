@@ -2,7 +2,7 @@
 
 import { BookOpen, ExternalLink, Globe, Loader2, MessageSquare, Plus, Reply, ThumbsUp } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import StudentCommunityCreatePostModal from '@/components/student/community/StudentCommunityCreatePostModal';
 import StudentCommunityPostComments from '@/components/student/community/StudentCommunityPostComments';
@@ -179,6 +179,11 @@ export default function StudentCommunityFeed({
       return tb - ta;
     });
   }, [postsRaw, scopedCourseId, draftCourseIds]);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('post');
+    if (id && /^\d+$/.test(id)) requestAnimationFrame(() => document.getElementById(`post-${id}`)?.scrollIntoView({ block: 'center' }));
+  }, [topPosts]);
 
   const filteredPosts = useMemo(() => {
     if (tab === 'all') return topPosts;
@@ -381,7 +386,7 @@ export default function StudentCommunityFeed({
               : 'border-[#E2E8F0] bg-white';
 
             return (
-              <li key={post.id} className={`rounded-2xl border p-6 shadow-sm ${cardTone}`}>
+              <li id={`post-${post.id}`} key={post.id} className={`rounded-2xl border p-6 shadow-sm ${cardTone}`}>
                 <div className="flex items-start gap-4">
                   <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#EEF2FF] text-[15px] font-bold text-[#2137D6]">
                     {userInitial}

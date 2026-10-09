@@ -218,7 +218,7 @@ export function ExamQuestionScreen({
                   </span>
                 </div>
 
-                <h2 className="text-start text-base font-bold leading-snug text-[#0F172A] sm:text-lg">
+                <h2 dir="auto" className="whitespace-pre-wrap break-words text-start text-base font-bold leading-relaxed text-[#0F172A] sm:text-lg">
                   {question.attributes.text}
                 </h2>
 
@@ -240,6 +240,7 @@ export function ExamQuestionScreen({
                   <div className="flex flex-col gap-2 sm:gap-2.5">
                     {mode === 'take' ? (
                       <textarea
+                        dir="auto"
                         value={shortText}
                         onChange={(e) => onChangeShortText?.(e.target.value)}
                         placeholder={shortAnswerPlaceholder}
@@ -251,7 +252,7 @@ export function ExamQuestionScreen({
                     ) : (
                       <div className="flex flex-col gap-2 rounded-lg border border-[#E2E8F0] bg-slate-50 px-3 py-2.5 sm:gap-2.5 sm:px-4 sm:py-3">
                         {shortText.trim() ? (
-                          <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-[#0F172A] sm:text-sm">{shortText}</p>
+                          <p dir="auto" className="whitespace-pre-wrap break-words text-start text-[13px] leading-relaxed text-[#0F172A] sm:text-sm">{shortText}</p>
                         ) : (
                           <p className="text-[13px] italic text-slate-500 sm:text-sm">—</p>
                         )}
@@ -288,7 +289,7 @@ export function ExamQuestionScreen({
                               }
                               className="mt-0.5 size-[15px] shrink-0 accent-[#2D46D9] sm:mt-1 sm:size-4"
                             />
-                            <span className="text-[13px] font-medium leading-snug text-[#0F172A] sm:text-sm">{label}</span>
+                            <span dir="auto" className="min-w-0 flex-1 whitespace-pre-wrap break-words text-start text-[13px] font-medium leading-relaxed text-[#0F172A] sm:text-sm">{label}</span>
                           </div>
                           {imgSrc ? (
                             <div className="relative ms-6 w-full max-w-xl overflow-hidden rounded-md border border-[#E2E8F0] bg-slate-50 sm:ms-7">
@@ -341,7 +342,8 @@ export function ExamQuestionScreen({
                               </span>
                               <div className="min-w-0 flex-1">
                                 <p
-                                  className={`text-[13px] font-medium leading-snug sm:text-sm ${reviewOptionTextClass({
+                                  dir="auto"
+                                  className={`whitespace-pre-wrap break-words text-start text-[13px] font-medium leading-relaxed sm:text-sm ${reviewOptionTextClass({
                                     selected,
                                     isCorrect,
                                   })}`}
@@ -354,7 +356,7 @@ export function ExamQuestionScreen({
                                       <p className="text-xs font-bold text-slate-700 mb-1 sm:text-[13px]">{feedbackLabel}</p>
                                     ) : null}
                                     {reason ? (
-                                      <p className="text-xs leading-relaxed text-slate-600 sm:text-[13px]">
+                                      <p dir="auto" className="whitespace-pre-wrap break-words text-start text-xs leading-relaxed text-slate-600 sm:text-[13px]">
                                         {reason}
                                       </p>
                                     ) : null}

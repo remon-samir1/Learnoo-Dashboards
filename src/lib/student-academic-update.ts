@@ -11,7 +11,7 @@ type AcademicUpdateBase = Pick<UpdateUserRequest, "first_name" | "last_name"> &
   Partial<
     Pick<
       UpdateUserRequest,
-      "phone" | "email" | "password" | "device_name"
+      "phone" | "email" | "device_name"
     >
   >;
 

@@ -307,9 +307,11 @@ export function ColumnItem({
         {renderCopyMove()}
 
         {/* Edit */}
+        {(!isInstructor || ['course', 'lecture', 'chapter', 'note'].includes(item.type)) && (
         <ActionBtn onClick={() => onEdit(item)} title="Edit" className="text-gray-400 hover:text-orange-600 hover:bg-orange-50">
           <Edit className="w-3 h-3" />
         </ActionBtn>
+        )}
 
         {/* Delete */}
         {(item.type === 'course' || item.type === 'lecture' || item.type === 'chapter' || !isInstructor) && (

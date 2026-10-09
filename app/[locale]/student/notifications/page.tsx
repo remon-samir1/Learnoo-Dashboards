@@ -1,17 +1,3 @@
-// app/[locale]/student/notifications/page.tsx
+import PlatformNotifications from '@/src/components/PlatformNotifications';
 
-import NotificationsClient from "@/components/student/notifications/NotificationsClient";
-import { getStudentNotifications } from "@/src/services/student/user.service";
-
-export default async function NotificationsPage() {
-  const response = await getStudentNotifications();
-
-  const loadFailed = response?.success === false;
-
-  const notifications = Array.isArray(response?.data)
-    ? response.data
-    : response?.data?.data || [];
-
-  return (<div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8"><NotificationsClient initialNotifications={notifications} loadFailed={loadFailed} /></div>)
-  ;
-}
+export default function Page() { return <PlatformNotifications />; }

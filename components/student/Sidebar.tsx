@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   BookOpen,
+  Bell,
+  CalendarDays,
   ChevronLeft,
   Download,
   HelpCircle,
@@ -22,6 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePlatformFeature } from "@/src/hooks/usePlatformFeature";
 import Logout from "./Logout";
 import type { CurrentUser } from "@/src/interfaces/current-user.interface";
 import { getUserAttributes, getUserInitials } from "@/src/lib/current-user";
@@ -42,6 +45,9 @@ const sections: SidebarItem[][] = [
     { key: "liveSessions", href: "/student/live-sessions", icon: Video },
     { key: "examsAndQA", href: "/student/exams", icon: NotebookText },
     { key: "electronicLibrary", href: "/student/library", icon: Library },
+    { key: "schedules", href: "/student/schedules", icon: CalendarDays },
+    { key: "notifications", href: "/student/notifications", icon: Bell },
+    { key: "downloads", href: "/student/downloads", icon: Download },
     // {
     //   key: "downloads",
     //   href: "/student/downloads",
@@ -136,6 +142,9 @@ export default function Sidebar({
   const t = useTranslations("sidebar");
   const common = useTranslations("common");
   const locale = useLocale();
+  const { data: branding } = usePlatformFeature();
+  const logo = branding?.find(f => f.attributes.key === "logo")?.attributes.value;
+  const platformName = branding?.find(f => f.attributes.key === "platform_name")?.attributes.value || "Learnoo";
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -239,8 +248,9 @@ export default function Sidebar({
           <div className="flex items-center">
             <div className="relative size-12 shrink-0">
               <Image
-                src="/logo.svg"
-                alt="Learnoo Logo"
+                src={logo || "/logo.svg"}
+                unoptimized
+                alt={platformName}
                 fill
                 sizes="48px"
                 className="object-contain"
@@ -250,7 +260,7 @@ export default function Sidebar({
 
             {!effectiveCollapsed && (
               <span className="text-xl font-bold text-[var(--primary)]">
-                Learnoo
+                {platformName}
               </span>
             )}
           </div>

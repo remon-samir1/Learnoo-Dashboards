@@ -26,10 +26,11 @@ function getPostRelativeTime(isoString: string, locale: string): string {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffSecs < 60) return "just now";
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays < 7) return `${diffDays}d ago`;
+  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  if (diffSecs < 60) return format.format(0, 'second');
+  if (diffMins < 60) return format.format(-diffMins, 'minute');
+  if (diffHours < 24) return format.format(-diffHours, 'hour');
+  if (diffDays < 7) return format.format(-diffDays, 'day');
 
   return date.toLocaleDateString(locale);
 }
@@ -125,6 +126,11 @@ export default function LatestPostsSection({
                       />
                     </div>
 
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      {(post.attributes.courses?.data ?? []).map(course => (
+                        <span key={course.id} className="rounded-full bg-blue-50 px-2 py-1 text-xs text-blue-700">{course.attributes.title}</span>
+                      ))}
+                    </div>
                     <p className="line-clamp-2 text-sm leading-6 text-[var(--text-muted)]">
                       {post.attributes.content}
                     </p>

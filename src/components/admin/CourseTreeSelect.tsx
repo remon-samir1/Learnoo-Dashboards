@@ -574,7 +574,7 @@ export function CourseTreeSelect({
 
           {getNodeIcon()}
 
-          <span className="truncate flex-1">{node.name}</span>
+          <span className="whitespace-normal break-words flex-1">{node.name}</span>
 
           {isExcluded && <span className="text-xs text-gray-400">(Current)</span>}
           {isSelected && !multiple && <Check className="w-4 h-4 text-white flex-shrink-0" />}
@@ -688,7 +688,7 @@ export function CourseTreeSelect({
         className={`w-full flex items-center justify-between px-4 py-2.5 bg-[#F8FAFC] border rounded-xl text-sm focus:outline-none transition-all ${isOpen ? 'border-[#2137D6] ring-2 ring-[#2137D6] ring-opacity-10 shadow-sm' : 'border-[#E2E8F0]'
           } ${error ? 'border-red-500' : ''} disabled:opacity-50 text-left`}
       >
-        <div className="flex flex-col gap-0.5 truncate flex-1 pr-4">
+        <div className="flex flex-col gap-0.5 whitespace-normal break-words flex-1 pr-4">
           {isLoading ? (
             <span className="text-slate-400 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-[#2137D6]" /> Loading structure...
@@ -696,10 +696,10 @@ export function CourseTreeSelect({
           ) : multiple ? (
             selectedValues.length > 0 ? (
               <>
-                <span className="font-semibold text-[#1E293B] truncate">
+                <span className="font-semibold text-[#1E293B] whitespace-normal break-words">
                   {selectedValues.length} course{selectedValues.length !== 1 ? 's' : ''} selected
                 </span>
-                <span className="text-[10px] text-[#64748B] truncate">
+                <span className="text-[10px] text-[#64748B] whitespace-normal break-words">
                   {selectedNames.join(', ')}
                 </span>
               </>
@@ -708,9 +708,9 @@ export function CourseTreeSelect({
             )
           ) : selectedCourse ? (
             <>
-              <span className="font-semibold text-[#1E293B] truncate">{selectedCourse.name}</span>
+              <span className="font-semibold text-[#1E293B] whitespace-normal break-words">{selectedCourse.name}</span>
               {selectedCourse.path.length > 1 && (
-                <span className="text-[10px] text-[#64748B] truncate">
+                <span className="text-[10px] text-[#64748B] whitespace-normal break-words">
                   {selectedCourse.path.slice(0, -1).join(' \u203A ')}
                 </span>
               )}

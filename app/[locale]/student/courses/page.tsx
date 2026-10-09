@@ -66,7 +66,7 @@ export default function StudentCoursesPage() {
             const categoryName = course.attributes.category?.data?.attributes?.name ?? '';
             const instructorName = course.attributes.instructor?.data?.attributes?.full_name ?? '';
             const locationName = course.attributes.center?.data?.attributes?.name ?? '';
-            const thumbnail = course.attributes.thumbnail || '/logo.svg';
+            const thumbnail = course.attributes.thumbnail;
 
             const locked = courseIsLocked(course);
 

@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie';
+import { getDeviceId } from './device-id';
 import type {
   ApiResponse,
   ApiListResponse,
@@ -115,7 +116,9 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public message: string,
-    public errors?: Record<string, string[]>
+    public errors?: Record<string, string[]>,
+    public code?: string,
+    public transferToken?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -169,24 +172,20 @@ function buildUrl(path: string): string {
 
 async function handleResponse<T>(response: Response, skipAuthRedirect: boolean = false): Promise<T> {
   if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
     // Handle unauthorized errors - redirect to login (unless skipped)
     if ((response.status === 401) && !skipAuthRedirect) {
-      // Clear auth cookies
-      Cookies.remove('token');
-      Cookies.remove('user_role');
-      Cookies.remove('user_data');
-
-      // Redirect to login if in browser
       if (typeof window !== 'undefined') {
-        window.location.href = '/login';
+        window.location.replace(`/api/auth/session-end?reason=${errorData.code === 'device_session_revoked' ? 'device-changed' : 'expired'}`);
       }
     }
 
-    const errorData = await response.json().catch(() => ({}));
     throw new ApiError(
       response.status,
       errorData.message || `HTTP ${response.status}: ${response.statusText}`,
-      errorData.errors
+      errorData.errors,
+      errorData.code,
+      errorData.transfer_token,
     );
   }
 
@@ -205,6 +204,10 @@ function createHeaders(includeAuth: boolean = true, isMultipart: boolean = false
     Accept: 'application/json',
     lang: currentLocale,
   };
+
+  if (typeof window !== 'undefined') {
+    headers['X-Device-ID'] = getDeviceId();
+  }
 
   if (!isMultipart) {
     headers['Content-Type'] = 'application/json';
@@ -325,6 +328,11 @@ async function postMultipart<T>(path: string, formData: FormData, onProgress?: (
   });
 
   return handleResponse<T>(response);
+}
+
+async function patch(path: string) {
+  const response = await fetch(buildUrl(path), { method: 'PATCH', headers: createHeaders() });
+  return handleResponse(response);
 }
 
 async function put<T>(
@@ -460,6 +468,9 @@ export const authApi = {
 
   login: (data: LoginRequest) =>
     post<ApiResponse<User> & { meta: AuthMeta }>('/v1/auth/login', data, false),
+
+  requestDeviceTransfer: (transferToken: string) =>
+    post<{ message: string }>('/v1/auth/device-transfer', { transfer_token: transferToken }, false, true),
 
   logout: () => post<undefined>('/v1/auth/logout'),
 
@@ -617,7 +628,7 @@ export const codesApi = {
 
 export interface PreActivationUploadRequest {
   item_id: number;
-  item_type: 'course' | 'chapter' | 'library' | 'category';
+  item_type: 'course' | 'chapter' | 'library' | 'category' | 'quiz';
   file: File;
 }
 
@@ -626,6 +637,7 @@ export interface PreActivationUploadResponse {
   message?: string;
   count?: number;
   activated?: number;
+  pending?: number;
   skipped?: number;
   total_phones?: number;
 }
@@ -644,11 +656,17 @@ export interface PreActivation {
 }
 
 export const preActivationApi = {
-  upload: (data: PreActivationUploadRequest) => {
+  upload: async (data: PreActivationUploadRequest) => {
+    let file = data.file;
+    if (/\.xlsx?$/i.test(file.name)) {
+      const XLSX = await import('xlsx');
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+      file = new File([XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]])], 'phones.csv', { type: 'text/csv' });
+    }
     const formData = new FormData();
     formData.append('item_id', data.item_id.toString());
     formData.append('item_type', data.item_type);
-    formData.append('file', data.file);
+    formData.append('file', file);
     return postMultipart<PreActivationUploadResponse>('/v1/pre-activation/upload', formData);
   },
 
@@ -708,7 +726,7 @@ export const departmentsApi = {
 // ============================================
 
 export const discussionsApi = {
-  list: (params?: any) => get<ApiListResponse<Discussion>>(`/v1/discussion?page=${params.page}`),
+  list: (params?: any) => get<ApiListResponse<Discussion>>('/v1/discussion', params),
 
   get: (id: number) => get<ApiResponse<Discussion>>(`/v1/discussion/${id}`),
 
@@ -899,11 +917,13 @@ export const notesApi = {
       if (data.title) formData.append('title', data.title);
       if (data.type) formData.append('type', data.type);
       if (data.content !== undefined) formData.append('content', data.content);
-      // Don't send course_id or is_publish in FormData for updates - note already has these in database
-      // FormData converts numbers/bools to strings which causes backend type error
+      if (data.course_id !== undefined) formData.append('course_id', String(data.course_id));
+      if (data.is_publish !== undefined) formData.append('is_publish', data.is_publish ? '1' : '0');
+      if (data.remove_attachment !== undefined) formData.append('remove_attachment', data.remove_attachment ? '1' : '0');
       if (data.linked_lecture !== undefined) formData.append('linked_lecture', data.linked_lecture);
       formData.append('attachment', data.attachment);
-      return putMultipart<ApiResponse<Note>>(`/v1/note/${id}`, formData);
+      formData.append('_method', 'PUT');
+      return postMultipart<ApiResponse<Note>>(`/v1/note/${id}`, formData);
     }
     return put<ApiResponse<Note>>(`/v1/note/${id}`, data);
   },
@@ -1001,7 +1021,7 @@ export const quizzesApi = {
     return put<ApiResponse<Quiz>>(`v1/quiz/${id}`, data);
   },
 
-  delete: (id: number) => del<ApiResponse<Quiz>>(`v1/quiz/${id}`),
+  delete: (id: number) => del<void>(`v1/quiz/${id}`),
 };
 
 // ============================================
@@ -1139,11 +1159,6 @@ export const studentsApi = {
 
   delete: (id: string) => del<ApiResponse<Student>>(`/v1/student/${id}`),
 
-  resetPassword: (id: string, password: string) => {
-    const formData = new FormData();
-    formData.append('password', password);
-    return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData);
-  },
 
   removeActivation: (studentId: string | number, data: { item_id: number; item_type: string }) =>
     post<ApiResponse<void>>(`/v1/student/${studentId}/remove-activation`, data),
@@ -1226,10 +1241,10 @@ export const dashboardApi = {
   getStats: () => get<ApiResponse<DashboardStats>>('/v1/dashboard/stats'),
 
   getActivity: (params?: { period?: string }) =>
-    get<ApiResponse<ActivityData[]>>('/v1/dashboard/activity-revenue', params),
+    get<ApiResponse<ActivityData>>('/v1/dashboard/activity-revenue', params),
 
   getEngagement: (params?: { period?: string }) =>
-    get<ApiResponse<ActivityData[]>>('/v1/dashboard/course-engagement', params),
+    get<ApiResponse<ActivityData>>('/v1/dashboard/course-engagement', params),
 
   getRecentActivity: (params?: { limit?: number }) =>
     get<ApiResponse<RecentActivityItem[]>>('/v1/dashboard/recent-activity', params),
@@ -1439,7 +1454,62 @@ export const appVersionsApi = {
 // Export all APIs
 // ============================================
 
+export interface PlatformNotification {
+  id: string;
+  data: { title: string; message: string; type?: string; url?: string; content_id?: string | number; course_id?: string | number; post_id?: string | number; chapter_id?: string | number; discussion_id?: string | number; student_id?: string };
+  read_at: string | null;
+  created_at: string;
+}
+
+export const notificationsApi = {
+  list: (page = 1) => get<{ data: PlatformNotification[]; meta: { last_page: number; unread_count: number } }>('/v1/notifications', { page }),
+  send: (data: { title: string; message: string; course_id?: number }) => post<{ sent: number }>('/v1/notifications/send', data),
+  read: (id: string) => patch(`/v1/notifications/${id}/read`),
+  readAll: () => patch('/v1/notifications/read-all'),
+};
+
+export interface TimetableEntry { kind: 'course' | 'lecture' | 'exam' | 'live'; id: number; title: string; start: string | null; end: string | null; documents?: import('@/src/types').Attachment[] }
+export interface DownloadRecord { id: number; file_name: string; first_name: string; last_name: string; created_at: string }
+export const downloadsApi = {
+  list: () => get<{ data: import('@/src/types').Attachment[] }>('/v1/downloads'),
+  history: (page = 1) => get<{ data: DownloadRecord[]; last_page: number }>('/v1/downloads/history', { page }),
+  download: async (id: string | number, name: string) => {
+    const response = await fetch(buildUrl(`/v1/downloads/${id}`), { headers: createHeaders() });
+    if (!response.ok) throw new ApiError(response.status, 'Download failed');
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement('a'); link.href = url; link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+};
+export const timetableApi = {
+  list: () => get<{ entries: TimetableEntry[]; documents: import('@/src/types').Attachment[] }>('/v1/timetable'),
+  upload: (id: string, form: FormData) => postMultipart(`/v1/timetable/${id}/documents`, form),
+};
+
+export interface StaffActivity { id: number; action: string; first_name: string; last_name: string; created_at: string }
+export interface DeviceDetails { device: string; browser: string; identifier: string; ip: string; at: string }
+export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null }
+export const ownerOperationsApi = {
+  activity: (page = 1, dates?: { from?: string; to?: string }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...dates }),
+  devices: () => get<{ data: DeviceTransfer[] }>('/v1/owner/device-transfers'),
+  approve: (id: string) => post(`/v1/owner/device-transfers/${id}/approve`),
+};
+
+export interface GuardianStudent { id: string; first_name: string; last_name: string; phone?: string; email?: string; student_code?: string; university?: { name: string } | null; faculty?: { name: string } | null; centers?: { name: string }[]; activated_courses?: { id: string; title: string }[]; parents: { id: string; first_name: string; last_name: string; email: string; phone: string }[] }
+export const guardiansApi = {
+  list: (page = 1) => get<{ data: GuardianStudent[]; last_page: number }>('/v1/guardians', { page }),
+  send: (data: { to_user_id: string; student_id: string; content: string }) => post('/v1/feedback', { ...data, type: 'general', category: 'neutral' }),
+};
+
 export const api = {
+  guardians: guardiansApi,
+  ownerOperations: ownerOperationsApi,
+  downloads: downloadsApi,
+  timetable: timetableApi,
+  notifications: notificationsApi,
   auth: authApi,
   centers: centersApi,
   chapters: chaptersApi,

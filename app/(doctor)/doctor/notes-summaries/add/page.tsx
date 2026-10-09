@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -19,6 +19,9 @@ function getNoteTypes(t: (key: string) => string) {
 
 export default function AddNotePage() {
   const t = useTranslations('notesSummaries');
+  const ar = useLocale() === 'ar';
+  const [attachment, setAttachment] = useState<File | undefined>();
+  const [removeAttachment, setRemoveAttachment] = useState(false);
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [type, setType] = useState('summary');
@@ -37,6 +40,8 @@ export default function AddNotePage() {
     if (!title.trim()) {
       newErrors.title = t('create.titleRequired');
     }
+
+    if (!courseId) newErrors.courseId = ar ? 'اختر الدورة' : 'Select a course';
 
     if (!type.trim()) {
       newErrors.type = t('create.typeRequired');
@@ -58,7 +63,9 @@ export default function AddNotePage() {
         content: content.trim() || '',
         course_id: courseId ? parseInt(courseId) : undefined,
         linked_lecture: linkedLecture.trim() || undefined,
-        is_publish: isPublish
+        is_publish: isPublish,
+        attachment,
+        remove_attachment: removeAttachment
       });
 
       router.push('/notes-summaries');
@@ -132,6 +139,8 @@ export default function AddNotePage() {
               value={courseId}
               onChange={(val) => setCourseId(val as string)}
               label={t('create.courseLabel')}
+            required
+            error={errors.courseId}
             />
           </div>
 
@@ -167,6 +176,13 @@ export default function AddNotePage() {
             <p className="mt-2 text-xs text-[#94A3B8]">
               {t('create.charactersCount', { count: content.length })}
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold">
+              {ar ? 'ملف الملاحظة (صورة أو فيديو أو مستند)' : 'Note attachment (image, video or document)'}
+              <input type="file" className="mt-2 block w-full" onChange={e => { setAttachment(e.target.files?.[0]); setRemoveAttachment(false); }} />
+            </label>
           </div>
 
           {/* Publish Status */}

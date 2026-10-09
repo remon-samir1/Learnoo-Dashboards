@@ -1,8 +1,11 @@
 'use client';
 
+import { PersistentLiveSession } from '@/components/live-sessions/PersistentLiveSession';
+import PlatformBranding from '@/src/components/PlatformBranding';
 import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NextIntlClientProvider } from 'next-intl';
+import { initializeAuthStore } from '@/src/stores/authStore';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -12,6 +15,7 @@ interface ProvidersProps {
 }
 
 export default function Providers({ children, messages, locale }: ProvidersProps) {
+  useEffect(() => initializeAuthStore(), []);
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -24,7 +28,8 @@ export default function Providers({ children, messages, locale }: ProvidersProps
   return (
     <NextIntlClientProvider messages={messages} locale={locale} timeZone="UTC">
       <QueryClientProvider client={queryClient}>
-        {children}
+        <PlatformBranding />
+        <PersistentLiveSession>{children}</PersistentLiveSession>
       </QueryClientProvider>
     </NextIntlClientProvider>
   );

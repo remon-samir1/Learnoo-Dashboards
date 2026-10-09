@@ -412,7 +412,7 @@ export default function MySubjectSection({
                 category.attributes.stats?.courses ?? 0;
 
               const studentsCount =
-                category.attributes.stats?.students ?? 0;
+                category.attributes.stats?.students;
 
               return (
                 <button
@@ -447,10 +447,10 @@ export default function MySubjectSection({
                         {coursesCount} {t("courses")}
                       </span>
 
-                      <span className="flex items-center gap-1.5">
+                      {studentsCount != null && <span className="flex items-center gap-1.5">
                         <Users size={16} />
                         {studentsCount} {t("students")}
-                      </span>
+                      </span>}
                     </div>
                   </div>
                 </button>

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { LifeBuoy, Send } from 'lucide-react';
 import api, { getApiErrorMessage } from '@/src/lib/api';
@@ -14,6 +14,7 @@ interface IssuesFormProps {
 
 interface IssueFormData {
   category: string;
+  page_url: string;
   type: string;
   priority: string;
   description: string;
@@ -25,6 +26,7 @@ interface IssueFormData {
 
 export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
   const t = useTranslations('issues');
+  const locale = useLocale();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [attachmentFile, setAttachmentFile] = React.useState<File | null>(null);
   const [attachmentError, setAttachmentError] = React.useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
 
     const allowedTypes = ['image/png', 'image/jpeg', 'video/mp4'];
     if (!allowedTypes.includes(file.type)) {
-      setAttachmentError('Only PNG, JPG, JPEG, or MP4 files are allowed.');
+      setAttachmentError(locale === 'ar' ? 'يمكن إرفاق صورة PNG أو JPG أو فيديو MP4 فقط.' : 'Only PNG, JPG, JPEG, or MP4 files are allowed.');
       setAttachmentFile(null);
       return;
     }
@@ -116,7 +118,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
               {t('title')}
             </h1>
             <p className="text-gray-500 text-lg leading-relaxed max-w-2xl mx-auto">
-              {isAdmin ? "Admin Support Channel" : "Doctor Support Channel"} - We are here to help you solve any problems you face.
+              {locale === 'ar' ? 'أرسل تفاصيل المشكلة وسنساعدك في حلها.' : 'Send the details of the problem so we can help you resolve it.'}
             </p>
           </div>
         </div>
@@ -124,6 +126,10 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
         {/* Form Section */}
         <div className="p-8 lg:p-12">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <div className="space-y-2">
+              <label htmlFor="issue-page-url" className="block text-sm font-bold text-gray-700">{locale === 'ar' ? 'رابط الصفحة التي ظهرت فيها المشكلة' : 'Affected page URL'}</label>
+              <input id="issue-page-url" type="url" {...register('page_url')} placeholder="https://learnoo.app/..." dir="ltr" className="w-full rounded-xl border border-blue-100 p-3" />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Category */}
               <div className="space-y-2">
@@ -141,7 +147,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
                   <option value="community">{t('categories.community')}</option>
                   <option value="library">{t('categories.library')}</option>
                 </select>
-                {errors.category && <p className="text-red-500 text-xs mt-1">Field required</p>}
+                {errors.category && <p className="text-red-500 text-xs mt-1">{locale === 'ar' ? 'هذا الحقل مطلوب' : 'Field required'}</p>}
               </div>
 
               {/* Type */}
@@ -162,7 +168,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
                   <option value="suggestion">{t('types.suggestion')}</option>
                   <option value="other">{t('types.other')}</option>
                 </select>
-                {errors.type && <p className="text-red-500 text-xs mt-1">Field required</p>}
+                {errors.type && <p className="text-red-500 text-xs mt-1">{locale === 'ar' ? 'هذا الحقل مطلوب' : 'Field required'}</p>}
               </div>
 
               {/* Priority */}
@@ -179,7 +185,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
                   <option value="medium">{t('priorities.medium')}</option>
                   <option value="low">{t('priorities.low')}</option>
                 </select>
-                {errors.priority && <p className="text-red-500 text-xs mt-1">Field required</p>}
+                {errors.priority && <p className="text-red-500 text-xs mt-1">{locale === 'ar' ? 'هذا الحقل مطلوب' : 'Field required'}</p>}
               </div>
 
               {/* Status Hidden/Default */}
@@ -196,7 +202,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
                 placeholder={t('placeholders.description')}
                 className="w-full px-4 py-3 rounded-xl border border-blue-100 bg-[#f8faff] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none min-h-[120px] resize-none"
               />
-              {errors.description && <p className="text-red-500 text-xs mt-1">Field required</p>}
+              {errors.description && <p className="text-red-500 text-xs mt-1">{locale === 'ar' ? 'هذا الحقل مطلوب' : 'Field required'}</p>}
             </div>
 
             {/* Steps */}
@@ -209,7 +215,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
                 placeholder={t('placeholders.steps')}
                 className="w-full px-4 py-3 rounded-xl border border-blue-100 bg-[#f8faff] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none min-h-[100px] resize-none"
               />
-              {errors.steps_before_problem_appears && <p className="text-red-500 text-xs mt-1">Field required</p>}
+              {errors.steps_before_problem_appears && <p className="text-red-500 text-xs mt-1">{locale === 'ar' ? 'هذا الحقل مطلوب' : 'Field required'}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -223,7 +229,7 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
                   placeholder={t('placeholders.expected')}
                   className="w-full px-4 py-3 rounded-xl border border-blue-100 bg-[#f8faff] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none min-h-[80px] resize-none"
                 />
-                {errors.expected_result && <p className="text-red-500 text-xs mt-1">Field required</p>}
+                {errors.expected_result && <p className="text-red-500 text-xs mt-1">{locale === 'ar' ? 'هذا الحقل مطلوب' : 'Field required'}</p>}
               </div>
 
               {/* Actual Result */}
@@ -236,21 +242,21 @@ export default function IssuesForm({ isAdmin = false }: IssuesFormProps) {
                   placeholder={t('placeholders.actual')}
                   className="w-full px-4 py-3 rounded-xl border border-blue-100 bg-[#f8faff] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none min-h-[80px] resize-none"
                 />
-                {errors.actual_result && <p className="text-red-500 text-xs mt-1">Field required</p>}
+                {errors.actual_result && <p className="text-red-500 text-xs mt-1">{locale === 'ar' ? 'هذا الحقل مطلوب' : 'Field required'}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-bold text-gray-700">
-                Attachment
+                {locale === 'ar' ? 'مرفق (اختياري)' : 'Attachment (optional)'}
               </label>
               <label className="group flex flex-col md:flex-row items-center justify-between gap-4 rounded-3xl border border-dashed border-blue-200 bg-[#f7fbff] p-5 text-left transition hover:border-blue-300 hover:bg-[#eef6ff] cursor-pointer">
                 <div className="min-w-0">
                   <p className="text-base font-semibold text-slate-900 truncate">
-                    {attachmentFile ? attachmentFile.name : 'Upload PNG, JPG, JPEG or MP4'}
+                    {attachmentFile ? attachmentFile.name : (locale === 'ar' ? 'إرفاق صورة PNG أو JPG أو فيديو MP4' : 'Upload PNG, JPG, JPEG or MP4')}
                   </p>
                   <p className="text-sm text-slate-500 mt-1">
-                    Optional attachment to help explain the issue.
+                    {locale === 'ar' ? 'مرفق اختياري لتوضيح المشكلة.' : 'Optional attachment to help explain the issue.'}
                   </p>
                   {attachmentFile && (
                     <p className="text-xs text-slate-400 mt-1">

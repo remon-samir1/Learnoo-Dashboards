@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/src/services/auth/me.service";
 import { getStudentNotifications, getUserProfileData } from "@/src/services/student/user.service";
 import { isStudentAcademicProfileComplete } from "@/src/lib/student-profile-completeness";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Learnoo-Dashboard",
@@ -23,6 +24,8 @@ export default async function StudentLayout({ children, params }: LayoutProps) {
       getCurrentUser(),
       getUserProfileData(),
     ]);
+
+  if (userResponse.sessionReason) redirect(`/api/auth/session-end?reason=${userResponse.sessionReason}`);
 
   const notifications = Array.isArray(notificationsResponse?.data)
     ? notificationsResponse.data

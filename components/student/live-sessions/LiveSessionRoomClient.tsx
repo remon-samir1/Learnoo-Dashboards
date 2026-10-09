@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Radio,
   Users,
-  Droplets,
   Eye,
   ArrowLeft,
   ArrowRight,
@@ -23,10 +23,7 @@ import {
   isUpcoming,
   normalizeLiveStatus,
 } from "@/src/lib/student-live-room";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { VideoWatermark } from "@/components/student/watch/VideoWatermark";
-import { resolveEnabledWatermarkBucket } from "@/src/lib/watermark-from-features";
-import { getStudentPlatformFeatures } from "@/src/services/student/platform-feature.service";
+import { useMemo, useRef, useState } from "react";
 import { JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
 
 interface JitsiExternalApi {
@@ -51,6 +48,7 @@ export default function LiveSessionRoomClient({
   const t = useTranslations("liveSessions");
   const tc = useTranslations("common");
   const locale = useLocale();
+  const router = useRouter();
   const isRtl = locale === "ar";
   const attrs = room.attributes;
   const status = normalizeLiveStatus(attrs?.status);
@@ -75,32 +73,6 @@ export default function LiveSessionRoomClient({
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const localParticipantIdRef = useRef<string | null>(null);
   const jitsiApiRef = useRef<JitsiExternalApi | null>(null);
-
-  // Watermark state management
-  const [watermarkEnabled, setWatermarkEnabled] = useState(false);
-  const watermarkDummyRef = useRef<HTMLVideoElement | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadWatermarkSettings = async () => {
-      try {
-        const features = await getStudentPlatformFeatures();
-        const resolution = resolveEnabledWatermarkBucket(features, 'liveStreams');
-        if (mounted) {
-          setWatermarkEnabled(resolution?.config.enabled ?? false);
-        }
-      } catch (error) {
-        console.error('Failed to load watermark settings:', error);
-      }
-    };
-
-    loadWatermarkSettings();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const isChatEnabled = attrs?.enable_chat !== false;
 
@@ -268,13 +240,6 @@ export default function LiveSessionRoomClient({
 
           <div className="overflow-hidden rounded-2xl border border-[var(--border-color)] shadow-sm">
             <div className="relative h-[60svh] min-h-[360px] sm:h-[72vh] sm:min-h-[520px] lg:h-[640px]">
-              {watermarkEnabled ? (
-                <div className="absolute top-2 end-2 z-20 flex items-center gap-1 sm:gap-1.5 bg-blue-50/95 border border-blue-200 rounded-lg px-2 py-1 sm:px-2.5 sm:py-1.5 shadow-sm">
-                  <Droplets className="size-3.5 sm:size-4 text-blue-600" aria-hidden />
-                  <span className="text-[10px] sm:text-xs font-semibold text-blue-700">Watermarked</span>
-                </div>
-              ) : null}
-
               {/* Whiteboard view-only notification badge */}
               {isWhiteboardOpen ? (
                 <div className="absolute top-2 start-2 z-20 flex items-center gap-1 sm:gap-1.5 rounded-lg border border-amber-200 bg-amber-50/95 backdrop-blur-sm px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs font-semibold text-amber-800 shadow-sm">
@@ -291,7 +256,7 @@ export default function LiveSessionRoomClient({
                   startWithVideoMuted: true,
                   disableModeratorIndicator: true,
                   enableEmailInStats: false,
-                  prejoinPageEnabled: false,
+                  prejoinConfig: { enabled: false },
                   disableDeepLinking: true,
                   disableChat: !isChatEnabled,
                   // Hide and disable remote video context menu (the 3 dots on remote video tiles)
@@ -331,6 +296,8 @@ export default function LiveSessionRoomClient({
                   },
                 }}
                 interfaceConfigOverwrite={{
+                  SHOW_JITSI_WATERMARK: false,
+                  SHOW_BRAND_WATERMARK: false,
                   DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
                   SHOW_CHROME_EXTENSION_BANNER: false,
                   MOBILE_APP_PROMO: false,
@@ -339,6 +306,7 @@ export default function LiveSessionRoomClient({
                   HIDE_INVITE_MORE_HEADER: true,
                 }}
                 userInfo={{ displayName, email: "" }}
+                onReadyToClose={() => router.replace(`/${locale}/student/live-sessions`)}
                 onApiReady={(api) => {
                   jitsiApiRef.current = api as unknown as JitsiExternalApi;
                   api.addEventListeners({
@@ -420,14 +388,6 @@ export default function LiveSessionRoomClient({
                 />
               ) : null}
 
-              {/* Watermark overlay */}
-              <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                <VideoWatermark
-                  videoRef={watermarkDummyRef}
-                  contentType="liveStreams"
-                  showWatermark={watermarkEnabled}
-                />
-              </div>
             </div>
           </div>
         </section>

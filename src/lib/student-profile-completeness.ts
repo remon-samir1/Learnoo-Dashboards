@@ -1,7 +1,7 @@
 type CentersValue =
   | number[]
   | string[]
-  | Array<{ data?: { id?: string | number | null } | null }>
+  | Array<{ id?: string | number | null; data?: { id?: string | number | null } | null }>
   | null
   | undefined;
 
@@ -85,6 +85,9 @@ export function getStudentCenterId(
     const first = centers[0];
     if (typeof first === "number" || typeof first === "string") {
       return String(first);
+    }
+    if (first && typeof first === "object" && "id" in first && hasPresentId(first.id)) {
+      return String(first.id);
     }
     if (
       first &&

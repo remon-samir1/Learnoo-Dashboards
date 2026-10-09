@@ -1,9 +1,10 @@
 
 "use client";
 
+import { toApiDateTime, toLocalDateTime } from '@/src/lib/platform-date-time';
 import React, { useState, useMemo, useEffect, useRef } from "react";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 import {
   useDepartments,
@@ -244,7 +245,7 @@ function buildUnifiedTree(
       stats: {
         courses: faculty.attributes.stats?.courses || 0,
 
-        students: faculty.attributes.stats?.students || 0,
+        students: faculty.attributes.stats?.students,
       },
     };
 
@@ -303,7 +304,7 @@ function buildUnifiedTree(
             stats: {
               courses: child.attributes.stats?.courses || 0,
 
-              students: child.attributes.stats?.students || 0,
+              students: child.attributes.stats?.students,
             },
           };
 
@@ -343,7 +344,7 @@ function buildUnifiedTree(
             stats: {
               courses: child.attributes.stats?.courses || 0,
 
-              students: child.attributes.stats?.students || 0,
+              students: child.attributes.stats?.students,
             },
 
             meta: {
@@ -394,7 +395,7 @@ function buildUnifiedTree(
       stats: {
         courses: dept.attributes.stats?.courses || 0,
 
-        students: dept.attributes.stats?.students || 0,
+        students: dept.attributes.stats?.students,
       },
 
       meta: {
@@ -556,7 +557,7 @@ function buildUnifiedTree(
       stats: {
         lectures: course.attributes.stats?.lectures || 0,
 
-        students: course.attributes.stats?.students || 0,
+        students: course.attributes.stats?.students,
       },
 
       meta: {
@@ -1688,7 +1689,7 @@ export default function DepartmentsPage() {
     if (!departments || !courses || !universities || !faculties || !centers)
       return [];
 
-    return buildUnifiedTree(
+    const tree = buildUnifiedTree(
       universities,
       faculties,
       centers,
@@ -1698,6 +1699,12 @@ export default function DepartmentsPage() {
       chaptersByLecture,
       notes || [],
     );
+    const assignedBranches = (nodes: TreeNode[]): TreeNode[] => nodes.flatMap(node => {
+      if (node.type === 'course') return [node];
+      const children = assignedBranches(node.children);
+      return children.length ? [{ ...node, children }] : [];
+    });
+    return isInstructor ? assignedBranches(tree) : tree;
   }, [
     universities,
     faculties,
@@ -1707,6 +1714,7 @@ export default function DepartmentsPage() {
     lecturesByCourse,
     chaptersByLecture,
     notes,
+    isInstructor,
   ]);
 
   const treeData = useMemo(() => {
@@ -1881,7 +1889,7 @@ export default function DepartmentsPage() {
 
       setNoteLinkedLecture(note.attributes.linked_lecture || "");
 
-      setNoteIsPublish(true);
+      setNoteIsPublish(Boolean(note.attributes.is_publish));
 
       setNoteAttachment(null);
 
@@ -1978,7 +1986,8 @@ export default function DepartmentsPage() {
         content: noteContent.trim() || "",
         course_id: finalCourseId,
         linked_lecture: noteLinkedLecture.trim() || null,
-        is_publish: true,
+        is_publish: noteIsPublish,
+        remove_attachment: isEditMode && !noteAttachment && !noteAttachmentPreview,
       };
 
       // Include file attachment if present
@@ -2026,13 +2035,13 @@ export default function DepartmentsPage() {
 
   const getNoteTypes = () => {
     return [
-      { value: "summary", label: "Summary" },
+      { value: "summary", label: t("departments.noteTypes.summary") },
 
-      { value: "highlight", label: "Highlight" },
+      { value: "highlight", label: t("departments.noteTypes.highlight") },
 
-      { value: "key_point", label: "Key Point" },
+      { value: "key_point", label: t("departments.noteTypes.key_point") },
 
-      { value: "important_notice", label: "Important Notice" },
+      { value: "important_notice", label: t("departments.noteTypes.important_notice") },
     ];
   };
 
@@ -2199,8 +2208,8 @@ export default function DepartmentsPage() {
         file,
       });
 
-      const count = (result as any)?.created || (result as any)?.data?.created || 0;
-      const skipped = (result as any)?.skipped || (result as any)?.data?.skipped || 0;
+      const count = (result.activated ?? 0) + (result.pending ?? 0);
+      const skipped = result.skipped ?? 0;
 
       setPreactivationResults({
         success: count,
@@ -2392,9 +2401,10 @@ export default function DepartmentsPage() {
               max_views_per_student:
                 parseInt(formData.max_views_per_student) || 10,
 
-              doctor_id: formData.instructor_id
-                ? parseInt(formData.instructor_id)
-                : undefined,
+              instructor_id: formData.instructor_id || undefined,
+
+              schedule_start: toApiDateTime(formData.schedule_start),
+              schedule_end: toApiDateTime(formData.schedule_end),
 
               show_in: formData.show_in ?? "both",
             },
@@ -2444,9 +2454,9 @@ export default function DepartmentsPage() {
 
             attachments: formData.attachments,
 
-            schedule_start: formData.schedule_start,
+            schedule_start: toApiDateTime(formData.schedule_start),
 
-              schedule_end: formData.schedule_end,
+              schedule_end: toApiDateTime(formData.schedule_end),
           };
 
           // Add attachments_to_delete if present
@@ -2564,9 +2574,10 @@ export default function DepartmentsPage() {
 
               show_in: formData.show_in ?? "both",
 
-              doctor_id: formData.instructor_id
-                ? parseInt(formData.instructor_id)
-                : undefined,
+              instructor_id: formData.instructor_id || undefined,
+
+              schedule_start: toApiDateTime(formData.schedule_start),
+              schedule_end: toApiDateTime(formData.schedule_end),
             },
             (progress) => setUploadProgress(progress),
           );
@@ -2615,9 +2626,9 @@ export default function DepartmentsPage() {
 
               content: formData.type === "note" ? formData.content : undefined,
 
-              schedule_start: formData.schedule_start,
+              schedule_start: toApiDateTime(formData.schedule_start),
 
-              schedule_end: formData.schedule_end,
+              schedule_end: toApiDateTime(formData.schedule_end),
             },
             (progress) => setUploadProgress(progress),
           );
@@ -2969,6 +2980,7 @@ export default function DepartmentsPage() {
                 <p className="text-sm text-gray-400">No viewers recorded for this lesson.</p>
               ) : (
                 <div className="divide-y divide-gray-100">
+                  <p className="py-3 text-sm text-gray-600">{t("departments.viewerExplanation", { count: viewersList.length })}</p>
                   {viewersList.map((uv: any) => (
                     <div key={uv.id} className="flex items-center justify-between py-3">
                       <div>
@@ -2981,7 +2993,7 @@ export default function DepartmentsPage() {
                       </div>
 
                       <div className="text-right">
-                        <div className="text-sm text-gray-700">Views: <span className="font-medium">{uv.count}</span></div>
+                        <div className="text-sm text-gray-700">{t("departments.recordedViews")}: <span className="font-medium">{uv.count}</span></div>
                         <div className="text-xs text-gray-400">{uv.created_at ? new Date(uv.created_at).toLocaleString() : ''}</div>
                       </div>
                     </div>
@@ -3239,7 +3251,7 @@ export default function DepartmentsPage() {
 
               {/* Publish Status */}
 
-              {/* <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   id="isPublish"
@@ -3254,7 +3266,7 @@ export default function DepartmentsPage() {
                 >
                   {t("departments.notePublishLabel")}
                 </label>
-              </div> */}
+              </div>
 
               {/* Actions */}
 
@@ -3320,6 +3332,7 @@ function EditModal({
   isLoading,
   progress = 0,
 }: EditModalProps) {
+  const t = useTranslations();
   const [formData, setFormData] = useState<Record<string, any>>(() => {
     switch (node.type) {
       case "university":
@@ -3372,8 +3385,8 @@ function EditModal({
 
           status: course.attributes.status,
 
-          schedule_start: course.attributes.schedule_start ? course.attributes.schedule_start.replace(' ', 'T').substring(0, 16) : "",
-          schedule_end: course.attributes.schedule_end ? course.attributes.schedule_end.replace(' ', 'T').substring(0, 16) : "",
+          schedule_start: toLocalDateTime(course.attributes.schedule_start),
+          schedule_end: toLocalDateTime(course.attributes.schedule_end),
 
           price: course.attributes.price?.toString() || "0",
 
@@ -3395,8 +3408,8 @@ function EditModal({
 
           description: lecture.attributes.description || "",
 
-          schedule_start: lecture.attributes.schedule_start ? lecture.attributes.schedule_start.replace(' ', 'T').substring(0, 16) : "",
-          schedule_end: lecture.attributes.schedule_end ? lecture.attributes.schedule_end.replace(' ', 'T').substring(0, 16) : "",
+          schedule_start: toLocalDateTime(lecture.attributes.schedule_start),
+          schedule_end: toLocalDateTime(lecture.attributes.schedule_end),
         };
 
       case "chapter":
@@ -3421,8 +3434,8 @@ function EditModal({
 
           content: chapter.attributes.content || "",
 
-          schedule_start: chapter.attributes.schedule_start ? chapter.attributes.schedule_start.replace(' ', 'T').substring(0, 16) : "",
-          schedule_end: chapter.attributes.schedule_end ? chapter.attributes.schedule_end.replace(' ', 'T').substring(0, 16) : "",
+          schedule_start: toLocalDateTime(chapter.attributes.schedule_start),
+          schedule_end: toLocalDateTime(chapter.attributes.schedule_end),
 
           thumbnail: null,
         };
@@ -4507,10 +4520,10 @@ function EditModal({
                         })
                       }
                     >
-                      <option value="summary">Summary</option>
-                      <option value="highlight">Highlight</option>
-                      <option value="key_point">Key Point</option>
-                      <option value="important_notice">Important Notice</option>
+                      <option value="summary">{t("departments.noteTypes.summary")}</option>
+                      <option value="highlight">{t("departments.noteTypes.highlight")}</option>
+                      <option value="key_point">{t("departments.noteTypes.key_point")}</option>
+                      <option value="important_notice">{t("departments.noteTypes.important_notice")}</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
                   </div>
@@ -4740,6 +4753,7 @@ function AddModal({
   progress = 0,
   lessonCreateType = "video-pdf",
 }: AddModalProps) {
+  const t = useTranslations();
   const [formData, setFormData] = useState<Record<string, any>>(
     type === "chapter" ? { view_by_minute: 30 } : {},
   );
@@ -5794,10 +5808,10 @@ function AddModal({
                         })
                       }
                     >
-                      <option value="summary">Summary</option>
-                      <option value="highlight">Highlight</option>
-                      <option value="key_point">Key Point</option>
-                      <option value="important_notice">Important Notice</option>
+                      <option value="summary">{t("departments.noteTypes.summary")}</option>
+                      <option value="highlight">{t("departments.noteTypes.highlight")}</option>
+                      <option value="key_point">{t("departments.noteTypes.key_point")}</option>
+                      <option value="important_notice">{t("departments.noteTypes.important_notice")}</option>
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
                   </div>
@@ -6034,6 +6048,7 @@ function CopyMoveModal({
 
   isLoading,
 }: CopyMoveModalProps) {
+  const ar = useLocale() === "ar";
   const chapter = node.data as Chapter;
 
   // Flatten lectures from all courses
@@ -6054,13 +6069,13 @@ function CopyMoveModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
         {/* Header */}
 
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
-              {mode === "copy" ? "Copy Lesson" : "Move Lesson"}
+              {mode === "copy" ? (ar ? "نسخ الدرس" : "Copy Lesson") : (ar ? "نقل الدرس" : "Move Lesson")}
             </h3>
 
             <p className="text-sm text-gray-500 mt-0.5">
@@ -6089,7 +6104,7 @@ function CopyMoveModal({
             value={selectedTargets}
             onMultiChange={onSelectTargets}
             multiple={true}
-            label="Target Lectures"
+            label={ar ? "المحاضرات المستهدفة" : "Target lectures"}
             coursesData={courses}
             lecturesData={allLectures}
             selectLectures={true}
@@ -6106,7 +6121,7 @@ function CopyMoveModal({
             onClick={onClose}
             className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
           >
-            Cancel
+            {ar ? "إلغاء" : "Cancel"}
           </button>
 
           <button
@@ -6121,11 +6136,11 @@ function CopyMoveModal({
 
             {isLoading
               ? mode === "copy"
-                ? "Copying..."
-                : "Moving..."
+                ? (ar ? "جارٍ النسخ…" : "Copying…")
+                : (ar ? "جارٍ النقل…" : "Moving…")
               : mode === "copy"
-                ? "Copy Lesson"
-                : "Move Lesson"}
+                ? (ar ? "نسخ الدرس" : "Copy Lesson")
+                : (ar ? "نقل الدرس" : "Move Lesson")}
           </button>
         </div>
       </div>
@@ -6227,7 +6242,7 @@ function GenerateCodeModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col">
         {/* Header */}
 
         <div className="flex items-center justify-between p-4 border-b border-gray-200">

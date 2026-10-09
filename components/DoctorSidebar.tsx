@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   LayoutDashboard,
+  Download,
   BookOpen,
   School,
   Video,
@@ -52,7 +53,10 @@ export default function DoctorSidebar({ isCollapsed, onToggle }: DoctorSidebarPr
     { name: t('notesSummaries'), icon: StickyNote, path: '/doctor/notes-summaries' },
     { name: t('electronicLibrary'), icon: Library, path: '/doctor/electronic-library' },
     { name: t('support'), icon: LifeBuoy, path: '/doctor/issues' },
-    // { name: 'Notifications', icon: Bell, path: '/doctor/notifications' },
+    { name: t('schedules'), icon: ClipboardList, path: '/doctor/schedules' },
+    { name: t('downloads'), icon: Download, path: '/doctor/downloads' },
+    { name: t('guardians'), icon: Users, path: '/doctor/guardians' },
+    { name: t('notifications'), icon: Bell, path: '/doctor/notifications' },
     // { name: 'Profile & Settings', icon: Settings, path: '/doctor/settings' },
   ];
 

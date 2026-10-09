@@ -108,18 +108,19 @@ const getMenuItems = (t: (key: string) => string, role: string | null | undefine
 
   if (role === 'Parent') {
     items.push({ name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/parent/dashboard' });
-    items.push({ name: t('sidebar.attendance'), icon: Clock, path: studentId ? `/parent/students/${studentId}/activity` : '/parent/dashboard/activity' });
-    // items.push({ name: t('sidebar.examsAndResults'), icon: ClipboardList, path: studentId ? `/parent/students/${studentId}/weekly-stats` : '/parent/dashboard/weekly-stats' });
-    items.push({ name: t('sidebar.courseProgress'), icon: BookOpen, path: studentId ? `/parent/students/${studentId}/progress` : '/parent/dashboard/progress' });
-    items.push({ name: t('sidebar.engagement'), icon: TrendingUp, path: studentId ? `/parent/students/${studentId}/weekly-stats` : '/parent/dashboard/weekly-stats' });
-    items.push({ name: t('sidebar.teacherFeedback'), icon: MessageSquare, path: studentId ? `/parent/students/${studentId}/feedback` : '/parent/dashboard/feedback' });
-    items.push({ name: t('sidebar.notifications'), icon: Bell, path: studentId ? `/parent/students/${studentId}/alerts` : '/parent/dashboard/alerts' });
+    items.push({ name: t('sidebar.attendance'), icon: Clock, path: studentId ? `/parent/students/${studentId}/activity` : '/parent/students' });
+    // items.push({ name: t('sidebar.examsAndResults'), icon: ClipboardList, path: studentId ? `/parent/students/${studentId}/weekly-stats` : '/parent/students' });
+    items.push({ name: t('sidebar.courseProgress'), icon: BookOpen, path: studentId ? `/parent/students/${studentId}/progress` : '/parent/students' });
+    items.push({ name: t('sidebar.engagement'), icon: TrendingUp, path: studentId ? `/parent/students/${studentId}/weekly-stats` : '/parent/students' });
+    items.push({ name: t('sidebar.teacherFeedback'), icon: MessageSquare, path: studentId ? `/parent/students/${studentId}/feedback` : '/parent/students' });
+    items.push({ name: t('sidebar.notifications'), icon: Bell, path: '/parent/notifications' });
     // items.push({ name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' });
     return items;
   }
 
   if (role === 'Super Admin') {
     items.push({ name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' });
+    items.push({ name: t('sidebar.activity'), icon: ClipboardList, path: '/activity' });
   }
 
   items.push({ name: t('sidebar.academicStructure'), icon: School, path: '/departments' });
@@ -127,6 +128,7 @@ const getMenuItems = (t: (key: string) => string, role: string | null | undefine
   items.push({ name: t('sidebar.instructors'), icon: GraduationCap, path: '/instructors' });
 
   items.push({ name: t('sidebar.students'), icon: Users2, path: '/students' });
+  items.push({ name: t('sidebar.guardians'), icon: Users2, path: '/guardians' });
 
   items.push({ name: t('sidebar.activation'), icon: Power, path: '/activation' });
 
@@ -137,12 +139,14 @@ const getMenuItems = (t: (key: string) => string, role: string | null | undefine
   items.push({ name: t('sidebar.community'), icon: MessageSquare, path: '/community' });
 
   items.push({ name: t('sidebar.discussions'), icon: MessageCircle, path: '/discussions' });
+  items.push({ name: t('sidebar.notesSummaries'), icon: StickyNote, path: '/notes-summaries' });
 
   items.push({ name: t('sidebar.electronicLibrary'), icon: BookOpen, path: '/electronic-library' });
 
-  items.push({ name: t('sidebar.notifications'), icon: Bell, path: '/notifications', comingSoon: true });
+  items.push({ name: t('sidebar.notifications'), icon: Bell, path: '/notifications' });
 
-  items.push({ name: t('sidebar.downloads'), icon: Download, path: '/downloads', comingSoon: true });
+  items.push({ name: t('sidebar.schedules'), icon: ClipboardList, path: '/schedules' });
+  items.push({ name: t('sidebar.downloads'), icon: Download, path: '/downloads' });
 
   items.push({ name: t('sidebar.profileSettings'), icon: Settings, path: '/settings' });
 
@@ -150,7 +154,7 @@ const getMenuItems = (t: (key: string) => string, role: string | null | undefine
 
   items.push({ name: t('sidebar.otaUpload'), icon: Smartphone, path: '/ota-upload' });
 
-  items.push({ name: t('sidebar.support'), icon: LifeBuoy, path: '/issues' });
+  items.push({ name: t('sidebar.support'), icon: LifeBuoy, path: role === 'Super Admin' ? '/issues/inbox' : '/issues' });
 
   return items;
 
@@ -173,23 +177,16 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const [activeStudentId, setActiveStudentId] = React.useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const pathParts = pathname.split('/');
-      const studentIndex = pathParts.indexOf('students');
-      let studentId = studentIndex !== -1 && pathParts[studentIndex + 1] ? pathParts[studentIndex + 1] : null;
-      if (studentId) {
-        studentId = studentId.split('?')[0];
-      }
-      if (studentId) {
-        setActiveStudentId(studentId);
-        localStorage.setItem('parentStudentId', studentId);
-      } else {
-        const persisted = localStorage.getItem('parentStudentId');
-        if (persisted) {
-          setActiveStudentId(persisted);
-        }
-      }
-    }
+    const syncStudent = () => {
+      const parts = pathname.split('/');
+      const index = parts.indexOf('students');
+      const studentId = index !== -1 ? parts[index + 1] : null;
+      if (studentId) localStorage.setItem('parentStudentId', studentId);
+      setActiveStudentId(studentId || localStorage.getItem('parentStudentId'));
+    };
+    syncStudent();
+    window.addEventListener('parent-student-change', syncStudent);
+    return () => window.removeEventListener('parent-student-change', syncStudent);
   }, [pathname]);
 
   const menuItems = React.useMemo(() => {
@@ -232,7 +229,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
 
   const logoUrl = getFeatureValue('logo', '');
 
-  const tagline = getFeatureValue('tagline', 'Pro Instructor');
+  const tagline = getFeatureValue('tagline', '');
 
 
 

@@ -1,7 +1,9 @@
 "use client";
 
+import { toApiDateTime, toLocalDateTime } from '@/src/lib/platform-date-time';
+
 import React, { useState, useEffect, ChangeEvent } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ChevronLeft, Info } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/src/lib/api';
@@ -12,6 +14,7 @@ import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 
 export default function ScheduleSessionPage() {
   const t = useTranslations();
+  const locale = useLocale();
   const router = useRouter();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,6 +25,8 @@ export default function ScheduleSessionPage() {
     title: string;
     description: string;
     started_at: string;
+    ended_at: string;
+    publication_status: 'draft' | 'active';
     max_students: number;
     max_join_time: number | string;
     is_public: string;
@@ -30,6 +35,8 @@ export default function ScheduleSessionPage() {
     title: '',
     description: '',
     started_at: '',
+    ended_at: '',
+    publication_status: 'draft',
     max_students: 50,
     max_join_time: 15,
     is_public: 'true'
@@ -56,7 +63,7 @@ export default function ScheduleSessionPage() {
   };
 
   const handleSubmit = async () => {
-    if (formData.course_ids.length === 0 || !formData.title || !formData.started_at) {
+    if (formData.course_ids.length === 0 || !formData.title || !formData.started_at || !formData.ended_at || new Date(formData.ended_at) <= new Date(formData.started_at)) {
       toast.error(t('liveSessions.schedule.validation.fillRequired'));
       return;
     }
@@ -64,17 +71,15 @@ export default function ScheduleSessionPage() {
     setLoading(true);
     try {
       // Format started_at as Y-m-d H:i:s
-      const sqlFormat = (dateStr: string) => {
-        const date = new Date(dateStr);
-        const iso = date.toISOString();
-        return iso.replace('T', ' ').slice(0, 19);
-      };
+
 
       const requestData: CreateLiveRoomRequest = {
         course_ids: formData.course_ids.map(Number),
         title: formData.title,
         description: formData.description,
-        started_at: sqlFormat(formData.started_at),
+        started_at: toApiDateTime(formData.started_at),
+        ended_at: formData.ended_at ? toApiDateTime(formData.ended_at) : undefined,
+        publication_status: formData.publication_status,
         max_students: Number(formData.max_students),
         max_join_time: formData.max_join_time ? Number(formData.max_join_time) : null,
         is_public: formData.is_public,
@@ -165,6 +170,17 @@ export default function ScheduleSessionPage() {
                 />
               </div>
 
+              <label className="flex flex-col gap-2 text-sm font-bold">
+                {locale === 'ar' ? 'وقت نهاية الجلسة' : 'Session end time'}
+                <input type="datetime-local" name="ended_at" value={formData.ended_at} onChange={handleChange} className="rounded-xl border p-3" />
+              </label>
+              <label className="flex flex-col gap-2 text-sm font-bold">
+                {locale === 'ar' ? 'حالة النشر' : 'Publication status'}
+                <select name="publication_status" value={formData.publication_status} onChange={handleChange} className="rounded-xl border p-3">
+                  <option value="draft">{locale === 'ar' ? 'مسودة' : 'Draft'}</option>
+                  <option value="active">{locale === 'ar' ? 'نشط' : 'Active'}</option>
+                </select>
+              </label>
               {/* Max Students */}
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-bold text-[#1E293B]">{t('liveSessions.schedule.maxStudents')}</label>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   Plus,
   Search,
@@ -14,7 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { useNotes, useDeleteNote } from '@/src/hooks/useNotes';
+import { useNotes, useDeleteNote, useUpdateNote } from '@/src/hooks/useNotes';
 import type { Note } from '@/src/types';
 
 function getTypeLabel(type: string, t: (key: string) => string): string {
@@ -44,6 +44,9 @@ function formatDate(dateString: string | null): string {
 
 export default function NotesSummariesPage() {
   const t = useTranslations('notesSummaries');
+  const ar = useLocale() === 'ar';
+  const [page, setPage] = useState(1);
+  const { mutate: updateNote, isLoading: isUpdating } = useUpdateNote();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>(t('filters.allTypes'));
@@ -74,6 +77,11 @@ export default function NotesSummariesPage() {
       return matchesSearch && matchesType;
     });
   }, [notes, debouncedSearch, typeFilter]);
+
+  const lastPage = Math.max(1, Math.ceil(filteredNotes.length / 10));
+  const currentPage = Math.min(page, lastPage);
+  const pageNotes = filteredNotes.slice((currentPage - 1) * 10, currentPage * 10);
+  useEffect(() => { setPage(1); }, [debouncedSearch, typeFilter]);
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('deleteConfirm'))) return;
@@ -141,7 +149,7 @@ export default function NotesSummariesPage() {
               <tr className="bg-[#F8FAFC]/50 border-b border-[#F1F5F9]">
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">{t('table.title')}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">{t('table.type')}</th>
-                <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">{t('table.courseId')}</th>
+                <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider">{t('create.courseLabel')}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider text-center">{t('table.status')}</th>
                 <th className="px-6 py-4 text-[13px] font-semibold text-[#64748B] uppercase tracking-wider text-right">{t('table.actions')}</th>
               </tr>
@@ -173,7 +181,7 @@ export default function NotesSummariesPage() {
                 </tr>
               )}
               
-              {!isLoading && !error && filteredNotes.map((note: Note) => (
+              {!isLoading && !error && pageNotes.map((note: Note) => (
                 <tr key={note.id} className="hover:bg-[#F8FAFC]/50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -196,16 +204,18 @@ export default function NotesSummariesPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-bold text-[#1E293B]">{note.attributes.course_id || t('na')}</span>
+                    <span className="text-sm font-bold text-[#1E293B]">{note.attributes.course_title || t('na')}</span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-wide ${
+                    <button type="button" disabled={isUpdating} aria-pressed={note.attributes.is_publish}
+                      onClick={async () => { await updateNote(Number(note.id), { is_publish: !note.attributes.is_publish }); await refetch(); }}
+                      className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-wide ${
                       note.attributes.is_publish
                         ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100'
                         : 'bg-[#F1F5F9] text-[#64748B] border border-slate-200'
                     }`}>
                       {note.attributes.is_publish ? t('status.published') : t('status.draft')}
-                    </span>
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
@@ -239,6 +249,11 @@ export default function NotesSummariesPage() {
           </table>
         </div>
       </div>
+      {lastPage > 1 && <nav aria-label={ar ? 'صفحات الملاحظات' : 'Notes pages'} className="flex items-center justify-center gap-4">
+        <button disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)} className="rounded-xl border p-3 disabled:opacity-50">{ar ? 'السابق' : 'Previous'}</button>
+        <span>{currentPage} / {lastPage}</span>
+        <button disabled={currentPage >= lastPage} onClick={() => setPage(currentPage + 1)} className="rounded-xl border p-3 disabled:opacity-50">{ar ? 'التالي' : 'Next'}</button>
+      </nav>}
     </div>
   );
 }

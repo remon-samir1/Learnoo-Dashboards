@@ -9,6 +9,7 @@ export interface Post {
     type: 'post' | 'question' | 'summary';
     status: 'draft' | 'published';
     course_id: number | null;
+    courses?: { data: { id: string | number; attributes: { title: string } }[] };
     parent_id: number | null;
     created_at: string;
     updated_at: string;
@@ -37,11 +38,7 @@ interface ServiceResponse<T> {
   message?: string;
 }
 
-/**
- * Get latest posts that don't have a course_id (general community posts).
- * Server-side service for use in Server Components.
- */
-export const getLatestGeneralPosts = async (limit: number = 5): Promise<ServiceResponse<Post[]>> => {
+export const getLatestStudentPosts = async (enrolledCourseIds: Set<string>, limit: number = 5): Promise<ServiceResponse<Post[]>> => {
   const userData = await getUserDataFromJWT();
   const token = userData?.token;
 
@@ -64,20 +61,22 @@ export const getLatestGeneralPosts = async (limit: number = 5): Promise<ServiceR
       };
     }
 
-    // Filter posts that don't have a course_id and are published top-level posts
-    // Note: API response structure is { data: Post[] }
-    const allPosts: Post[] = result.data || [];
-    const generalPosts = allPosts.filter((post: Post) => {
+    const allPosts: Post[] = (result.data || []).map((post: Post) => ({
+      ...post,
+      attributes: { ...post.attributes, courses: {
+        data: Array.isArray(post.attributes.courses) ? post.attributes.courses : post.attributes.courses?.data ?? [],
+      } },
+    }));
+    const coursePosts = allPosts.filter((post: Post) => {
       const isTopLevel = post.attributes.parent_id == null || post.attributes.parent_id === 0;
       const isPublished = post.attributes.status === 'published';
       const courseId = post.attributes.course_id;
-      // Consider it general if course_id is null, undefined, or 0
-      const hasNoCourse = courseId == null || Number(courseId) === 0;
-      return isTopLevel && isPublished && hasNoCourse;
+      const courseIds = [...(post.attributes.courses?.data ?? []).map(course => String(course.id)), ...(courseId ? [String(courseId)] : [])];
+      return isTopLevel && isPublished && courseIds.some(id => enrolledCourseIds.has(id));
     });
 
     // Sort by created_at descending and limit
-    const sortedPosts = generalPosts.sort((a, b) => {
+    const sortedPosts = coursePosts.sort((a, b) => {
       return new Date(b.attributes.created_at).getTime() - new Date(a.attributes.created_at).getTime();
     });
 

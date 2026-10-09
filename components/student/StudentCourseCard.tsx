@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { BookOpen, FileText, Lock, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
@@ -18,7 +18,7 @@ function statusBadgeWrapClass(status: number): string {
 }
 
 interface StudentCourseCardProps {
-  image: string;
+  image: string | null;
   title: string;
   instructor: string;
   /** API `center.data.attributes.name` — shown next to the map pin only. */
@@ -53,6 +53,7 @@ export const StudentCourseCard: React.FC<StudentCourseCardProps> = ({
 }) => {
   const t = useTranslations('courses');
   const tCard = useTranslations('courses.studentCourseCard');
+  const [imageFailed, setImageFailed] = useState(false);
 
   const subLine = subTitle?.trim() ?? '';
   const locationLine = location?.trim() ?? '';
@@ -70,6 +71,7 @@ export const StudentCourseCard: React.FC<StudentCourseCardProps> = ({
 
   const leftBadgeClass = categoryBadgeClass(typeLabel);
   const rightBadgeWrap = statusBadgeWrapClass(statusCode);
+  const showFallback = !image?.trim() || imageFailed;
 
   return (
     <article
@@ -83,12 +85,19 @@ export const StudentCourseCard: React.FC<StudentCourseCardProps> = ({
         }`}
     >
       <div className="relative h-52 overflow-hidden bg-slate-100">
-        <img
-          src={image}
-          alt={title}
-          className={`h-full w-full object-cover object-center ${locked ? '' : 'transition-transform duration-500 group-hover:scale-[1.03]'
-            }`}
-        />
+        {showFallback ? (
+          <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white">
+            <BookOpen className="h-10 w-10" aria-hidden />
+          </div>
+        ) : (
+          <img
+            src={image ?? undefined}
+            alt={title}
+            className={`h-full w-full object-cover object-center ${locked ? '' : 'transition-transform duration-500 group-hover:scale-[1.03]'
+              }`}
+            onError={() => setImageFailed(true)}
+          />
+        )}
 
         {locked ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/65 px-6 text-center">

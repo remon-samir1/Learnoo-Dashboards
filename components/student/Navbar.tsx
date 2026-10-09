@@ -3,7 +3,8 @@
 import Cookies from "@/lib/cookies";
 import type { CurrentUser } from "@/src/interfaces/current-user.interface";
 import { getUserAttributes, getUserInitials } from "@/src/lib/current-user";
-import { getPusherClient } from "@/src/lib/pusher.client";
+import { notificationHref } from '@/src/lib/notification-href';
+import { notificationsApi } from "@/src/lib/api";
 import { userLogout } from "@/src/services/student/auth.service";
 import {
   Bell,
@@ -43,6 +44,12 @@ export type NotificationItem = {
 
     type: string;
 
+    post_id?: number;
+    chapter_id?: number;
+    discussion_id?: number;
+    content_id?: number;
+    url?: string;
+    student_id?: string;
     device?: string;
 
     ip_address?: string;
@@ -157,22 +164,20 @@ export default function Navbar({
   }, 1000);
 
   useEffect(() => {
-    const handleNavClick = () => {
-      setOpenDropdown(null);
-    };
+    setOpenDropdown(null);
   }, [pathname]);
 
   useEffect(() => {
-    const pusher = getPusherClient();
-    const channel = pusher.subscribe("global");
-    channel.bind_global((eventName: string, data: unknown) => {
-      if (eventName.includes("pusher_internal")) return;
-      setNotifications((prev) => [data as NotificationItem, ...prev]);
-    });
-    return () => {
-      channel.unbind_global();
-      pusher.unsubscribe("global");
+    let mounted = true;
+    const refresh = async () => {
+      try {
+        const response = await notificationsApi.list(1);
+        if (mounted) setNotifications(response.data as NotificationItem[]);
+      } catch { /* Keep the last inbox during a temporary connection failure. */ }
     };
+    void refresh();
+    const timer = setInterval(refresh, 30_000);
+    return () => { mounted = false; clearInterval(timer); };
   }, []);
 
   const unreadCount = useMemo(() => {
@@ -290,8 +295,10 @@ export default function Navbar({
                     item?.data?.message || t("notificationFallbackMessage");
 
                   return (
-                    <div
-                      key={index}
+                    <Link
+                      href={notificationHref(item.data, pathname, locale) ?? `/${locale}/student/notifications`}
+                      onClick={() => { setOpenDropdown(null); void notificationsApi.read(item.id); }}
+                      key={item.id}
                       className="flex gap-3 border-t border-[var(--border-color)] px-4 py-3 transition hover:bg-gray-50"
                     >
                       <div
@@ -322,7 +329,7 @@ export default function Navbar({
                             t("justNow")}
                         </span>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })
               )}

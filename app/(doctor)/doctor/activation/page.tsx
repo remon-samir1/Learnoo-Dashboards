@@ -76,7 +76,7 @@ export default function ActivationPage() {
 
   const { data: codes, isLoading, error, refetch } = useCodes();
   const { mutate: deleteCode, isLoading: isDeleting } = useDeleteCode();
-  const { mutate: activateCode, isLoading: isAssigning } = useActivateCode();
+  const { mutateAsync: activateCode, isLoading: isAssigning } = useActivateCode();
   const { data: assignStudentsRes, isLoading: isLoadingAssignStudents } = useStudents(
     { page: assignPage, search: debouncedAssignSearch, per_page: 5 },
     { enabled: activeTab === 'assign' }
@@ -133,14 +133,18 @@ export default function ActivationPage() {
     }
 
     try {
-      const itemType: 'course' | 'chapter' | 'library' | 'department' =
+      const itemType: 'course' | 'chapter' | 'library' | 'department' | 'quiz' | 'live_room' =
         code.attributes.codeable_type === 'App\\Models\\Course'
           ? 'course'
           : code.attributes.codeable_type === 'App\\Models\\Chapter'
             ? 'chapter'
             : code.attributes.codeable_type === 'App\\Models\\Department'
               ? 'department'
-              : 'library';
+              : code.attributes.codeable_type === 'App\\Models\\Quiz'
+                ? 'quiz'
+                : code.attributes.codeable_type === 'App\\Models\\LiveRoom'
+                  ? 'live_room'
+                  : 'library';
       await activateCode({
         code: code.attributes.code,
         item_id: code.attributes.codeable_id,
@@ -231,12 +235,12 @@ export default function ActivationPage() {
 
   const filteredCodes = codes?.filter((code) => {
     const matchesSearch = code.attributes.code.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === 'All Types' || getTypeLabel(code.attributes.codeable_type) === typeFilter;
+    const matchesType = typeFilter === 'All Types' || code.attributes.codeable_type === codeableTypeMap[typeFilter];
     const matchesStatus = statusFilter === 'All' ||
       (statusFilter === 'Used' && code.attributes.is_used) ||
       (statusFilter === 'Available' && !code.attributes.is_used);
     const matchesItem = itemFilter === 'All Items' ||
-      (code.attributes.codeable_id.toString() === itemFilter && getTypeLabel(code.attributes.codeable_type) === typeFilter);
+      (code.attributes.codeable_id.toString() === itemFilter && code.attributes.codeable_type === codeableTypeMap[typeFilter]);
     return matchesSearch && matchesType && matchesStatus && matchesItem;
   }) || [];
 
@@ -399,6 +403,7 @@ export default function ActivationPage() {
                   { value: 'Chapter', label: t('activation.types.chapter') },
                   { value: 'Library', label: t('activation.types.library') },
                   { value: 'Live Room', label: t('activation.types.liveRoom') },
+                  { value: 'Quiz', label: t('activation.types.quiz') },
                 ],
                 value: typeFilter === 'All Types' ? '' : typeFilter,
                 onChange: (val) => {

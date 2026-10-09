@@ -1,19 +1,4 @@
 "use client";
-import { z } from "zod";
-
-const changePasswordSchema = z
-  .object({
-    password: z.string().min(8, "passwordMin"),
-    confirmPassword: z.string().min(1, "confirmRequired"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ["confirmPassword"],
-    message: "passwordMismatch",
-  });
-
-type PasswordErrors = Partial<Record<"password" | "confirmPassword", string>>;
-
-
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
@@ -23,17 +8,12 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
-  Eye,
-  EyeOff,
   FileText,
   Globe2,
   HelpCircle,
-  Lock,
   Moon,
 } from "lucide-react";
 import Cookies from "@/lib/cookies";
-import { toast } from "sonner";
-import { updateUserPassword } from "@/src/services/student/user.service";
 
 type ToggleKey = "notifications" | "darkMode" | "autoDownload";
 
@@ -54,16 +34,7 @@ export default function StudentSettingsPage() {
     autoDownload: true,
   });
 
-  const [openPassword, setOpenPassword] = useState(false);
   const [openLanguage, setOpenLanguage] = useState(false);
-const [showPassword, setShowPassword] = useState(false);
-const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-const [passwords, setPasswords] = useState({
-  password: "",
-  confirmPassword: "",
-});
-
-const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
 
   const toggleValue = (key: ToggleKey) => {
     setToggles((prev) => ({
@@ -90,33 +61,6 @@ const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
 
     router.refresh();
   };
-
- const handleChangePassword = async() => {
-  const result = changePasswordSchema.safeParse(passwords);
-
-  if (!result.success) {
-    const fieldErrors: PasswordErrors = {};
-
-    result.error.issues.forEach((issue) => {
-      const field = issue.path[0] as keyof PasswordErrors;
-      fieldErrors[field] = issue.message;
-    });
-
-    setPasswordErrors(fieldErrors);
-    return;
-  }
- const res = await updateUserPassword(passwords.password);
- 
- if (!res.success) {
-  toast.error(res.message || t("errors.changePasswordFailed"));
-  return;
- }
-
- toast.success(res.message || t("passwordChanged"));
-  setPasswordErrors({});
-  setPasswords({ password: "", confirmPassword: "" });
-  setOpenPassword(false);
-};
 
   return (
     <main className=" bg-[#FAFAF8] p-6">
@@ -163,138 +107,6 @@ const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
 
         <section className="mt-5 overflow-hidden rounded-2xl border border-[var(--border-color)] bg-white shadow-sm">
           <SectionTitle title={t("account.title")} />
-
-          <button
-            type="button"
-            onClick={() => setOpenPassword((prev) => !prev)}
-            className="flex w-full items-center justify-between border-t border-[var(--border-color)] px-5 py-5 text-start transition hover:bg-gray-50"
-          >
-            <div className="flex items-center gap-4">
-              <IconBox className="bg-orange-50 text-orange-500">
-                <Lock size={18} />
-              </IconBox>
-
-              <div>
-                <h3 className="text-sm font-semibold text-[var(--text-dark)]">
-                  {t("account.changePassword.title")}
-                </h3>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">
-                  {t("account.changePassword.description")}
-                </p>
-              </div>
-            </div>
-
-            <ChevronDown
-              size={18}
-              className={`text-[var(--text-muted)] transition ${
-                openPassword ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {openPassword && (
-            <div className="border-t border-[var(--border-color)] bg-gray-50 px-5 py-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-2 block text-xs font-medium text-[var(--text-muted)]">
-                    {t("account.changePassword.newPassword")}
-                  </label>
-                  <div>
-
-
-  <div className="relative">
-    <input
-      type={showPassword ? "text" : "password"}
-      value={passwords.password}
-      onChange={(e) =>
-        setPasswords((prev) => ({
-          ...prev,
-          password: e.target.value,
-        }))
-      }
-      className="h-11 w-full rounded-xl border border-[var(--border-color)] bg-white px-4 pe-11 text-sm outline-none focus:border-[var(--primary)]"
-    />
-
-    <button
-      type="button"
-      onClick={() => setShowPassword((prev) => !prev)}
-      className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition hover:text-[var(--primary)]"
-    >
-      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-    </button>
-  </div>
-
-  {passwordErrors.password && (
-    <p className="mt-1 text-xs text-red-500">
-      {t(`errors.${passwordErrors.password}`)}
-    </p>
-  )}
-</div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-xs font-medium text-[var(--text-muted)]">
-                    {t("account.changePassword.confirmPassword")}
-                  </label>
-                 <div>
- 
-
-  <div className="relative">
-    <input
-      type={showConfirmPassword ? "text" : "password"}
-      value={passwords.confirmPassword}
-      onChange={(e) =>
-        setPasswords((prev) => ({
-          ...prev,
-          confirmPassword: e.target.value,
-        }))
-      }
-      className="h-11 w-full rounded-xl border border-[var(--border-color)] bg-white px-4 pe-11 text-sm outline-none focus:border-[var(--primary)]"
-    />
-
-    <button
-      type="button"
-      onClick={() =>
-        setShowConfirmPassword((prev) => !prev)
-      }
-      className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition hover:text-[var(--primary)]"
-    >
-      {showConfirmPassword ? (
-        <EyeOff size={18} />
-      ) : (
-        <Eye size={18} />
-      )}
-    </button>
-  </div>
-
-  {passwordErrors.confirmPassword && (
-    <p className="mt-1 text-xs text-red-500">
-      {t(`errors.${passwordErrors.confirmPassword}`)}
-    </p>
-  )}
-</div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOpenPassword(false)}
-                  className="rounded-xl border border-[var(--border-color)] px-5 py-2 text-sm font-semibold text-[var(--text-muted)] hover:bg-white"
-                >
-                  {t("cancel")}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleChangePassword}
-                  className="rounded-xl bg-[var(--primary)] px-5 py-2 text-sm font-semibold text-white hover:opacity-90"
-                >
-                  {t("save")}
-                </button>
-              </div>
-            </div>
-          )}
 
           <button
             type="button"

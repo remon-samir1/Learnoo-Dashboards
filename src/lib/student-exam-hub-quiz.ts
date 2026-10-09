@@ -7,7 +7,7 @@ import {
   readIsPublicMode,
   readQuizOwningCourseIds,
   readRemainingAttemptsFromQuizAttributes,
-} from '@/src/lib/student-quiz-activation-lock';
+} from './student-quiz-activation-lock.ts';
 
 export type HubQuizListRow = {
   id: string;
@@ -156,6 +156,8 @@ export function classifyHubQuizRow(
   enrolledCourseIds?: ReadonlySet<string> | Iterable<string> | null
 ): HubQuizBucket {
   const attrs = hubQuizAttrs(row);
+  const status = String(attrs.status ?? '').trim().toLowerCase();
+  if (status === 'draft') return 'hidden';
   // The enrolled-aware helper returns `true` when the student hasn't met the
   // requirements to bypass the lock (i.e. course not enrolled for 'included',
   // or hasn't entered a code for 'false').
@@ -168,9 +170,6 @@ export function classifyHubQuizRow(
     // It should go to 'locked' to prompt them for a code.
     return 'locked';
   }
-  const status = String(attrs.status ?? '')
-    .trim()
-    .toLowerCase();
   const startRaw = attrs.start_time;
   const endRaw = attrs.end_time;
   const start = typeof startRaw === 'string' && startRaw.trim() ? new Date(startRaw).getTime() : NaN;
@@ -178,7 +177,7 @@ export function classifyHubQuizRow(
 
   const rem = readHubQuizRemainingAttempts(row);
 
-  if (status !== 'active' && status !== 'draft') {
+  if (status !== 'active') {
     return 'locked';
   }
 

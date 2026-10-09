@@ -144,18 +144,15 @@ function getUserFromCookies(): User | null {
 // Store
 // ============================================
 
-const _initToken = typeof window !== 'undefined' ? getTokenFromCookies() : null;
-const _initUser = typeof window !== 'undefined' ? getUserFromCookies() : null;
-
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       // Initial state
-      user: _initUser,
-      token: _initToken,
-      isAuthenticated: !!_initToken,
+      user: null,
+      token: null,
+      isAuthenticated: false,
       isLoading: false,
-      isInitialized: typeof window !== 'undefined',
+      isInitialized: false,
       error: null,
 
       // Getters
@@ -463,6 +460,9 @@ export function initializeAuthStore() {
   } else {
     // No token anywhere — definitely not authenticated
     useAuthStore.setState({
+      user: null,
+      token: null,
+      isAuthenticated: false,
       isInitialized: true,
     });
   }

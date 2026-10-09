@@ -570,6 +570,13 @@ export default function CommunityModerationPage() {
     }
   };
   const [posts, setPosts] = useState<Post[]>([]);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('post');
+    if (id && /^\d+$/.test(id) && posts.some(post => String(post.id) === id)) {
+      setExpandedComments(previous => new Set(previous).add(id));
+      requestAnimationFrame(() => document.getElementById(`post-${id}`)?.scrollIntoView({ block: 'center' }));
+    }
+  }, [posts]);
 
   // Filter social links by search query
   const filteredSocialLinks = useMemo(() => {
@@ -989,7 +996,7 @@ export default function CommunityModerationPage() {
           const userRole = user?.role || 'student';
 
           return (
-            <div key={post.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
+            <div id={`post-${post.id}`} key={post.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="w-10 h-10 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center font-bold text-[15px] shrink-0">

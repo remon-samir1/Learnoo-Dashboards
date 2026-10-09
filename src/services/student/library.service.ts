@@ -2,7 +2,7 @@ import getUserDataFromJWT from '@/lib/server.utils';
 import type { LibraryItem, LibraryResponse } from '@/src/types/student-library';
 import { API_BASE_URL } from "@/src/lib/api";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || '${API_BASE_URL}').replace(/\/$/, '');
+const API_BASE = API_BASE_URL.replace(/\/$/, '');
 
 function parseCourseId(courseId: string | number): number | null {
   const parsed = typeof courseId === 'number' ? courseId : Number.parseInt(String(courseId), 10);

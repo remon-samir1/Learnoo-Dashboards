@@ -10,6 +10,7 @@
     "cancel": "إلغاء",
     "delete": "حذف",
     "edit": "تعديل",
+    "copy": "نسخ",
     "view": "عرض",
     "search": "بحث",
     "filter": "تصفية",
@@ -88,7 +89,11 @@
     "notifications": {
       "deleted": "تم حذف النقاش بنجاح",
       "replied": "تم إرسال الرد بنجاح"
-    }
+    },
+    "microphoneDenied": "تعذر الوصول إلى الميكروفون",
+    "recordVoiceFirst": "يرجى تسجيل رسالة صوتية أولًا",
+    "showReplies": "عرض الردود",
+    "hideReplies": "إخفاء الردود"
   },
   "auth": {
     "login": {
@@ -105,6 +110,11 @@
       "adminLink": "مدير أو معلم؟ سجل الدخول بكلمة المرور",
       "forgotPassword": "نسيت كلمة المرور؟",
       "registeredSuccess": "تم إنشاء الحساب بنجاح. سجّل الدخول برقم هاتفك.",
+      "sendDeviceRequest": "إرسال طلب للإدارة لاستخدام هذا الجهاز",
+      "sendingDeviceRequest": "جارٍ إرسال الطلب...",
+      "deviceRequestSent": "تم إرسال طلبك للإدارة. بعد الموافقة، سجّل الدخول من هذا الجهاز.",
+      "deviceChanged": "تم إنهاء الجلسة على هذا الجهاز بعد تغيير الجهاز المعتمد. سجّل الدخول للمتابعة.",
+      "sessionExpired": "انتهت جلستك. سجّل الدخول مرة أخرى.",
       "errors": {
         "missingFields": "الرجاء إدخال رقم الهاتف",
         "localPhoneFormat": "في مصر، أدخل رقمك المحلي مثل 010... من دون +20 أو 020.",
@@ -381,6 +391,10 @@
     "description": "هذه الميزة قيد التطوير."
   },
   "sidebar": {
+    "attendance": "الحضور",
+    "courseProgress": "التقدم في الدورات",
+    "engagement": "المشاركة",
+    "teacherFeedback": "ملاحظات المدرسين",
     "mainMenu": "القائمة الرئيسية",
     "dashboard": "لوحة التحكم",
     "instructors": "المدربون",
@@ -407,7 +421,10 @@
     "activation": "التفعيل",
     "adminDashboard": "لوحة تحكم الإدارة",
     "doctorDashboard": "لوحة تحكم الطبيب",
-    "parentDashboard": "لوحة تحكم ولي الأمر"
+    "parentDashboard": "لوحة تحكم ولي الأمر",
+    "schedules": "الجداول والمستندات",
+    "activity": "نشاط الفريق والأجهزة",
+    "guardians": "أولياء الأمور"
   },
   "issues": {
     "title": "الدعم الفني",
@@ -1272,7 +1289,7 @@
       "createPost": "إنشاء منشور",
       "postsEmpty": "لا توجد منشورات مطابقة لهذا التصفية بعد.",
       "postsError": "تعذّر تحميل المنشورات. حاول لاحقًا.",
-      "toastCreated": "تم نشر منشورك.",
+      "toastCreated": "تم إرسال منشورك. سيظهر بعد موافقة الإدارة.",
       "toastCreateFailed": "تعذّر إنشاء المنشور. حاول مرة أخرى.",
       "toastReactFailed": "تعذّر تحديث التفاعل. حاول مرة أخرى.",
       "badgeInstructor": "مدرّس",
@@ -2047,6 +2064,10 @@
     "ai": {
       "title": "استخراج الأسئلة",
       "description": "ارفع ملف PDF لاستخراج الأسئلة باستخدام الذكاء الاصطناعي.",
+      "language": "لغة الأسئلة",
+      "sourceLanguage": "نفس لغة الملف",
+      "arabic": "العربية",
+      "english": "الإنجليزية",
       "questionCount": "عدد الأسئلة",
       "questionCountPlaceholder": "مثال: 5",
       "pdfFile": "ملف PDF",
@@ -2055,6 +2076,13 @@
       "openButton": "استخراج بالذكاء الاصطناعي",
       "selectFileError": "يرجى اختيار ملف PDF أولاً.",
       "extractError": "فشل استخراج الأسئلة.",
+      "rateLimitReached": "تم بلوغ الحد اليومي المجاني أو حد مؤقت من مزود الخدمة. قد تشارك تطبيقات أخرى على حساب OpenRouter هذا في الحد. حاول مرة أخرى لاحقاً.",
+      "dailyUsageLoading": "جارٍ التحقق من عدد طلبات الذكاء الاصطناعي المتاحة اليوم...",
+      "dailyUsageUnavailable": "عدد طلبات الذكاء الاصطناعي المتاحة اليوم غير متاح.",
+      "dailyUsageRemaining": "متبقي {remaining} من {limit} طلبات توليد من Learnoo اليوم",
+      "dailyUsageUsed": "استخدم Learnoo {used} من {limit} طلبات اليوم.",
+      "dailyUsageEstimate": "هذا تقدير لاستخدام Learnoo فقط؛ قد تستهلك تطبيقات أخرى على حساب OpenRouter المشترك من الحد المجاني. يُعاد عند منتصف الليل بتوقيت UTC.",
+      "dailyUsageReached": "بلغ Learnoo الحد اليومي لتوليد الاختبارات. يُعاد عند منتصف الليل بتوقيت UTC.",
       "invalidResponse": "أعادت خدمة الذكاء الاصطناعي تنسيقًا غير صالح للأسئلة.",
       "extractSuccess": "تم استخراج الأسئلة من ملف PDF بنجاح.",
       "replaceTitle": "تم استخراج أسئلة جديدة",
@@ -2622,7 +2650,15 @@
     "noteUpdatedSuccess": "تم تحديث الملاحظة بنجاح",
     "noteCreatedSuccess": "تم إنشاء الملاحظة بنجاح",
     "noteUpdateFailed": "فشل تحديث الملاحظة",
-    "noteCreateFailed": "فشل إنشاء الملاحظة"
+    "noteCreateFailed": "فشل إنشاء الملاحظة",
+    "noteTypes": {
+      "summary": "ملخص",
+      "highlight": "نقاط بارزة",
+      "key_point": "نقطة أساسية",
+      "important_notice": "تنبيه مهم"
+    },
+    "viewerExplanation": "طلاب شاهدوا الدرس: {count}. لكل طالب عدّاد مشاهدات مستقل، ولا يمثل هذا العدد إجمالي طلاب الدورة.",
+    "recordedViews": "المشاهدات المسجلة"
   },
   "language": {
     "switcher": "اللغة",
@@ -2929,9 +2965,9 @@
         "technical": "الدعم الفني"
       },
       "faqs": {
-        "resetPassword": {
-          "question": "كيف يمكنني إعادة تعيين كلمة المرور؟",
-          "answer": "اذهب إلى الإعدادات > تغيير كلمة المرور، ثم أدخل كلمة المرور الحالية وأنشئ كلمة مرور جديدة. يمكنك أيضًا استخدام رابط نسيت كلمة المرور من صفحة تسجيل الدخول."
+        "otpLogin": {
+          "question": "كيف أسجّل الدخول إلى حساب الطالب؟",
+          "answer": "أدخل رقم هاتفك المسجّل، ثم انتقل إلى صفحة التحقق وأكّد رمز التحقق. حسابات الطلاب لا تستخدم كلمات مرور."
         },
         "accessPurchasedCourses": {
           "question": "كيف يمكنني الوصول إلى الكورسات التي اشتريتها؟",
@@ -3095,7 +3131,6 @@
     "communityPosts": "المنشورات في المجتمع",
     "pageTitle": "الملف الشخصي",
     "pageDescription": "إدارة بياناتك الشخصية وتفاصيل حسابك",
-    "download": "تحميل",
     "backToProfile": "العودة إلى الملف الشخصي",
     "academic": {
       "university": "الجامعة",
@@ -3178,12 +3213,6 @@
       "liveAttendance": "الحضور في المحاضرة",
       "communityPosts": "المنشورات في المجتمع",
       "settings": "الاعدادات"
-    },
-    "qr": {
-      "title": "رمز الطالب",
-      "description": "امسح للتحقق من هوية الطالب",
-      "downloadSuccess": "تم تحميل رمز QR بنجاح",
-      "downloadError": "فشل تحميل رمز QR"
     }
   },
   "notifications": {
@@ -3377,6 +3406,7 @@
       "viewAll": "عرض الكل",
       "upcomingLiveClasses": "الفصول المباشرة القادمة",
       "students": "طلاب",
+      "progress": "التقدم",
       "studentsNeedingAttention": "الطلاب الذين يحتاجون إلى انتباه",
       "noDataAvailable": "لا توجد بيانات متاحة"
     },

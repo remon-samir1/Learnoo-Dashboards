@@ -1,18 +1,16 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   Edit2,
-  Key,
   Mail,
   Phone,
   Calendar,
   GraduationCap,
   BookOpen,
   ClipboardList,
-  ShieldCheck,
   Layout,
   User,
   ExternalLink,
@@ -27,8 +25,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useStudent, useResetStudentPassword } from '@/src/hooks/useStudents';
-import ResetPasswordModal from '@/components/modals/ResetPasswordModal';
+import { useStudent } from '@/src/hooks/useStudents';
 import { StudentStatusLabels } from '@/src/types';
 
 // Helper to get initials from name
@@ -42,13 +39,10 @@ export default function StudentProfilePage() {
   const t = useTranslations();
   const params = useParams();
   const studentId = params.id as string;
-  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-  const [generatedPassword, setGeneratedPassword] = useState<string | undefined>(undefined);
-  const [resetError, setResetError] = useState<string | null>(null);
+
 
   // Fetch student data
   const { data: studentResponse, isLoading, error } = useStudent(studentId);
-  const { mutate: resetPassword, isLoading: isResetting } = useResetStudentPassword();
 
   // New API response structure: { data: { id, type, attributes } }
   const studentData = studentResponse?.data?.attributes;
@@ -81,32 +75,6 @@ export default function StudentProfilePage() {
       lastIp: studentData.device_access?.last_ip || 'N/A'
     }
   } : null;
-
-  // Step 1: Open confirmation modal
-  const handleResetClick = () => {
-    setGeneratedPassword(undefined);
-    setResetError(null);
-    setIsResetModalOpen(true);
-  };
-
-  // Step 2: Confirm and call API
-  const handleConfirmReset = async () => {
-    try {
-      // Generate 10-char password to ensure it meets min 8 char requirement
-      const newPassword = Math.random().toString(36).slice(-10).toUpperCase();
-      await resetPassword({ studentId, password: newPassword });
-      setGeneratedPassword(newPassword);
-    } catch (err: any) {
-      console.error('Failed to reset password:', err);
-      setResetError(err.message || 'Failed to reset password. Please try again.');
-    }
-  };
-
-  const handleCloseModal = () => {
-    setIsResetModalOpen(false);
-    setGeneratedPassword(undefined);
-    setResetError(null);
-  };
 
   if (isLoading) {
     return (
@@ -151,14 +119,7 @@ export default function StudentProfilePage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {/* <button 
-            onClick={handleResetPassword}
-            disabled={isResetting}
-            className="flex-1 md:flex-none px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#475569] rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#F8FAFC] hover:shadow-sm transition-all disabled:opacity-50"
-          >
-            {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
-            Reset Password
-          </button> */}
+
           <Link
             href={`/doctor/students/${student.id}/edit`}
             className="flex-1 md:flex-none px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200"
@@ -373,25 +334,7 @@ export default function StudentProfilePage() {
             </div>
           </section>
 
-          {/* Section 5: Security & Account Access */}
-          <section className="bg-white rounded-3xl border border-[#F1F5F9] shadow-sm overflow-hidden border-orange-100">
-            <div className="px-6 py-5 border-b border-[#F1F5F9] flex items-center gap-2">
-              <div className="p-1.5 bg-orange-50 rounded-lg">
-                <ShieldCheck className="w-4 h-4 text-orange-600" />
-              </div>
-              <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('students.form.view.sections.security')}</h2>
-            </div>
-            <div className="p-8 flex flex-col gap-4">
-              <button
-                onClick={handleResetClick}
-                disabled={isResetting}
-                className="w-fit flex items-center gap-2.5 text-[#4F46E5] hover:bg-indigo-50 px-5 py-2.5 rounded-xl border border-indigo-100 font-bold transition-all disabled:opacity-50"
-              >
-                {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
-                {t('students.form.view.fields.resetPassword')}
-              </button>
-            </div>
-          </section>
+
         </div>
 
         {/* Right Column: Cards */}
@@ -480,16 +423,7 @@ export default function StudentProfilePage() {
         </div>
       </div>
 
-      {/* Reset Modal */}
-      <ResetPasswordModal
-        isOpen={isResetModalOpen}
-        onClose={handleCloseModal}
-        studentName={student.name}
-        generatedPassword={generatedPassword}
-        onConfirm={handleConfirmReset}
-        isLoading={isResetting}
-        error={resetError}
-      />
+
     </div>
   );
 }

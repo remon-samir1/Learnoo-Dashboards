@@ -10,7 +10,7 @@ import WelcomeSection from "@/src/components/student/home/WelcomeSection";
 import { getCategories } from "@/src/services/student/department.service";
 import { getLatestStudentExams } from "@/src/services/student/exam.service";
 import { getLibrary } from "@/src/services/student/library.service";
-import { getLatestGeneralPosts } from "@/src/services/student/post.service";
+import { getLatestStudentPosts } from "@/src/services/student/post.service";
 import { getStudentLiveRooms } from "@/src/services/student/live-room.service";
 import { getLiveRoomCourseIds } from "@/src/lib/student-live-room";
 import {
@@ -46,15 +46,16 @@ export default async function StudentPage() {
   const categoryResult = await getCategories();
   const category = categoryResult.success ? categoryResult.data?.data ?? [] : [];
 
-  const postsResult = await getLatestGeneralPosts(3);
-  const latestPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
 
   const examsResult = await getLatestStudentExams(4);
   const latestExams = examsResult.success ? examsResult.data ?? [] : [];
 
-  const enrolledCourseIds = new Set(
+  const enrolledCourseIds = new Set<string>(
     (courses || []).map((c: { id: string | number }) => String(c.id))
   );
+
+  const postsResult = await getLatestStudentPosts(enrolledCourseIds, 3);
+  const latestPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
 
   // 1. Filter continue watching progress by enrolled courses
   const filteredProgress = (progress || []).filter((p: any) => {
@@ -97,8 +98,8 @@ export default async function StudentPage() {
 
   // 5. Filter library materials by enrolled courses
   const filteredLibrary = rawLibrary.filter((item: any) => {
-    const cid = item?.attributes?.course_id ?? item?.course_id;
-    return cid != null && enrolledCourseIds.has(String(cid));
+    const ids = item?.attributes?.course_ids ?? [];
+    return ids.some((id: number | string) => enrolledCourseIds.has(String(id)));
   });
 
   // 6. Filter exams by enrolled courses
