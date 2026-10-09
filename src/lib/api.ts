@@ -686,6 +686,8 @@ export const coursesApi = {
 
   get: (id: number) => get<ApiResponse<Course>>(`/v1/course/${id}`),
 
+  subscribers: (id: number, page = 1) => get<{ data: { id: number; first_name: string; last_name: string; phone: string }[]; last_page: number }>(`/v1/course/${id}/subscribers`, { page }),
+
   create: (data: CreateCourseRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
     return postMultipart<ApiResponse<Course>>('/v1/course', formData, onProgress);

@@ -227,7 +227,7 @@ export function DetailPanel({
                 </div>
                 {node.stats?.students != null && <div>
                   <label className="text-[10px] text-gray-400 block">{t("students")}</label>
-                  <p className="text-xs font-bold text-green-600">{node.stats.students}</p>
+                  <button type="button" onClick={() => openViewers(node)} className="text-xs font-bold text-green-600 underline" aria-label={locale === 'ar' ? 'عرض الطلاب المشتركين وأرقام هواتفهم' : 'View subscribers and their phone numbers'}>{node.stats.students}</button>
                 </div>}
               </div>
             </div>

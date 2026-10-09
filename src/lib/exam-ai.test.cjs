@@ -16,6 +16,7 @@ test('all requested questions and correct answers must be valid; partial results
   assert.throws(() => parseGeneratedExamQuestions([{ output }], 21), /INVALID_AI_RESPONSE/);
   for (const invalid of [
     { ...question(), text: '' }, { ...question(), type: 'unknown' },
+    { ...question(), type: 'short_answer', answers: [{ text: 'أ', is_correct: true }] },
     { ...question(), answers: [{ text: 'أ', is_correct: false }, { text: 'ب', is_correct: false }] },
     { ...question(), answers: [{ text: 'أ', is_correct: true }, { text: 'ب', is_correct: true }] },
     { ...question(), answers: [{ text: '', is_correct: true }, { text: 'ب', is_correct: false }] },

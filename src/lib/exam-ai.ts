@@ -68,7 +68,7 @@ function parseQuestion(value: unknown): GeneratedExamQuestion | null {
   const correctCount = validAnswers.filter(answer => answer.isCorrect).length;
   if (correctCount === 0 || (['single_choice', 'true_false'].includes(type) && correctCount !== 1)) return null;
   if (type === 'true_false' && answers.length !== 2) return null;
-  if (type !== 'short_answer' && answers.length < 2) return null;
+  if (type === 'short_answer' || answers.length < 2 || correctCount === answers.length) return null;
 
   return {
     text: value.text.trim(),
