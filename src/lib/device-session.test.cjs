@@ -49,10 +49,11 @@ test('revoked client sessions and HTML 401 responses redirect through cookie cle
 
 test('session cleanup redirects to login with the notice and preserves the device cookie', () => {
   const { GET } = load('../../app/api/auth/session-end/route.ts');
-  const response = GET(new NextRequest('https://learnoo.app/api/auth/session-end?reason=device-changed', {
+  const response = GET(new NextRequest('http://localhost:3000/api/auth/session-end?reason=device-changed', {
     headers: { cookie: 'token=old-token; user_role=Student; learnoo_device_id=laptop-device-id; locale=en' },
   }));
-  assert.equal(response.headers.get('location'), 'https://learnoo.app/login?session=device-changed');
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get('location'), '/login?session=device-changed');
   assert.equal(response.cookies.get('token').value, '');
   assert.equal(response.cookies.get('user_role').value, '');
   assert.equal(response.cookies.get('user_data').value, '');
