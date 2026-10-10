@@ -4,8 +4,6 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
-  Edit,
-  Trash2,
   User,
   FileText,
   BookOpen,
@@ -14,8 +12,8 @@ import {
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useParams } from 'next/navigation';
-import { useNote, useDeleteNote } from '@/src/hooks/useNotes';
+import { useParams } from 'next/navigation';
+import { useNote } from '@/src/hooks/useNotes';
 
 function formatDate(dateString: string | null, naText: string = 'N/A'): string {
   if (!dateString) return naText;
@@ -24,23 +22,10 @@ function formatDate(dateString: string | null, naText: string = 'N/A'): string {
 
 export default function NoteDetailPage() {
   const t = useTranslations('notesSummaries');
-  const router = useRouter();
   const params = useParams();
   const noteId = parseInt(params.id as string);
 
   const { data: note, isLoading, error } = useNote(noteId);
-  const { mutate: deleteNote, isLoading: isDeleting } = useDeleteNote();
-
-  const handleDelete = async () => {
-    if (!confirm(t('detail.deleteConfirm'))) return;
-
-    try {
-      await deleteNote(noteId);
-      router.push('/notes-summaries');
-    } catch {
-      // Error handled by hook
-    }
-  };
 
   if (isLoading) {
     return (
@@ -55,7 +40,7 @@ export default function NoteDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-[#EF4444]">{t('detail.loadError')}</p>
         <Link
-          href="/notes-summaries"
+          href="/doctor/notes-summaries"
           className="flex items-center gap-2 px-4 py-2 bg-[#2137D6] text-white rounded-xl text-sm font-bold"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -71,7 +56,7 @@ export default function NoteDetailPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
-            href="/notes-summaries"
+            href="/doctor/notes-summaries"
             className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -86,23 +71,6 @@ export default function NoteDetailPage() {
               <span className="text-sm text-[#94A3B8]">{formatDate(note.attributes.created_at, t('na'))}</span>
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/doctor/notes-summaries/${note.id}/edit`}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#1E293B] rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-all"
-          >
-            <Edit className="w-4 h-4" />
-            {t('detail.edit')}
-          </Link>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-red-200 disabled:opacity-50"
-          >
-            <Trash2 className="w-4 h-4" />
-            {t('detail.delete')}
-          </button>
         </div>
       </div>
 

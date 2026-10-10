@@ -24,3 +24,14 @@ export function getJitsiAppUrl(roomId: string | number, displayName: string, and
   const meeting = `${JITSI_DOMAIN}/${getJitsiRoomName(roomId)}#userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`;
   return android ? `intent://${meeting}#Intent;scheme=org.jitsi.meet;package=org.jitsi.meet;end` : `org.jitsi.meet://${meeting}`;
 }
+
+export const liveMeetingBranding = {
+  APP_NAME: 'Learnoo',
+  PROVIDER_NAME: 'Learnoo',
+  SHOW_JITSI_WATERMARK: false,
+  SHOW_BRAND_WATERMARK: false,
+  SHOW_POWERED_BY: false,
+  JITSI_WATERMARK_LINK: '',
+  BRAND_WATERMARK_LINK: '',
+  DEFAULT_WELCOME_PAGE_LOGO_URL: '',
+};

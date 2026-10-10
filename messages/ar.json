@@ -811,6 +811,8 @@
     "stats": {
       "totalStudents": "إجمالي الطلاب",
       "activeCourses": "الدورات النشطة",
+      "draftCourses": "الدورات المسودة",
+      "liveSessions": "إجمالي الجلسات المباشرة",
       "liveSessionsToday": "الجلسات المباشرة اليوم",
       "notesCreated": "الملاحظات المنشأة",
       "monthlyRevenue": "الإيرادات الشهرية",
@@ -1374,6 +1376,8 @@
       "notes": "ملاحظات",
       "exams": "اختبارات",
       "noInstructor": "لا يوجد مدرس",
+      "draftedBy": "حوّلها لمسودة: {name}",
+      "draftActorUnknown": "حوّلها لمسودة: غير مسجّل",
       "noCenter": "لا يوجد مركز",
       "untitled": "دورة بدون عنوان"
     },

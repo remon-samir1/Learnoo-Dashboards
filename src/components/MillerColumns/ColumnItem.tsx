@@ -143,6 +143,7 @@ export function ColumnItem({
 
   // ── Add buttons ────────────────────────────────────────────────────────────
   const renderAddButtons = () => {
+    if (isInstructor) return null;
     switch (item.type) {
       case "university":
         if (isInstructor) return null;
@@ -249,7 +250,7 @@ export function ColumnItem({
 
   // ── Copy/Move for chapters ─────────────────────────────────────────────────
   const renderCopyMove = () => {
-    if (item.type !== "chapter" || !onCopyMove) return null;
+    if (isInstructor || item.type !== "chapter" || !onCopyMove) return null;
     return (
       <>
         <ActionBtn onClick={() => onCopyMove(item, "copy")} title="Copy" className="text-blue-400 hover:bg-blue-50">
@@ -307,14 +308,14 @@ export function ColumnItem({
         {renderCopyMove()}
 
         {/* Edit */}
-        {(!isInstructor || ['course', 'lecture', 'chapter', 'note'].includes(item.type)) && (
+        {!isInstructor && (
         <ActionBtn onClick={() => onEdit(item)} title="Edit" className="text-gray-400 hover:text-orange-600 hover:bg-orange-50">
           <Edit className="w-3 h-3" />
         </ActionBtn>
         )}
 
         {/* Delete */}
-        {(item.type === 'course' || item.type === 'lecture' || item.type === 'chapter' || !isInstructor) && (
+        {!isInstructor && (
           <ActionBtn onClick={() => onDelete(item)} title="Delete" className="text-gray-400 hover:text-red-600 hover:bg-red-50">
             <Trash2 className="w-3 h-3" />
           </ActionBtn>

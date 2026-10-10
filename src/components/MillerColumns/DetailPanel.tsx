@@ -710,18 +710,18 @@ export function DetailPanel({
       <div className="p-3 border-t border-gray-200 bg-gray-50 flex-shrink-0 flex gap-2 flex-wrap">
         {node.type === "chapter" && (
           <>
-            <button
+            {!isInstructor && <button
               onClick={() => onCopyMove(node, "copy")}
               className="px-2.5 py-1.5 bg-blue-50 text-blue-600 text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
             >
               <Copy className="w-3.5 h-3.5" /> {t("copy")}
-            </button>
-            <button
+            </button>}
+            {!isInstructor && <button
               onClick={() => onCopyMove(node, "move")}
               className="px-2.5 py-1.5 bg-purple-50 text-purple-600 text-xs font-semibold rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-1"
             >
               <ArrowRightLeft className="w-3.5 h-3.5" /> {t("move")}
-            </button>
+            </button>}
             <button
               onClick={() => openViewers(node)}
               className="px-2.5 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
@@ -731,7 +731,7 @@ export function DetailPanel({
           </>
         )}
 
-        {(!isInstructor || ['course', 'lecture', 'chapter', 'note'].includes(node.type)) && (
+        {!isInstructor && (
         <button
           onClick={() => onEdit(node)}
           className="flex-grow px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-lg transition-colors text-center"

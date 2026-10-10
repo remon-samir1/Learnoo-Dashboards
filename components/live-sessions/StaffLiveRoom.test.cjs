@@ -50,6 +50,11 @@ test('staff hangup preserves another page and returns from the room page', () =>
     const view = room({ pathname });
     assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_JITSI_WATERMARK, false);
     assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_BRAND_WATERMARK, false);
+    assert.equal(view.meeting.interfaceConfigOverwrite.APP_NAME, 'Learnoo');
+    assert.equal(view.meeting.interfaceConfigOverwrite.PROVIDER_NAME, 'Learnoo');
+    assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_POWERED_BY, false);
+    assert.equal(view.meeting.configOverwrite.toolbarButtons.includes('help'), false);
+    assert.equal(view.meeting.configOverwrite.toolbarButtons.includes('feedback'), false);
     view.meeting.onReadyToClose();
     assert.equal(view.closed, true);
     assert.deepEqual(view.destinations, pathname.endsWith('/room') ? ['/live-sessions'] : []);
@@ -67,7 +72,7 @@ test('iPad opens the same native room without joining twice; Android uses an int
     view.elements().find(node => node.type === 'button' && String(node.props.children).startsWith('متابعة في المتصفح')).props.onClick();
     view.render();
     assert.equal(view.meeting.roomName, 'learnooroom70');
-    view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق Jitsi').props.onClick();
+    view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق مشاركة الشاشة').props.onClick();
     view.render();
     assert.equal(view.meeting, null);
     assert.equal(view.closed, false);

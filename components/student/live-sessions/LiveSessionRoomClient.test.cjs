@@ -39,6 +39,9 @@ test('leaving a Student meeting returns to the localized session list', () => {
     assert.equal(meeting.configOverwrite.startWithVideoMuted, true);
     assert.equal(meeting.interfaceConfigOverwrite.SHOW_JITSI_WATERMARK, false);
     assert.equal(meeting.interfaceConfigOverwrite.SHOW_BRAND_WATERMARK, false);
+    assert.equal(meeting.interfaceConfigOverwrite.APP_NAME, 'Learnoo');
+    assert.equal(meeting.interfaceConfigOverwrite.PROVIDER_NAME, 'Learnoo');
+    assert.equal(meeting.interfaceConfigOverwrite.SHOW_POWERED_BY, false);
     assert.equal(typeof meeting.onReadyToClose, 'function');
     meeting.onReadyToClose();
     assert.deepEqual(destinations, [`/${locale}/student/live-sessions`]);

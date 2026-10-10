@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus, Search, ChevronDown } from 'lucide-react';
 import { CourseCard } from '@/components/CourseCard';
@@ -29,6 +29,7 @@ function transformCourseToCardProps(course: Course, t: (key: string) => string) 
     image: attrs.thumbnail || 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop&q=60',
     title: attrs.title || t('courses.card.untitled'),
     instructor: attrs.instructor?.data?.attributes?.full_name || t('courses.card.noInstructor'),
+    draftedBy: 'drafted_by' in attrs ? [attrs.drafted_by?.first_name, attrs.drafted_by?.last_name].filter(Boolean).join(' ') : undefined,
     center: attrs.category?.data?.attributes?.name
       || attrs.center?.data?.attributes?.name
       || attrs.department?.data?.attributes?.name
@@ -44,10 +45,13 @@ function transformCourseToCardProps(course: Course, t: (key: string) => string) 
 export default function CoursesPage() {
   const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState(t('courses.allStatuses'));
-  const [approvalFilter, setApprovalFilter] = useState(t('courses.allApprovals'));
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [approvalFilter, setApprovalFilter] = useState('all');
   const { data: courses, isLoading, error, refetch } = useCourses({});
   const { mutate: deleteCourse } = useDeleteCourse();
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('status') === 'draft') setStatusFilter('0');
+  }, []);
 
   const handleDelete = async (courseId: number) => {
     if (!confirm(t('courses.deleteConfirm'))) return;
@@ -96,10 +100,10 @@ export default function CoursesPage() {
               value={approvalFilter}
               onChange={(e) => setApprovalFilter(e.target.value)}
             >
-              <option>{t('courses.allApprovals')}</option>
-              <option>{t('courses.approved')}</option>
-              <option>{t('courses.pending')}</option>
-              <option>{t('courses.declined')}</option>
+              <option value="all">{t('courses.allApprovals')}</option>
+              <option value="1">{t('courses.approved')}</option>
+              <option value="0">{t('courses.pending')}</option>
+              <option value="2">{t('courses.declined')}</option>
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
           </div>
@@ -109,9 +113,9 @@ export default function CoursesPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option>{t('courses.allStatuses')}</option>
-              <option>{t('courses.active')}</option>
-              <option>{t('courses.draft')}</option>
+              <option value="all">{t('courses.allStatuses')}</option>
+              <option value="1">{t('courses.active')}</option>
+              <option value="0">{t('courses.draft')}</option>
             </select>
             <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
           </div>
@@ -135,18 +139,9 @@ export default function CoursesPage() {
           </div>
         ) : courses && courses.length > 0 ? (
           courses
-            .filter((course) => {
-              if (statusFilter === t('courses.allStatuses')) return true;
-              const statusMap: { [key: number]: string } = { 0: 'Draft', 1: 'Active' };
-              const courseStatus = statusMap[course.attributes.status] || 'Draft';
-              return courseStatus === statusFilter;
-            })
-            .filter((course) => {
-              if (approvalFilter === t('courses.allApprovals')) return true;
-              const approvalMap: { [key: number]: string } = { 0: 'Pending', 1: 'Approved', 2: 'Declined' };
-              const courseApproval = approvalMap[course.attributes.approval] || 'Pending';
-              return courseApproval === approvalFilter;
-            })
+            .filter(course => statusFilter === 'all' || String(course.attributes.status) === statusFilter)
+            .filter(course => approvalFilter === 'all' || String(course.attributes.approval) === approvalFilter)
+            .filter(course => course.attributes.title.toLowerCase().includes(searchQuery.toLowerCase()))
             .map((course) => {
               const cardProps = transformCourseToCardProps(course, t);
               return (

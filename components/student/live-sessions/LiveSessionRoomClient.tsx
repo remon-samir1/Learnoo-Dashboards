@@ -24,7 +24,7 @@ import {
   normalizeLiveStatus,
 } from "@/src/lib/student-live-room";
 import { useMemo, useRef, useState } from "react";
-import { JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
+import { liveMeetingBranding, JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
 
 interface JitsiExternalApi {
   executeCommand: (command: string, ...args: unknown[]) => void;
@@ -296,8 +296,7 @@ export default function LiveSessionRoomClient({
                   },
                 }}
                 interfaceConfigOverwrite={{
-                  SHOW_JITSI_WATERMARK: false,
-                  SHOW_BRAND_WATERMARK: false,
+                  ...liveMeetingBranding,
                   DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
                   SHOW_CHROME_EXTENSION_BANNER: false,
                   MOBILE_APP_PROMO: false,

@@ -43,7 +43,9 @@ export default function CourseDetailPage() {
   const { mutate: activateCode, isLoading: isActivating } = useActivateCode();
   const { mutate: uploadPreActivation, isLoading: isUploadingPreActivation } = useUploadPreActivation();
   const { data: students } = useStudents();
-  const { canUseActivations } = useCurrentUser();
+  const { canUseActivations, role } = useCurrentUser();
+  const isInstructor = role === 'Instructor';
+  const basePath = isInstructor ? '/doctor' : '';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const preactivationFileRef = useRef<HTMLInputElement>(null);
 
@@ -186,7 +188,7 @@ export default function CourseDetailPage() {
           <p className="text-sm">{courseError || t('courses.view.notFound')}</p>
         </div>
         <Link
-          href="/courses"
+          href={`${basePath}/courses`}
           className="px-6 py-2 bg-white border border-[#E2E8F0] rounded-xl text-sm font-bold text-[#64748B] hover:bg-[#F8FAFC] transition-all"
         >
           {t('courses.view.backToCourses')}
@@ -203,7 +205,7 @@ export default function CourseDetailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link 
-            href="/courses"
+            href={`${basePath}/courses`}
             className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl text-[#64748B] hover:text-[#1E293B] hover:shadow-sm transition-all"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -222,18 +224,18 @@ export default function CourseDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            href="/departments"
+            href={`${basePath}/departments`}
             className="px-5 py-2.5 bg-white border border-[#E2E8F0] text-[#475569] rounded-xl text-sm font-bold hover:bg-[#F8FAFC] transition-all"
           >
             {t('courses.view.manageContent')}
           </Link>
-          <Link
+          {!isInstructor && <Link
             href={`/courses/${id}/edit`}
             className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
           >
             <Edit3 className="w-4 h-4" />
             {t('courses.view.editCourse')}
-          </Link>
+          </Link>}
         </div>
       </div>
 
@@ -341,7 +343,7 @@ export default function CourseDetailPage() {
                 <h2 className="text-sm font-bold text-[#1E293B] uppercase tracking-wider">{t('courses.view.sections.activation')}</h2>
               </div>
               <Link
-                href={`/activation/generate?course_id=${courseId}`}
+                href={`${basePath}/activation/generate?course_id=${courseId}`}
                 className="p-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[#64748B] hover:text-[#2137D6] hover:border-[#2137D6] transition-all"
                 title={t('courses.view.generateCodes')}
               >
@@ -591,4 +593,3 @@ export default function CourseDetailPage() {
     </div>
   );
 }
-

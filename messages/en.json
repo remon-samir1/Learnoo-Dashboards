@@ -544,6 +544,8 @@
       "welcome": {
         "title": "Welcome back",
         "activeCourses": "Active Courses",
+      "draftCourses": "Draft courses",
+      "liveSessions": "Total live sessions",
         "liveToday": "Live Today",
         "upcomingExams": "In Progress",
         "notes": "Notes and Summaries",
@@ -1338,6 +1340,8 @@
       "notes": "notes",
       "exams": "exams",
       "noInstructor": "No Instructor",
+      "draftedBy": "Moved to draft by: {name}",
+      "draftActorUnknown": "Moved to draft by: not recorded",
       "noCenter": "No Center",
       "untitled": "Untitled Course"
     },

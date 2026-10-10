@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getUserData } from '@/lib/auth';
 import { JitsiMeeting } from '@jitsi/react-sdk';
-import { JITSI_DOMAIN, getJitsiRoomName, getJitsiAppUrl } from '@/src/lib/jitsi';
+import { liveMeetingBranding, JITSI_DOMAIN, getJitsiRoomName, getJitsiAppUrl } from '@/src/lib/jitsi';
 
 export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: string; basePath: string; onClose: () => void }) {
   const router = useRouter();
@@ -117,20 +117,20 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
 
       {recordingError && <p role="alert" className="bg-red-950 p-3 text-sm text-white">{recordingError}</p>}
       {screenCaptureSupported === false && <div dir="rtl" className="shrink-0 bg-slate-800 px-4 py-3 text-sm text-white">
-        مشاركة شاشة الآيباد أو الهاتف تحتاج تطبيق Jitsi Meet. الطلاب يظلّون داخل Learnoo.
-        {meetingInBrowser && <a className="ms-2 underline" href={getJitsiAppUrl(roomId, userName, android)} onClick={() => { setMeetingInBrowser(false); setJoined(false); jitsiApiRef.current = null; }}>فتح في تطبيق Jitsi</a>}
+        مشاركة شاشة الآيباد أو الهاتف تحتاج تطبيق مشاركة الشاشة. الطلاب يظلّون داخل Learnoo.
+        {meetingInBrowser && <a className="ms-2 underline" href={getJitsiAppUrl(roomId, userName, android)} onClick={() => { setMeetingInBrowser(false); setJoined(false); jitsiApiRef.current = null; }}>فتح في تطبيق مشاركة الشاشة</a>}
       </div>}
 
       {/* Jitsi Meeting Embed */}
       <div className="min-h-0 flex-1 relative w-full overflow-auto">
         {screenCaptureSupported === null ? <p className="p-6 text-white">جارٍ تجهيز الجلسة…</p> : !meetingInBrowser ? <div dir="rtl" className="mx-auto flex max-w-xl flex-col gap-5 p-6 text-center text-white">
           <Smartphone className="mx-auto h-10 w-10" />
-          <h2 className="text-xl font-bold">ابدأ الجلسة من تطبيق Jitsi Meet</h2>
+          <h2 className="text-xl font-bold">ابدأ الجلسة من تطبيق مشاركة الشاشة</h2>
           <p>ثبّت التطبيق، ثم افتح نفس الجلسة من الزر التالي. داخل التطبيق اختر «مشاركة الشاشة»، ثم وافق على بدء بث الشاشة من جهازك.</p>
-          <a className="rounded-lg bg-blue-600 px-4 py-3 font-bold" href={getJitsiAppUrl(roomId, userName, android)}>فتح في تطبيق Jitsi</a>
-          <a className="underline" href="https://jitsi.org/downloads/" target="_blank" rel="noopener noreferrer">تحميل تطبيق Jitsi Meet</a>
-          <p className="text-sm text-slate-300">إذا لم يفتح التطبيق، انسخ رابط الجلسة التالي والصقه في خانة الانضمام داخل Jitsi Meet:</p>
-          <input aria-label="رابط الجلسة لتطبيق Jitsi" readOnly value={`https://${JITSI_DOMAIN}/${jitsiRoomName}`} dir="ltr" className="w-full rounded-lg bg-slate-700 p-3 text-sm" onFocus={event => event.currentTarget.select()} />
+          <a className="rounded-lg bg-blue-600 px-4 py-3 font-bold" href={getJitsiAppUrl(roomId, userName, android)}>فتح في تطبيق مشاركة الشاشة</a>
+          <a className="underline" href="https://jitsi.org/downloads/" target="_blank" rel="noopener noreferrer">تحميل تطبيق مشاركة الشاشة</a>
+          <p className="text-sm text-slate-300">إذا لم يفتح التطبيق، انسخ رابط الجلسة التالي والصقه في خانة الانضمام داخل تطبيق مشاركة الشاشة:</p>
+          <input aria-label="رابط الجلسة لتطبيق مشاركة الشاشة" readOnly value={`https://${JITSI_DOMAIN}/${jitsiRoomName}`} dir="ltr" className="w-full rounded-lg bg-slate-700 p-3 text-sm" onFocus={event => event.currentTarget.select()} />
           <button className="text-sm underline" onClick={() => setMeetingInBrowser(true)}>متابعة في المتصفح بدون مشاركة شاشة الجهاز</button>
         </div> : <JitsiMeeting
           domain={JITSI_DOMAIN}
@@ -160,11 +160,9 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
               'download',
               'embedmeeting',
               'etherpad',
-              'feedback',
               'filmstrip',
               'fullscreen',
               'hangup',
-              'help',
               'highlight',
               'invite',
               'linktosalesforce',
@@ -196,8 +194,7 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
             },
           }}
           interfaceConfigOverwrite={{
-            SHOW_JITSI_WATERMARK: false,
-            SHOW_BRAND_WATERMARK: false,
+            ...liveMeetingBranding,
             DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
             SHOW_CHROME_EXTENSION_BANNER: false,
             MOBILE_APP_PROMO: false,

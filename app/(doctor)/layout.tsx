@@ -1,7 +1,8 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DoctorSidebar from '../../components/DoctorSidebar';
 import DoctorHeader from '../../components/DoctorHeader';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function DoctorLayout({
   children,
@@ -9,6 +10,14 @@ export default function DoctorLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const readOnlyRoute = /^\/doctor\/(universities|centers|faculties|departments|courses|lectures|chapters|notes-summaries)\/(add|[^/]+\/edit)$/.test(pathname)
+    || /^\/doctor\/courses\/[^/]+\/(lectures|notes)\/create$/.test(pathname) || pathname === '/doctor/content-manager';
+  useEffect(() => {
+    if (readOnlyRoute) router.replace('/doctor/departments');
+  }, [readOnlyRoute, router]);
+  if (readOnlyRoute) return null;
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans">
