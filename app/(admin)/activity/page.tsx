@@ -24,16 +24,16 @@ export default function OwnerActivityPage() {
     }).catch(() => setError(true));
   }, [role, page, from, to]);
   useEffect(() => {
-    if (role !== 'Super Admin') return;
+    if (role !== 'Super Admin' && role !== 'Admin') return;
     let active = true;
     const load = () => api.ownerOperations.devices().then(transfers => { if (active) setDevices(transfers.data); }).catch(() => { if (active) setError(true); });
     load();
     const timer = window.setInterval(load, 30000);
     return () => { active = false; window.clearInterval(timer); };
   }, [role]);
-  if (role !== 'Super Admin') return <p>{ar ? 'هذه الصفحة متاحة للمالك فقط' : 'This page is available to the Owner only'}</p>;
+  if (role !== 'Super Admin' && role !== 'Admin') return <p>{ar ? 'هذه الصفحة متاحة للمالك والأدمن فقط' : 'This page is available to the Owner and Admin only'}</p>;
   return <div className="space-y-6 pb-12">
-    <h1 className="text-2xl font-bold">{ar ? 'نشاط الفريق واعتماد الأجهزة' : 'Staff activity and device approvals'}</h1>
+    <h1 className="text-2xl font-bold">{role === 'Admin' ? (ar ? 'اعتماد الأجهزة' : 'Device approvals') : (ar ? 'نشاط الفريق واعتماد الأجهزة' : 'Staff activity and device approvals')}</h1>
     {error && <p role="alert">{ar ? 'تعذر تحميل البيانات' : 'Could not load data'}</p>}
     <h2 className="text-lg font-bold">{ar ? 'طلبات نقل الجهاز' : 'Device transfer requests'}</h2>
     {!devices.length && <p>{ar ? 'لا توجد طلبات معلقة' : 'No pending requests'}</p>}
@@ -49,6 +49,7 @@ export default function OwnerActivityPage() {
       catch { toast.error(ar ? 'تعذر اعتماد الجهاز' : 'Could not approve device'); }
       finally { setBusy(null); }
     }}>{ar ? 'اعتماد الجهاز الجديد' : 'Approve new device'}</button></article>)}
+    {role === 'Super Admin' && <>
     <h2 className="text-lg font-bold">{ar ? 'نشاط آخر ٩٠ يومًا' : 'Activity over the past 90 days'}</h2>
     <div className="flex flex-wrap items-end gap-3">
       <button className="rounded-xl border p-3" onClick={() => { const today = new Date().toLocaleDateString('en-CA'); setFrom(today); setTo(today); setPage(1); }}>{ar ? 'اليوم' : 'Today'}</button>
@@ -60,5 +61,6 @@ export default function OwnerActivityPage() {
     {!activity.length && <p>{ar ? 'لا توجد أنشطة مسجلة بعد' : 'No recorded activity yet'}</p>}
     {activity.map(item => <article key={item.id} className="rounded-xl border bg-white p-4"><p>{item.first_name} {item.last_name}</p><p dir="ltr" className="break-all text-sm">{item.action}</p><time className="text-xs text-gray-500">{new Date(item.created_at).toLocaleString(ar ? 'ar' : 'en')}</time></article>)}
     <div className="flex gap-4"><button disabled={page <= 1} onClick={() => setPage(page - 1)}>{ar ? 'السابق' : 'Previous'}</button><span>{page} / {lastPage}</span><button disabled={page >= lastPage} onClick={() => setPage(page + 1)}>{ar ? 'التالي' : 'Next'}</button></div>
+    </>}
   </div>;
 }

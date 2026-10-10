@@ -2482,8 +2482,8 @@ export default function DepartmentsPage() {
       setUploadProgress(0);
 
       refetchAll();
-    } catch {
-      toast.error("Failed to update");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update"));
 
       setUploadProgress(0);
     }
@@ -2651,8 +2651,8 @@ export default function DepartmentsPage() {
       setUploadProgress(0);
 
       refetchAll();
-    } catch {
-      toast.error("Failed to create");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to create"));
 
       setUploadProgress(0);
     }

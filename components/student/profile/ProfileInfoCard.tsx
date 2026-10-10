@@ -137,14 +137,14 @@ const locale = useLocale();
         <InfoRow
           icon={<Building2 size={20} />}
           label={t("academic.center")}
-          value={faculty}
+          value={center}
         />
-{/* 
+
         <InfoRow
           icon={<BookOpen size={20} />}
-          label={t("academic.center")}
-          value={center }
-        /> */}
+          label={t("academic.faculty")}
+          value={faculty}
+        />
 
         {department ? (
           <InfoRow

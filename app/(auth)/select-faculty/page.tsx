@@ -116,12 +116,11 @@ export default function SelectFacultyPage() {
       });
       updateUser(completedUser);
 
-      router.replace(`/${locale}/student`);
+      window.location.replace(`/${locale}/student`);
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, 'Failed to update profile');
       toast.error(message);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
-    } finally {
       setSubmitting(false);
     }
   }
