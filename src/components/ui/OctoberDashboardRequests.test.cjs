@@ -133,3 +133,25 @@ test('teacher grid and list expose enrolled course counts without course authori
     assert.ok(!markup.includes('lucide-trash'));
   }
 });
+
+test('student community shows their pending notification target but hides other pending posts and replies', () => {
+  const post = (id, user, status = 'draft', parent_id = null) => ({ id, attributes: { title: `Post ${id}`, content: 'Question', type: 'post', status, parent_id, user: { data: { id: user, attributes: { first_name: 'Student' } } } } });
+  const { default: Feed } = load('components/student/community/StudentCommunityFeed.tsx', {
+    react: { ...React, useEffect: () => {} },
+    '@/components/student/community/StudentCommunityCreatePostModal': { __esModule: true, default: () => null },
+    '@/components/student/community/StudentCommunityPostComments': { __esModule: true, default: ({ postId }) => React.createElement('span', null, `Replies for ${postId}`) },
+    '@/src/lib/community-post-display': { communityPostRelativeTime: () => '', communityPostTypeBadgeClasses: () => '' },
+    '@/src/lib/community-post-media': { pickPostImageUrl: () => null },
+    '@/src/hooks/useComments': { useCreateComment: () => ({}) },
+    '@/src/hooks/usePosts': { usePosts: () => ({}), useCreatePost: () => ({}), useReactToPost: () => ({}) },
+    '@/src/hooks/useCourses': { useCourses: () => ({ data: [] }) },
+    '@/src/stores/authStore': { useAuth: () => ({ user: { id: '7' } }) },
+  });
+  const markup = renderToStaticMarkup(React.createElement(Feed, { postsFromCourse: [post('100', '7'), post('101', '8'), post('102', '7', 'published', 100), post('103', '8', 'published')] }));
+  assert.match(markup, /id="post-100"/);
+  assert.match(markup, /Replies for 100/);
+  assert.match(markup, /قيد الانتظار/);
+  assert.match(markup, /id="post-103"/);
+  assert.ok(!markup.includes('id="post-101"'));
+  assert.ok(!markup.includes('id="post-102"'));
+});

@@ -11,6 +11,7 @@ import { pickPostImageUrl } from '@/src/lib/community-post-media';
 import { useCreateComment } from '@/src/hooks/useComments';
 import { useCreatePost, usePosts, useReactToPost } from '@/src/hooks/usePosts';
 import { useCourses } from '@/src/hooks/useCourses';
+import { useAuth } from '@/src/stores/authStore';
 import type { Course, CreatePostRequest, Post, SocialLink } from '@/src/types';
 
 const POST_TIME_AGO_PREFIX = 'community.posts.timeAgo';
@@ -32,10 +33,10 @@ export type StudentCommunityFeedProps = {
 
 type FeedTab = 'all' | 'post' | 'summary' | 'question';
 
-function isTopLevelPublishedPost(p: Post): boolean {
+function isVisibleRootPost(p: Post, userId: string | undefined): boolean {
   const pid = p.attributes.parent_id;
   if (pid != null && pid !== 0) return false;
-  return p.attributes.status === 'published';
+  return p.attributes.status === 'published' || (userId != null && String(p.attributes.user?.data.id) === String(userId));
 }
 
 function isLikelyInstructorRole(role: string | undefined): boolean {
@@ -115,6 +116,7 @@ export default function StudentCommunityFeed({
   onPostsRefresh,
 }: StudentCommunityFeedProps = {}) {
   const locale = useLocale();
+  const { user: currentUser } = useAuth();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const t = useTranslations();
   const tPage = useTranslations('courses.studentCommunity');
@@ -160,7 +162,7 @@ export default function StudentCommunityFeed({
 
   const topPosts = useMemo(() => {
     const list = postsRaw ?? [];
-    let roots = list.filter(isTopLevelPublishedPost);
+    let roots = list.filter(p => isVisibleRootPost(p, currentUser?.id));
     if (scopedCourseId != null) {
       roots = roots.filter(
         (p) =>
@@ -178,7 +180,7 @@ export default function StudentCommunityFeed({
       const tb = new Date(b.attributes.created_at || 0).getTime();
       return tb - ta;
     });
-  }, [postsRaw, scopedCourseId, draftCourseIds]);
+  }, [postsRaw, scopedCourseId, draftCourseIds, currentUser?.id]);
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('post');
@@ -408,6 +410,9 @@ export default function StudentCommunityFeed({
                       >
                         {typeLabel}
                       </span>
+                      {post.attributes.status === 'draft' && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">{t('courses.pending')}</span>
+                      )}
                     </div>
 
                     {courseNames.length > 0 ? (
