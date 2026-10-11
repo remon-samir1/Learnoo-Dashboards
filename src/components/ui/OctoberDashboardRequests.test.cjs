@@ -7,6 +7,12 @@ const { renderToStaticMarkup } = require('react-dom/server');
 const ts = require('typescript');
 const root = resolve(__dirname, '../../..');
 const translations = require(resolve(root, 'messages/ar.json'));
+test('Arabic community ages use Arabic plurals without English suffixes', () => {
+  const { createTranslator } = require('next-intl');
+  const t = createTranslator({ locale: 'ar', messages: translations });
+  assert.equal(t('community.posts.timeAgo.hourAgo', { hours: 4, plural: 's' }), 'منذ 4 ساعات');
+  assert.equal(t('community.posts.timeAgo.dayAgo', { days: 2, plural: 's' }), 'منذ يومين');
+});
 const i18n = {
   useLocale: () => 'ar',
   useTranslations: namespace => (key, values = {}) => {

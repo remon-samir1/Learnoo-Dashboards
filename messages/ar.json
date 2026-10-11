@@ -2399,8 +2399,8 @@
       "timeAgo": {
         "justNow": "الآن",
         "minAgo": "{minutes} دقيقة مضت",
-        "hourAgo": "{hours} ساعة{plural} مضت",
-        "dayAgo": "{days} يوم{plural} مضت",
+        "hourAgo": "{hours, plural, one {منذ ساعة} two {منذ ساعتين} few {منذ # ساعات} other {منذ # ساعة}}",
+        "dayAgo": "{days, plural, one {منذ يوم} two {منذ يومين} few {منذ # أيام} other {منذ # يوم}}",
         "today": "اليوم"
       },
       "status": {
