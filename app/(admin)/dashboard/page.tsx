@@ -55,6 +55,7 @@ export default function DashboardPage() {
                 </svg>
               }
             />
+            <Link href="/courses?status=active" className="rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
             <StatCard
               label={t('stats.activeCourses')}
               value={stats?.active_courses?.value?.toString() || '0'}
@@ -65,6 +66,7 @@ export default function DashboardPage() {
                 </svg>
               }
             />
+            </Link>
             {role === 'Super Admin' && <Link href="/courses?status=draft" className="rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
               <StatCard label={t('stats.draftCourses')} value={stats?.draft_courses?.value ?? 0} icon={BookOpen} />
             </Link>}

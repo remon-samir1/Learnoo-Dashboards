@@ -3,14 +3,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import {
+  Plus,
   Search,
   ChevronDown,
   FileText,
   Eye,
+  Edit2,
+  Pin,
+  Trash2,
   Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { useNotes } from '@/src/hooks/useNotes';
+import { useNotes, useDeleteNote, useUpdateNote } from '@/src/hooks/useNotes';
 import type { Note } from '@/src/types';
 
 function getTypeLabel(type: string, t: (key: string) => string): string {
@@ -42,6 +46,7 @@ export default function NotesSummariesPage() {
   const t = useTranslations('notesSummaries');
   const ar = useLocale() === 'ar';
   const [page, setPage] = useState(1);
+  const { mutate: updateNote, isLoading: isUpdating } = useUpdateNote();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>(t('filters.allTypes'));
@@ -55,6 +60,7 @@ export default function NotesSummariesPage() {
   }, [searchQuery]);
 
   const { data: notesResponse, isLoading, error, refetch } = useNotes();
+  const { mutate: deleteNote, isLoading: isDeleting } = useDeleteNote();
 
   const notes = notesResponse || [];
 
@@ -77,6 +83,17 @@ export default function NotesSummariesPage() {
   const pageNotes = filteredNotes.slice((currentPage - 1) * 10, currentPage * 10);
   useEffect(() => { setPage(1); }, [debouncedSearch, typeFilter]);
 
+  const handleDelete = async (id: number) => {
+    if (!confirm(t('deleteConfirm'))) return;
+
+    try {
+      await deleteNote(id);
+      await refetch();
+    } catch {
+      // Error handled by hook
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 pb-12">
       {/* Header */}
@@ -85,6 +102,13 @@ export default function NotesSummariesPage() {
           <h1 className="text-2xl font-bold text-[#1E293B]">{t('pageTitle')}</h1>
           <p className="text-sm text-[#64748B] mt-0.5">{t('pageDescription')}</p>
         </div>
+        <Link
+          href="/doctor/notes-summaries/add"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-200"
+        >
+          <Plus className="w-4 h-4" />
+          {t('addNote')}
+        </Link>
       </div>
 
       {/* Filters */}
@@ -183,13 +207,14 @@ export default function NotesSummariesPage() {
                     <span className="text-sm font-bold text-[#1E293B]">{note.attributes.course_title || t('na')}</span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <span
+                    <button type="button" disabled={isUpdating} aria-pressed={note.attributes.is_publish}
+                      onClick={async () => { await updateNote(Number(note.id), { is_publish: !note.attributes.is_publish }); await refetch(); }}
                       className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-wide ${note.attributes.is_publish
                       ? 'bg-[#EBFDF5] text-[#10B981] border border-emerald-100'
                       : 'bg-[#F1F5F9] text-[#64748B] border border-slate-200'
                       }`}>
                       {note.attributes.is_publish ? t('status.published') : t('status.draft')}
-                    </span>
+                    </button>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-1.5">
@@ -199,6 +224,22 @@ export default function NotesSummariesPage() {
                       >
                         <Eye className="w-4 h-4" />
                       </Link>
+                      <Link
+                        href={`/doctor/notes-summaries/${note.id}/edit`}
+                        className="p-2 text-[#94A3B8] hover:text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-all"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Link>
+                      <button className="p-2 text-[#94A3B8] hover:text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-all">
+                        <Pin className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(parseInt(note.id))}
+                        disabled={isDeleting}
+                        className="p-2 text-[#94A3B8] hover:text-[#EF4444] hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>

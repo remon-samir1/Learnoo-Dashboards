@@ -50,7 +50,9 @@ export default function CoursesPage() {
   const { data: courses, isLoading, error, refetch } = useCourses({});
   const { mutate: deleteCourse } = useDeleteCourse();
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('status') === 'draft') setStatusFilter('0');
+    const status = new URLSearchParams(window.location.search).get('status');
+    if (status === 'draft') setStatusFilter('0');
+    if (status === 'active') setStatusFilter('1');
   }, []);
 
   const handleDelete = async (courseId: number) => {

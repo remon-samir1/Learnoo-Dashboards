@@ -1091,7 +1091,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "course" && !isInstructor && (
+          {node.type === "course" && (
             <>
               <button
                 onClick={() => onAdd("lecture", node.id)}
@@ -1103,7 +1103,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "lecture" && !isInstructor && (
+          {node.type === "lecture" && (
             <div className="relative">
               <button
                 onClick={() => setIsAddDropdownOpen(!isAddDropdownOpen)}
@@ -1147,7 +1147,7 @@ function TreeItem({
             </div>
           )}
 
-          {node.type === "chapter" && !isInstructor && onCopyMove && (
+          {node.type === "chapter" && onCopyMove && (
             <>
               <button
                 onClick={() => onCopyMove(node, "copy")}
@@ -1168,7 +1168,7 @@ function TreeItem({
           )}
 
           {/* Edit and Delete buttons - skip chapters unless isInstructor */}
-          {node.type !== 'chapter' && !isInstructor && (
+          {node.type !== 'chapter' && (!isInstructor || ['course', 'lecture', 'note'].includes(node.type)) && (
             <>
               <button
                 onClick={() => onEdit(node)}
@@ -1178,17 +1178,17 @@ function TreeItem({
                 <Edit2 className="w-4 h-4" />
               </button>
 
-              <button
+              {(!isInstructor || node.type !== 'course') && <button
                 onClick={() => onDelete(node)}
                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                 title={t("common.delete")}
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </button>}
             </>
           )}
 
-          {node.type === 'chapter' && !isInstructor && (
+          {node.type === 'chapter' && (
             <>
               <button
                 onClick={() => onEdit(node)}
@@ -2401,7 +2401,7 @@ export default function DepartmentsPage() {
 
           await updateCourse(
             rawId,
-            {
+            isInstructor ? formData : {
               ...formData,
 
               category_id: categoryId,
@@ -2891,6 +2891,7 @@ export default function DepartmentsPage() {
 
       {editModalOpen && selectedNode && (
         <EditModal
+          isInstructor={isInstructor}
           node={selectedNode}
           instructors={instructorsResponse?.data}
           instructorsLoading={instructorsLoading}
@@ -3323,6 +3324,7 @@ export default function DepartmentsPage() {
 // Edit Modal Component
 
 interface EditModalProps {
+  isInstructor?: boolean;
   node: TreeNode;
 
   instructors?: any[];
@@ -3339,6 +3341,7 @@ interface EditModalProps {
 }
 
 function EditModal({
+  isInstructor = false,
   node,
   instructors,
   instructorsLoading,
@@ -3542,7 +3545,7 @@ function EditModal({
       ? { ...formData, attachments_to_delete: attachmentsToDelete }
       : formData;
 
-    onSubmit(submitData);
+    onSubmit(isInstructor && node.type === 'course' ? { title: formData.title, sub_title: formData.sub_title, description: formData.description, objectives: formData.objectives, thumbnail: formData.thumbnail, status: formData.status } : submitData);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -4024,7 +4027,7 @@ function EditModal({
                     </select>
                   </div>
 
-                  {formData.status === 0 && (
+                  {!isInstructor && formData.status === 0 && (
                     <div className="flex flex-col gap-3 w-full">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -4051,7 +4054,7 @@ function EditModal({
                 </div>
                   )}
 
-                  <div>
+                  {!isInstructor && <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Instructor
                     </label>
@@ -4065,10 +4068,11 @@ function EditModal({
                         })
                       }
                     />
-                  </div>
+                  </div>}
                 </div>
               </div>
 
+              {!isInstructor && <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -4130,6 +4134,7 @@ function EditModal({
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
                 </div>
               </div>
+              </>}
             </>
           )}
 

@@ -14,9 +14,9 @@ const i18n = {
     return typeof value === 'string' ? value.replace(/\{(\w+)\}/g, (_, key) => values[key] ?? `{${key}}`) : key;
   },
 };
-function load(path, mocks = {}) {
+function load(path, mocks = {}, source = readFileSync(resolve(root, path), 'utf8')) {
   const module = { exports: {} };
-  const compiled = ts.transpileModule(readFileSync(resolve(root, path), 'utf8'), {
+  const compiled = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   }).outputText;
   new Function('require', 'module', 'exports', compiled)(id => mocks[id] || (id === 'next-intl' ? i18n : require(id)), module, module.exports);
@@ -86,19 +86,19 @@ test('direct teacher authoring routes redirect before rendering content', () => 
     '../../components/DoctorHeader': { __esModule: true, default: () => null },
     'next/navigation': { usePathname: () => pathname, useRouter: () => ({ replace: value => { redirected = value; } }) },
   });
-  for (pathname of ['/doctor/courses/add', '/doctor/courses/12/edit', '/doctor/chapters/5/edit', '/doctor/courses/12/lectures/create', '/doctor/courses/12/notes/create', '/doctor/notes-summaries/add', '/doctor/content-manager']) {
+  for (pathname of ['/doctor/courses/add', '/doctor/courses/12/edit']) {
     redirected = null;
     assert.equal(Layout({ children: 'Protected form' }), null);
     assert.equal(redirected, '/doctor/departments');
   }
-  for (pathname of ['/doctor/courses/12', '/doctor/exams/create', '/doctor/discussions']) {
+  for (pathname of ['/doctor/courses/12', '/doctor/exams/create', '/doctor/discussions', '/doctor/chapters/5/edit', '/doctor/courses/12/lectures/create', '/doctor/courses/12/notes/create', '/doctor/content-manager', '/doctor/notes-summaries/add']) {
     redirected = null;
     assert.ok(Layout({ children: 'Allowed content' }));
     assert.equal(redirected, null);
   }
 });
 
-test('teacher tree has no mutation buttons while administration retains them', () => {
+test('teacher edits course details and manages descendants while academic branches remain protected', () => {
   const { ColumnItem } = load('src/components/MillerColumns/ColumnItem.tsx');
   const { DetailPanel } = load('src/components/MillerColumns/DetailPanel.tsx', {
     './ChapterPreview': { ChapterPreview: () => null }, './StudentSelector': { StudentSelector: () => null },
@@ -107,10 +107,15 @@ test('teacher tree has no mutation buttons while administration retains them', (
     const item = { type, id: '1', name: 'Course', children: [], data: { id: '1', attributes: {} }, meta: {}, stats: {} };
     const actions = { onEdit() { throw new Error('Cannot edit'); }, onDelete() { throw new Error('Cannot delete'); }, onAdd() { throw new Error('Cannot create'); }, onCopyMove() { throw new Error('Cannot copy'); } };
     const markup = renderToStaticMarkup(React.createElement(ColumnItem, { item, isInstructor: true, searchQuery: '', ...actions }));
-    assert.ok(!/title="(Edit|Delete|Copy|Move|Add [^"]+)"/.test(markup), type);
+    const editable = ['course', 'lecture', 'chapter', 'note'].includes(type);
+    assert.equal(markup.includes('title="Edit"'), editable, type);
+    assert.equal(markup.includes('title="Delete"'), ['lecture', 'chapter', 'note'].includes(type), type);
+    assert.equal(markup.includes('title="Copy"'), type === 'chapter', type);
     const panel = DetailPanel({ node: item, isInstructor: true, canUseActivations: false, ...actions });
     const buttons = elements(panel).filter(node => node.type === 'button');
-    assert.ok(buttons.every(node => !['edit', 'delete', 'copy', 'move'].includes(node.props.children)), type);
+    const actionText = buttons.map(node => React.Children.toArray(node.props.children).filter(child => typeof child === 'string').join(''));
+    assert.equal(actionText.some(text => text.startsWith(i18n.useTranslations('courses.detailPanel')('edit'))), editable, type);
+    assert.equal(actionText.includes(i18n.useTranslations('courses.detailPanel')('delete')), ['lecture', 'chapter', 'note'].includes(type), type);
   }
   const item = { type: 'course', id: '1', name: 'Course', children: [], data: { attributes: {} } };
   assert.match(renderToStaticMarkup(React.createElement(ColumnItem, { item, searchQuery: '', isInstructor: false })), /title="Edit"/);
@@ -154,4 +159,24 @@ test('student community shows their pending notification target but hides other 
   assert.match(markup, /id="post-103"/);
   assert.ok(!markup.includes('id="post-101"'));
   assert.ok(!markup.includes('id="post-102"'));
+});
+
+test('teacher course editor hides management fields and submits only the allowed details', () => {
+  const file = readFileSync(resolve(root, 'app/(doctor)/doctor/departments/page.tsx'), 'utf8');
+  const source = `import React, { useState, useRef } from 'react';
+    import { useTranslations } from 'next-intl';
+    import { X, Upload, ChevronDown, Loader2 } from 'lucide-react';
+    const toLocalDateTime = () => '';
+    ${file.slice(file.indexOf('function EditModal('), file.indexOf('// Add Modal Component'))}
+    export default EditModal;`;
+  const { default: Editor } = load('editor.tsx', {
+    react: { ...React, useState: value => [typeof value === 'function' ? value() : value, () => {}], useRef: () => ({ current: null }) },
+  }, source);
+  let submitted;
+  const tree = Editor({ node: { type: 'course', data: { attributes: { title: 'Accounting', price: 50, status: 1, show_in: 'app' } } }, isInstructor: true, onClose() {}, onSubmit: data => { submitted = data; } });
+  const markup = renderToStaticMarkup(tree);
+  for (const field of ['Title', 'Subtitle', 'Description', 'Objectives', 'Thumbnail', 'Status']) assert.ok(markup.includes(field), field);
+  for (const field of ['Instructor', 'Price', 'Max Views', 'Show In', 'Schedule Start']) assert.ok(!markup.includes(field), field);
+  elements(tree).find(node => node.type === 'form').props.onSubmit({ preventDefault() {} });
+  assert.deepEqual(Object.keys(submitted).sort(), ['title', 'sub_title', 'description', 'objectives', 'thumbnail', 'status'].sort());
 });
