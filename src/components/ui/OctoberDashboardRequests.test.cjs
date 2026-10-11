@@ -167,6 +167,19 @@ test('student community shows their pending notification target but hides other 
   assert.ok(!markup.includes('id="post-102"'));
 });
 
+test('student community renders replies of every accepted post type only for their parent', () => {
+  const reply = (id, type, parent_id) => ({ id, attributes: { type, parent_id, content: `Reply ${id}` } });
+  const { default: Comments } = load('components/student/community/StudentCommunityPostComments.tsx', {
+    react: { ...React, useState: value => [value === false ? true : value, () => {}] },
+    '@/src/hooks/useComments': { useComments: () => ({ data: [reply(1, 'post', 104), reply(2, 'question', 104), reply(3, 'summary', 104), reply(4, 'post', 105), reply(5, 'post', null)] }), useDeleteComment: () => ({}) },
+    '@/src/hooks/usePosts': { useReactToPost: () => ({}) },
+    '@/src/stores/authStore': { useAuth: () => ({ user: null }) },
+  });
+  const markup = renderToStaticMarkup(React.createElement(Comments, { postId: 104, commentsCount: 3 }));
+  for (const id of [1, 2, 3]) assert.ok(markup.includes(`Reply ${id}`));
+  for (const id of [4, 5]) assert.ok(!markup.includes(`Reply ${id}`));
+});
+
 test('teacher course editor hides management fields and submits only the allowed details', () => {
   const file = readFileSync(resolve(root, 'app/(doctor)/doctor/departments/page.tsx'), 'utf8');
   const source = `import React, { useState, useRef } from 'react';
