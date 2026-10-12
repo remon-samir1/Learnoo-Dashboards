@@ -111,7 +111,6 @@ export default function ParentStudentLinkPage() {
           <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-slate-900">{t('linkedStudentsTitle') ?? 'Linked Students'}</p>
-              <p className="text-sm text-slate-500 mt-1">{t('noStudents') ?? 'No students are linked yet.'}</p>
             </div>
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
               <Users className="h-5 w-5" />
@@ -134,7 +133,7 @@ export default function ParentStudentLinkPage() {
                 <div key={student.id} className="rounded-3xl border border-slate-100 bg-slate-50 p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">{student.name ?? student.full_name ?? ''}</p>
+                      <p className="text-sm font-semibold text-slate-900">{student.name ?? student.full_name ?? [student.attributes?.first_name, student.attributes?.last_name].filter(Boolean).join(' ')}</p>
                       <p className="text-sm text-slate-500 mt-1">{student.relationship ?? student.grade ?? ''}</p>
                     </div>
                     <Link href={`/parent/students/${student.id}/dashboard`} className="inline-flex h-10 items-center justify-center rounded-2xl bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 transition">

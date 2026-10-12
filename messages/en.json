@@ -2495,7 +2495,8 @@
     "microphoneDenied": "Microphone access denied",
     "recordVoiceFirst": "Please record a voice note first",
     "showReplies": "Show replies",
-    "hideReplies": "Hide replies"
+    "hideReplies": "Hide replies",
+    "watchMoment": "Watch this moment"
   },
   "universities": {
     "pageTitle": "Universities Management",

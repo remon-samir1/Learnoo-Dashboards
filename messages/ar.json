@@ -93,7 +93,8 @@
     "microphoneDenied": "تعذر الوصول إلى الميكروفون",
     "recordVoiceFirst": "يرجى تسجيل رسالة صوتية أولًا",
     "showReplies": "عرض الردود",
-    "hideReplies": "إخفاء الردود"
+    "hideReplies": "إخفاء الردود",
+    "watchMoment": "شاهد هذا الجزء من الدرس"
   },
   "auth": {
     "login": {
