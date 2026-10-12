@@ -99,11 +99,6 @@ export default function LiveSessionRoomClient({
   const handleToggleChat = () => {
     if (jitsiApiRef.current) {
       jitsiApiRef.current.executeCommand("toggleChat");
-      setIsChatOpen((prev) => {
-        const next = !prev;
-        if (next) setUnreadChatCount(0);
-        return next;
-      });
     }
   };
 
@@ -258,7 +253,7 @@ export default function LiveSessionRoomClient({
                 </div>
               ) : null}
 
-              <LiveMeetingStage><JitsiMeeting
+              <LiveMeetingStage chatOpen={isChatOpen}><JitsiMeeting
                 domain={JITSI_DOMAIN}
                 roomName={jitsiRoomName}
                 configOverwrite={{
@@ -391,7 +386,7 @@ export default function LiveSessionRoomClient({
               {isConferenceJoined && isWhiteboardOpen ? (
                 <div
                   className="absolute inset-x-0 top-0 bottom-[76px] z-10 select-none bg-transparent cursor-default"
-                  style={{ touchAction: "none" }}
+                  style={{ touchAction: "none", left: isChatOpen ? 315 : 0 }}
                   onMouseDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}

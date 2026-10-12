@@ -22,7 +22,8 @@ test('host, tablet and phone retain one canvas without clipping, including resiz
     useEffect: callback => { effect = callback; },
   } : require(id), module, module.exports, Observer);
   const child = React.createElement('iframe');
-  const render = () => module.exports.default({ children: child }).props.children;
+  let chatOpen = false;
+  const render = () => module.exports.default({ children: child, chatOpen }).props.children;
   assert.equal(render().props.style.visibility, 'hidden');
   const cleanup = effect();
   assert.equal(observed, element);
@@ -38,6 +39,13 @@ test('host, tablet and phone retain one canvas without clipping, including resiz
     assert.equal(stage.props.style.zoom, scale);
     assert.equal(stage.props.style.transform, 'translate(-50%, -50%)');
   }
+  chatOpen = true;
+  render();
+  const chatCleanup = effect();
+  resize();
+  assert.equal(render().props.style.width, 1275);
+  assert.ok(1275 * scale <= element.clientWidth);
+  chatCleanup();
   cleanup();
   assert.equal(disconnected, true);
 });
