@@ -465,7 +465,6 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                       <div className="min-w-0 flex-1">
                         <h3 className="text-base font-bold leading-snug text-[#0F172A] sm:text-lg">{title}</h3>
                       </div>
-                      <ScheduledCountdown date={typeof startRaw === "string" ? startRaw : null} />
                     </div>
                     {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
                     <button
@@ -473,7 +472,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                       disabled
                       className="mt-5 w-full cursor-not-allowed rounded-lg bg-[#F1F5F9] py-3 text-center text-sm font-semibold text-[#64748B] sm:mt-6"
                     >
-                      {tDetails('examsScheduled')}
+                      <ScheduledCountdown date={typeof startRaw === "string" ? startRaw : null} />
                     </button>
                   </li>
                 );

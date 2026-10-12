@@ -1520,7 +1520,6 @@ function ExamsTab({
                         {examSubtitle(attrs, courseTitle)}
                       </p>
                     </div>
-                    <ScheduledCountdown date={attrs.start_time} />
                   </div>
                   <div className="mt-4 space-y-2.5 text-sm text-[#64748B]">
                     <div className="flex items-center gap-2.5">
@@ -1621,7 +1620,7 @@ function ExamsTab({
                     disabled
                     className="mt-5 w-full cursor-not-allowed rounded-lg bg-[#F1F5F9] py-3 text-center text-sm font-semibold text-[#64748B] sm:mt-6"
                   >
-                    {t("examsScheduled")}
+                    <ScheduledCountdown date={attrs.start_time} />
                   </button>
                 </li>
               );
