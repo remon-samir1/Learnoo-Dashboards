@@ -24,7 +24,7 @@ import {
   normalizeLiveStatus,
 } from "@/src/lib/student-live-room";
 import { useMemo, useRef, useState } from "react";
-import { liveMeetingBranding, JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
+import { liveMeetingBranding, liveWhiteboardConfig, JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
 
 interface JitsiExternalApi {
   executeCommand: (command: string, ...args: unknown[]) => void;
@@ -284,10 +284,7 @@ export default function LiveSessionRoomClient({
                     hideMuteAllButton: true,
                   },
                   // Enable whiteboard collab backend for students so they receive the canvas stream
-                  whiteboard: {
-                    enabled: true,
-                    collabServerBaseUrl: 'https://whiteboard.jitsi.net',
-                  },
+                  whiteboard: liveWhiteboardConfig,
                   toolbarButtons: studentToolbarButtons,
                   // Students auto-knock and wait in lobby until host admits them
                   lobby: {

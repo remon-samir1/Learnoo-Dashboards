@@ -53,10 +53,10 @@ export default function ParentStudentLinkPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{t('title') ?? 'Student Management'}</h1>
-          <p className="text-slate-500 text-sm mt-1">{t('description') ?? 'Link a child to your parent account and view their learning progress.'}</p>
+          <p className="text-slate-500 text-sm mt-1">{t('description') ?? 'Link a student to your parent account and view their learning progress.'}</p>
         </div>
         <Link href="/parent/dashboard" className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition">
-          {t('manageChildren') ?? 'Manage Children'}
+          {t('manageChildren') ?? 'Manage Students'}
         </Link>
       </div>
 
@@ -111,7 +111,7 @@ export default function ParentStudentLinkPage() {
           <div className="mb-6 flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-slate-900">{t('linkedStudentsTitle') ?? 'Linked Students'}</p>
-              <p className="text-sm text-slate-500 mt-1">{t('noStudents') ?? 'No children are linked yet.'}</p>
+              <p className="text-sm text-slate-500 mt-1">{t('noStudents') ?? 'No students are linked yet.'}</p>
             </div>
             <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
               <Users className="h-5 w-5" />
@@ -126,7 +126,7 @@ export default function ParentStudentLinkPage() {
             <div className="rounded-2xl bg-rose-50 p-4 text-sm text-rose-700">{error?.toString() ?? 'Failed to fetch linked students.'}</div>
           ) : linkedStudents.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500">
-              {t('noStudents') ?? 'No children are linked yet.'}
+              {t('noStudents') ?? 'No students are linked yet.'}
             </div>
           ) : (
             <div className="space-y-4">

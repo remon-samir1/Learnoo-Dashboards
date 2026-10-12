@@ -32,6 +32,55 @@ function elements(node) {
   return !node || typeof node !== 'object' ? [] : [node, ...React.Children.toArray(node.props?.children).flatMap(elements)];
 }
 
+test('teacher dashboard shows separate active and draft course totals in both languages', () => {
+  for (const locale of ['ar', 'en']) {
+    const messages = require(resolve(root, `messages/${locale}.json`));
+    const data = [{ summary: { pending_questions: 99, pending_discussions: 7 } }, { courses: { value: 12 }, draft_courses: { value: 3 } }, null, null, null, null, null, false, 'month'];
+    let cursor = 0;
+    const { default: Dashboard } = load('app/(doctor)/doctor/dashboard/page.tsx', {
+      react: { ...React, useState: () => [data[cursor++], () => {}], useEffect: () => {} },
+      'next-intl': { useTranslations: namespace => key => `${namespace}.${key}`.split('.').reduce((value, part) => value[part], messages) },
+      '@/src/hooks/useAuth': { useCurrentUser: () => ({ user: { attributes: { first_name: 'Teacher' } }, isLoading: false }) },
+      '@/src/lib/api': { instructorDashboardApi: {} },
+    });
+    const tree = Dashboard();
+    const cards = elements(tree).filter(node => node.props?.label);
+    assert.equal(cards.find(node => node.props.label === messages.doctorDashboard.stats.activeCourses).props.value, '12');
+    assert.equal(cards.find(node => node.props.label === messages.doctorDashboard.stats.draftCourses).props.value, '3');
+    assert.equal(cards.find(node => node.props.label === messages.doctorDashboard.stats.draftCourses).props.subtext, messages.doctorDashboard.stats.unpublished);
+    assert.equal(cards.find(node => node.props.label === messages.doctorDashboard.stats.pendingQuestions).props.value, '7');
+    assert.ok(elements(tree).some(node => node.props?.href === '/doctor/discussions?unanswered=1'));
+  }
+});
+
+test('teacher unanswered discussion link waits for its filter and can return to all discussions', () => {
+  const states = [], effects = [], requests = [];
+  let cursor = 0;
+  const { default: Discussions } = load('app/(doctor)/doctor/discussions/page.tsx', {
+    react: { ...React, useState: initial => { const i = cursor++; if (!(i in states)) states[i] = initial; return [states[i], value => { states[i] = value; }]; }, useEffect: effect => effects.push(effect), useMemo: fn => fn() },
+    '@/src/hooks/useDiscussions': { useDiscussions: (params, options) => { requests.push({ params, options }); return { data: { data: [] }, isLoading: false }; }, useDeleteDiscussion: () => ({}), useCreateDiscussion: () => ({}) },
+    '@/src/lib/api': { API_BASE_URL: 'https://fixture.test' },
+    '@/components/student/watch/watchChapterDiscussionUtils': { buildDiscussionTree: rows => rows },
+  });
+  const previousWindow = global.window;
+  global.window = { location: { search: '?unanswered=1' } };
+  try {
+    assert.match(renderToStaticMarkup(Discussions()), /animate-spin/);
+    assert.equal(requests.at(-1).options.enabled, false);
+    effects[0](); cursor = 0;
+    const tree = Discussions();
+    assert.equal(requests.at(-1).params.unanswered, 1);
+    assert.equal(requests.at(-1).options.enabled, true);
+    assert.match(renderToStaticMarkup(tree), /أسئلة الطلاب التي تحتاج إلى رد/);
+    elements(tree).find(node => node.type === 'button' && node.props.children === 'عرض كل النقاشات').props.onClick();
+    cursor = 0; Discussions();
+    assert.equal(requests.at(-1).params.unanswered, undefined);
+    assert.equal(requests.at(-1).params.page, 1);
+  } finally {
+    global.window = previousWindow;
+  }
+});
+
 test('numbered pagination has bounded buttons, current-page semantics and working navigation', () => {
   const { Pagination } = load('src/components/ui/DataTable.tsx');
   const pages = [];

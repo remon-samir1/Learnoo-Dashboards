@@ -2,12 +2,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ChevronLeft, Loader2, Video, Square, Smartphone } from 'lucide-react';
+import { ChevronLeft, Loader2, Smartphone, Presentation } from 'lucide-react';
 import Link from 'next/link';
 import { useLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getUserData } from '@/lib/auth';
 import { JitsiMeeting } from '@jitsi/react-sdk';
-import { liveMeetingBranding, JITSI_DOMAIN, getJitsiRoomName, getJitsiAppUrl } from '@/src/lib/jitsi';
+import LocalSessionRecording from './LocalSessionRecording';
+import { liveMeetingBranding, liveWhiteboardConfig, JITSI_DOMAIN, getJitsiRoomName, getJitsiAppUrl } from '@/src/lib/jitsi';
 
 export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: string; basePath: string; onClose: () => void }) {
   const router = useRouter();
@@ -23,14 +24,11 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
 
   const jitsiApiRef = useRef<any>(null);
 
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingPending, setRecordingPending] = useState(false);
-  const [recordingError, setRecordingError] = useState('');
   const [joined, setJoined] = useState(false);
   const [screenCaptureSupported, setScreenCaptureSupported] = useState<boolean | null>(null);
   const [meetingInBrowser, setMeetingInBrowser] = useState(false);
   const [android, setAndroid] = useState(false);
-  const recordingEnabled = process.env.NEXT_PUBLIC_JITSI_RECORDING_ENABLED === 'true' && !!liveRoom?.attributes?.enable_recording;
+  const recordingEnabled = !!liveRoom?.attributes?.enable_recording;
 
   useEffect(() => {
     const supported = typeof navigator.mediaDevices?.getDisplayMedia === 'function';
@@ -38,14 +36,6 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
     setMeetingInBrowser(supported);
     setAndroid(/Android/i.test(navigator.userAgent));
   }, []);
-
-  const toggleRecording = () => {
-    if (!recordingEnabled || !joined || recordingPending) return;
-    setRecordingError('');
-    setRecordingPending(true);
-    if (isRecording) jitsiApiRef.current?.executeCommand('stopRecording', 'file');
-    else jitsiApiRef.current?.executeCommand('startRecording', { mode: 'file' });
-  };
 
   const handleReadyToClose = () => {
     onClose();
@@ -87,27 +77,11 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {recordingEnabled && meetingInBrowser ? <button
-            type="button"
-            onClick={toggleRecording}
-            disabled={!joined || recordingPending}
-            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${isRecording
-                ? 'bg-red-500/10 text-red-500 border-red-500'
-                : 'bg-[#0F172A] text-white border-[#334155] hover:bg-[#334155]'
-              }`}
-          >
-            {isRecording ? (
-              <>
-                <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current shrink-0" />
-                <span className="whitespace-nowrap">إيقاف التسجيل</span>
-              </>
-            ) : (
-              <>
-                <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                <span className="whitespace-nowrap">{recordingPending ? 'جارٍ تحديث التسجيل…' : 'تسجيل الجلسة'}</span>
-              </>
-            )}
-          </button> : !recordingEnabled && <span className="text-xs text-slate-300">{liveRoom.attributes.enable_recording ? 'تسجيل الجلسات قيد التجهيز' : 'التسجيل غير مفعّل لهذه الجلسة'}</span>}
+          {meetingInBrowser && <button type="button" disabled={!joined} onClick={() => jitsiApiRef.current?.executeCommand('toggleWhiteboard')}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs text-white disabled:opacity-50">
+            <Presentation className="h-4 w-4" /> السبورة
+          </button>}
+          {meetingInBrowser && <LocalSessionRecording roomId={roomId} joined={joined} enabled={recordingEnabled} />}
           <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#94A3B8] bg-[#0F172A] px-2.5 py-1.5 rounded-lg border border-[#334155]">
             <span className="text-[#64748B]">Room:</span>
             <code className="text-[#60A5FA] font-mono truncate max-w-[120px] md:max-w-none">{jitsiRoomName}</code>
@@ -115,7 +89,6 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
         </div>
       </div>
 
-      {recordingError && <p role="alert" className="bg-red-950 p-3 text-sm text-white">{recordingError}</p>}
       {screenCaptureSupported === false && <div dir="rtl" className="shrink-0 bg-slate-800 px-4 py-3 text-sm text-white">
         مشاركة شاشة الآيباد أو الهاتف تحتاج تطبيق مشاركة الشاشة. الطلاب يظلّون داخل Learnoo.
         {meetingInBrowser && <a className="ms-2 underline" href={getJitsiAppUrl(roomId, userName, android)} onClick={() => { setMeetingInBrowser(false); setJoined(false); jitsiApiRef.current = null; }}>فتح في تطبيق مشاركة الشاشة</a>}
@@ -131,7 +104,8 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
           <a className="underline" href="https://jitsi.org/downloads/" target="_blank" rel="noopener noreferrer">تحميل تطبيق مشاركة الشاشة</a>
           <p className="text-sm text-slate-300">إذا لم يفتح التطبيق، انسخ رابط الجلسة التالي والصقه في خانة الانضمام داخل تطبيق مشاركة الشاشة:</p>
           <input aria-label="رابط الجلسة لتطبيق مشاركة الشاشة" readOnly value={`https://${JITSI_DOMAIN}/${jitsiRoomName}`} dir="ltr" className="w-full rounded-lg bg-slate-700 p-3 text-sm" onFocus={event => event.currentTarget.select()} />
-          <button className="text-sm underline" onClick={() => setMeetingInBrowser(true)}>متابعة في المتصفح بدون مشاركة شاشة الجهاز</button>
+          <button className="text-sm underline" onClick={() => setMeetingInBrowser(true)}>فتح الجلسة والسبورة في المتصفح</button>
+          <p className="text-sm text-slate-300">السبورة داخل المتصفح لا تحتاج مشاركة شاشة الجهاز.</p>
         </div> : <JitsiMeeting
           domain={JITSI_DOMAIN}
           roomName={jitsiRoomName}
@@ -143,15 +117,10 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
             enableEmailInStats: false,
             prejoinConfig: { enabled: false },
             disableDeepLinking: true,
-            fileRecordingsEnabled: recordingEnabled,
-            recordingService: { enabled: recordingEnabled },
-            localRecording: {
-              enabled: false,
-            },
-            whiteboard: {
-              enabled: true,
-              collabServerBaseUrl: 'https://whiteboard.jitsi.net',
-            },
+            fileRecordingsEnabled: false,
+            recordingService: { enabled: false },
+            localRecording: { disable: true },
+            whiteboard: liveWhiteboardConfig,
             toolbarButtons: [
               'camera',
               'chat',
@@ -171,7 +140,6 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
               'participants-pane',
               'profile',
               'raisehand',
-              ...(recordingEnabled ? ['recording'] : []),
               'security',
               'select-background',
               'settings',
@@ -210,12 +178,7 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
               readyToClose: handleReadyToClose,
               videoConferenceJoined: () => setJoined(true),
               videoConferenceLeft: () => setJoined(false),
-              recordingStatusChanged: ({ on, mode, error }: { on: boolean; mode: string; error?: string }) => {
-                if (mode !== 'file') return;
-                setIsRecording(on);
-                setRecordingPending(false);
-                setRecordingError(error ? 'تعذر تسجيل الجلسة. خدمة التسجيل غير متاحة؛ حاول مرة أخرى بعد تجهيزها.' : '');
-              },
+
             });
           }}
           onReadyToClose={handleReadyToClose}

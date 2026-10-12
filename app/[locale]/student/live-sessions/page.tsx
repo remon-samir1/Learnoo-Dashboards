@@ -263,6 +263,7 @@ export default function StudentLiveSessionsPage() {
 
   const [rooms, setRooms] = useState<StudentLiveRoom[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedPage, setLoadedPage] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [facultyId, setFacultyId] = useState<string | null>(null);
@@ -354,6 +355,7 @@ export default function StudentLiveSessionsPage() {
       if (id !== requestId.current) return;
       if (res.success && res.data) {
         setRooms(res.data);
+        setLoadedPage(pageNum);
         if (res.meta) setPaginationMeta(res.meta);
       } else {
         setError(res.message || t.error);
@@ -373,7 +375,7 @@ export default function StudentLiveSessionsPage() {
     return filterLiveRoomsByFacultyCourses(rooms, facultyCourseIds, hasLoadedFacultyTree);
   }, [rooms, facultyCourseIds, hasLoadedFacultyTree]);
 
-  const isDataLoading = loading || !hasLoadedFacultyTree || loadingCourses;
+  const isDataLoading = (loading && loadedPage !== page) || !hasLoadedFacultyTree || (loadingCourses && !enrolledCourses);
 
   return (
     <div
@@ -384,12 +386,14 @@ export default function StudentLiveSessionsPage() {
         {t.title}
       </h1>
 
+      {error && loadedPage === page && <p role="alert" className="mb-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p>}
+
       {isDataLoading ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20 text-[#94A3B8]">
           <Loader2 className="size-10 animate-spin text-[var(--primary)]" />
           <p className="text-sm">{t.loading}</p>
         </div>
-      ) : error ? (
+      ) : error && loadedPage !== page ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
           {error}
         </div>
@@ -423,7 +427,7 @@ export default function StudentLiveSessionsPage() {
           <button
             type="button"
             disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => { setLoading(true); setError(null); setPage((p) => Math.max(1, p - 1)); }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] shadow-sm transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft className={`size-4 shrink-0${dir === 'rtl' ? ' rotate-180' : ''}`} strokeWidth={2} />
@@ -437,7 +441,7 @@ export default function StudentLiveSessionsPage() {
           <button
             type="button"
             disabled={page >= paginationMeta.last_page}
-            onClick={() => setPage((p) => Math.min(paginationMeta.last_page, p + 1))}
+            onClick={() => { setLoading(true); setError(null); setPage((p) => Math.min(paginationMeta.last_page, p + 1)); }}
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#E5E7EB] bg-white px-4 py-2 text-sm font-semibold text-[#374151] shadow-sm transition hover:bg-[#F9FAFB] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {t.nextPage}

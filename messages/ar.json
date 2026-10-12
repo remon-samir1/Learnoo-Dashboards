@@ -3287,8 +3287,8 @@
   },
   "parentDashboard": {
     "welcome": "مرحباً",
-    "subtitle": "إليك نظرة عامة على تقدم أطفالك.",
-    "selectChild": "اختر الابن:",
+    "subtitle": "إليك نظرة عامة على تقدم الطلاب المرتبطين بحسابك.",
+    "selectChild": "اختر الطالب:",
     "attendance": "نسبة الحضور",
     "courseProgress": "التقدم في المقررات",
     "examAverage": "متوسط الامتحانات",
@@ -3299,24 +3299,24 @@
     "alertsSubtitle": "تحديثات هامة عن الحضور والامتحانات والتقدم الدراسي",
     "noRecentActivity": "لا يوجد نشاط حديث متاح بعد.",
     "noAlerts": "لا توجد تنبيهات في الوقت الحالي.",
-    "noStudentSelected": "لا يوجد أطفال مرتبطين",
-    "manageChildren": "إدارة الأطفال",
+    "noStudentSelected": "لا يوجد طلاب مرتبطون",
+    "manageChildren": "إدارة الطلاب",
     "errorTitle": "لا يمكن تحميل لوحة ولي الأمر",
     "errorMessage": "حدث خطأ أثناء جلب البيانات. الرجاء المحاولة مرة أخرى.",
     "retry": "إعادة المحاولة"
   },
   "parentStudents": {
     "title": "إدارة الطلاب",
-    "description": "اربط طفلاً بحساب ولي الأمر الخاص بك واطلع على تقدمه التعليمي.",
+    "description": "اربط طالبًا بحساب ولي الأمر الخاص بك واطلع على تقدمه التعليمي.",
     "codeLabel": "كود الطالب",
     "codePlaceholder": "أدخل كود الطالب",
     "linkButton": "ربط الطالب",
     "linkedStudentsTitle": "الطلاب المرتبطون",
-    "noStudents": "لا يوجد أطفال مرتبطين حتى الآن.",
+    "noStudents": "لا يوجد طلاب مرتبطون حتى الآن.",
     "successLinked": "تم ربط الطالب بنجاح.",
     "errorLinked": "تعذر ربط الطالب. يرجى التحقق من الكود والمحاولة مرة أخرى.",
     "viewDashboard": "عرض لوحة القيادة",
-    "manageChildren": "إدارة الأطفال"
+    "manageChildren": "إدارة الطلاب"
   },
   "parentStudentOverview": {
     "title": "نظرة عامة على الطالب",
@@ -3388,6 +3388,8 @@
     "pageTitle": "لوحة تحكم الدكتور",
     "stats": {
       "totalStudents": "إجمالي الطلاب",
+      "draftCourses": "الدورات المسودة",
+      "unpublished": "لم تُنشر بعد",
       "activeCourses": "الدورات النشطة",
       "liveClasses": "الفصول المباشرة",
       "pendingQuestions": "الأسئلة المعلقة",

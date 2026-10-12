@@ -11,6 +11,11 @@ export function getJitsiDomain(): string {
 
 export const JITSI_DOMAIN = getJitsiDomain();
 
+export const liveWhiteboardConfig = {
+  enabled: true,
+  collabServerBaseUrl: 'https://whiteboard.learnoo.app',
+};
+
 /**
  * Generates an alphanumeric room name safe for Apache/Nginx Jitsi rewrite rules (without hyphens or special chars).
  * e.g. 'learnooroom58'

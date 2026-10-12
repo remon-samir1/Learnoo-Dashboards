@@ -37,6 +37,7 @@ test('leaving a Student meeting returns to the localized session list', () => {
     assert.equal(meeting.configOverwrite.prejoinConfig.enabled, false);
     assert.equal(meeting.configOverwrite.startWithAudioMuted, true);
     assert.equal(meeting.configOverwrite.startWithVideoMuted, true);
+    assert.equal(meeting.configOverwrite.whiteboard.collabServerBaseUrl, 'https://whiteboard.learnoo.app');
     assert.equal(meeting.interfaceConfigOverwrite.SHOW_JITSI_WATERMARK, false);
     assert.equal(meeting.interfaceConfigOverwrite.SHOW_BRAND_WATERMARK, false);
     assert.equal(meeting.interfaceConfigOverwrite.APP_NAME, 'Learnoo');
