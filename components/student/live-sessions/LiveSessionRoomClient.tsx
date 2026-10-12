@@ -364,14 +364,6 @@ export default function LiveSessionRoomClient({
                         setIsHandRaised(Boolean(ev?.handRaised));
                       }
                     },
-                    incomingMessage: () => {
-                      setIsChatOpen((open) => {
-                        if (!open) {
-                          setUnreadChatCount((count) => count + 1);
-                        }
-                        return open;
-                      });
-                    },
                   });
                 }}
                 getIFrameRef={(iframe) => {
