@@ -6,7 +6,21 @@ const loaded = { exports: {} };
 new Function('require', 'module', 'exports', ts.transpileModule(readFileSync(`${__dirname}/exam-import.ts`, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText)(require, loaded, loaded.exports);
-const { importedQuestion, finishImportedExam, parseWordExam, readWordExam } = loaded.exports;
+const { importedQuestion, importedTrueFalseQuestion, finishImportedExam, parseWordExam, readWordExam } = loaded.exports;
+
+test('true/false answer marks preserve the statement and require review when missing or ambiguous', () => {
+  for (const mark of ['✓', '✔', '✘', '✕', '×', '✗', '', '✓✗']) {
+    const question = importedTrueFalseQuestion('١. تكلفة الأجور 200000 ج', mark, 'توضيح');
+    assert.equal(question.type, 'true_false');
+    assert.equal(question.text, 'تكلفة الأجور 200000 ج');
+    assert.deepEqual(question.answers.map(a => a.text), ['صح', 'خطأ']);
+    assert.equal(question.answers.filter(a => a.isCorrect).length, mark.length === 1 ? 1 : mark.length);
+    assert.deepEqual(finishImportedExam([question]).review, mark.length === 1 ? [] : [1]);
+    if (mark === '✓' || mark === '✔') assert.equal(question.answers[0].isCorrect, true);
+    if (['✘', '✕', '×', '✗'].includes(mark)) assert.equal(question.answers[1].isCorrect, true);
+    assert.ok(question.answers.every(a => a.reason === 'توضيح'));
+  }
+});
 
 test('import preserves Arabic and mixed text, assigns new IDs, and flags missing answers without guessing', () => {
   const questions = [importedQuestion('١. ما الفرق بين E-HRM و HRM؟', 'short_answer'),

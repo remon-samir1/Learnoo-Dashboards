@@ -29,15 +29,22 @@ export function ExamFileImport({ onApply }: { onApply: (questions: ExamFormQuest
     if (!file) return;
     setError(""); setExam(null); setBusy(true);
     try {
-      if (file.size > 10_000_000 || !/\.(docx|pdf)$/i.test(file.name)) throw new Error("INVALID_IMPORT_FILE");
+      if (file.size > 10_000_000) throw new Error("IMPORT_SIZE_LIMIT");
+      if (!/\.(docx|pdf)$/i.test(file.name)) throw new Error("INVALID_IMPORT_FILE");
       const data = await file.arrayBuffer();
       const result = /\.docx$/i.test(file.name)
         ? await (await import("@/src/lib/exam-import")).readWordExam(data)
         : await (await import("@/src/lib/exam-import-pdf")).readPdfExam(data);
       setExam(result); setIndex(0); setCount(result.questions.length);
       setTitle(file.name.replace(/\.[^/.]+$/, ""));
-    } catch {
-      setError(ar ? "تعذّر قراءة الأسئلة. استخدم ملف Word بتنسيق النماذج المرسلة أو PDF نصي، بحجم أقل من ١٠ ميجا وحتى ٢٥ صفحة. ملفات PDF المصوّرة غير مدعومة." : "Could not read questions. Use a Word file matching the provided templates or a text PDF, under 10 MB and up to 25 pages. Scanned PDFs are unsupported.");
+    } catch (error) {
+      const messages: Record<string, string> = {
+        IMPORT_SIZE_LIMIT: ar ? "حجم الملف أكبر من ١٠ ميجا. قسّمه إلى ملفات أصغر." : "The file exceeds 10 MB. Split it into smaller files.",
+        IMPORT_PAGE_LIMIT: ar ? "الملف أكثر من ٢٥ صفحة. قسّمه إلى ملفات أصغر." : "The file exceeds 25 pages. Split it into smaller files.",
+        IMPORT_NO_TEXT: ar ? "ملف PDF لا يحتوي على نص قابل للقراءة. استخدم نسخة Word أو PDF نصي." : "The PDF has no readable text. Use Word or a text PDF.",
+        NO_IMPORTABLE_QUESTIONS: ar ? "لم نعثر على أسئلة بالتنسيق المدعوم. استخدم أسئلة مرقّمة مع خيارات، أو عبارات صح وخطأ بعلامة ✓ أو ✗." : "No supported questions found. Use numbered questions with options, or true/false statements marked ✓ or ✗.",
+      };
+      setError(messages[error instanceof Error ? error.message : ""] ?? (ar ? "تعذّر قراءة الملف. استخدم Word بصيغة docx أو PDF نصي سليم، ثم حاول مجددًا." : "Could not read the file. Use a valid .docx file or text PDF and try again."));
     } finally { setBusy(false); }
   }
 

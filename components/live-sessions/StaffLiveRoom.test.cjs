@@ -71,9 +71,13 @@ test('staff hangup preserves another page and returns from the room page', () =>
   }
 });
 
-test('iPad opens the same native room without joining twice; Android uses an intent', () => {
+test('mobile starts with the browser whiteboard and can switch to native screen sharing without joining twice', () => {
   for (const userAgent of ['iPad', 'Macintosh', 'Android']) {
     const view = room({ capture: false, userAgent });
+    assert.equal(view.meeting.roomName, 'learnooroom70');
+    assert.ok(view.elements().some(node => node.type === 'button' && React.Children.toArray(node.props.children).includes(' السبورة')));
+    view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق مشاركة الشاشة').props.onClick();
+    view.render();
     assert.equal(view.meeting, null);
     const link = view.elements().find(node => node.type === 'a' && /^(org\.jitsi\.meet|intent):/.test(node.props.href));
     assert.ok(link.props.href.startsWith(userAgent === 'Android' ? 'intent://meet.learnoo.app/learnooroom70' : 'org.jitsi.meet://meet.learnoo.app/learnooroom70'));

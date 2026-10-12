@@ -1,4 +1,4 @@
-import { finishImportedExam, importedQuestion, type ImportedExam } from "./exam-import";
+import { finishImportedExam, importedQuestion, importedTrueFalseQuestion, type ImportedExam } from "./exam-import";
 import type { ExamFormQuestion } from "./exam-form";
 
 export async function readPdfExam(data: ArrayBuffer): Promise<ImportedExam> {
@@ -11,6 +11,7 @@ export async function readPdfExam(data: ArrayBuffer): Promise<ImportedExam> {
   let current: ExamFormQuestion | undefined;
   let columns: { right: number; answer: ExamFormQuestion["answers"][number] }[] = [];
   let mode: "choice" | "true_false" | "essay" = "choice";
+  let hasText = false;
   const flush = () => { if (current) questions.push(current); current = undefined; columns = []; };
   try {
     for (let pi = 1; pi <= doc.numPages; pi++) {
@@ -23,6 +24,7 @@ export async function readPdfExam(data: ArrayBuffer): Promise<ImportedExam> {
       await page.render({ canvas, canvasContext: ctx, viewport }).promise;
       const content = await page.getTextContent();
       const items = content.items.filter((item): item is import("pdfjs-dist/types/src/display/api").TextItem => "str" in item && !!item.str.trim());
+      hasText ||= items.length > 0;
       const lines: typeof items[] = [];
       for (const item of items.sort((a, b) => b.transform[5] - a.transform[5] || b.transform[4] - a.transform[4])) {
         const line = lines.find(line => Math.abs(line[0].transform[5] - item.transform[5]) < 3);
@@ -53,15 +55,13 @@ export async function readPdfExam(data: ArrayBuffer): Promise<ImportedExam> {
         }
         if (/العبارة|العلامة|موارد بشرية.*الفرقة|انتظام$|انتساب$/.test(raw)) continue;
         const numbered = /^[\d٠-٩]+\s*[.)]/u.test(raw);
-        if (mode === "true_false") {
-          if (numbered) {
+        const marked = /\(\s*[✓✔✘✕×✗]\s*\)\s*$/u.test(raw);
+        if (mode === "true_false" || (marked && (numbered || !current || current.type === "true_false"))) {
+          if (numbered || marked) {
             flush();
-            const clean = tokens.filter(token => !token.red && !/[✓✔✘✕×✗]/.test(token.text)).map(token => token.text).join(" ");
+            const clean = tokens.filter(token => !token.red).map(token => token.text.replace(/[✓✔✘✕×✗]/g, "")).join(" ");
             const reason = tokens.filter(token => token.red).map(token => token.text).join(" ");
-            current = importedQuestion(clean, "true_false", [
-              { text: "صح", isCorrect: /[✓✔]/.test(raw), reason },
-              { text: "خطأ", isCorrect: /[✘✕×✗]/.test(raw), reason },
-            ]);
+            current = importedTrueFalseQuestion(clean.replace(/\(\s*\)\s*$/, ""), raw, reason);
           } else if (current) {
             current.text += " " + tokens.filter(token => !token.red && !/[✓✔✘✕×✗]/.test(token.text)).map(token => token.text).join(" ");
             const reason = tokens.filter(token => token.red).map(token => token.text).join(" ");
@@ -93,6 +93,7 @@ export async function readPdfExam(data: ArrayBuffer): Promise<ImportedExam> {
       canvas.width = canvas.height = 0;
     }
     flush();
+    if (!hasText) throw new Error("IMPORT_NO_TEXT");
     return finishImportedExam(questions);
   } finally { await doc.destroy(); }
 }

@@ -17,6 +17,13 @@ export function importedQuestion(text: string, type: ExamFormQuestionType, answe
   };
 }
 
+export function importedTrueFalseQuestion(text: string, mark: string, reason = ""): ExamFormQuestion {
+  return importedQuestion(text, "true_false", [
+    { text: "صح", isCorrect: /[✓✔]/.test(mark), reason },
+    { text: "خطأ", isCorrect: /[✘✕×✗]/.test(mark), reason },
+  ]);
+}
+
 export function finishImportedExam(questions: ExamFormQuestion[], contexts: string[] = []): ImportedExam {
   if (!questions.length || questions.length > 500) throw new Error("NO_IMPORTABLE_QUESTIONS");
   const stamp = Date.now();
@@ -44,6 +51,7 @@ export function parseWordExam(xml: string): ImportedExam {
   let pending: string[] = [];
   const contexts: string[] = [];
   let essay = false;
+  let trueFalse = false;
   for (const block of Array.from(body.children)) {
     if (block.localName === "p") {
       const value = text(block);
@@ -51,12 +59,16 @@ export function parseWordExam(xml: string): ImportedExam {
       if (/^السؤال/.test(value)) {
         pending = [];
         essay = !/اختر|إختر|صح|خطأ/.test(value);
+        trueFalse = /صح|خطأ/.test(value);
         const colon = value.indexOf(":");
         if (essay && colon >= 0 && value.slice(colon + 1).trim()) questions.push(importedQuestion(value.slice(colon + 1), "short_answer"));
       } else if (essay) {
         questions.push(importedQuestion(value, "short_answer"));
       } else {
-        pending.push(value);
+        const mark = value.match(/\(\s*([✓✔✘✕×✗])\s*\)\s*$/u);
+        if (mark || trueFalse) {
+          questions.push(importedTrueFalseQuestion(mark ? value.slice(0, mark.index) : value, mark?.[1] ?? ""));
+        } else pending.push(value);
       }
       continue;
     }
@@ -72,10 +84,7 @@ export function parseWordExam(xml: string): ImportedExam {
         const full = text(statement);
         const clean = text(statement, true);
         const reason = full !== clean ? Array.from(statement.getElementsByTagNameNS(WORD_NS, "r")).filter(run => Array.from(run.getElementsByTagNameNS(WORD_NS, "color")).some(color => color.getAttributeNS(WORD_NS, "val")?.toUpperCase() === "FF0000")).map(run => text(run)).join("") : "";
-        questions.push(importedQuestion(clean, "true_false", [
-          { text: "صح", isCorrect: /[✓✔]/.test(mark), reason },
-          { text: "خطأ", isCorrect: /[✘✕×✗]/.test(mark), reason },
-        ]));
+        questions.push(importedTrueFalseQuestion(clean, mark, reason));
       }
     } else {
       if (pending.length > 1) contexts.push(pending.slice(0, -1).join("\n"));

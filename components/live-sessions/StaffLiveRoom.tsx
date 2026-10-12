@@ -36,7 +36,7 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
   useEffect(() => {
     const supported = typeof navigator.mediaDevices?.getDisplayMedia === 'function';
     setScreenCaptureSupported(supported);
-    setMeetingInBrowser(supported);
+    setMeetingInBrowser(true);
     setAndroid(/Android/i.test(navigator.userAgent));
   }, []);
 
