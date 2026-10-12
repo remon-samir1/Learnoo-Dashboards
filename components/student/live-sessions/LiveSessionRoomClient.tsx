@@ -253,7 +253,7 @@ export default function LiveSessionRoomClient({
                 </div>
               ) : null}
 
-              <LiveMeetingStage chatOpen={isChatOpen}><JitsiMeeting
+              <LiveMeetingStage chatOpen={isChatOpen} whiteboardOpen={isWhiteboardOpen}><JitsiMeeting
                 domain={JITSI_DOMAIN}
                 roomName={jitsiRoomName}
                 configOverwrite={{
@@ -329,6 +329,8 @@ export default function LiveSessionRoomClient({
                       const ev = event as { muted: boolean };
                       setIsAudioMuted(ev.muted);
                     },
+                    // This server emits no event payload; read the selected participant from its API.
+                    largeVideoChanged: () => setIsWhiteboardOpen((api as typeof api & { _getOnStageParticipant: () => string })._getOnStageParticipant() === 'whiteboard'),
                     whiteboardStatusChanged: (event: unknown) => {
                       const ev = event as { status?: string; isOpen?: boolean } | string | undefined;
                       const rawStatus = typeof ev === "string" ? ev : ev?.status || "";
@@ -336,7 +338,6 @@ export default function LiveSessionRoomClient({
                       // Jitsi (meet.learnoo.app) reports: INSTANTIATED | SHOWN | HIDDEN | FORBIDDEN | RESET
                       const isOpen =
                         status === "shown" ||
-                        status === "instantiated" ||
                         status === "visible" ||
                         status === "open" ||
                         status === "opened" ||

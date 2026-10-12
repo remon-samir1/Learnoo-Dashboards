@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-export default function LiveMeetingStage({ children, chatOpen = false }: { children: ReactNode; chatOpen?: boolean }) {
+export default function LiveMeetingStage({ children, chatOpen = false, whiteboardOpen = false }: { children: ReactNode; chatOpen?: boolean; whiteboardOpen?: boolean }) {
   const width = chatOpen ? 1275 : 960;
   const container = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
@@ -16,9 +16,11 @@ export default function LiveMeetingStage({ children, chatOpen = false }: { child
     return () => observer.disconnect();
   }, [width]);
 
-  // Keep the same canvas coordinates on every device; scale the whole meeting to fit.
+  // Only the whiteboard needs fixed canvas coordinates across devices.
   return <div ref={container} className="relative h-full w-full overflow-hidden bg-[#040404]">
-    <div className="absolute" style={{ width, height: 640, left: '50%', top: '50%', zoom: scale || 1, transform: 'translate(-50%, -50%)', visibility: scale ? 'visible' : 'hidden' }}>
+    <div className="absolute" style={whiteboardOpen
+      ? { width, height: 640, left: '50%', top: '50%', zoom: scale || 1, transform: 'translate(-50%, -50%)', visibility: scale ? 'visible' : 'hidden' }
+      : { width: '100%', height: '100%', inset: 0 }}>
       {children}
     </div>
   </div>;

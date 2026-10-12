@@ -8,7 +8,7 @@ const ts = require('typescript');
 
 function room({ pathname = '/live-sessions/70/room', capture = true, recording = false, enabled = true, userAgent = 'iPad' } = {}) {
   const state = [], refs = [], effects = [], commands = [], destinations = [];
-  let cursor, refCursor, meeting, localRecording, closed = false, tree, markup;
+  let onStage = 'instructor', cursor, refCursor, meeting, localRecording, closed = false, tree, markup;
   const module = { exports: {} };
   const compiled = ts.transpileModule(readFileSync(join(__dirname, 'StaffLiveRoom.tsx'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const jitsi = { exports: {} };
@@ -40,9 +40,9 @@ function room({ pathname = '/live-sessions/70/room', capture = true, recording =
   render();
   effects.shift()();
   render();
-  return { render, elements, commands, destinations, get meeting() { return meeting; }, get localRecording() { return localRecording; }, get closed() { return closed; }, get markup() { return markup; }, ready() {
+  return { render, elements, commands, destinations, select: id => onStage = id, get meeting() { return meeting; }, get localRecording() { return localRecording; }, get closed() { return closed; }, get markup() { return markup; }, ready() {
     const listeners = {};
-    meeting.onApiReady({ executeCommand: (...args) => commands.push(args), addEventListeners: value => Object.assign(listeners, value) });
+    meeting.onApiReady({ _getOnStageParticipant: () => onStage, executeCommand: (...args) => commands.push(args), addEventListeners: value => Object.assign(listeners, value) });
     return listeners;
   } };
 }
@@ -103,4 +103,28 @@ test('staff uses device recording with room permission and disables server recor
     view.render();
     assert.equal(view.localRecording.joined, true);
   }
+});
+
+test('staff scales only the visible whiteboard and restores video after closing it', () => {
+  const view = room();
+  const stage = () => view.elements().find(node => node.props?.whiteboardOpen !== undefined);
+  const listeners = view.ready();
+  assert.equal(stage().props.whiteboardOpen, false);
+  listeners.whiteboardStatusChanged({ status: 'INSTANTIATED' });
+  view.render();
+  assert.equal(stage().props.whiteboardOpen, false);
+  listeners.whiteboardStatusChanged({ status: 'SHOWN' });
+  view.render();
+  assert.equal(stage().props.whiteboardOpen, true);
+  view.select('instructor-sharing-screen');
+  listeners.largeVideoChanged();
+  view.render();
+  assert.equal(stage().props.whiteboardOpen, false);
+  view.select('whiteboard');
+  listeners.largeVideoChanged();
+  view.render();
+  assert.equal(stage().props.whiteboardOpen, true);
+  listeners.whiteboardStatusChanged({ status: 'HIDDEN' });
+  view.render();
+  assert.equal(stage().props.whiteboardOpen, false);
 });

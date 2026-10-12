@@ -26,6 +26,7 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
   const jitsiApiRef = useRef<any>(null);
 
   const [chatOpen, setChatOpen] = useState(false);
+  const [whiteboardOpen, setWhiteboardOpen] = useState(false);
   const [joined, setJoined] = useState(false);
   const [screenCaptureSupported, setScreenCaptureSupported] = useState<boolean | null>(null);
   const [meetingInBrowser, setMeetingInBrowser] = useState(false);
@@ -108,7 +109,7 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
           <input aria-label="رابط الجلسة لتطبيق مشاركة الشاشة" readOnly value={`https://${JITSI_DOMAIN}/${jitsiRoomName}`} dir="ltr" className="w-full rounded-lg bg-slate-700 p-3 text-sm" onFocus={event => event.currentTarget.select()} />
           <button className="text-sm underline" onClick={() => setMeetingInBrowser(true)}>فتح الجلسة والسبورة في المتصفح</button>
           <p className="text-sm text-slate-300">السبورة داخل المتصفح لا تحتاج مشاركة شاشة الجهاز.</p>
-        </div> : <LiveMeetingStage chatOpen={chatOpen}><JitsiMeeting
+        </div> : <LiveMeetingStage chatOpen={chatOpen} whiteboardOpen={whiteboardOpen}><JitsiMeeting
           domain={JITSI_DOMAIN}
           roomName={jitsiRoomName}
           configOverwrite={{
@@ -178,9 +179,12 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
             // Listen for the local participant leaving
             api.addEventListeners({
               chatUpdated: (event: { isOpen: boolean }) => setChatOpen(event.isOpen),
+              whiteboardStatusChanged: (event: { status: string }) => setWhiteboardOpen(event.status === 'SHOWN'),
+              // This server emits no event payload; read the selected participant from its API.
+              largeVideoChanged: () => setWhiteboardOpen((api as typeof api & { _getOnStageParticipant: () => string })._getOnStageParticipant() === 'whiteboard'),
               readyToClose: handleReadyToClose,
               videoConferenceJoined: () => setJoined(true),
-              videoConferenceLeft: () => setJoined(false),
+              videoConferenceLeft: () => { setJoined(false); setWhiteboardOpen(false); },
 
             });
           }}
