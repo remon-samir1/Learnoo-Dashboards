@@ -24,7 +24,6 @@ function room({ pathname = '/live-sessions/70/room', capture = true, recording =
     if (id === '@/src/hooks/useLiveRooms') return { useLiveRoom: () => ({ data: { attributes: { title: 'QA room', enable_recording: enabled } }, isLoading: false }) };
     if (id === '@/lib/auth') return { getUserData: () => ({ attributes: { first_name: 'مدرس & # " عربي' } }) };
     if (id === '@/src/lib/jitsi') return jitsi.exports;
-    if (id === './LiveMeetingStage') return { __esModule: true, default: ({ children }) => React.createElement('div', { 'data-meeting-stage': true }, children) };
     if (id === './LocalSessionRecording') return { __esModule: true, default: props => { localRecording = props; return React.createElement('span', null, 'Local recorder'); } };
     if (id === '@jitsi/react-sdk') return { JitsiMeeting: props => { meeting = props; return React.createElement('iframe'); } };
     return require(id);
@@ -82,7 +81,6 @@ test('iPad opens the same native room without joining twice; Android uses an int
     view.elements().find(node => node.type === 'button' && String(node.props.children).startsWith('فتح الجلسة والسبورة')).props.onClick();
     view.render();
     assert.equal(view.meeting.roomName, 'learnooroom70');
-    assert.ok(view.markup.includes('data-meeting-stage'));
     view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق مشاركة الشاشة').props.onClick();
     view.render();
     assert.equal(view.meeting, null);
