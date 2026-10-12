@@ -8,6 +8,7 @@ import { useLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getUserData } from '@/lib/auth';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import LocalSessionRecording from './LocalSessionRecording';
+import LiveMeetingStage from './LiveMeetingStage';
 import { liveMeetingBranding, liveWhiteboardConfig, JITSI_DOMAIN, getJitsiRoomName, getJitsiAppUrl } from '@/src/lib/jitsi';
 
 export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: string; basePath: string; onClose: () => void }) {
@@ -106,7 +107,7 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
           <input aria-label="رابط الجلسة لتطبيق مشاركة الشاشة" readOnly value={`https://${JITSI_DOMAIN}/${jitsiRoomName}`} dir="ltr" className="w-full rounded-lg bg-slate-700 p-3 text-sm" onFocus={event => event.currentTarget.select()} />
           <button className="text-sm underline" onClick={() => setMeetingInBrowser(true)}>فتح الجلسة والسبورة في المتصفح</button>
           <p className="text-sm text-slate-300">السبورة داخل المتصفح لا تحتاج مشاركة شاشة الجهاز.</p>
-        </div> : <JitsiMeeting
+        </div> : <LiveMeetingStage><JitsiMeeting
           domain={JITSI_DOMAIN}
           roomName={jitsiRoomName}
           configOverwrite={{
@@ -187,7 +188,7 @@ export default function StaffLiveRoom({ roomId, basePath, onClose }: { roomId: s
             iframe.style.height = '100%';
             iframe.style.border = 'none';
           }}
-        />}
+        /></LiveMeetingStage>}
       </div>
     </div>
   );
