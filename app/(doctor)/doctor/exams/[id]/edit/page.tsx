@@ -26,6 +26,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useChapters } from '@/src/hooks/useChapters';
 import { quizKeys, useQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
+import { ExamFileImport } from '@/components/exams/ExamFileImport';
 import { AiExamUsageNotice } from '@/src/components/ai-exam/AiExamUsageNotice';
 import { parseGeneratedExamQuestions, requestExamExtraction } from '@/src/lib/exam-ai';
 import {
@@ -538,8 +539,12 @@ export default function EditExamPage() {
           </div>
         </div>
 
-        {/* AI Upload Button */}
-        <div>
+        <div className="flex flex-wrap gap-2">
+          <ExamFileImport onApply={(imported, title) => {
+            revokeQuestionsObjectUrls(questionsRef.current);
+            setQuestions(imported);
+            setExamDetails(current => ({ ...current, title: current.title || title, totalMarks: String(imported.reduce((sum, question) => sum + question.score, 0)) }));
+          }} />
           <button
             type="button"
             onClick={() => {

@@ -27,6 +27,7 @@ interface DetailPanelProps {
   node: TreeNode;
   canUseActivations: boolean;
   isInstructor: boolean;
+  isOwner: boolean;
   codesLoading: boolean;
   selectedCode: string;
   setSelectedCode: (val: string) => void;
@@ -61,6 +62,7 @@ export function DetailPanel({
   node,
   canUseActivations,
   isInstructor,
+  isOwner,
   codesLoading,
   selectedCode,
   setSelectedCode,
@@ -164,7 +166,7 @@ export function DetailPanel({
                   {node.stats?.courses || 0}
                 </p>
               </div>
-              {node.stats?.students != null && <div>
+              {isOwner && node.stats?.students != null && <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   {t("students")}
                 </label>
@@ -213,19 +215,19 @@ export function DetailPanel({
                   EGP {(node.data as Course).attributes.price}
                 </p>
               </div>
-              <div>
+              {isOwner && <div>
                 <label className="text-[10px] text-gray-400 block font-normal">{t("maxViews")}</label>
                 <p className="text-xs text-gray-700">
                   {(node.data as Course).attributes.max_views_per_student}
                 </p>
                 <p className="mt-1 text-[10px] text-gray-500">{locale === 'ar' ? 'حد المشاهدات لكل طالب في كل محاضرة. يُطبّق الأقل من حد الكورس وحد المحاضرة؛ صفر يعني بلا حد.' : 'Views per student for each lesson. The lower positive course or lesson limit applies; zero means unlimited.'}</p>
-              </div>
+              </div>}
               <div className="col-span-2 border-t border-gray-100 pt-2 flex justify-between">
                 <div>
                   <label className="text-[10px] text-gray-400 block">{t("lectures")}</label>
                   <p className="text-xs font-bold text-purple-600">{node.stats?.lectures || 0}</p>
                 </div>
-                {node.stats?.students != null && <div>
+                {isOwner && node.stats?.students != null && <div>
                   <label className="text-[10px] text-gray-400 block">{t("students")}</label>
                   <button type="button" onClick={() => openViewers(node)} className="text-xs font-bold text-green-600 underline" aria-label={locale === 'ar' ? 'عرض الطلاب المشتركين وأرقام هواتفهم' : 'View subscribers and their phone numbers'}>{node.stats.students}</button>
                 </div>}
@@ -244,7 +246,7 @@ export function DetailPanel({
             )}
 
             {/* Course activation section */}
-            {canUseActivations && (
+            {isOwner && canUseActivations && (
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1">
@@ -464,7 +466,7 @@ export function DetailPanel({
             )}
 
             {/* Chapter Activation codes */}
-            {canUseActivations && (
+            {isOwner && canUseActivations && (
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1">
@@ -722,12 +724,12 @@ export function DetailPanel({
             >
               <ArrowRightLeft className="w-3.5 h-3.5" /> {t("move")}
             </button>
-            <button
+            {isOwner && <button
               onClick={() => openViewers(node)}
               className="px-2.5 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
             >
               <Users className="w-3.5 h-3.5 text-gray-500" /> {t("viewers")}
-            </button>
+            </button>}
           </>
         )}
 

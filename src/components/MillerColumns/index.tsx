@@ -14,6 +14,7 @@ interface MillerColumnsProps {
   onCopyMove: (node: TreeNode, mode: "copy" | "move") => void;
   openViewers: (node: TreeNode) => void;
   isInstructor: boolean;
+  isOwner: boolean;
 
   // Activation & Student States (passed down to DetailPanel)
   canUseActivations: boolean;
@@ -54,6 +55,7 @@ export function MillerColumns({
   onCopyMove,
   openViewers,
   isInstructor,
+  isOwner,
 
   canUseActivations,
   codesLoading,
@@ -176,6 +178,7 @@ export function MillerColumns({
           <div className="flex-shrink-0 w-80">
             <DetailPanel
               node={detailPanelNode}
+              isOwner={isOwner}
               canUseActivations={canUseActivations}
               isInstructor={isInstructor}
               codesLoading={codesLoading}

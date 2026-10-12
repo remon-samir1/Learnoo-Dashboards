@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useLocale } from "next-intl";
 import Link from "next/link";
 import {
@@ -345,9 +345,13 @@ export default function StudentLiveSessionsPage() {
     return set;
   }, [enrolledCourses, unlockedTreeCourseIds]);
 
+  const requestId = useRef(0);
   const fetchRooms = (pageNum: number) => {
+    const id = ++requestId.current;
+    setError(null);
     setLoading(true);
     getStudentLiveRooms({ page: pageNum }).then((res) => {
+      if (id !== requestId.current) return;
       if (res.success && res.data) {
         setRooms(res.data);
         if (res.meta) setPaginationMeta(res.meta);
@@ -359,15 +363,17 @@ export default function StudentLiveSessionsPage() {
   };
 
   useEffect(() => {
+    if (!hasLoadedFacultyTree || loadingCourses) return;
     fetchRooms(page);
+    return () => { requestId.current++; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, hasLoadedFacultyTree, loadingCourses]);
 
   const visibleRooms = useMemo(() => {
     return filterLiveRoomsByFacultyCourses(rooms, facultyCourseIds, hasLoadedFacultyTree);
   }, [rooms, facultyCourseIds, hasLoadedFacultyTree]);
 
-  const isDataLoading = loading;
+  const isDataLoading = loading || !hasLoadedFacultyTree || loadingCourses;
 
   return (
     <div

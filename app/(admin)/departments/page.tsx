@@ -802,6 +802,7 @@ function TreeItem({
 }: TreeItemProps) {
   const t = useTranslations();
 
+  const { role } = useCurrentUser();
   const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
 
   const isExpanded = expanded.has(node.id);
@@ -1020,7 +1021,7 @@ function TreeItem({
                   </span>
                 )}
 
-                {node.stats.students !== undefined && (
+                {role === "Super Admin" && node.stats.students !== undefined && (
                   <span className="flex items-center gap-1 text-green-600">
                     <Users className="w-3 h-3" /> {node.stats.students}
                   </span>
@@ -2848,6 +2849,7 @@ export default function DepartmentsPage() {
           onCopyMove={handleCopyMove}
           openViewers={openViewers}
           isInstructor={isInstructor}
+          isOwner={role === "Super Admin"}
           canUseActivations={canUseActivations}
           codesLoading={codesLoading}
           selectedCode={selectedCode}

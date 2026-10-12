@@ -1,4 +1,6 @@
 "use client";
+import { ScheduledCountdown } from "@/components/student/ScheduledCountdown";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
@@ -418,15 +420,6 @@ function chapterIdsLinkedToExams(
   return ids;
 }
 
-function daysWholeFromNowTo(iso: string | null | undefined): number | null {
-  if (!iso?.trim()) return null;
-  const target = new Date(iso).getTime();
-  if (Number.isNaN(target)) return null;
-  const now = Date.now();
-  if (target <= now) return null;
-  return Math.max(1, Math.ceil((target - now) / 86400000));
-}
-
 function getExamScorePercent(attrs: LooseExamAttrs): number | null {
   for (const value of [attrs.result_percentage, attrs.percentage]) {
     const percentage = clampPercentage(value);
@@ -793,6 +786,7 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
                             {instructorFullName && (
                               <p className="mt-0.5 truncate text-sm text-[#64748B]">{instructorFullName}</p>
                             )}
+                            {upcoming && <ScheduledCountdown date={startedAt} />}
                             {whenLabel && (
                               <p className="mt-1 text-xs text-[#94A3B8]">{whenLabel}</p>
                             )}
@@ -1499,7 +1493,6 @@ function ExamsTab({
                   : 0;
               const showQuestions = examQuestionsReturned(exam);
               const qCount = showQuestions ? examQuestionCount(exam) : 0;
-              const daysLeft = daysWholeFromNowTo(attrs.start_time ?? null);
               const startStr = formatExamDate(attrs.start_time ?? null, locale);
               const typeLabel = examTypeDisplayLabel(attrs, t);
               const attemptsLines = attemptsSummaryLinesForCourseExam(exam, t);
@@ -1527,11 +1520,7 @@ function ExamsTab({
                         {examSubtitle(attrs, courseTitle)}
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-700 sm:text-xs">
-                      {daysLeft != null
-                        ? t("examsDaysLeft", { count: daysLeft })
-                        : t("examsUpcomingFallback")}
-                    </span>
+                    <ScheduledCountdown date={attrs.start_time} />
                   </div>
                   <div className="mt-4 space-y-2.5 text-sm text-[#64748B]">
                     <div className="flex items-center gap-2.5">
