@@ -1,0 +1,24 @@
+'use client';
+
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+
+export default function LiveMeetingStage({ children }: { children: ReactNode }) {
+  const container = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+
+  useEffect(() => {
+    const element = container.current!;
+    const resize = () => setScale(Math.min(element.clientWidth / 960, element.clientHeight / 640));
+    const observer = new ResizeObserver(resize);
+    observer.observe(element);
+    resize();
+    return () => observer.disconnect();
+  }, []);
+
+  // Keep the same canvas coordinates on every device; scale the whole meeting to fit.
+  return <div ref={container} className="relative h-full w-full overflow-hidden bg-[#040404]">
+    <div className="absolute" style={{ width: 960, height: 640, left: '50%', top: '50%', transform: `translate(-50%, -50%) scale(${scale})`, visibility: scale ? 'visible' : 'hidden' }}>
+      {children}
+    </div>
+  </div>;
+}

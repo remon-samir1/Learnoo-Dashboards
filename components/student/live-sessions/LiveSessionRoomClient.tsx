@@ -10,6 +10,8 @@ import {
   ArrowRight,
   MessageCircle,
   Hand,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { JitsiMeeting } from "@jitsi/react-sdk";
@@ -25,6 +27,7 @@ import {
 } from "@/src/lib/student-live-room";
 import { useMemo, useRef, useState } from "react";
 import { liveMeetingBranding, liveWhiteboardConfig, JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
+import LiveMeetingStage from "@/components/live-sessions/LiveMeetingStage";
 
 interface JitsiExternalApi {
   executeCommand: (command: string, ...args: unknown[]) => void;
@@ -68,6 +71,7 @@ export default function LiveSessionRoomClient({
   // Whiteboard and meeting state
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
   const [isConferenceJoined, setIsConferenceJoined] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(true);
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -188,6 +192,12 @@ export default function LiveSessionRoomClient({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <button type="button" disabled={!isConferenceJoined} onClick={() => jitsiApiRef.current?.executeCommand('toggleAudio')}
+                aria-pressed={!isAudioMuted}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-bold disabled:opacity-40">
+                {isAudioMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                {isRtl ? (isAudioMuted ? 'تشغيل الميكروفون' : 'كتم الميكروفون') : (isAudioMuted ? 'Unmute microphone' : 'Mute microphone')}
+              </button>
               {/* Raise Hand Button */}
               <button
                 type="button"
@@ -248,7 +258,7 @@ export default function LiveSessionRoomClient({
                 </div>
               ) : null}
 
-              <JitsiMeeting
+              <LiveMeetingStage><JitsiMeeting
                 domain={JITSI_DOMAIN}
                 roomName={jitsiRoomName}
                 configOverwrite={{
@@ -315,9 +325,14 @@ export default function LiveSessionRoomClient({
                     },
                     videoConferenceLeft: () => {
                       setIsConferenceJoined(false);
+                      setIsAudioMuted(true);
                       setIsWhiteboardOpen(false);
                       setIsHandRaised(false);
                       setIsChatOpen(false);
+                    },
+                    audioMuteStatusChanged: (event: unknown) => {
+                      const ev = event as { muted: boolean };
+                      setIsAudioMuted(ev.muted);
                     },
                     whiteboardStatusChanged: (event: unknown) => {
                       const ev = event as { status?: string; isOpen?: boolean } | string | undefined;
@@ -383,7 +398,7 @@ export default function LiveSessionRoomClient({
                   title={isRtl ? "السبورة التفاعلية للعرض فقط" : "Whiteboard is view-only"}
                 />
               ) : null}
-
+              </LiveMeetingStage>
             </div>
           </div>
         </section>

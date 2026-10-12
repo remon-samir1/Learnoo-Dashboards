@@ -20,6 +20,7 @@ test('leaving a Student meeting returns to the localized session list', () => {
         if (id === 'next-intl') return { useLocale: () => locale, useTranslations: () => key => key };
         if (id === 'next/link') return ({ children, ...props }) => React.createElement('a', props, children);
         if (id === '@jitsi/react-sdk') return { JitsiMeeting: props => { meeting = props; return null; } };
+        if (id === '@/components/live-sessions/LiveMeetingStage') return { __esModule: true, default: ({ children }) => React.createElement('div', { 'data-meeting-stage': true }, children) };
         if (id === '@/components/student/watch/VideoWatermark') return { VideoWatermark: () => { throw new Error('Live meetings must not render a watermark'); } };
         if (id === '@/src/services/student/platform-feature.service') return { getStudentPlatformFeatures: async () => [] };
         if (id === '@/src/lib/watermark-from-features') return { resolveEnabledWatermarkBucket: () => null };
@@ -29,9 +30,11 @@ test('leaving a Student meeting returns to the localized session list', () => {
       return module.exports;
     }
     const { default: Room } = load(resolve(__dirname, 'LiveSessionRoomClient.tsx'));
-    renderToStaticMarkup(React.createElement(Room, {
+    const markup = renderToStaticMarkup(React.createElement(Room, {
       room: { id: '70', attributes: { title: 'QA live lesson', status: 'live' } }, studentName: 'QA Student',
     }));
+    assert.ok(markup.includes('data-meeting-stage'));
+    assert.ok(markup.includes(locale === 'ar' ? 'تشغيل الميكروفون' : 'Unmute microphone'));
     assert.equal(meeting.roomName, 'learnooroom70');
     assert.equal(meeting.userInfo.displayName, 'QA Student');
     assert.equal(meeting.configOverwrite.prejoinConfig.enabled, false);
