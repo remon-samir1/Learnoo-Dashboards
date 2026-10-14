@@ -2,19 +2,18 @@
 
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { archivedStudentsApi } from '@/src/lib/api';
 import { useCurrentUser } from '@/src/hooks/useAuth';
 
-export default function ArchivedStudents() {
+export default function ArchivedStudents({ onRecovered }: { onRecovered: () => Promise<unknown> }) {
   const ar = useLocale() === 'ar';
   const { role } = useCurrentUser();
   const allowed = role === 'Admin' || role === 'Super Admin';
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState('');
-  const client = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({ queryKey: ['archivedStudents', page, search], enabled: allowed, queryFn: () => archivedStudentsApi.list(page, search) });
   if (!allowed) return null;
   async function recover(id: string, mode: 'restore' | 'new') {
@@ -26,7 +25,7 @@ export default function ArchivedStudents() {
     try {
       await archivedStudentsApi.recover(id, mode);
       await refetch();
-      await client.invalidateQueries({ queryKey: ['students'] });
+      await onRecovered();
       toast.success(mode === 'restore' ? (ar ? 'تم استرجاع الحساب' : 'Account restored') : (ar ? 'يمكن للطالب الآن التسجيل بنفس الرقم كحساب جديد' : 'The student can now register a new account with this number'));
     } catch { toast.error(ar ? 'تعذر تنفيذ الطلب' : 'Could not complete the request'); }
     finally { setBusy(''); }

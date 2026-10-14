@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import {
   Search,
@@ -23,6 +24,7 @@ function getInitials(firstName: string, lastName: string) {
 }
 
 export default function StudentsPage() {
+  const queryClient = useQueryClient();
   const t = useTranslations('students');
   const tc = useTranslations('common');
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,6 +57,7 @@ export default function StudentsPage() {
       try {
         await deleteStudent(id);
         refetch();
+        await queryClient.invalidateQueries({ queryKey: ['archivedStudents'] });
       } catch {
         // Error handled by hook
       }
@@ -282,7 +285,7 @@ export default function StudentsPage() {
       </div>
 
 
-      <ArchivedStudents />
+      <ArchivedStudents onRecovered={refetch} />
     </div>
   );
 }
