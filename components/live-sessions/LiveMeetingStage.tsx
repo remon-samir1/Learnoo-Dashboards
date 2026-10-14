@@ -17,9 +17,9 @@ export default function LiveMeetingStage({ children, chatOpen = false, whiteboar
   }, [width]);
 
   // Only the whiteboard needs fixed canvas coordinates across devices.
-  return <div ref={container} className="relative h-full w-full overflow-hidden bg-[#040404]">
+  return <div ref={container} className="relative h-full w-full overflow-hidden bg-[#040404] [&_iframe]:!h-full [&_iframe]:!w-full">
     <div className="absolute" style={whiteboardOpen
-      ? { width, height: 640, left: '50%', top: '50%', zoom: scale || 1, transform: 'translate(-50%, -50%)', visibility: scale ? 'visible' : 'hidden' }
+      ? { width, height: 640, left: '50%', top: '50%', transform: `translate(-50%, -50%) scale(${scale || 1})`, visibility: scale ? 'visible' : 'hidden' }
       : { width: '100%', height: '100%', inset: 0 }}>
       {children}
     </div>

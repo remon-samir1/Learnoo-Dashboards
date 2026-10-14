@@ -1491,7 +1491,13 @@ export const timetableApi = {
   upload: (id: string, form: FormData) => postMultipart(`/v1/timetable/${id}/documents`, form),
 };
 
-export interface StaffActivity { id: number; action: string; first_name: string; last_name: string; created_at: string }
+export interface ContentAuditSnapshot { id: number; title: string; video: string | null; lecture_id: number | null; course_id: number | null; status: number; max_views: number | null; view_by_minute: number | null }
+export interface StaffActivity { id: number; action: string; first_name: string; last_name: string; created_at: string; details?: { before: ContentAuditSnapshot; after: ContentAuditSnapshot | null; view_history: { student_id: string; name: string; count: number }[] } | null }
+export interface ArchivedStudent { id: string; first_name: string; last_name: string; phone: string; deleted_at: string }
+export const archivedStudentsApi = {
+  list: (page: number, search: string) => get<{ data: ArchivedStudent[]; last_page: number }>('/v1/student-archives', { page, search }),
+  recover: (id: string, mode: 'restore' | 'new') => post(`/v1/student-archives/${id}`, { mode }),
+};
 export interface DeviceDetails { device: string; browser: string; identifier: string; ip: string; at: string }
 export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null }
 export const ownerOperationsApi = {

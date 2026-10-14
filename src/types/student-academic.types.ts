@@ -36,6 +36,7 @@ export type FacultyForSelection = {
   type?: string;
   attributes: {
     name?: string | null;
+    image?: string | null;
     /** Center id */
     parent_id?: number | string | null;
     parent?: FacultyParentRelation | null;
@@ -46,4 +47,5 @@ export type FacultyForSelection = {
 export type AcademicSelectOption = {
   id: string;
   label: string;
+  image?: string | null;
 };

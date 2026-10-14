@@ -109,7 +109,7 @@ export function buildUniversityCenterOptions(
 
     const centerId = String(centerNode.id);
     if (!byId.has(centerId)) {
-      byId.set(centerId, { id: centerId, label });
+      byId.set(centerId, { id: centerId, label, image: centerNode.attributes?.image });
     }
   }
 
@@ -145,6 +145,7 @@ export function buildCenterFacultyOptions(
     options.push({
       id: String(facultyItem.id),
       label,
+      image: facultyItem.attributes.image,
     });
   }
 

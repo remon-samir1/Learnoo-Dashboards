@@ -31,9 +31,9 @@ function translations(locale) {
 
 test('the university, center and faculty labels match filtered API options in Arabic and English', () => {
   for (const locale of ['ar', 'en']) {
-    const universities = [{ id: '1', attributes: { name: 'Capital' } }];
+    const universities = [{ id: '1', attributes: { name: 'Capital', image: 'https://example.com/university.png' } }];
     const faculties = [
-      { id: '3', attributes: { name: 'Commerce', parent_id: 2, parent: { data: { id: '2', attributes: { name: 'MOGA', parent_id: 1 } } }, childrens: [] } },
+      { id: '3', attributes: { name: 'Commerce', image: 'https://example.com/faculty.png', parent_id: 2, parent: { data: { id: '2', attributes: { name: 'MOGA', image: 'https://example.com/center.png', parent_id: 1 } } }, childrens: [] } },
       { id: '5', attributes: { name: 'Engineering', parent_id: 4, parent: { data: { id: '4', attributes: { name: 'Other center', parent_id: 9 } } }, childrens: [] } },
     ];
     const state = [universities, faculties, false, false, '', {}, null];
@@ -52,12 +52,15 @@ test('the university, center and faculty labels match filtered API options in Ar
     const labels = require(resolve(root, `messages/${locale}.json`)).studentProfile.academic;
     assert.ok(html.indexOf(labels.university) < html.indexOf(labels.center));
     assert.ok(html.indexOf(labels.center) < html.indexOf(labels.faculty));
-    assert.match(html, /value="2" selected="">MOGA/);
-    assert.match(html, /value="3" selected="">Commerce/);
+    assert.match(html, /value="2"/);
+    assert.match(html, /MOGA/);
+    for (const name of ['university', 'center', 'faculty']) assert.ok(html.includes(`https://example.com/${name}.png`));
+    assert.match(html, /value="3"/);
+    assert.match(html, /Commerce/);
     assert.doesNotMatch(html, /Other center|Engineering/);
-    const universityField = React.Children.toArray(tree.props.children).find(child => child.props?.children?.some?.(node => node?.type === 'select' && node.props.value === '1'));
-    const select = universityField.props.children.find(node => node?.type === 'select');
-    select.props.onChange({ target: { value: '9' } });
+    const universityField = React.Children.toArray(tree.props.children).find(child => child.props?.children?.some?.(node => node?.props?.options && node.props.value === '1'));
+    const select = universityField.props.children.find(node => node?.props?.options);
+    select.props.onChange('9');
     assert.deepEqual(changes, [['university', '9'], ['center', ''], ['faculty', '']]);
   }
 });

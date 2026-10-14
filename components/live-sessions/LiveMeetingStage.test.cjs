@@ -38,8 +38,8 @@ test('host, tablet and phone retain one canvas without clipping, including resiz
     assert.equal(stage.props.style.height, 640);
     assert.equal(stage.props.style.visibility, 'visible');
     assert.ok(960 * scale <= width && 640 * scale <= height);
-    assert.equal(stage.props.style.zoom, scale);
-    assert.equal(stage.props.style.transform, 'translate(-50%, -50%)');
+    assert.equal(stage.props.style.zoom, undefined);
+    assert.equal(stage.props.style.transform, `translate(-50%, -50%) scale(${scale})`);
   }
   chatOpen = true;
   render();

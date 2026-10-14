@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useTranslations } from "next-intl";
+import AcademicOptions from "./AcademicOptions";
 
 import { facultiesApi, universitiesApi } from "@/src/lib/api";
 
@@ -456,9 +457,6 @@ export default function UniversityFacultyFields({
 
 
 
-  const selectClassName =
-
-    "h-11 w-full rounded-xl border border-[var(--border-color)] bg-white px-4 text-sm outline-none focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60";
 
 
 
@@ -502,31 +500,7 @@ export default function UniversityFacultyFields({
 
         ) : (
 
-          <select
-
-            value={universityId}
-
-            onChange={(event) => handleUniversityChange(event.target.value)}
-
-            disabled={disabled}
-
-            className={selectClassName}
-
-          >
-
-            <option value="">{t("selectUniversity")}</option>
-
-            {universities.map((university) => (
-
-              <option key={university.id} value={university.id}>
-
-                {university.attributes.name}
-
-              </option>
-
-            ))}
-
-          </select>
+          <AcademicOptions label={t("university")} options={universities.map(university => ({ id: university.id, label: university.attributes.name, image: university.attributes.image }))} value={universityId} onChange={handleUniversityChange} disabled={disabled} />
 
         )}
 
@@ -570,31 +544,7 @@ export default function UniversityFacultyFields({
 
         ) : (
 
-          <select
-
-            value={centerId}
-
-            onChange={(event) => handleCenterChange(event.target.value)}
-
-            disabled={disabled || !universityId}
-
-            className={selectClassName}
-
-          >
-
-            <option value="">{t("selectCenter")}</option>
-
-            {centerOptions.map((center) => (
-
-              <option key={center.id} value={center.id}>
-
-                {center.label}
-
-              </option>
-
-            ))}
-
-          </select>
+          <AcademicOptions label={t("center")} options={centerOptions} value={centerId} onChange={handleCenterChange} disabled={disabled} />
 
         )}
 
@@ -638,31 +588,7 @@ export default function UniversityFacultyFields({
 
         ) : (
 
-          <select
-
-            value={facultyId}
-
-            onChange={(event) => handleFacultyChange(event.target.value)}
-
-            disabled={disabled || !centerId}
-
-            className={selectClassName}
-
-          >
-
-            <option value="">{t("selectFaculty")}</option>
-
-            {facultyOptions.map((faculty) => (
-
-              <option key={faculty.id} value={faculty.id}>
-
-                {faculty.label}
-
-              </option>
-
-            ))}
-
-          </select>
+          <AcademicOptions label={t("faculty")} options={facultyOptions} value={facultyId} onChange={handleFacultyChange} disabled={disabled} />
 
         )}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
+import StaffActivityDetails from '@/components/dashboard/StaffActivityDetails';
 import { toast } from 'sonner';
 import api, { type StaffActivity, type DeviceTransfer, type DeviceDetails } from '@/src/lib/api';
 import { useCurrentUser } from '@/src/hooks/useAuth';
@@ -59,7 +60,7 @@ export default function OwnerActivityPage() {
       <label>{ar ? 'إلى' : 'To'}<input type="date" value={to} min={from || undefined} onChange={event => { setTo(event.target.value); setPage(1); }} className="block rounded-xl border p-3" /></label>
     </div>
     {!activity.length && <p>{ar ? 'لا توجد أنشطة مسجلة بعد' : 'No recorded activity yet'}</p>}
-    {activity.map(item => <article key={item.id} className="rounded-xl border bg-white p-4"><p>{item.first_name} {item.last_name}</p><p dir="ltr" className="break-all text-sm">{item.action}</p><time className="text-xs text-gray-500">{new Date(item.created_at).toLocaleString(ar ? 'ar' : 'en')}</time></article>)}
+    {activity.map(item => <article key={item.id} className="rounded-xl border bg-white p-4"><p>{item.first_name} {item.last_name}</p><p dir="ltr" className="break-all text-sm">{item.action}</p><StaffActivityDetails details={item.details} /><time className="text-xs text-gray-500">{new Date(item.created_at).toLocaleString(ar ? 'ar' : 'en')}</time></article>)}
     <div className="flex gap-4"><button disabled={page <= 1} onClick={() => setPage(page - 1)}>{ar ? 'السابق' : 'Previous'}</button><span>{page} / {lastPage}</span><button disabled={page >= lastPage} onClick={() => setPage(page + 1)}>{ar ? 'التالي' : 'Next'}</button></div>
     </>}
   </div>;

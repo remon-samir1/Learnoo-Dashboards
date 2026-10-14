@@ -11,6 +11,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
+import ArchivedStudents from '@/components/dashboard/ArchivedStudents';
 import { useStudents, useDeleteStudent } from '@/src/hooks/useStudents';
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
 import type { Student, StudentStatus } from '@/src/types';
@@ -281,6 +282,7 @@ export default function StudentsPage() {
       </div>
 
 
+      <ArchivedStudents />
     </div>
   );
 }

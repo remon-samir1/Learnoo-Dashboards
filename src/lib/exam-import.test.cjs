@@ -9,6 +9,7 @@ new Function('require', 'module', 'exports', ts.transpileModule(readFileSync(`${
 const { importedQuestion, importedTrueFalseQuestion, finishImportedExam, parseWordExam, readWordExam } = loaded.exports;
 
 test('true/false answer marks preserve the statement and require review when missing or ambiguous', () => {
+  assert.deepEqual(importedTrueFalseQuestion('English statement', '✓').answers.map(answer => answer.text), ['True', 'False']);
   for (const mark of ['✓', '✔', '✘', '✕', '×', '✗', '', '✓✗']) {
     const question = importedTrueFalseQuestion('١. تكلفة الأجور 200000 ج', mark, 'توضيح');
     assert.equal(question.type, 'true_false');
@@ -49,4 +50,45 @@ test('untrusted XML declarations and oversized expanded archives are rejected be
   const data = new ArrayBuffer(46), view = new DataView(data);
   view.setUint32(0, 0x02014b50, true); view.setUint32(24, 50_000_001, true);
   await assert.rejects(readWordExam(data), /INVALID_IMPORT_FILE/);
+});
+
+test('Word preserves all mixed questions and red feedback, including English tables and essays', () => {
+  const node = (localName, children = [], attributes = {}, value = '') => ({
+    localName, children, get textContent() { return value + children.map(child => child.textContent).join(''); },
+    getAttributeNS: (_ns, name) => attributes[name] ?? null,
+    getElementsByTagNameNS: (_ns, name) => children.flatMap(child => [
+      ...(child.localName === name ? [child] : []), ...child.getElementsByTagNameNS(_ns, name),
+    ]),
+  });
+  const run = (value, red = false) => node('r', [...(red ? [node('rPr', [node('color', [], { val: 'FF0000' })])] : []), node('t', [], {}, value)]);
+  const p = (...runs) => node('p', runs);
+  const cell = (...runs) => node('tc', [p(...runs)]);
+  const choice = () => node('tbl', [node('tr', [cell(run('A. One')), cell(run('B. Two'))])]);
+  let body;
+  const previous = global.DOMParser;
+  global.DOMParser = class {
+    parseFromString() { return { getElementsByTagName: () => [], getElementsByTagNameNS: () => [body] }; }
+  };
+  try {
+    const blocks = Array.from({ length: 20 }, (_, i) => [p(run(`${i + 1}. اختيار ${i + 1}`), run('سبب عام', true)), choice()]).flat();
+    for (let i = 21; i <= 100; i++) blocks.push(p(run(`${i}. عبارة ${i} (`), node('r', [node('sym', [], { char: i % 2 ? 'F0FC' : 'F0FB' })]), run(') '), run('سبب ', true), run('الإجابة', true)));
+    body = node('body', blocks);
+    const exam = parseWordExam('fixture');
+    assert.equal(exam.questions.length, 100);
+    assert.equal(exam.questions[0].text, 'اختيار 1');
+    assert.ok(exam.questions[0].answers.every(answer => answer.reason === 'سبب عام'));
+    exam.questions.slice(20).forEach((question, i) => {
+      assert.equal(question.text, `عبارة ${i + 21}`);
+      assert.equal(question.answers[0].isCorrect, (i + 21) % 2 === 1);
+      assert.ok(question.answers.every(answer => answer.reason === 'سبب الإجابة'));
+    });
+    body = node('body', [p(run('Q1: True or false')), node('tbl', [
+      node('tr', [cell(run('#')), cell(run('Statements')), cell(run('mark'))]),
+      node('tr', [cell(run('1')), cell(run('Statement')), cell(run('✓'))]),
+    ]), p(run('Q2: Select the correct answer')), p(run('Question')), choice(), p(run('Q3 : Compare between')), p(run('First and second')), p(run('Dr / Author'))]);
+    const english = parseWordExam('fixture').questions;
+    assert.deepEqual(english.map(question => question.type), ['true_false', 'single_choice', 'short_answer']);
+    assert.equal(english[0].answers[0].text, 'True');
+    assert.equal(english[2].text, 'Compare between\nFirst and second');
+  } finally { global.DOMParser = previous; }
 });
