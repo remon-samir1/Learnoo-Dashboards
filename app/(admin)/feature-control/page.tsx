@@ -156,9 +156,14 @@ const getCategoryConfig = (t: (key: string) => string): FeatureCategory[] => [
 
 
 
-const Switch = ({ enabled, onChange, disabled }: { enabled: boolean; onChange: () => void; disabled?: boolean }) => (
+const Switch = ({ enabled, onChange, disabled, label }: { enabled: boolean; onChange: () => void; disabled?: boolean; label: string }) => (
 
   <button
+
+    type="button"
+    role="switch"
+    aria-checked={enabled}
+    aria-label={label}
 
     onClick={onChange}
 
@@ -176,7 +181,7 @@ const Switch = ({ enabled, onChange, disabled }: { enabled: boolean; onChange: (
 
       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
 
-        enabled ? 'translate-x-5' : 'translate-x-0'
+        enabled ? 'translate-x-5 rtl:-translate-x-5' : 'translate-x-0'
 
       }`}
 
@@ -538,7 +543,7 @@ export default function FeatureControlPage() {
                 category.features.map((feature) => (
 
                   <div key={feature.id}>
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
 
                       <div className="flex flex-col gap-0.5">
 
@@ -549,6 +554,8 @@ export default function FeatureControlPage() {
                       </div>
 
                       <Switch
+
+                        label={feature.name}
 
                         enabled={feature.enabled}
 
