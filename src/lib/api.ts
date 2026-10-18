@@ -176,7 +176,8 @@ async function handleResponse<T>(response: Response, skipAuthRedirect: boolean =
     // Handle unauthorized errors - redirect to login (unless skipped)
     if ((response.status === 401) && !skipAuthRedirect) {
       if (typeof window !== 'undefined') {
-        window.location.replace(`/api/auth/session-end?reason=${errorData.code === 'device_session_revoked' ? 'device-changed' : 'expired'}`);
+        if (typeof document !== 'undefined') document.querySelectorAll<HTMLMediaElement>('video, audio').forEach(media => media.pause());
+        window.location.replace(`/api/auth/session-end?reason=${errorData.code === 'account_inactive' ? 'inactive' : errorData.code === 'device_session_revoked' ? 'device-changed' : 'expired'}`);
       }
     }
 
@@ -1156,6 +1157,7 @@ export const studentsApi = {
 
   update: (id: string, data: Partial<CreateStudentRequest>, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
+    if (data.course_ids?.length === 0) formData.append('course_ids', '');
     return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData, onProgress);
   },
 

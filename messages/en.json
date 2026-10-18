@@ -79,6 +79,7 @@
       "deviceRequestSent": "Your request was sent to the administrator. Once approved, sign in on this device.",
       "deviceChanged": "This session ended because the approved device changed. Sign in to continue.",
       "sessionExpired": "Your session expired. Please sign in again.",
+      "accountInactive": "Your account has been disabled. Please contact the administration.",
       "errors": {
         "missingFields": "Please enter your phone number",
         "localPhoneFormat": "For Egypt, enter your local number, such as 010..., without +20 or 020.",

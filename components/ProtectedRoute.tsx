@@ -24,7 +24,7 @@ export default function ProtectedRoute({
       if (document.visibilityState === 'visible') authApi.me().catch(() => {});
     };
     checkSession();
-    const timer = window.setInterval(checkSession, 30000);
+    const timer = window.setInterval(checkSession, 5000);
     window.addEventListener('focus', checkSession);
     document.addEventListener('visibilitychange', checkSession);
     return () => {
