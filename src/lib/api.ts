@@ -1462,7 +1462,7 @@ export const appVersionsApi = {
 
 export interface PlatformNotification {
   id: string;
-  data: { title: string; message: string; type?: string; url?: string; content_id?: string | number; course_id?: string | number; post_id?: string | number; chapter_id?: string | number; discussion_id?: string | number; student_id?: string };
+  data: { title: string; message: string; type?: string; action?: string; event?: string; actor_name?: string; url?: string; content_id?: string | number; course_id?: string | number; post_id?: string | number; chapter_id?: string | number; discussion_id?: string | number; student_id?: string };
   read_at: string | null;
   created_at: string;
 }

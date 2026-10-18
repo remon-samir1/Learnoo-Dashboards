@@ -158,6 +158,7 @@ export default function Navbar({
   const [openDropdown, setOpenDropdown] = useState<DropdownType>(null);
   const [notifications, setNotifications] =
     useState<NotificationItem[]>(initialNotifications);
+  const [unreadCount, setUnreadCount] = useState(initialNotifications.filter(item => !item.read_at).length);
 
   const debounced = useDebouncedCallback((value: string) => {
     setSearch(value);
@@ -172,7 +173,10 @@ export default function Navbar({
     const refresh = async () => {
       try {
         const response = await notificationsApi.list(1);
-        if (mounted) setNotifications(response.data as NotificationItem[]);
+        if (mounted) {
+          setNotifications(response.data as NotificationItem[]);
+          setUnreadCount(response.meta.unread_count);
+        }
       } catch { /* Keep the last inbox during a temporary connection failure. */ }
     };
     void refresh();
@@ -180,9 +184,6 @@ export default function Navbar({
     return () => { mounted = false; clearInterval(timer); };
   }, []);
 
-  const unreadCount = useMemo(() => {
-    return notifications.filter((item) => !item.read_at).length;
-  }, [notifications]);
   const latestNotifications = notifications.slice(0, 4);
 
   const currentLanguage =
@@ -297,7 +298,13 @@ export default function Navbar({
                   return (
                     <Link
                       href={notificationHref(item.data, pathname, locale) ?? `/${locale}/student/notifications`}
-                      onClick={() => { setOpenDropdown(null); void notificationsApi.read(item.id); }}
+                      onClick={() => {
+                        setOpenDropdown(null);
+                        void notificationsApi.read(item.id).then(() => {
+                          if (!item.read_at) setUnreadCount(count => Math.max(0, count - 1));
+                          setNotifications(items => items.map(n => n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n));
+                        });
+                      }}
                       key={item.id}
                       className="flex gap-3 border-t border-[var(--border-color)] px-4 py-3 transition hover:bg-gray-50"
                     >

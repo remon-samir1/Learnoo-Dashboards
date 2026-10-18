@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Search, Bell, LogOut } from 'lucide-react';
-import Link from 'next/link';
+import { Search, LogOut } from 'lucide-react';
+import StaffNotificationLink from '@/src/components/StaffNotificationLink';
 import { logout } from '@/lib/auth';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useCurrentUser } from '@/src/hooks/useAuth';
@@ -51,11 +51,7 @@ export default function DoctorHeader() {
         <LanguageSwitcher />
         
         {/* Notification Bell */}  
-        <Link href="/doctor/notifications"
-         className="relative p-2 text-[#64748B] hover:bg-[#F1F5F9] rounded-full transition-colors">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-[#4F46E5] rounded-full border-2 border-white"></span>
-        </Link>
+        <StaffNotificationLink href="/doctor/notifications" />
 
         {/* User Profile */}
         <div className="flex items-center gap-3 pl-4 border-l border-[#E5E7EB]">

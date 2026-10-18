@@ -61,6 +61,7 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
     }}>{ar ? 'تحديد الكل كمقروء' : 'Mark all as read'}</button>
     {error ? <p role="alert">{ar ? 'تعذر تحميل الإشعارات' : 'Could not load notifications'}</p> : loading ? <p>{ar ? 'جارٍ التحميل…' : 'Loading…'}</p> : !items.length ? <p>{ar ? 'لا توجد إشعارات' : 'No notifications'}</p> : items.map(item => <article key={item.id} className={`rounded-2xl border p-5 ${item.read_at ? 'bg-white' : 'bg-blue-50'}`}>
       <h2 className="font-bold">{item.data.title}</h2><p className="mt-2 whitespace-pre-wrap">{item.data.message}</p><time className="mt-2 block text-xs text-gray-500">{new Date(item.created_at).toLocaleString(ar ? 'ar' : 'en')}</time>
+      {item.data.actor_name && <p className="mt-2 text-xs text-gray-500">{ar ? 'بواسطة' : 'By'}: {item.data.actor_name}</p>}
       {notificationHref(item.data, pathname, locale) && <Link href={notificationHref(item.data, pathname, locale)!} onClick={() => { void api.notifications.read(item.id); }} className="mt-2 block text-sm text-primary underline">{item.data.type === 'support-issue' ? (ar ? 'عرض الشكوى' : 'View complaint') : (ar ? 'فتح المحتوى' : 'Open content')}</Link>}
       {!item.read_at && <button className="mt-2 text-sm text-primary underline" onClick={async () => { await api.notifications.read(item.id); setItems(prev => prev.map(n => n.id === item.id ? { ...n, read_at: new Date().toISOString() } : n)); }}>{ar ? 'تحديد كمقروء' : 'Mark as read'}</button>}
     </article>)}
