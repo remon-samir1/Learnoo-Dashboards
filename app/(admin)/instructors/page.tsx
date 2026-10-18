@@ -18,10 +18,13 @@ import { useInstructors, useDeleteInstructor, useResetInstructorPassword, useTog
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
 import type { Student } from '@/src/types';
 import { StudentStatusLabels } from '@/src/types';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 
 export default function InstructorsPage() {
   const t = useTranslations('instructors');
   const tc = useTranslations('common');
+  const { role } = useCurrentUser();
+  const canManagePublishing = role === 'Admin' || role === 'Super Admin';
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -188,6 +191,7 @@ export default function InstructorsPage() {
                         )}
                         <div>
                           <p className="font-medium text-[#1E293B]">{getFullName(instructor)}</p>
+                          {canManagePublishing && <p className="mt-1 text-xs text-[#64748B]">{t('publishing.title')}: {t(instructor.attributes.can_publish_without_approval ? 'publishing.automatic' : 'publishing.review')}</p>}
                         </div>
                       </div>
                     </td>

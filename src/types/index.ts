@@ -535,6 +535,8 @@ export interface UserAttributes {
   /** When true, user may use course/chapter activation flows (API-dependent). */
   can_use_activations?: boolean;
 
+  can_publish_without_approval?: boolean;
+
   //added by mohamed ahmed
   student_code: string;
 
@@ -5042,6 +5044,8 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
   /** When set, instructor may use course activation flows (API-dependent). */
   can_use_activations?: boolean;
 
+  can_publish_without_approval?: boolean;
+
   feedback?: string;
 
 
@@ -5118,6 +5122,8 @@ export interface CreateStudentRequest {
 
   /** Instructor-only: allow activation-related features. */
   can_use_activations?: boolean;
+
+  can_publish_without_approval?: boolean;
 
 
 

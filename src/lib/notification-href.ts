@@ -10,7 +10,7 @@ export function notificationHref(data: Record<string, unknown>, pathname: string
   const discussion = String(data.discussion_id ?? '');
   const course = String(data.course_id ?? '');
   if (data.type === 'student-account' && typeof data.student_id === 'string' && /^[\w-]+$/.test(data.student_id)) return student ? `${base}/profile` : `${prefix}/students/${data.student_id}`;
-  if (data.type === 'instructor-account' && typeof data.student_id === 'string' && /^[\w-]+$/.test(data.student_id) && !student && !prefix) return `/instructors/${data.student_id}`;
+  if (data.type === 'instructor-account' && typeof data.student_id === 'string' && /^[\w-]+$/.test(data.student_id) && !student && !prefix) return `/instructors/${data.student_id}/edit`;
   if (data.action === 'unavailable') return `${base}/courses`;
   if (data.action === 'deleted') return data.type !== 'course' && /^\d+$/.test(course)
     ? `${base}/courses/${student ? 'course-details/' : ''}${course}` : `${base}/courses`;

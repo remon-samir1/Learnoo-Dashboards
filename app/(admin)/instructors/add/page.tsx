@@ -13,6 +13,8 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FileUpload } from '@/components/FileUpload';
+import InstructorPublishingPolicy from '@/components/InstructorPublishingPolicy';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 import { 
   useCreateInstructor
 } from '@/src/hooks';
@@ -22,6 +24,8 @@ import { StudentStatusLabels } from '@/src/types';
 export default function AddInstructorPage() {
   const t = useTranslations();
   const router = useRouter();
+  const { role } = useCurrentUser();
+  const canManagePublishing = role === 'Admin' || role === 'Super Admin';
   
   // Mutation
   const { mutate: createInstructor, isLoading: isCreating, error: createError, progress } = useCreateInstructor();
@@ -34,7 +38,8 @@ export default function AddInstructorPage() {
     confirmPassword: '',
     specialization: '',
     status: 1 as StudentStatus,
-    image: null as File | null
+    image: null as File | null,
+    can_publish_without_approval: false,
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -71,7 +76,8 @@ export default function AddInstructorPage() {
         password: formData.password,
         specialization: formData.specialization,
         status: formData.status,
-        image: formData.image || undefined
+        image: formData.image || undefined,
+        can_publish_without_approval: canManagePublishing ? formData.can_publish_without_approval : undefined,
       };
 
       await createInstructor(payload);
@@ -215,6 +221,12 @@ export default function AddInstructorPage() {
             </div>
           </div>
         </section>
+
+        {canManagePublishing && <InstructorPublishingPolicy
+          value={formData.can_publish_without_approval}
+          onChange={value => setFormData(prev => ({ ...prev, can_publish_without_approval: value }))}
+          disabled={isCreating}
+        />}
 
         {/* Submit Section */}
         <div className="flex items-center justify-end gap-4">

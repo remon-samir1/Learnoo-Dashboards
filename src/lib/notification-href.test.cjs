@@ -15,7 +15,7 @@ test('activity notifications open reviews, parent courses and affected accounts 
   assert.equal(notificationHref({ type: 'course', content_id: 6, action: 'unavailable' }, '/ar/student/notifications', 'ar'), '/ar/student/courses');
   assert.equal(notificationHref({ type: 'student-account', student_id: 'student-uuid' }, '/notifications', 'ar'), '/students/student-uuid');
   assert.equal(notificationHref({ type: 'student-account', student_id: 'student-uuid' }, '/doctor/notifications', 'ar'), '/doctor/students/student-uuid');
-  assert.equal(notificationHref({ type: 'instructor-account', student_id: 'teacher-uuid' }, '/notifications', 'ar'), '/instructors/teacher-uuid');
+  assert.equal(notificationHref({ type: 'instructor-account', student_id: 'teacher-uuid' }, '/notifications', 'ar'), '/instructors/teacher-uuid/edit');
   assert.equal(notificationHref({ type: 'lecture', content_id: 9, course_id: 'javascript:alert(1)' }, '/notifications', 'ar'), null);
   assert.equal(notificationHref({ type: 'lesson', course_id: 'javascript:alert(1)', action: 'deleted' }, '/notifications', 'ar'), '/courses');
 });

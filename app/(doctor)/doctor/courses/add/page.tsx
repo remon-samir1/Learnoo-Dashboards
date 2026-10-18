@@ -6,10 +6,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCreateCourse } from '@/src/hooks/useCourses';
 import { useDepartments } from '@/src/hooks/useDepartments';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 
 export default function AddCoursePage() {
   const t = useTranslations('courses');
   const router = useRouter();
+  const { user } = useCurrentUser();
+  const canPublishWithoutApproval = Boolean(user?.attributes.can_publish_without_approval);
   const { data: departments, isLoading: loadingDepartments } = useDepartments();
   const { mutate, isLoading, error } = useCreateCourse();
   const [title, setTitle] = useState('');
@@ -26,7 +29,7 @@ export default function AddCoursePage() {
 
   return <form onSubmit={event => { submit(event).catch(() => {}); }} className="mx-auto max-w-2xl space-y-5 rounded-xl border bg-white p-6">
     <h1 className="text-xl font-bold">{t('createCourse')}</h1>
-    <p className="text-sm text-slate-600">{t('review.description')}</p>
+    <p className="text-sm text-slate-600">{t(canPublishWithoutApproval ? 'review.automaticDescription' : 'review.description')}</p>
     <label className="block text-sm">{t('form.fields.title')}
       <input required maxLength={255} value={title} onChange={event => setTitle(event.target.value)} className="mt-1 block w-full rounded-lg border p-2" />
     </label>
@@ -45,7 +48,7 @@ export default function AddCoursePage() {
     </label>
     {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
     <div className="flex gap-3">
-      <button disabled={isLoading || !departments?.length} className="rounded-lg bg-primary px-4 py-2 text-white disabled:opacity-50">{t('review.submit')}</button>
+      <button disabled={isLoading || !departments?.length} className="rounded-lg bg-primary px-4 py-2 text-white disabled:opacity-50">{t(canPublishWithoutApproval ? 'review.publish' : 'review.submit')}</button>
       <Link href="/doctor/courses" className="rounded-lg border px-4 py-2">{t('form.buttons.cancel')}</Link>
     </div>
   </form>;

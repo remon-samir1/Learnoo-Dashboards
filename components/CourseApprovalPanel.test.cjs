@@ -88,7 +88,7 @@ test('approval action sends the actual PATCH JSON request and keeps notification
   assert.equal(requests[1].body, undefined);
 });
 
-test('instructor form submits to its assigned department as pending without privileged fields', async () => {
+for (const automatic of [false, true]) test(`instructor form follows publishing permission ${automatic} without submitting privileged fields`, async () => {
   const states = [], requests = [], redirects = [];
   let cursor = 0;
   const messages = require(resolve(root, 'messages/en.json'));
@@ -98,10 +98,12 @@ test('instructor form submits to its assigned department as pending without priv
     'next/navigation': { useRouter: () => ({ push: value => redirects.push(value) }) },
     'next/link': { __esModule: true, default: props => React.createElement('a', props) },
     '@/src/hooks/useDepartments': { useDepartments: () => ({ data: [{ id: '4', attributes: { name: 'Assigned department' } }] }) },
+    '@/src/hooks/useAuth': { useCurrentUser: () => ({ user: { attributes: { can_publish_without_approval: automatic } } }) },
     '@/src/hooks/useCourses': { useCreateCourse: () => ({ mutate: async data => { requests.push(data); } }) },
   });
   const render = () => { cursor = 0; return Form(); };
   let tree = render();
+  assert.match(renderToStaticMarkup(tree), new RegExp(automatic ? messages.courses.review.publish : messages.courses.review.submit));
   elements(tree).find(node => node.type === 'input' && node.props.maxLength === 255).props.onChange({ target: { value: 'New accounting course' } });
   elements(tree).find(node => node.type === 'select').props.onChange({ target: { value: '4' } });
   elements(tree).find(node => node.type === 'input' && node.props.type === 'file').props.onChange({ target: { files: [new File(['photo'], 'course.png', { type: 'image/png' })] } });

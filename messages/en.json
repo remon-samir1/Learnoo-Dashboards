@@ -494,6 +494,15 @@
     }
   },
   "instructors": {
+    "publishing": {
+      "title": "Course publishing",
+      "description": "Choose how this instructor’s new courses are approved.",
+      "review": "Require administrative approval",
+      "reviewHint": "New courses stay hidden from students until an Admin or Owner approves them.",
+      "automatic": "Publish without waiting for approval",
+      "automaticHint": "New courses are approved automatically. Administrators still receive notifications.",
+      "existingCourses": "Existing course approvals and student activations stay unchanged."
+    },
     "pageTitle": "Instructors Management",
     "pageDescription": "Manage instructor accounts and details.",
     "addInstructor": "Add Instructor",
@@ -1462,6 +1471,8 @@
       "codeCopied": "Code copied to clipboard"
     },
     "review": {
+      "automaticDescription": "You can publish new courses without waiting for administrative approval.",
+      "publish": "Create and publish",
       "title": "Review course",
       "0": "Pending review",
       "1": "Approved",

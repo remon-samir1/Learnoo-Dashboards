@@ -13,6 +13,8 @@ import {
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { FileUpload } from '@/components/FileUpload';
+import InstructorPublishingPolicy from '@/components/InstructorPublishingPolicy';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 import { 
   useInstructor,
   useUpdateInstructor
@@ -23,6 +25,8 @@ import { StudentStatusLabels } from '@/src/types';
 export default function EditInstructorPage() {
   const t = useTranslations();
   const router = useRouter();
+  const { role } = useCurrentUser();
+  const canManagePublishing = role === 'Admin' || role === 'Super Admin';
   const params = useParams();
   const instructorId = params.id as string;
   
@@ -43,6 +47,7 @@ export default function EditInstructorPage() {
     image: null as File | null,
     existingImage: null as string | null,
     can_use_activations: false,
+    can_publish_without_approval: false,
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -82,6 +87,7 @@ export default function EditInstructorPage() {
         image: null,
         existingImage: attrs.image || null,
         can_use_activations: attrs.can_use_activations || false,
+        can_publish_without_approval: attrs.can_publish_without_approval ?? false,
       });
       
       setPreviewUrl(attrs.image || null);
@@ -112,6 +118,7 @@ export default function EditInstructorPage() {
         status: formData.status,
         image: formData.image || undefined,
         can_use_activations: formData.can_use_activations,
+        can_publish_without_approval: canManagePublishing ? formData.can_publish_without_approval : undefined,
       };
 
       await updateInstructor(instructorId, payload);
@@ -263,6 +270,12 @@ export default function EditInstructorPage() {
             </div>
           </div>
         </section>
+
+        {canManagePublishing && <InstructorPublishingPolicy
+          value={formData.can_publish_without_approval}
+          onChange={value => setFormData(prev => ({ ...prev, can_publish_without_approval: value }))}
+          disabled={isUpdating}
+        />}
 
         {/* Submit Section */}
         <div className="flex items-center justify-end gap-4">
