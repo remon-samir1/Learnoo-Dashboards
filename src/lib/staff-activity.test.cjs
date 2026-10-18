@@ -23,6 +23,8 @@ test('resource updates and deletions hide numeric and ULID identifiers', () => {
 
 test('custom actions describe what happened instead of pretending every POST creates content', () => {
   assert.equal(format('POST v1/owner/device-transfers/01ky3bkhbsmnsqmqcm7c5fzw6d/approve', 'ar'), 'اعتماد الجهاز الجديد');
+  assert.equal(format('POST v1/owner/device-transfers/01ky3bkhbsmnsqmqcm7c5fzw6d/reset', 'ar'), 'السماح للطالب بتغيير الجهاز وإلغاء الجلسات السابقة');
+  assert.equal(format('POST v1/owner/device-transfers/01ky3bkhbsmnsqmqcm7c5fzw6d/reset', 'en'), 'Allowed a student device change and revoked previous sessions');
   assert.equal(format('POST v1/chapter/711/copy', 'en'), 'Copied a lesson');
   assert.equal(format('POST v1/chapter/711/retry-conversion', 'ar'), 'إعادة معالجة فيديو');
   assert.equal(format('POST v1/notifications/send', 'ar'), 'إرسال إشعار للطلاب');

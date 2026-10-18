@@ -27,6 +27,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useStudent } from '@/src/hooks/useStudents';
 import { StudentStatusLabels } from '@/src/types';
+import StudentDeviceReset from '@/components/dashboard/StudentDeviceReset';
 
 // Helper to get initials from name
 function getInitials(firstName: string | null | undefined, lastName: string | null | undefined) {
@@ -418,6 +419,7 @@ export default function StudentProfilePage() {
                 <span className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-[1px]">{t('students.form.view.fields.lastIp')}</span>
                 <span className="text-[14px] font-bold text-[#1E293B]">{student.device.lastIp}</span>
               </div>
+              {studentData?.role === 'Student' && <StudentDeviceReset studentId={student.id} />}
             </div>
           </section>
 

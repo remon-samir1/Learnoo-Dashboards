@@ -1504,6 +1504,7 @@ export const ownerOperationsApi = {
   activity: (page = 1, dates?: { from?: string; to?: string }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...dates }),
   devices: () => get<{ data: DeviceTransfer[] }>('/v1/owner/device-transfers'),
   approve: (id: string) => post(`/v1/owner/device-transfers/${id}/approve`),
+  resetDevice: (id: string) => post(`/v1/owner/device-transfers/${id}/reset`),
 };
 
 export interface GuardianStudent { id: string; first_name: string; last_name: string; phone?: string; email?: string; student_code?: string; university?: { name: string } | null; faculty?: { name: string } | null; centers?: { name: string }[]; activated_courses?: { id: string; title: string }[]; parents: { id: string; first_name: string; last_name: string; email: string; phone: string }[] }
