@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Save, Eye, Layers } from 'lucide-react';
 import Link from 'next/link';
 import toast, { Toaster } from 'react-hot-toast';
 import { usePlatformFeature, useUpdatePlatformFeature } from '@/src/hooks';
+import { createWatermarkUtterance } from '@/src/hooks/useVoiceWatermark';
 import {
   DEFAULT_WATERMARK_CONFIG,
   type AnimationStyle,
@@ -28,7 +29,6 @@ const contentTypes: { key: ContentType; labelKey: string }[] = [
   { key: 'exams', labelKey: 'applyToExams' },
   { key: 'library', labelKey: 'applyToLibrary' },
   { key: 'videos', labelKey: 'applyToVideos' },
-  { key: 'liveStreams', labelKey: 'applyToLiveStreams' },
   { key: 'files', labelKey: 'applyToFiles' },
 ];
 
@@ -43,6 +43,9 @@ interface PreviewSettings {
 export default function WatermarkSettingsPage() {
   const t = useTranslations('watermarkSettings');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
+  const [voicePreview, setVoicePreview] = useState<'idle' | 'playing' | 'done' | 'error'>('idle');
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
   const { data: features, isLoading } = usePlatformFeature();
   const updateFeature = useUpdatePlatformFeature();
   
@@ -589,6 +592,16 @@ export default function WatermarkSettingsPage() {
                 <span className="ml-3 text-sm font-medium text-[#475569]">{t('enableVoice')}</span>
               </label>
               <p className="text-xs text-[#94A3B8]">{t('enableVoiceDesc')}</p>
+              <button type="button" disabled={voicePreview === 'playing'} className="rounded-lg border px-4 py-2 disabled:opacity-50" onClick={() => {
+                if (!('speechSynthesis' in window)) { setVoicePreview('error'); return; }
+                const utterance = createWatermarkUtterance(locale === 'ar' ? 'هذا اختبار العلامة المائية الصوتية' : 'This is a voice watermark test');
+                utterance.onend = () => setVoicePreview('done');
+                utterance.onerror = () => setVoicePreview('error');
+                setVoicePreview('playing');
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
+              }}>{locale === 'ar' ? 'تجربة الصوت' : 'Test voice'}</button>
+              {voicePreview !== 'idle' && <p role="status">{voicePreview === 'done' ? (locale === 'ar' ? 'اكتملت تجربة الصوت' : 'Voice test completed') : voicePreview === 'error' ? (locale === 'ar' ? 'تعذر تشغيل الصوت في هذا المتصفح' : 'Could not play speech in this browser') : (locale === 'ar' ? 'جارٍ تشغيل الصوت…' : 'Playing speech…')}</p>}
 
               {/* Voice Interval Slider */}
               {currentSettings.voiceEnabled && (

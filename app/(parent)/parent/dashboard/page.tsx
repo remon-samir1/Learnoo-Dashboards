@@ -53,16 +53,8 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const persistedId = localStorage.getItem(STORAGE_KEY);
-    if (persistedId) {
-      setSelectedStudentId(persistedId);
-      return;
-    }
-
-    if (linkedStudents.length > 0) {
-      const firstId = String(linkedStudents[0].id);
-      localStorage.setItem(STORAGE_KEY, firstId);
-      setSelectedStudentId(firstId);
-    }
+    const student = linkedStudents.find(item => String(item.id) === persistedId) || linkedStudents[0];
+    setSelectedStudentId(student ? String(student.id) : null);
   }, [linkedStudents]);
 
   const dashboardQuery = useStudentDashboard(selectedStudentId ?? '', {
@@ -78,6 +70,7 @@ export default function ParentDashboard() {
   useEffect(() => {
     if (selectedStudentId) {
       localStorage.setItem(STORAGE_KEY, selectedStudentId);
+      window.dispatchEvent(new Event('parent-student-change'));
     }
   }, [selectedStudentId]);
 

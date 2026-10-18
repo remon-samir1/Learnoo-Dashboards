@@ -1,8 +1,6 @@
 import ProfileHeader from "@/components/student/profile/ProfileHeader";
 import ProfileInfoCard from "@/components/student/profile/ProfileInfoCard";
-import ProfileLinksCard from "@/components/student/profile/ProfileLinksCard";
 import ProfileOverview from "@/components/student/profile/ProfileOverview";
-import ProfileQrCard from "@/components/student/profile/ProfileQrCard";
 import { getUserProfileData } from "@/src/services/student/user.service";
 import { getTranslations } from "next-intl/server";
 
@@ -109,7 +107,7 @@ export default async function StudentProfilePage() {
     <main className="min-h-screen bg-[#FAFAF8] p-6">
       <ProfileHeader title={t("title")} description={t("description")} />
 
-      <section className="grid gap-5 lg:grid-cols-[1fr_380px]">
+      <section>
         <ProfileInfoCard
           initials={initials}
           fullName={fullName}
@@ -126,21 +124,6 @@ export default async function StudentProfilePage() {
           }`}
           studentCode={student?.student_code || undefined}
         />
-
-        <div className="space-y-5">
-          <ProfileQrCard
-            student={{
-              id: student?.student_code || "",
-              fullName,
-              email,
-              phone,
-              university,
-              faculty,
-              status: student?.status || "Unknown",
-            }}
-          />
-          {/* <ProfileLinksCard /> */}
-        </div>
       </section>
 
       <ProfileOverview stats={stats} />

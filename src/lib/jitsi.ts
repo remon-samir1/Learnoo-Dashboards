@@ -19,3 +19,8 @@ export function getJitsiRoomName(roomId: string | number): string {
   const cleanId = String(roomId).replace(/[^a-zA-Z0-9]/g, '');
   return `learnooroom${cleanId}`;
 }
+
+export function getJitsiAppUrl(roomId: string | number, displayName: string, android = false) {
+  const meeting = `${JITSI_DOMAIN}/${getJitsiRoomName(roomId)}#userInfo.displayName=${encodeURIComponent(JSON.stringify(displayName))}`;
+  return android ? `intent://${meeting}#Intent;scheme=org.jitsi.meet;package=org.jitsi.meet;end` : `org.jitsi.meet://${meeting}`;
+}

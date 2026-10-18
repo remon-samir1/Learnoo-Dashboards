@@ -139,16 +139,16 @@ export default function NoteDetailsClient({ note }: { note: IStudentNote }) {
 
           <div className="mt-3 flex flex-col gap-1.5 text-xs leading-relaxed text-white/95 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-2 sm:text-sm">
             <span className="break-words">
-              {note.attributes?.course_title || "No course"}
+              {note.attributes?.course_title}
             </span>
-            <span className="hidden text-white/50 sm:inline" aria-hidden>
+            {(note.attributes?.lecture_title || note.attributes?.linked_lecture) && <><span className="hidden text-white/50 sm:inline" aria-hidden>
               •
             </span>
             <span className="break-words">
               {note.attributes?.lecture_title ||
-                note.attributes?.linked_lecture ||
-                "No lecture"}
+                note.attributes?.linked_lecture}
             </span>
+            </>}
           </div>
         </div>
 

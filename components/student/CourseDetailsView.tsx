@@ -159,6 +159,8 @@ function classifyExamBucket(
 ): StudentExamBucket | null {
   const s = normalizeExamStatusToken(exam?.attributes?.status);
 
+  if (s === "draft") return null;
+
   if (examRequiresCourseActivation(exam, lockedCourse)) return "locked";
 
   const rawAttrs = (exam?.attributes ?? {}) as Record<string, unknown>;
@@ -194,7 +196,7 @@ function classifyExamBucket(
   }
 
   // Align with student Exams hub (`classifyHubQuizRow`): `active` still respects start window.
-  if (s === "active" || s === "draft") {
+  if (s === "active") {
     if (!Number.isNaN(startTs) && startTs > now) return "upcoming";
     return "active";
   }
@@ -926,6 +928,8 @@ function LecturesTab({
         // A lesson scheduled for later must not appear at all — not even greyed
         // out — so it is dropped before the rows and the part counter are built.
         const chapters = (lecture.attributes.chapters ?? []).filter(
+          // `isChapterHiddenFromStudent` covers both `not_published` and
+          // `outside_schedule`, plus the legacy schedule start/end timestamps.
           (ch) => !isChapterHiddenFromStudent(ch),
         );
         const partCount = chapters.length;

@@ -44,7 +44,6 @@ export default function AddStudentPage() {
     last_name: '',
     phone: '',
     email: '',
-    password: '',
     university_id: '',
     faculty_id: '',
     center_ids: [] as number[],
@@ -192,17 +191,7 @@ export default function AddStudentPage() {
                 required
               />
             </div>
-            <div className="flex flex-col gap-2 md:col-span-2">
-              <label className="text-[13px] font-bold text-[#475569]">{t('students.form.fields.password')}</label>
-              <input 
-                type="password" 
-                placeholder={t('students.form.fields.placeholders.password')}
-                className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                required
-              />
-            </div>
+
           </div>
         </section>
 

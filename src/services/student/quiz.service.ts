@@ -25,10 +25,12 @@ export const getQuizById = async (id: number | string): Promise<ServiceResponse<
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
+        Accept: 'application/json',
       },
+      cache: 'no-store',
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       return {

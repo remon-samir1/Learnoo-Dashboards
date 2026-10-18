@@ -1,0 +1,108 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { readFileSync } = require('node:fs');
+const { join } = require('node:path');
+const React = require('react');
+const { renderToStaticMarkup } = require('react-dom/server');
+const ts = require('typescript');
+
+function room({ pathname = '/live-sessions/70/room', capture = true, recording = false, enabled = true, userAgent = 'iPad' } = {}) {
+  const state = [], refs = [], effects = [], commands = [], destinations = [];
+  let cursor, refCursor, meeting, closed = false, tree, markup;
+  const module = { exports: {} };
+  const compiled = ts.transpileModule(readFileSync(join(__dirname, 'StaffLiveRoom.tsx'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
+  const jitsi = { exports: {} };
+  new Function('module', 'exports', 'process', ts.transpileModule(readFileSync(join(__dirname, '../../src/lib/jitsi.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(jitsi, jitsi.exports, { env: {} });
+  new Function('require', 'module', 'exports', 'navigator', 'process', compiled)(id => {
+    if (id === 'react') return { ...React,
+      useEffect: callback => effects.push(callback),
+      useRef: initial => refs[refCursor++] ??= { current: initial },
+      useState: initial => { const index = cursor++; if (!(index in state)) state[index] = initial; return [state[index], next => state[index] = next]; },
+    };
+    if (id === 'next/navigation') return { usePathname: () => pathname, useRouter: () => ({ push: path => destinations.push(path) }) };
+    if (id === 'next/link') return ({ children }) => React.createElement('a', null, children);
+    if (id === '@/src/hooks/useLiveRooms') return { useLiveRoom: () => ({ data: { attributes: { title: 'QA room', enable_recording: enabled } }, isLoading: false }) };
+    if (id === '@/lib/auth') return { getUserData: () => ({ attributes: { first_name: 'مدرس & # " عربي' } }) };
+    if (id === '@/src/lib/jitsi') return jitsi.exports;
+    if (id === '@jitsi/react-sdk') return { JitsiMeeting: props => { meeting = props; return React.createElement('iframe'); } };
+    return require(id);
+  }, module, module.exports, { userAgent, mediaDevices: capture ? { getDisplayMedia: () => { throw new Error('Must not capture browser media'); } } : {} }, { env: { NEXT_PUBLIC_JITSI_RECORDING_ENABLED: String(recording) } });
+  const render = () => {
+    cursor = refCursor = 0;
+    meeting = null;
+    tree = module.exports.default({ roomId: '70', basePath: '/live-sessions', onClose: () => closed = true });
+    markup = renderToStaticMarkup(tree);
+    return markup;
+  };
+  const elements = (node = tree) => !node || typeof node !== 'object' ? [] : [node, ...React.Children.toArray(node.props?.children).flatMap(child => elements(child))];
+  render();
+  effects.shift()();
+  render();
+  return { render, elements, commands, destinations, get meeting() { return meeting; }, get closed() { return closed; }, get markup() { return markup; }, ready() {
+    const listeners = {};
+    meeting.onApiReady({ executeCommand: (...args) => commands.push(args), addEventListeners: value => Object.assign(listeners, value) });
+    return listeners;
+  } };
+}
+
+test('staff hangup preserves another page and returns from the room page', () => {
+  for (const pathname of ['/exams/create', '/live-sessions/70/room']) {
+    const view = room({ pathname });
+    assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_JITSI_WATERMARK, false);
+    assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_BRAND_WATERMARK, false);
+    view.meeting.onReadyToClose();
+    assert.equal(view.closed, true);
+    assert.deepEqual(view.destinations, pathname.endsWith('/room') ? ['/live-sessions'] : []);
+  }
+});
+
+test('iPad opens the same native room without joining twice; Android uses an intent', () => {
+  for (const userAgent of ['iPad', 'Macintosh', 'Android']) {
+    const view = room({ capture: false, userAgent });
+    assert.equal(view.meeting, null);
+    const link = view.elements().find(node => node.type === 'a' && /^(org\.jitsi\.meet|intent):/.test(node.props.href));
+    assert.ok(link.props.href.startsWith(userAgent === 'Android' ? 'intent://meet.learnoo.app/learnooroom70' : 'org.jitsi.meet://meet.learnoo.app/learnooroom70'));
+    const name = link.props.href.split('#userInfo.displayName=')[1].split('#Intent')[0];
+    assert.equal(JSON.parse(decodeURIComponent(name)), 'مدرس & # " عربي');
+    view.elements().find(node => node.type === 'button' && String(node.props.children).startsWith('متابعة في المتصفح')).props.onClick();
+    view.render();
+    assert.equal(view.meeting.roomName, 'learnooroom70');
+    view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق Jitsi').props.onClick();
+    view.render();
+    assert.equal(view.meeting, null);
+    assert.equal(view.closed, false);
+  }
+});
+
+test('server recording respects readiness and room settings, and follows actual recorder events', () => {
+  for (const options of [{ recording: false }, { recording: true, enabled: false }]) {
+    const view = room(options);
+    assert.equal(view.meeting.configOverwrite.recordingService.enabled, false);
+    assert.equal(view.meeting.configOverwrite.toolbarButtons.includes('recording'), false);
+    assert.equal(view.meeting.configOverwrite.localRecording.enabled, false);
+  }
+  const view = room({ recording: true });
+  assert.equal(view.elements().find(node => node.type === 'button' && node.props.onClick?.name === 'toggleRecording').props.disabled, true);
+  const listeners = view.ready();
+  listeners.videoConferenceJoined();
+  view.render();
+  const click = () => view.elements().find(node => node.type === 'button' && node.props.onClick?.name === 'toggleRecording').props.onClick();
+  click();
+  view.render();
+  assert.deepEqual(view.commands, [['startRecording', { mode: 'file' }]]);
+  assert.ok(view.markup.includes('جارٍ تحديث التسجيل'));
+  assert.ok(!view.markup.includes('إيقاف التسجيل'));
+  click();
+  assert.equal(view.commands.length, 1);
+  listeners.recordingStatusChanged({ mode: 'local', on: true });
+  view.render();
+  assert.ok(!view.markup.includes('إيقاف التسجيل'));
+  listeners.recordingStatusChanged({ mode: 'file', on: true });
+  view.render();
+  click();
+  assert.deepEqual(view.commands[1], ['stopRecording', 'file']);
+  listeners.recordingStatusChanged({ mode: 'file', on: false, error: 'service-unavailable' });
+  view.render();
+  assert.ok(view.markup.includes('role="alert"'));
+  assert.ok(!view.markup.includes('منح الصلاحيات'));
+});

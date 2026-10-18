@@ -119,17 +119,28 @@ export function chapterHasVideo(attrs: ChapterAttributes): boolean {
  * part counters, next/previous navigation and search alike.
  *
  * `not_published` is the backend's decision for a lesson whose schedule has not
- * arrived yet; the legacy `schedule` / `schedule_start` timestamps are kept as a
+ * arrived yet and `outside_schedule` for one whose window is closed; the legacy
+ * `schedule` / `schedule_start` / `schedule_end` timestamps are kept as a
  * fallback for payloads that do not carry `watch_access_state`.
  */
 export function isChapterHiddenFromStudent(chapter: Chapter): boolean {
   const attrs = chapter.attributes;
   if (attrs.watch_access_state === 'not_published') return true;
+  if (attrs.watch_access_state === 'outside_schedule') return true;
+
+  const now = Date.now();
 
   const scheduledAt = attrs.schedule ?? attrs.schedule_start ?? null;
   if (scheduledAt) {
     const time = new Date(String(scheduledAt).replace(' ', 'T')).getTime();
-    if (!Number.isNaN(time) && time > Date.now()) return true;
+    if (!Number.isNaN(time) && time > now) return true;
   }
+
+  const scheduleEnd = attrs.schedule_end ?? null;
+  if (scheduleEnd) {
+    const time = new Date(String(scheduleEnd).replace(' ', 'T')).getTime();
+    if (!Number.isNaN(time) && time <= now) return true;
+  }
+
   return false;
 }

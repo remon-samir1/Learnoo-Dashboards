@@ -10,10 +10,9 @@ import WelcomeSection from "@/src/components/student/home/WelcomeSection";
 import { getCategories } from "@/src/services/student/department.service";
 import { getLatestStudentExams } from "@/src/services/student/exam.service";
 import { getLibrary } from "@/src/services/student/library.service";
-import { getCommunityPosts } from "@/src/services/student/post.service";
+import { getLatestStudentPosts } from "@/src/services/student/post.service";
 import { getStudentLiveRooms } from "@/src/services/student/live-room.service";
 import { getLiveRoomCourseIds } from "@/src/lib/student-live-room";
-import { isCommunityPostInStudentCourses } from "@/src/lib/student-community-posts";
 import {
   isWithinStudentCourses,
   readRowCourseIds,
@@ -52,8 +51,6 @@ export default async function StudentPage() {
   const categoryResult = await getCategories();
   const category = categoryResult.success ? categoryResult.data?.data ?? [] : [];
 
-  const postsResult = await getCommunityPosts();
-  const communityPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
 
   const examsResult = await getLatestStudentExams(4);
   const latestExams = examsResult.success ? examsResult.data ?? [] : [];
@@ -65,6 +62,9 @@ export default async function StudentPage() {
     (courses || []).map((c: { id: string | number }) => String(c.id))
   );
   const courseTitleById = studentCourseTitleMap(courses);
+
+  const postsResult = await getLatestStudentPosts(enrolledCourseIds, 3);
+  const latestPosts = postsResult.success ? postsResult.data?.data ?? [] : [];
 
   // 1. Filter continue watching progress by enrolled courses
   const filteredProgress = (progress || []).filter((p: any) => {
@@ -122,11 +122,8 @@ export default async function StudentPage() {
     return examCids.some((cid) => enrolledCourseIds.has(String(cid)));
   });
 
-  // 7. Only show community posts published under one of the student's own
-  // courses. Replies and drafts were already dropped by the service.
-  const latestPosts = communityPosts
-    .filter((post) => isCommunityPostInStudentCourses(post, enrolledCourseIds))
-    .slice(0, 3);
+  // 7. Community posts: `getLatestStudentPosts` already dropped replies and
+  // drafts and scoped what is left to the student's own courses.
 
   const coursesCount = courses?.length ?? 0;
   const liveSessionsCount = filteredLiveSessions.length;

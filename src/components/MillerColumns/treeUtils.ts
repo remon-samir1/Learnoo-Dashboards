@@ -53,7 +53,7 @@ export function buildUnifiedTree(
       level: 0,
       stats: {
         courses: faculty.attributes.stats?.courses || 0,
-        students: faculty.attributes.stats?.students || 0,
+        students: faculty.attributes.stats?.students,
       },
     };
     facultyMap.set(faculty.id, facultyNode);
@@ -91,7 +91,7 @@ export function buildUnifiedTree(
             parentId: centerNode.id,
             stats: {
               courses: child.attributes.stats?.courses || 0,
-              students: child.attributes.stats?.students || 0,
+              students: child.attributes.stats?.students,
             },
           };
           facultyMap.set(child.id, facultyNode);
@@ -118,7 +118,7 @@ export function buildUnifiedTree(
             parentId: centerNode.id,
             stats: {
               courses: child.attributes.stats?.courses || 0,
-              students: child.attributes.stats?.students || 0,
+              students: child.attributes.stats?.students,
             },
             meta: {
               code: child.attributes.code || undefined,
@@ -153,7 +153,7 @@ export function buildUnifiedTree(
       level: 0,
       stats: {
         courses: dept.attributes.stats?.courses || 0,
-        students: dept.attributes.stats?.students || 0,
+        students: dept.attributes.stats?.students,
       },
       meta: {
         code: dept.attributes.code || undefined,
@@ -257,7 +257,7 @@ export function buildUnifiedTree(
       level: 0,
       stats: {
         lectures: course.attributes.stats?.lectures || 0,
-        students: course.attributes.stats?.students || 0,
+        students: course.attributes.stats?.students,
       },
       meta: {
         status: course.attributes.status === 1 ? "active" : "draft",

@@ -41,6 +41,8 @@ export default function StudentElectronicLibrary() {
 
   const [tab, setTab] = useState<LibraryMaterialFilter>('all');
   const [q, setQ] = useState('');
+  const [courseId, setCourseId] = useState('all');
+  const { data: courses } = useCourses(STUDENT_COURSES_LIST_PARAMS);
   const [activationItemId, setActivationItemId] = useState<string | null>(null);
   const [activationContextTitle, setActivationContextTitle] = useState('');
 
@@ -59,12 +61,13 @@ export default function StudentElectronicLibrary() {
 
   const tabFiltered = useMemo(() => {
     let list = publishedMaterials;
+    if (courseId !== 'all') list = list.filter(item => item.attributes.course_ids?.some(id => String(id) === courseId));
     if (tab !== 'all') {
       list = list.filter((item) => item.attributes.material_type === tab);
     }
     if (!searchNeedle) return list;
     return list.filter((lib) => librarySearchHaystack(lib).includes(searchNeedle));
-  }, [publishedMaterials, tab, searchNeedle]);
+  }, [publishedMaterials, tab, searchNeedle, courseId]);
 
   const firstLockedForBanner = useMemo(
     () => publishedMaterials.find((l) => (l.attributes as any).code_activation) ?? null,
@@ -143,6 +146,13 @@ export default function StudentElectronicLibrary() {
       </section>
 
       <div className="mb-5 rounded-2xl border border-[#E5E7EB] bg-white p-3 shadow-sm sm:mb-6 sm:p-5">
+        <label className="mb-4 block text-sm">
+          {locale === 'ar' ? 'تصفية حسب الدورة' : 'Filter by course'}
+          <select value={courseId} onChange={e => setCourseId(e.target.value)} className="mt-2 w-full rounded-xl border p-3">
+            <option value="all">{locale === 'ar' ? 'كل الدورات' : 'All courses'}</option>
+            {(courses ?? []).map(course => <option key={course.id} value={String(course.id)}>{course.attributes.title}</option>)}
+          </select>
+        </label>
         <div className="relative mb-4 sm:mb-5">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-[18px] -translate-y-1/2 text-[#94A3B8]" aria-hidden />
           <input
@@ -236,7 +246,7 @@ export default function StudentElectronicLibrary() {
                   <div className="flex flex-1 flex-col gap-0.5 overflow-hidden p-4 pt-3 sm:min-h-0 sm:flex-1 sm:p-3 sm:pt-2">
                     <h3 className="line-clamp-2 text-base font-bold leading-snug text-[#0F172A] sm:text-[13px]">{a.title}</h3>
                     <p className="mt-0.5 line-clamp-1 text-xs font-medium text-[#64748B] sm:text-[10px]">
-                      {t('courseRef', { id: a.course_ids?.join(', ') })}
+                      {a.course_titles?.join('، ') || '—'}
                     </p>
                     {a.description?.trim() ? (
                       <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-[#64748B] sm:line-clamp-2 sm:text-[10px]">

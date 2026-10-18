@@ -22,3 +22,15 @@ test('keeps signed HLS URLs same-origin without exposing the user token', () => 
     '/api/learnoo-origin/hls/chapter/332/playlist?signature=master-signature'
   );
 });
+
+
+test('signed attachment playlists use the same-origin media proxy and retain their signature', () => {
+  assert.equal(
+    toProxiedLearnooHlsUrl('https://api.learnoo.app/v1/attachment/420/preview/summary.m3u8?device_version=1&expires=2000000000&signature=master-signature'),
+    '/api/learnoo-origin/v1/attachment/420/preview/summary.m3u8?device_version=1&expires=2000000000&signature=master-signature'
+  );
+  assert.equal(
+    toProxiedLearnooHlsUrl('https://external.example/v1/attachment/420/preview/summary.m3u8?signature=external'),
+    'https://external.example/v1/attachment/420/preview/summary.m3u8?signature=external'
+  );
+});

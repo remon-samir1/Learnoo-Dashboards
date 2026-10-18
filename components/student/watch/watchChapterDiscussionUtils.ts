@@ -9,6 +9,7 @@ export type WatchDiscussionItem = {
     type?: string | null;
     discussion_type?: string | null;
     parent_id?: number | null;
+    replies?: WatchDiscussionItem[];
     image?: string | null;
     voice?: string | null;
     duration?: number | null;
@@ -29,6 +30,21 @@ export type WatchDiscussionItem = {
 export function normalizeDiscussions(raw: unknown): WatchDiscussionItem[] {
   if (!Array.isArray(raw)) return [];
   return raw as WatchDiscussionItem[];
+}
+
+export function buildDiscussionTree<T extends { id?: string | number; attributes?: { parent_id?: number | null; replies?: T[] }; replies?: T[] }>(flat: T[]): T[] {
+  const map = new Map<string, T>();
+  const roots: T[] = [];
+  for (const item of flat) {
+    if (item.id != null) map.set(String(item.id), { ...item, replies: [...(item.attributes?.replies ?? item.replies ?? [])] });
+  }
+  for (const item of map.values()) {
+    const parent = item.attributes?.parent_id != null ? map.get(String(item.attributes.parent_id)) : undefined;
+    if (parent) {
+      if (!parent.replies?.some(reply => String(reply.id) === String(item.id))) parent.replies?.push(item);
+    } else roots.push(item);
+  }
+  return roots;
 }
 
 export function discussionContent(d: WatchDiscussionItem): string {

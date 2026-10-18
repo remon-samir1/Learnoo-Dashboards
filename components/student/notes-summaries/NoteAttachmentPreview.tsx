@@ -1,14 +1,33 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { HlsVideoPlayer } from '@/components/student/watch/HlsVideoPlayer';
 import {
   attachmentMediaKind,
+  isHlsAttachment,
   type AttachmentMediaSource,
 } from '@/src/lib/student-attachment-media';
 
+const PdfPreviewModal = dynamic(() => import('@/components/student/PdfPreviewModal'), {
+  ssr: false,
+});
+
+/** `true` for a PDF, by mime type first and only then by extension / url. */
+function isPdfAttachment(source: AttachmentMediaSource): boolean {
+  const mime = (source.mime_type ?? source.mime ?? source.type ?? '').trim().toLowerCase();
+  if (mime === 'application/pdf') return true;
+  if (mime.startsWith('image/') || mime.startsWith('video/')) return false;
+  const ext = (source.extension ?? '').trim().replace(/^\./, '').toLowerCase();
+  if (ext) return ext === 'pdf';
+  const fromPath = (source.name ?? source.url ?? '').split('?')[0].split('#')[0];
+  return fromPath.toLowerCase().endsWith('.pdf');
+}
+
 type NoteAttachmentPreviewProps = {
-  attachment: AttachmentMediaSource;
+  /** Missing attachment renders nothing, so callers can pass theirs straight through. */
+  attachment: AttachmentMediaSource | null | undefined;
   /** Note title, used as the image alt text when present. */
   title?: string | null;
   /** Taller on the note details page than in the compact course tab. */
@@ -16,9 +35,10 @@ type NoteAttachmentPreviewProps = {
 };
 
 /**
- * Renders a note/summary attachment: images and videos play inline, everything
- * else keeps the plain file link. Shared by the course "Notes & summaries" tab
- * and the note details page so both stay in sync.
+ * Renders a note/summary attachment: PDFs, images and videos (including HLS
+ * playlists) play inline, everything else keeps the plain file link. Shared by
+ * the course "Notes & summaries" tab, the home notes card and the note details
+ * page so all three stay in sync.
  */
 export default function NoteAttachmentPreview({
   attachment,
@@ -26,9 +46,9 @@ export default function NoteAttachmentPreview({
   size = 'compact',
 }: NoteAttachmentPreviewProps) {
   const t = useTranslations('notesSummaries.attachment');
-  const url = attachment?.url?.trim();
-  if (!url) return null;
+  if (!attachment?.url?.trim()) return null;
 
+  const url = attachment.url.trim();
   const kind = attachmentMediaKind(attachment);
   const mediaHeight = size === 'full' ? 'max-h-[500px]' : 'max-h-[300px]';
 
@@ -37,14 +57,28 @@ export default function NoteAttachmentPreview({
       className={`overflow-hidden rounded-xl border border-gray-100 bg-gray-50 ${size === 'full' ? 'mb-6' : 'mt-3'
         }`}
     >
-      {kind === 'video' ? (
-        <video
-          src={url}
-          controls
-          playsInline
-          className={`w-full ${mediaHeight} object-contain`}
-          preload="metadata"
-        />
+      {isPdfAttachment(attachment) ? (
+        <div className={size === 'full' ? 'h-[500px]' : 'h-[300px]'}>
+          <PdfPreviewModal
+            open
+            pdfUrl={url}
+            title={title?.trim() || attachment.name?.trim() || ''}
+            variant="inline"
+            contentType="files"
+          />
+        </div>
+      ) : kind === 'video' ? (
+        isHlsAttachment(attachment) ? (
+          <HlsVideoPlayer src={url} className={`w-full ${mediaHeight}`} />
+        ) : (
+          <video
+            src={url}
+            controls
+            playsInline
+            className={`w-full ${mediaHeight} object-contain`}
+            preload="metadata"
+          />
+        )
       ) : kind === 'image' ? (
         <a
           href={url}

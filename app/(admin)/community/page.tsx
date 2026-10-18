@@ -550,6 +550,13 @@ export default function CommunityModerationPage() {
     }
   };
   const [posts, setPosts] = useState<Post[]>([]);
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('post');
+    if (id && /^\d+$/.test(id) && posts.some(post => String(post.id) === id)) {
+      setExpandedComments(previous => new Set(previous).add(id));
+      requestAnimationFrame(() => document.getElementById(`post-${id}`)?.scrollIntoView({ block: 'center' }));
+    }
+  }, [posts]);
 
   // Filter social links by search query
   const filteredSocialLinks = useMemo(() => {
@@ -872,12 +879,18 @@ export default function CommunityModerationPage() {
         {!socialLinksLoading && filteredSocialLinks?.map((link) => (
           <div key={link.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 flex flex-col shadow-sm">
             <div className="flex justify-between items-start mb-6">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: link.attributes.icon ? 'transparent' : (link.attributes.color || '#E2E8F0') }}>
+              <div className="relative w-10 h-10 rounded-full flex items-center justify-center overflow-hidden" style={{ backgroundColor: link.attributes.color || '#E2E8F0' }}>
+                <Globe className="w-5 h-5 text-white" />
                 {link.attributes.icon ? (
-                  <img src={link.attributes.icon} alt={link.attributes.title} className="w-full h-full object-cover" />
-                ) : (
-                  <Globe className="w-5 h-5 text-white" />
-                )}
+                  <img
+                    src={link.attributes.icon}
+                    alt={link.attributes.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : null}
               </div>
               <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wide uppercase ${link.attributes.status
                 ? 'bg-[#DCFCE7] text-[#16A34A]'
@@ -963,7 +976,7 @@ export default function CommunityModerationPage() {
           const userRole = user?.role || 'student';
 
           return (
-            <div key={post.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
+            <div id={`post-${post.id}`} key={post.id} className="bg-white rounded-2xl border border-[#E2E8F0] p-6 shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4 flex-1">
                   <div className="w-10 h-10 rounded-full bg-[#F1F5F9] text-[#64748B] flex items-center justify-center font-bold text-[15px] shrink-0">

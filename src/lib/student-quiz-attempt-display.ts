@@ -1,8 +1,9 @@
+import { readQuizOwningCourseIds } from './student-quiz-activation-lock.ts';
 import type { QuizAttempt } from '@/src/types';
 import {
   passingMarksPercentage,
   readPercentageWithScoreFallback,
-} from '@/src/lib/student-exam-score';
+} from './student-exam-score.ts';
 
 function asRecord(v: unknown): Record<string, unknown> | null {
   return v != null && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
@@ -98,4 +99,10 @@ export function readAttemptPercentage(attempt: QuizAttempt): number | null {
     attrs?.score,
     attrs?.total_score,
   );
+}
+
+
+export function isCompletedAttemptForEnrolledCourses(attempt: QuizAttempt, enrolled: ReadonlySet<string>): boolean {
+  if (!isAttemptRecordCompleted(attempt)) return false;
+  return readQuizOwningCourseIds(nestedQuizAttributesFromAttempt(attempt) ?? {}).some(id => enrolled.has(id));
 }

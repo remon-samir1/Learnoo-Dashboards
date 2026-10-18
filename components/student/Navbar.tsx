@@ -138,25 +138,31 @@ export default function Navbar({
   }, 1000);
 
   useEffect(() => {
-    const handleNavClick = () => {
-      setOpenDropdown(null);
-    };
+    // Closing the open panel is the point of this effect: a route change must not
+    // leave the language / notifications / profile dropdown hanging over the new page.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setOpenDropdown(null);
   }, [pathname]);
 
+  // The list is kept fresh centrally (polling + the realtime refresh signal) by
+  // `StudentNotificationsRuntime`, so the bell itself never fetches.
   const latestNotifications = useMemo(
     () => notifications.slice(0, 4),
     [notifications],
   );
 
-  const handleNotificationClick = (notification: StudentNotification) => {
+  /**
+   * Navigation itself is the `Link`'s job, so the row stays a real anchor
+   * (middle-click / open-in-new-tab keep working); this only closes the panel and
+   * marks the row read through the store, which is what keeps the badge in sync
+   * with the notifications page.
+   */
+  const handleNotificationOpen = (notification: StudentNotification) => {
     setOpenDropdown(null);
 
     if (!notification.read_at) {
       void markAsRead(notification.id);
     }
-
-    const href = resolveStudentNotificationHref(notification, locale);
-    router.push(href ?? `/${locale}/student/notifications`);
   };
 
   const currentLanguage =
@@ -326,10 +332,13 @@ export default function Navbar({
                     item?.data?.message || t("notificationFallbackMessage");
 
                   return (
-                    <button
+                    <Link
                       key={item.id}
-                      type="button"
-                      onClick={() => handleNotificationClick(item)}
+                      href={
+                        resolveStudentNotificationHref(item, locale) ??
+                        `/${locale}/student/notifications`
+                      }
+                      onClick={() => handleNotificationOpen(item)}
                       className={`flex w-full gap-3 border-t border-[var(--border-color)] px-4 py-3 text-start transition hover:bg-gray-50 ${
                         item.read_at ? "" : "bg-blue-50/50"
                       }`}
@@ -362,7 +371,7 @@ export default function Navbar({
                             t("justNow")}
                         </span>
                       </div>
-                    </button>
+                    </Link>
                   );
                 })
               )}

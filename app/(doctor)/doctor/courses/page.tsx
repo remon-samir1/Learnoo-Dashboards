@@ -65,10 +65,7 @@ function CourseCard({
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-3 mb-4">
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <p className="text-lg font-semibold text-gray-900">{course.students}</p>
-          <p className="text-xs text-gray-500">{t('stats.students')}</p>
-        </div>
+
         <div className="text-center p-3 bg-gray-50 rounded-lg">
           {/* FIX: removed duplicated {course.exams} that was rendered
               twice (once here and once above) unlike the other three cells */}
@@ -135,7 +132,7 @@ function CourseListView({ courses, t, onDelete }: { courses: CourseDisplay[]; t:
             <tr className="bg-gray-50 border-b border-[#E5E7EB]">
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.course')}</th>
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.subject')}</th>
-              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.students')}</th>
+
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.progress')}</th>
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.exam')}</th>
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.notes')}</th>
@@ -156,7 +153,7 @@ function CourseListView({ courses, t, onDelete }: { courses: CourseDisplay[]; t:
                   </div>
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-600">{course.subject}</td>
-                <td className="py-4 px-4 text-sm font-medium text-gray-900">{course.students}</td>
+
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-2">
                     <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -243,7 +240,7 @@ export default function MyCoursesPage() {
         students: c.attributes.stats?.students || 0,
         exams: c.attributes.stats?.exams || 0,
         lectures: c.attributes.stats?.lectures || 0,
-        notes: 0,
+        notes: c.attributes.stats?.notes || 0,
         progress: 0,
         status: c.attributes.status === 1 ? 'active' as const : 'draft' as const,
         category: c.attributes.status === 1 ? 'active' : 'draft',

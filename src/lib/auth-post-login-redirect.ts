@@ -3,14 +3,14 @@ import type { User } from '@/src/types';
 import { isAppRole, isStudentLikeRole } from '@/src/types/user-role';
 
 /**
- * Student app entry: dashboard or complete-profile when university/faculty are missing.
+ * Student app entry: only known missing academic details trigger profile completion.
  * Only applies after the user is authenticated (login/register).
  */
 export function getStudentDashboardHref(
   locale: string,
   user: User | null | undefined,
 ): string {
-  if (!isStudentAcademicProfileComplete(user?.attributes ?? null)) {
+  if (user?.attributes && ['university', 'faculty', 'centers'].every(key => key in user.attributes) && !isStudentAcademicProfileComplete(user.attributes)) {
     return `/${locale}/student/complete-profile`;
   }
   return `/${locale}/student`;

@@ -7,6 +7,8 @@
  * nothing usable is there the notification simply has no link and stays a read-only row.
  */
 
+import { notificationHref } from '@/src/lib/notification-href';
+import { buildStudentStartExamHref } from '@/src/lib/student-start-exam-href';
 import type {
   StudentNotification,
   StudentNotificationCategory,
@@ -65,14 +67,21 @@ export function resolveStudentNotificationHref(
   const payload = readPayload(notification);
   const base = `/${locale}/student`;
 
+  // The shared `notificationHref` map is the authoritative destination for every
+  // notification class the backend tags with a `data.type` (course, lesson, exam,
+  // live, note, library, community, discussion, timetable, ...). The synthetic
+  // pathname is how it is told to build student routes.
+  const shared = notificationHref(payload, `${base}/notifications`, locale);
+  if (shared) return shared;
+
+  // Fallback: older notification classes carry ids without a usable `data.type`.
   const liveId = readId(payload, ['live_room_id', 'live_session_id', 'room_id', 'liveRoomId']);
   if (liveId) return `${base}/live-sessions/${liveId}`;
 
   const quizId = readId(payload, ['quiz_id', 'exam_id', 'quizId', 'examId']);
   if (quizId) {
     const courseId = readId(payload, ['course_id', 'courseId']);
-    const href = `${base}/exams/start-exam/${quizId}`;
-    return courseId && /^\d+$/.test(courseId) ? `${href}?course=${courseId}` : href;
+    return buildStudentStartExamHref(locale, quizId, courseId);
   }
 
   const chapterId = readId(payload, ['chapter_id', 'lecture_id', 'chapterId', 'lectureId']);

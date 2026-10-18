@@ -26,9 +26,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { useChapters } from '@/src/hooks/useChapters';
 import { quizKeys, useQuiz, useUpdateQuiz } from '@/src/hooks/useQuizzes';
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
-import { parseGeneratedExamQuestions } from '@/src/lib/exam-ai';
+import { AiExamUsageNotice } from '@/src/components/ai-exam/AiExamUsageNotice';
+import { parseGeneratedExamQuestions, requestExamExtraction } from '@/src/lib/exam-ai';
 import {
   buildExamFormData,
+  focusExamField,
+  getExamErrorField,
+  validateExamQuestions,
   createReplacementPreview,
   getApiErrorMessages,
   getQuizCourseIds,
@@ -75,7 +79,9 @@ export default function EditExamPage() {
   const [pendingQuestions, setPendingQuestions] = useState<Question[] | null>(null);
 
   const [showAIModal, setShowAIModal] = useState(false);
+  const [aiLimitReached, setAiLimitReached] = useState(false);
   const [aiQuestionCount, setAiQuestionCount] = useState<string>('5');
+  const [aiLanguage, setAiLanguage] = useState('auto');
   const [aiFile, setAiFile] = useState<File | null>(null);
   const [examDetails, setExamDetails] = useState<ExamDetails>({
     title: '', courses: [], chapter: '', type: 'exam',
@@ -84,6 +90,8 @@ export default function EditExamPage() {
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [validationAttempted, setValidationAttempted] = useState(false);
+  const validationErrors = validateExamQuestions(validationAttempted ? questions : []);
   const questionsRef = useRef(questions);
   questionsRef.current = questions;
 
@@ -286,28 +294,27 @@ export default function EditExamPage() {
       const formData = new FormData();
       formData.append('file', aiFile);
       if (aiQuestionCount) formData.append('count', aiQuestionCount);
+      formData.append('language', aiLanguage);
 
-      const response = await fetch('http://31.97.36.130:5678/webhook/form', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await requestExamExtraction(formData);
       const data: unknown = await response.json().catch(() => null);
 
+      if (response.status === 429) throw new Error(t('ai.rateLimitReached'));
       if (!response.ok) {
         throw new Error(isApiErrorPayload(data) && data.message ? data.message : t('ai.extractError'));
       }
 
-      setPendingQuestions(mapGeneratedQuestionsToForm(parseGeneratedExamQuestions(data)));
+      setPendingQuestions(mapGeneratedQuestionsToForm(parseGeneratedExamQuestions(data, Number(aiQuestionCount))));
       setShowReplaceModal(true);
+      setShowAIModal(false);
+      setAiFile(null);
+      setAiQuestionCount('5');
     } catch (error) {
       toast.error(error instanceof Error && error.message !== 'INVALID_AI_RESPONSE'
         ? error.message
         : t('ai.invalidResponse'));
     } finally {
       setIsExtractingAI(false);
-      setShowAIModal(false);
-      setAiFile(null);
-      setAiQuestionCount('5');
     }
   };
 
@@ -328,17 +335,33 @@ export default function EditExamPage() {
   // ── submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (examDetails.courses.length === 0) {
+      toast.error(t('create.validation.courseRequired'));
+      focusExamField('exam-courses');
+      return;
+    }
+    if (examDetails.startTime && examDetails.endTime && examDetails.endTime <= examDetails.startTime) {
+      toast.error(locale === 'ar' ? 'موعد النهاية يجب أن يكون بعد موعد البداية' : 'End time must be after start time');
+      focusExamField('exam-endTime');
+      return;
+    }
+    const errors = validateExamQuestions(questions);
+    setValidationAttempted(true);
+    if (errors.firstInvalid) {
+      focusExamField(errors.firstInvalidField);
+      toast.error(locale === 'ar'
+        ? ({ question: 'نص السؤال مطلوب', answer: 'نص الإجابة مطلوب', correct: 'اختر إجابة صحيحة واحدة على الأقل' }[errors.firstInvalidType!])
+        : ({ question: 'Question text is required', answer: 'Answer text is required', correct: 'Select at least one correct answer' }[errors.firstInvalidType!]));
+      return;
+    }
     setIsSubmitting(true);
 
     try {
-      if (examDetails.courses.length === 0) {
-        toast.error(t('create.validation.courseRequired'));
-        return;
-      }
 
       const totalMarks = Number(examDetails.totalMarks) || 0;
       const currentScore = Number(questions.reduce((sum, q) => sum + (Number(q.score) || 0), 0).toFixed(2));
       if (currentScore !== totalMarks) {
+        focusExamField('exam-totalMarks');
         toast.error(locale === 'ar'
           ? `مجموع درجات الأسئلة (${currentScore}) يجب أن يساوي الدرجة الكلية (${totalMarks})`
           : `Total questions score (${currentScore}) must equal total marks (${totalMarks})`);
@@ -360,6 +383,7 @@ export default function EditExamPage() {
     } catch (error: any) {
       console.error('Error updating exam:', error);
       if (error?.errors) {
+        focusExamField(getExamErrorField(error.errors, questions));
         const validationMessages = getApiErrorMessages(error.errors);
         if (validationMessages.length > 0) {
           validationMessages.forEach((message) => toast.error(message));
@@ -407,7 +431,15 @@ export default function EditExamPage() {
                 <p className="text-sm text-slate-500 mt-1">{t('ai.description')}</p>
               </div>
             </div>
+            <AiExamUsageNotice onLimitReached={setAiLimitReached} />
             <form onSubmit={handleAIUpload} className="flex flex-col gap-4">
+              <label className="flex flex-col gap-2 text-[13px] font-bold text-[#475569]">{t('ai.language')}
+                <select value={aiLanguage} onChange={event => setAiLanguage(event.target.value)} disabled={isExtractingAI} className="w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm">
+                  <option value="auto">{t('ai.sourceLanguage')}</option>
+                  <option value="ar">{t('ai.arabic')}</option>
+                  <option value="en">{t('ai.english')}</option>
+                </select>
+              </label>
               <div className="flex flex-col gap-2">
                 <label className="text-[13px] font-bold text-[#475569]">{t('ai.questionCount')}</label>
                 <input
@@ -432,7 +464,7 @@ export default function EditExamPage() {
               <div className="flex flex-col gap-3 mt-2">
                 <button
                   type="submit"
-                  disabled={isExtractingAI || !aiFile}
+                  disabled={isExtractingAI || !aiFile || aiLimitReached}
                   className="w-full flex justify-center items-center gap-2 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isExtractingAI ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
@@ -540,20 +572,21 @@ export default function EditExamPage() {
                 type="text"
                 placeholder={t('create.titlePlaceholder')}
                 className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
-                value={examDetails.title}
+                id="exam-title"
+                    value={examDetails.title}
                 onChange={(e) => setExamDetails({ ...examDetails, title: e.target.value })}
                 required
               />
             </div>
 
-            <CourseTreeSelect
+            <div id="exam-courses"><CourseTreeSelect
               value={examDetails.courses}
               onMultiChange={(val) => setExamDetails(prev => ({ ...prev, courses: val, chapter: '' }))}
               label={t('create.course')}
               multiple
               inline
               required
-            />
+            /></div>
 
             {/* Type & Chapter */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -561,7 +594,8 @@ export default function EditExamPage() {
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.examType')} <span className="text-[#EF4444]">*</span></label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
-                  value={examDetails.type}
+                  id="exam-type"
+                    value={examDetails.type}
                   onChange={(e) => setExamDetails({ ...examDetails, type: e.target.value as 'exam' | 'homework' })}
                   required
                 >
@@ -575,7 +609,8 @@ export default function EditExamPage() {
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.chapter')}</label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer disabled:opacity-50"
-                  value={examDetails.chapter}
+                  id="exam-chapter"
+                    value={examDetails.chapter}
                   onChange={(e) => setExamDetails({ ...examDetails, chapter: e.target.value })}
                   disabled={examDetails.courses.length === 0 || chaptersLoading}
                 >
@@ -608,6 +643,7 @@ export default function EditExamPage() {
                     <input
                       type="number" min={min}
                       className="w-full ps-10 pe-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                      id={`exam-${key}`}
                       value={readExamField(examDetails, key)}
                       onChange={(e) => setExamDetails({ ...examDetails, [key]: e.target.value })}
                       required={key === 'duration' || key === 'totalMarks'}
@@ -630,6 +666,7 @@ export default function EditExamPage() {
                     <input
                       type="datetime-local"
                       className="w-full ps-10 pe-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                      id={`exam-${key}`}
                       value={readExamField(examDetails, key)}
                       onChange={(e) => setExamDetails({ ...examDetails, [key]: e.target.value })}
                     />
@@ -644,7 +681,8 @@ export default function EditExamPage() {
                 <label className="text-[13px] font-bold text-[#475569]">{t('status.label')} <span className="text-[#EF4444]">*</span></label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
-                  value={examDetails.status}
+                  id="exam-status"
+                    value={examDetails.status}
                   onChange={(e) => setExamDetails({ ...examDetails, status: e.target.value as 'Draft' | 'Active' })}
                   required
                 >
@@ -658,7 +696,8 @@ export default function EditExamPage() {
                 <label className="text-[13px] font-bold text-[#475569]">{t('create.visibility')} <span className="text-[#EF4444]">*</span></label>
                 <select
                   className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
-                  value={examDetails.is_public}
+                  id="exam-is_public"
+                    value={examDetails.is_public}
                   onChange={(e) => setExamDetails({ ...examDetails, is_public: e.target.value as 'true' | 'false' | 'included' })}
                   required
                 >
@@ -673,7 +712,7 @@ export default function EditExamPage() {
         </section>
 
         {/* ── Questions ── */}
-        <div className="flex flex-col gap-8">
+        <div id="exam-questions" className="flex flex-col gap-8">
           <div className="flex items-center justify-between bg-white p-5 rounded-2xl border border-[#F1F5F9] shadow-sm">
             <div>
               <h2 className="text-base font-bold text-[#1E293B]">
@@ -780,6 +819,7 @@ export default function EditExamPage() {
                       <input
                         type="number" min="0"
                         className="w-full px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all"
+                        id={`score-${q.id}`}
                         value={q.score}
                         onChange={(e) => updateQuestion(q.id, { score: parseInt(e.target.value) || 0 })}
                       />
@@ -804,13 +844,16 @@ export default function EditExamPage() {
                   {/* Question Text */}
                   <div className="flex flex-col gap-2">
                     <label className="text-[13px] font-bold text-[#475569]">{t('create.questionText')}</label>
-                    <input
-                      type="text"
+                    <textarea
+                      dir="auto"
+                      rows={3}
                       placeholder={t('create.questionPlaceholder')}
-                      className="w-full px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                      className="w-full resize-y text-start leading-relaxed px-4 py-3 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                      id={`question-${q.id}`}
                       value={q.text}
                       onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
                     />
+                    {validationErrors.questionIds.has(q.id) && <p role="alert" className="text-xs text-red-600">{locale === 'ar' ? 'نص السؤال مطلوب' : 'Question text is required'}</p>}
                   </div>
 
                   {/* Question Image */}
@@ -858,6 +901,8 @@ export default function EditExamPage() {
                             <div className="flex items-center gap-3">
                               <button
                                 type="button"
+                                id={`correct-${q.id}-${answer.id}`}
+                                aria-label={locale === 'ar' ? 'اختيار إجابة صحيحة' : 'Select correct answer'}
                                 onClick={() => toggleCorrectAnswer(q.id, answer.id)}
                                 className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${answer.isCorrect ? 'bg-[#10B981] border-[#10B981] text-white' : 'border-[#E2E8F0] hover:border-[#10B981]'
                                   }`}
@@ -869,10 +914,13 @@ export default function EditExamPage() {
                                 )}
                               </button>
 
-                              <input
-                                type="text"
+                              <textarea
+                      dir="auto"
+                      rows={2}
                                 placeholder={`${t('create.answer')} ${ansIndex + 1}`}
-                                className="flex-1 px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                                className="min-w-0 flex-1 resize-y text-start leading-relaxed px-4 py-2.5 bg-white border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all placeholder:text-[#94A3B8]"
+                                id={`answer-${q.id}-${answer.id}`}
+                                aria-invalid={validationErrors.answerIds.has(`${q.id}:${answer.id}`)}
                                 value={answer.text}
                                 onChange={(e) => updateAnswer(q.id, answer.id, { text: e.target.value })}
                                 required

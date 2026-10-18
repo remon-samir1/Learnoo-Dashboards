@@ -98,7 +98,7 @@ export default function StudentCommunityCreatePostModal({
       title: form.title.trim(),
       content: form.content.trim(),
       type: form.type,
-      status: 'published',
+      status: 'draft',
       ...(tags.length ? { tags } : {}),
       ...(form.image ? { image: form.image } : {}),
     });

@@ -50,8 +50,10 @@ function PdfPreviewContent({
 }) {
   const [pageWidth, setPageWidth] = useState(720);
   const [totalPages, setTotalPages] = useState(0);
-  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  const [pdfData, setPdfData] = useState<Blob | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [visiblePages, setVisiblePages] = useState(() => new Set([1]));
+  const [pageRatios, setPageRatios] = useState<Record<number, number>>({});
   const contentRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,7 +74,7 @@ function PdfPreviewContent({
     fetch(proxiedPdfUrl, { cache: 'no-store', signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.arrayBuffer();
+        return response.blob();
       })
       .then(setPdfData)
       .catch((error: unknown) => {
@@ -105,10 +107,24 @@ function PdfPreviewContent({
   };
 
   useEffect(() => {
+    const visible = new Set<number>();
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const page = Number((entry.target as HTMLElement).dataset.pdfPage);
+        if (entry.isIntersecting) visible.add(page);
+        else visible.delete(page);
+      }
+      setVisiblePages(new Set(visible));
+    }, { rootMargin: '300px 0px' });
+    contentRef.current?.querySelectorAll('[data-pdf-page]').forEach(page => observer.observe(page));
+    return () => observer.disconnect();
+  }, [totalPages, pdfData]);
+
+  useEffect(() => {
     if (pageRef.current) {
       pageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [currentPage]);
+  }, [currentPage, totalPages]);
 
   return (
     <div ref={contentRef} className="min-h-0 w-full">
@@ -132,19 +148,22 @@ function PdfPreviewContent({
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
             <div
               key={pageNum}
+              data-pdf-page={pageNum}
               ref={pageNum === currentPage ? pageRef : null}
               className="relative mx-auto overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-slate-200/90"
-              style={{ width: pageWidth }}
+              style={{ width: pageWidth, minHeight: pageWidth * (pageRatios[pageNum] ?? Math.SQRT2) }}
             >
-              <Page
+              {visiblePages.has(pageNum) && <Page
                 pageNumber={pageNum}
                 width={pageWidth}
+                devicePixelRatio={Math.min(window.devicePixelRatio || 1, 1.5, Math.sqrt(4_000_000 / (pageWidth ** 2 * (pageRatios[pageNum] ?? Math.SQRT2))))}
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
+                onLoadSuccess={({ width, height }) => setPageRatios(ratios => ({ ...ratios, [pageNum]: height / width }))}
                 onLoadError={(error) => reportError('page', error)}
                 onRenderError={(error) => reportError('render', error)}
                 className="[&_canvas]:!h-auto [&_canvas]:!w-full"
-              />
+              />}
 
             </div>
           ))}
@@ -291,6 +310,7 @@ export default function PdfPreviewModal({
       className={`mx-auto flex w-full justify-center ${expandToContainer ? 'max-w-none' : 'max-w-[800px]'}`}
     >
       <PdfPreviewContent
+        key={proxiedPdfUrl}
         proxiedPdfUrl={proxiedPdfUrl}
         expandToContainer={expandToContainer}
         scale={scale}

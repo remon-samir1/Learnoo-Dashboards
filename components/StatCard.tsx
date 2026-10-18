@@ -24,7 +24,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div className={`${bgColor} border border-[#F1F5F9] rounded-2xl p-4 flex  items-start justify-start gap-3 shadow-sm hover:shadow-md transition-all relative overflow-hidden group`}>
       {trend && (
-        <div className="absolute top-4 right-4 px-2 py-0.5 bg-green-50 text-green-600 rounded-md text-[10px] font-bold">
+        <div className={`absolute top-4 end-4 px-2 py-0.5 rounded-md text-[10px] font-bold ${trend.startsWith('-') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
           {trend}
         </div>
       )}

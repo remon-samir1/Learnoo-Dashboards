@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
@@ -19,6 +19,9 @@ function getNoteTypes(t: (key: string) => string) {
 
 export default function EditNotePage() {
   const t = useTranslations('notesSummaries');
+  const ar = useLocale() === 'ar';
+  const [attachment, setAttachment] = useState<File | undefined>();
+  const [removeAttachment, setRemoveAttachment] = useState(false);
   const router = useRouter();
   const params = useParams();
   const noteId = parseInt(params.id as string);
@@ -58,7 +61,9 @@ export default function EditNotePage() {
         content: content.trim(),
         course_id: courseId ? parseInt(courseId) : undefined,
         linked_lecture: linkedLecture.trim() || undefined,
-        is_publish: isPublish
+        is_publish: isPublish,
+        attachment,
+        remove_attachment: removeAttachment
       });
       
       router.push(`/notes-summaries/${noteId}`);
@@ -180,6 +185,17 @@ export default function EditNotePage() {
             <p className="mt-2 text-xs text-[#94A3B8]">
               {t('editNote.charactersCount', { count: content.length })}
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-semibold">
+              {ar ? 'ملف الملاحظة (صورة أو فيديو أو مستند)' : 'Note attachment (image, video or document)'}
+              <input type="file" className="mt-2 block w-full" onChange={e => { setAttachment(e.target.files?.[0]); setRemoveAttachment(false); }} />
+            </label>
+            {note.attributes.attachment && <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={removeAttachment} onChange={e => { setRemoveAttachment(e.target.checked); if (e.target.checked) setAttachment(undefined); }} />
+              {ar ? 'حذف الملف الحالي:' : 'Remove current attachment:'} {note.attributes.attachment.name}
+            </label>}
           </div>
 
           {/* Publish Status */}

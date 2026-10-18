@@ -24,7 +24,7 @@ import {
 import type { QuizAttempt } from '@/src/types';
 import { api, ApiError } from '@/src/lib/api';
 import {
-  isAttemptRecordCompleted,
+  isCompletedAttemptForEnrolledCourses,
   nestedQuizAttributesFromAttempt,
   readAttemptFinishedAtIso,
   readAttemptPassState,
@@ -120,6 +120,10 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     return set;
   }, [enrolledCourses]);
 
+  // Every course the student has, including the ones still locked. Exam
+  // *visibility* uses this wider set so an exam of a course the student owns but
+  // has not activated yet can still be shown as "activate the course first"
+  // instead of disappearing from the hub.
   const visibleCourseIds = useMemo<Set<string>>(() => {
     const set = new Set<string>();
     if (!enrolledCourses) return set;
@@ -176,7 +180,9 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
     void loadAll(page, debouncedSearchQuery);
   }, [loadAll, page, debouncedSearchQuery]);
 
-  const { available, upcoming, expired, locked, courseNotEnrolled } = useMemo(() => {
+  // `expired` is still bucketed so an exam whose window closed is kept out of the
+  // available / activation lists, but it has no section of its own on this hub.
+  const { available, upcoming, locked, courseNotEnrolled } = useMemo(() => {
     const buckets: {
       available: HubQuizListRow[];
       upcoming: HubQuizListRow[];
@@ -197,7 +203,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
       // (or a course the student does not have) belongs to the rest of the
       // platform and used to leak into this list.
       if (!hubQuizIsInStudentCourses(row, visibleCourseIds)) {
-        continue;
+        continue; // Do not show exams that belong to courses hidden from the student
       }
 
       const b = classifyHubQuizRow(row, now, enrolledCourseIds);
@@ -226,13 +232,13 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
 
   const completedAttempts = useMemo(() => {
     if (!attemptList?.length) return [];
-    const done = attemptList.filter(isAttemptRecordCompleted);
+    const done = attemptList.filter(attempt => isCompletedAttemptForEnrolledCourses(attempt, enrolledCourseIds));
     return [...done].sort((a, b) => {
       const fa = readAttemptFinishedAtIso(a) ?? '';
       const fb = readAttemptFinishedAtIso(b) ?? '';
       return new Date(fb).getTime() - new Date(fa).getTime();
     });
-  }, [attemptList]);
+  }, [attemptList, enrolledCourseIds]);
 
   const tExams = useCallback(
     (key: string, values?: Record<string, string | number>) =>
@@ -499,63 +505,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
           )}
         </section>
 
-        <section className="space-y-4 sm:space-y-5">
-          <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">
-            {tDetails('examsExpiredTitle')}
-          </h2>
-          {loading ? (
-            <p className="rounded-xl border border-[#E5E7EB] bg-white px-5 py-10 text-center text-sm text-[#64748B]">
-              {t('loadingQuizzes')}
-            </p>
-          ) : expired.length === 0 ? (
-            <p className="rounded-xl border border-[#E5E7EB] bg-[#F8FAFC] px-5 py-8 text-center text-sm text-[#64748B]">
-              {t('emptyExpired')}
-            </p>
-          ) : (
-            <ul className={STUDENT_EXAM_GRID}>
-              {expired.map((row) => {
-                const title = hubQuizTitle(row);
-                const attrs = hubQuizAttrs(row);
-                const endRaw = attrs.end_time;
-                const endStr =
-                  typeof endRaw === 'string' && endRaw.trim() ? formatIsoDate(endRaw, locale) : null;
-                return (
-                  <li key={row.id} className={`${STUDENT_EXAM_CARD_BASE} border-rose-100`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="text-base font-bold leading-snug text-[#0F172A] sm:text-lg">{title}</h3>
-                      </div>
-                      <span className="shrink-0 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-800 sm:text-xs">
-                        {tDetails('examsExpiredBadge')}
-                      </span>
-                    </div>
-                    <div className="mt-3 rounded-lg border border-rose-200/90 bg-rose-50/90 px-3 py-2.5">
-                      <div className="flex gap-2">
-                        <XCircle className="mt-0.5 size-4 shrink-0 text-rose-700" strokeWidth={2} aria-hidden />
-                        <p className="text-sm font-medium leading-snug text-rose-950">
-                          {tDetails('examsExpiredHint')}
-                        </p>
-                      </div>
-                      {endStr ? (
-                        <p className="mt-2 text-xs font-medium text-rose-900/90">
-                          {tDetails('examsEndedOn', { date: endStr })}
-                        </p>
-                      ) : null}
-                    </div>
-                    {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
-                    <button
-                      type="button"
-                      disabled
-                      className="mt-5 w-full cursor-not-allowed rounded-lg bg-[#F1F5F9] py-3 text-center text-sm font-semibold text-[#94A3B8] sm:mt-6"
-                    >
-                      {tDetails('examsExpiredClosed')}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
+
 
         <section className="space-y-4 sm:space-y-5">
           <h2 className="text-lg font-bold tracking-tight text-[#0F172A] sm:text-xl">

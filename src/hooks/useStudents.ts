@@ -113,10 +113,6 @@ export const useDeleteStudent = createMutationHook(
   (id: string) => api.students.delete(id)
 );
 
-export const useResetStudentPassword = createMutationHook(
-  ({ studentId, password }: { studentId: string; password: string }) => 
-    api.students.resetPassword(studentId, password)
-);
 
 export const useRemoveStudentActivation = createMutationHook<
   ApiResponse<void>,

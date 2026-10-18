@@ -91,9 +91,6 @@ export default function AdminLoginPage() {
             />
             <span>{t('rememberMe')}</span>
           </label>
-          {/* <Link href="/forgot-password" virtual-link-type="internal" className="font-sans font-medium text-[11.9px] leading-5 text-primary hover:opacity-80 transition-opacity">
-            {t('forgotPassword')}
-          </Link> */}
         </div>
 
         {error && (

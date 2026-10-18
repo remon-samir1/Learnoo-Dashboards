@@ -69,7 +69,7 @@ export default function MyCoursesSection() {
                 course.attributes.instructor?.data?.attributes?.full_name ?? "";
               const locationName =
                 course.attributes.center?.data?.attributes?.name ?? "";
-              const thumbnail = course.attributes.thumbnail || "/logo.svg";
+              const thumbnail = course.attributes.thumbnail;
               const locked = courseIsLocked(course);
 
               return (

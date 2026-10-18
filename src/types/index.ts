@@ -839,6 +839,7 @@ export interface ChapterAttributes {
   video_mp4_url?: string | null;
 
   main_video?: string | null;
+  download_video?: string | null;
 
   video_ready?: boolean;
 
@@ -883,6 +884,7 @@ export interface ChapterAttributes {
     | 'activation_required'
     | 'view_limit_reached'
     | 'not_published'
+    | 'outside_schedule'
     | 'video_not_ready'
     | 'authentication_required';
 
@@ -1613,6 +1615,10 @@ export type Course = JsonApiData<CourseAttributes>;
 
 export interface CreateCourseRequest {
 
+  instructor_id?: string;
+  schedule_start?: string | null;
+  schedule_end?: string | null;
+
 
 
   category_id: number;
@@ -1679,6 +1685,10 @@ export interface CreateCourseRequest {
 
 
 export interface UpdateCourseRequest {
+
+  instructor_id?: string;
+  schedule_start?: string | null;
+  schedule_end?: string | null;
 
 
 
@@ -2473,6 +2483,7 @@ export type MaterialType = 'booklet' | 'reference' | 'guide';
 
 
 export interface AttachmentAttributes {
+  document_type?: 'course' | 'lecture' | 'exam' | null;
 
 
 
@@ -2535,6 +2546,7 @@ export interface LibraryAttributes {
 
 
   course_ids: number[];
+  course_titles?: string[];
 
 
 
@@ -2756,7 +2768,8 @@ export interface LiveRoomAttributes {
 
 
 
-  status?: 'pending' | 'live' | 'ended';
+  status?: 'draft' | 'upcoming' | 'pending' | 'live' | 'ended';
+  publication_status?: 'draft' | 'active';
 
 
 
@@ -2947,6 +2960,7 @@ export interface CreateLiveRoomRequest {
 
 
   ended_at?: string;
+  publication_status?: 'draft' | 'active';
 
 
 
@@ -3047,6 +3061,7 @@ export type NoteType = 'summary' | 'highlight' | 'key_point' | 'important_notice
 
 
 export interface NoteAttributes {
+  course_title?: string;
 
 
 
@@ -3163,6 +3178,7 @@ export interface CreateNoteRequest {
 
 
   attachment?: File;
+  remove_attachment?: boolean;
 
 
 
@@ -5265,25 +5281,8 @@ export interface DashboardStats {
 
 
 export interface ActivityData {
-
-
-
-  date: string;
-
-
-
-  students: number;
-
-
-
-  revenue: number;
-
-
-
-  engagement?: number;
-
-
-
+  labels: string[];
+  datasets: { label: string; data: number[]; color?: string }[];
 }
 
 
@@ -5565,4 +5564,3 @@ export interface CreateAppVersionRequest {
 
 
 }
-

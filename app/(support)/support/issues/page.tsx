@@ -8,8 +8,6 @@ import {
   Clock,
   Trash2,
   Eye,
-  Filter,
-  ArrowUpDown,
   ChevronDown
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
@@ -24,6 +22,7 @@ interface Issue {
   type: string;
   priority: string | null;
   description: string;
+  page_url?: string;
   steps_before_problem_appears: string;
   expected_result: string;
   actual_result: string;
@@ -43,6 +42,7 @@ export default function IssuesPage() {
   useEffect(() => { setMounted(true); }, []);
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get('status');
+  const issueId = searchParams.get('issue');
 
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +50,14 @@ export default function IssuesPage() {
   const [showModal, setShowModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const [updatingId, setUpdatingId] = useState<string | number | null>(null);
+
+  useEffect(() => {
+    const issue = issues.find(item => String(item.id) === issueId);
+    if (issue) {
+      setSelectedIssue(issue);
+      setShowModal(true);
+    }
+  }, [issues, issueId]);
 
   const fetchIssues = async () => {
     setIsLoading(true);
@@ -256,19 +264,6 @@ export default function IssuesPage() {
 
       {/* Issues Table */}
       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F8FAFC]">
-          <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#64748B] hover:text-[#1E293B] transition-colors">
-              <Filter className="w-4 h-4" />
-              Filter
-            </button>
-            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#64748B] hover:text-[#1E293B] transition-colors">
-              <ArrowUpDown className="w-4 h-4" />
-              Sort
-            </button>
-          </div>
-        </div>
-
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -389,6 +384,7 @@ export default function IssuesPage() {
               <div>
                 <span className="font-semibold text-[#475569]">Description: </span>
                 <span className="text-[#1E293B]">{selectedIssue?.description}</span>
+                {selectedIssue?.page_url && <a href={selectedIssue.page_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">{selectedIssue.page_url}</a>}
               </div>
               <div>
                 <span className="font-semibold text-[#475569]">Category: </span>

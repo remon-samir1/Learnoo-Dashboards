@@ -6,6 +6,7 @@ import { LogOut } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { logout } from '@/lib/auth';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import StaffNotificationLink from '@/src/components/StaffNotificationLink';
 
 const getPageTitle = (pathname: string, t: (key: string) => string): string => {
   // Remove trailing slash and split path
@@ -70,6 +71,7 @@ export default function Header() {
       {/* Actions */}
       <div className="flex items-center gap-4">
         <LanguageSwitcher />
+        <StaffNotificationLink href={pathname.includes('/parent/') ? '/parent/notifications' : '/notifications'} />
         <button
           onClick={logout}
           className="p-2 text-[#9CA3AF] hover:bg-[#F4F5FD] rounded-full transition-colors"

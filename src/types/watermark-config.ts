@@ -42,7 +42,7 @@ export interface WatermarkConfig {
   easingType: EasingType;
   randomCoordinates: boolean;
   voiceEnabled: boolean;
-  /** Seconds in Admin (voice watermark interval). */
+  /** Minutes in Admin (voice watermark interval). */
   voiceInterval: number;
 }
 

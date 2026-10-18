@@ -496,13 +496,17 @@ import type { Discussion } from '@/src/types';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/src/lib/api';
 
+import { buildDiscussionTree } from '@/components/student/watch/watchChapterDiscussionUtils';
+
 export default function AdminDiscussionsPage() {
   const t = useTranslations('discussions');
   const commonT = useTranslations('common');
   const locale = useLocale();
   const [page, setPage] = useState(1);
+  const [targetDiscussion, setTargetDiscussion] = useState<string | undefined>();
+  useEffect(() => { const id = new URLSearchParams(window.location.search).get('discussion'); if (id && /^\d+$/.test(id)) setTargetDiscussion(id); }, []);
   const [perPage, setPerPage] = useState(10);
-  const { data: discussionsData, isLoading, refetch } = useDiscussions({ page: page });
+  const { data: discussionsData, isLoading, refetch } = useDiscussions({ page, per_page: perPage, discussion_id: targetDiscussion });
   const { mutate: deleteDiscussion, isLoading: isDeleting } = useDeleteDiscussion();
   console.log(page)
   const [replyingTo, setReplyingTo] = useState<string | number | null>(null);
@@ -516,29 +520,7 @@ export default function AdminDiscussionsPage() {
     refetch();
   };
 
-  const discussionsTree = useMemo(() => {
-    if (!discussionsData) return [];
-
-    const flat = discussionsData.data;
-    const map = new Map<string | number, any>();
-    const roots: any[] = [];
-
-    flat.forEach((d) => {
-      map.set(String(d.id), { ...d, replies: [] });
-    });
-
-    flat.forEach((d) => {
-      const parentId = d.attributes?.parent_id;
-      if (parentId != null && map.has(String(parentId))) {
-        const parent = map.get(String(parentId))!;
-        parent.replies.push(map.get(String(d.id)) || d);
-      } else {
-        roots.push(map.get(String(d.id)) || d);
-      }
-    });
-
-    return roots;
-  }, [discussionsData?.data]);
+  const discussionsTree = useMemo(() => buildDiscussionTree(discussionsData?.data ?? []), [discussionsData?.data]);
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('deleteConfirm'))) return;
@@ -980,7 +962,7 @@ const AdminReplyComposer = ({ parentId, chapterId, moment, onCancel, onSuccess, 
       setRecordingSeconds(0);
       recordingTimerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000);
     } catch {
-      toast.error('Microphone access denied');
+      toast.error(t('microphoneDenied'));
     }
   };
 
@@ -1016,7 +998,7 @@ const AdminReplyComposer = ({ parentId, chapterId, moment, onCancel, onSuccess, 
       return;
     }
     if (mode === 'voice' && !audioBlob) {
-      toast.error('Please record a voice note first');
+      toast.error(t('recordVoiceFirst'));
       return;
     }
 

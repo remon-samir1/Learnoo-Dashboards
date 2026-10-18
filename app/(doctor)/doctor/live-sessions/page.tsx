@@ -9,12 +9,15 @@ import { useDebounce } from 'use-debounce';
 import LiveSessionCard from '@/components/live-sessions/LiveSessionCard';
 import { usePaginatedLiveRooms, useDeleteLiveRoom } from '@/src/hooks/useLiveRooms';
 import { getCourseTitle } from '@/src/lib/student-live-room';
+import { useAuthStore } from '@/src/stores/authStore';
 import type { LiveRoom } from '@/src/types';
 import { toast } from 'react-hot-toast';
 
-function getSessionStatus(room: LiveRoom): 'LIVE' | 'UPCOMING' | 'ENDED' {
+function getSessionStatus(room: LiveRoom): 'DRAFT' | 'LIVE' | 'UPCOMING' | 'ENDED' {
   // Use API status if available
   const apiStatus = room.attributes.status;
+  if (apiStatus === 'draft') return 'DRAFT';
+  if (apiStatus === 'upcoming') return 'UPCOMING';
   if (apiStatus === 'live') return 'LIVE';
   if (apiStatus === 'ended') return 'ENDED';
   if (apiStatus === 'pending') return 'UPCOMING';
@@ -64,6 +67,7 @@ function getDuration(startedAt: string, endedAt?: string | null): string {
 }
 
 export default function LiveSessionsPage() {
+  const canDelete = useAuthStore((state) => state.user?.attributes.role === 'Super Admin');
   const t = useTranslations();
   const router = useRouter();
   const [page, setPage] = useState(1);
@@ -81,6 +85,7 @@ export default function LiveSessionsPage() {
   };
 
   const handleDelete = async (roomId: string) => {
+    if (!canDelete) return;
     if (!confirm(t('liveSessions.deleteConfirm'))) return;
     try {
       await deleteMutation.mutate(Number(roomId));
@@ -157,7 +162,7 @@ export default function LiveSessionsPage() {
                 onStart={() => handleStart(room.id)}
                 onDetails={() => router.push(`/doctor/live-sessions/${room.id}`)}
                 onEdit={() => router.push(`/doctor/live-sessions/${room.id}/edit`)}
-                onDelete={() => handleDelete(room.id)}
+                onDelete={canDelete ? () => handleDelete(room.id) : undefined}
               />
             );
           })

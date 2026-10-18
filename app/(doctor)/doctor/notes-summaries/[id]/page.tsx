@@ -143,7 +143,7 @@ export default function NoteDetailPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[12px] text-[#64748B]">{t('detail.courseId')}</span>
-                  <span className="text-sm font-bold text-[#1E293B]">{note.attributes.course_id || t('na')}</span>
+                  <span className="text-sm font-bold text-[#1E293B]">{note.attributes.course_title || t('na')}</span>
                 </div>
               </div>
 

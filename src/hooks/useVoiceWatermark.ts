@@ -1,12 +1,23 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { RefObject } from 'react';
 
+export function createWatermarkUtterance(text: string) {
+  const utterance = new SpeechSynthesisUtterance(text.trim());
+  utterance.lang = /[\u0600-\u06ff]/.test(text) ? 'ar-EG' : 'en-US';
+  const voice = window.speechSynthesis.getVoices().find(voice => voice.lang.startsWith(utterance.lang.split('-')[0]));
+  if (voice) utterance.voice = voice;
+  utterance.volume = 0.5;
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  return utterance;
+}
+
 export interface UseVoiceWatermarkProps {
   /** Whether voice watermark is enabled */
   enabled: boolean;
   /** Text to speak as watermark */
   text: string;
-  /** Interval in seconds between speech utterances */
+  /** Interval in minutes between speech utterances */
   interval: number;
   /** Reference to the video element (optional - if null, speaks continuously when enabled) */
   videoRef?: RefObject<HTMLVideoElement | null>;
@@ -67,12 +78,7 @@ export function useVoiceWatermark({
     }
 
     try {
-      const utterance = new SpeechSynthesisUtterance(trimmedText);
-      utterance.volume = 0.5; // Moderate volume
-      utterance.rate = 0.9; // Slightly slower for clarity
-      utterance.pitch = 1.0; // Normal pitch
-
-      synthesis.speak(utterance);
+      synthesis.speak(createWatermarkUtterance(trimmedText));
     } catch (error) {
       console.error('Failed to speak watermark text:', error);
     }
@@ -96,7 +102,7 @@ export function useVoiceWatermark({
 
     intervalRef.current = setInterval(() => {
       speak();
-    }, interval * 60000); // Convert seconds to milliseconds
+    }, interval * 60000); // Convert minutes to milliseconds
   }, [enabled, text, interval, speak]);
 
   // Stop the interval timer

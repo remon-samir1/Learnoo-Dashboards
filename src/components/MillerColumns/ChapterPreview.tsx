@@ -8,11 +8,13 @@ interface ChapterPreviewProps {
 
 export function ChapterPreview({ chapter }: ChapterPreviewProps) {
   const t = useTranslations("courses.detailPanel");
+  const tc = useTranslations("common");
   const [videoError, setVideoError] = useState(false);
 
   // Step 1: Determine if a valid video URL exists
   const getValidVideoUrl = (): string | null => {
     const candidates = [
+      chapter.main_video,
       chapter.video_mp4_url,
       chapter.video_hls_url,
       chapter.video,
@@ -73,7 +75,8 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
         <label className="text-[10px] font-bold text-gray-400 max-w-[300px] uppercase tracking-wider block mb-1">
           {t("videoPreview")}
         </label>
-        <div className="aspect-video w-full w-[200px] rounded-lg overflow-hidden border border-gray-200 bg-black">
+        {chapter.download_video && <a href={chapter.download_video} className="mb-2 block text-xs text-blue-600" download>{tc("download")}</a>}
+        <div className="aspect-video w-full rounded-lg overflow-hidden border border-gray-200 bg-black">
           {isEmbed ? (
             <iframe
               src={videoUrl}
@@ -85,7 +88,7 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
           ) : (
             <video
               src={videoUrl}
-              className="w-full h-[200px]"
+              className="w-full h-full"
               controls
               preload="metadata"
               onError={() => {

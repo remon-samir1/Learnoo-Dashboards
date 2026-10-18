@@ -9,7 +9,7 @@
 
 import { create } from 'zustand';
 import { useShallow } from 'zustand/react/shallow';
-import { notificationsApi, getApiErrorMessage } from '@/src/lib/api';
+import { studentNotificationsApi, getApiErrorMessage } from '@/src/lib/api';
 import {
   mergeStudentNotifications,
   normalizeStudentNotificationMeta,
@@ -63,7 +63,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await notificationsApi.list();
+      const response = await studentNotificationsApi.list();
       const incoming = normalizeStudentNotifications(response);
       const meta = normalizeStudentNotificationMeta(response);
 
@@ -107,7 +107,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     set({ notifications: optimistic, unreadCount: countUnread(optimistic), error: null });
 
     try {
-      await notificationsApi.markAsRead(id);
+      await studentNotificationsApi.markAsRead(id);
     } catch (error) {
       // Roll back so the badge keeps reflecting the server.
       const reverted = get().notifications.map((item) =>
@@ -133,7 +133,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     set({ notifications: optimistic, unreadCount: 0, isMarkingAll: true, error: null });
 
     try {
-      await notificationsApi.markAllAsRead();
+      await studentNotificationsApi.markAllAsRead();
       set({ isMarkingAll: false });
     } catch (error) {
       set({

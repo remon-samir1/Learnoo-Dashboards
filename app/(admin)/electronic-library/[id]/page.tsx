@@ -300,8 +300,8 @@ export default function LibraryDetailPage() {
                   <DollarSign className="w-5 h-5 text-[#10B981]" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.detail.fields.courseId')}</span>
-                  <span className="text-sm font-bold text-[#1E293B]">{library.attributes.course_ids?.join(', ')}</span>
+                  <span className="text-[12px] text-[#64748B]">{t('electronicLibrary.add.fields.course')}</span>
+                  <span className="text-sm font-bold text-[#1E293B]">{library.attributes.course_titles?.join('، ') || '—'}</span>
                 </div>
               </div>
 

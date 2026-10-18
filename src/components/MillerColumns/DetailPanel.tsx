@@ -1,5 +1,5 @@
 import React from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   X,
   Plus,
@@ -91,10 +91,16 @@ export function DetailPanel({
   onClose,
 }: DetailPanelProps) {
   const t = useTranslations("courses.detailPanel");
+  const locale = useLocale();
 
   const handlePreactivationFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (/\.xlsx?$/i.test(file.name)) {
+      setPreactivationNumbers([]);
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -158,14 +164,14 @@ export function DetailPanel({
                   {node.stats?.courses || 0}
                 </p>
               </div>
-              <div>
+              {node.stats?.students != null && <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                   {t("students")}
                 </label>
                 <p className="text-base font-bold text-green-600">
-                  {node.stats?.students || 0}
+                  {node.stats.students}
                 </p>
-              </div>
+              </div>}
             </div>
 
           </div>
@@ -212,16 +218,17 @@ export function DetailPanel({
                 <p className="text-xs text-gray-700">
                   {(node.data as Course).attributes.max_views_per_student}
                 </p>
+                <p className="mt-1 text-[10px] text-gray-500">{locale === 'ar' ? 'حد المشاهدات لكل طالب في كل محاضرة. يُطبّق الأقل من حد الكورس وحد المحاضرة؛ صفر يعني بلا حد.' : 'Views per student for each lesson. The lower positive course or lesson limit applies; zero means unlimited.'}</p>
               </div>
               <div className="col-span-2 border-t border-gray-100 pt-2 flex justify-between">
                 <div>
                   <label className="text-[10px] text-gray-400 block">{t("lectures")}</label>
                   <p className="text-xs font-bold text-purple-600">{node.stats?.lectures || 0}</p>
                 </div>
-                <div>
+                {node.stats?.students != null && <div>
                   <label className="text-[10px] text-gray-400 block">{t("students")}</label>
-                  <p className="text-xs font-bold text-green-600">{node.stats?.students || 0}</p>
-                </div>
+                  <p className="text-xs font-bold text-green-600">{node.stats.students}</p>
+                </div>}
               </div>
             </div>
 
@@ -377,7 +384,7 @@ export function DetailPanel({
 
                     <div className="flex items-center gap-1 my-1.5"><div className="flex-grow h-px bg-gray-100" /> <span className="text-[9px] text-gray-400">{t("orFile")}</span> <div className="flex-grow h-px bg-gray-100" /></div>
 
-                    <input ref={preactivationFileRef} type="file" accept=".txt,.csv" onChange={handlePreactivationFileSelect} className="hidden" />
+                    <input ref={preactivationFileRef} type="file" accept=".txt,.csv,.xls,.xlsx" onChange={handlePreactivationFileSelect} className="hidden" />
                     <button
                       onClick={() => preactivationFileRef.current?.click()}
                       className="w-full py-1 border border-gray-200 rounded bg-gray-50 text-xs text-gray-700 flex justify-center items-center gap-1"
@@ -596,7 +603,7 @@ export function DetailPanel({
 
                     <div className="flex items-center gap-1 my-1.5"><div className="flex-grow h-px bg-gray-100" /> <span className="text-[9px] text-gray-400">{t("orFile")}</span> <div className="flex-grow h-px bg-gray-100" /></div>
 
-                    <input ref={preactivationFileRef} type="file" accept=".txt,.csv" onChange={handlePreactivationFileSelect} className="hidden" />
+                    <input ref={preactivationFileRef} type="file" accept=".txt,.csv,.xls,.xlsx" onChange={handlePreactivationFileSelect} className="hidden" />
                     <button
                       onClick={() => preactivationFileRef.current?.click()}
                       className="w-full py-1 border border-gray-200 rounded bg-gray-50 text-xs text-gray-700 flex justify-center items-center gap-1"
@@ -724,12 +731,14 @@ export function DetailPanel({
           </>
         )}
 
+        {(!isInstructor || ['course', 'lecture', 'chapter', 'note'].includes(node.type)) && (
         <button
           onClick={() => onEdit(node)}
           className="flex-grow px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-lg transition-colors text-center"
         >
           {t("edit")} {node.type.charAt(0).toUpperCase() + node.type.slice(1)}
         </button>
+        )}
 
         {!isInstructor && (
           <button

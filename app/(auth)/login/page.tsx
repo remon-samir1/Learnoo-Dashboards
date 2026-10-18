@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import Cookies from '@/lib/cookies';
-import { getApiErrorMessage } from '@/src/lib/api';
-import { useAuthActions } from '@/src/stores/authStore';
+import { ApiError, authApi, getApiErrorMessage } from '@/src/lib/api';
+import { useAuthActions, useAuthStore } from '@/src/stores/authStore';
 import AuthPageLayout from '../components/AuthLayout';
 import CountryCodeSelect, { DEFAULT_COUNTRY } from '../components/CountryCodeSelect';
 import { isValidLocalPhone, normalizeLocalPhone } from '@/src/lib/local-phone';
@@ -15,16 +15,27 @@ import { isValidLocalPhone, normalizeLocalPhone } from '@/src/lib/local-phone';
 export default function LoginPage() {
   const t = useTranslations('auth.login');
   const router = useRouter();
-  const { login, fetchCurrentUser } = useAuthActions();
+  const { login } = useAuthActions();
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState(DEFAULT_COUNTRY);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [justRegistered, setJustRegistered] = useState(false);
+  const [sessionNotice, setSessionNotice] = useState('');
+  const [transferToken, setTransferToken] = useState('');
+  const [requesting, setRequesting] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
   const locale = useLocale() || "ar";
 
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
+    if (sp.has('session')) {
+      setSessionNotice(sp.get('session') === 'device-changed' ? 'deviceChanged' : 'sessionExpired');
+      for (const key of ['pending_auth_token', 'pending_auth_user', 'pending_auth_meta', 'auth_flow', 'registration_onboarding']) sessionStorage.removeItem(key);
+      useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
+      sp.delete('session');
+      window.history.replaceState(null, '', `${window.location.pathname}${sp.size ? `?${sp}` : ''}`);
+    }
     if (sp.get('registered') !== '1') return;
     setJustRegistered(true);
     sp.delete('registered');
@@ -33,12 +44,15 @@ export default function LoginPage() {
     window.history.replaceState(null, '', path);
   }, []);
 
+  useEffect(() => { setTransferToken(''); setRequestSent(false); setError(''); }, [phone, country]);
+
   return (
     <AuthPageLayout
       title={t('title')}
       subtitle={t('subtitle')}
     >
       <div className="flex flex-col gap-6">
+        {sessionNotice && <p role="status" className="rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">{t(sessionNotice)}</p>}
         {justRegistered ? (
           <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3">
             <p className="font-sans text-xs leading-5 text-emerald-800">{t('registeredSuccess')}</p>
@@ -62,9 +76,12 @@ export default function LoginPage() {
 
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="font-sans text-xs leading-5 text-red-600">{error}</p>
+            <p role="alert" className="font-sans text-xs leading-5 text-red-600">{error}</p>
+            {transferToken && !requestSent && <button type="button" disabled={requesting || loading} onClick={handleTransferRequest} className="mt-2 text-xs font-medium text-primary underline disabled:opacity-50">{requesting ? t('sendingDeviceRequest') : t('sendDeviceRequest')}</button>}
           </div>
         )}
+
+        {requestSent && <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">{t('deviceRequestSent')}</p>}
 
         {/* Sign In Button */}
         <button
@@ -93,11 +110,7 @@ export default function LoginPage() {
               {t('createAccount')}
             </Link>
           </p>
-          <p className="font-sans text-xs leading-5 text-text-muted">
-            <Link href="/forgot-password" virtual-link-type="internal" className="font-sans font-medium text-xs text-primary hover:opacity-80 transition-opacity">
-              {t('forgotPassword')}
-            </Link>
-          </p>
+
         </div>
       </div>
     </AuthPageLayout>
@@ -116,6 +129,8 @@ export default function LoginPage() {
 
     setLoading(true);
     setError('');
+    setTransferToken('');
+    setRequestSent(false);
 
     try {
       const ph = normalizeLocalPhone(phone);
@@ -143,10 +158,24 @@ export default function LoginPage() {
       router.push('/verification-code');
     } catch (err: unknown) {
       const message = getApiErrorMessage(err, t('errors.loginFailed'));
-      toast.error(message);
-      setError(err instanceof Error ? err.message : t('errors.loginFailed'));
+      if (err instanceof ApiError && err.code === 'device_transfer_required') setTransferToken(err.transferToken || '');
+      else toast.error(message);
+      setError(message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleTransferRequest() {
+    setRequesting(true);
+    try {
+      await authApi.requestDeviceTransfer(transferToken);
+      setRequestSent(true);
+      setError('');
+    } catch (err) {
+      setError(getApiErrorMessage(err, t('errors.loginFailed')));
+    } finally {
+      setRequesting(false);
     }
   }
 }

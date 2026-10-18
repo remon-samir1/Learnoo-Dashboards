@@ -28,6 +28,7 @@ import {
   useUpdateQuiz,
 } from '@/src/hooks/useQuizzes';
 import { api } from '@/src/lib/api';
+import { useAuthStore } from '@/src/stores/authStore';
 import {
   buildExamFormData,
   getQuizCourseIds,
@@ -52,6 +53,7 @@ function useDebouncedValue<T>(value: T, delay: number) {
 }
 
 export function ExamManagementList({ basePath }: ExamManagementListProps) {
+  const canDelete = useAuthStore((state) => state.user?.attributes.role === 'Super Admin');
   const t = useTranslations('exams');
   const commonT = useTranslations('common');
   const locale = useLocale();
@@ -127,7 +129,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
       const fullQuiz = fullQuizRes.data;
 
       const examDetails = {
-        title: `${fullQuiz.attributes.title} (Copy)`,
+        title: fullQuiz.attributes.title,
         courses: getQuizCourseIds(
           fullQuiz.attributes.courses,
           fullQuiz.attributes.course_id,
@@ -189,7 +191,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
   };
 
   const confirmDelete = async () => {
-    if (!selectedQuiz) return;
+    if (!canDelete || !selectedQuiz) return;
 
     try {
       await deleteMutation.mutateAsync(Number(selectedQuiz.id));
@@ -412,7 +414,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
                             >
                               <Pencil className="h-4 w-4" />
                             </Link>
-                            <button
+                            {canDelete && <button
                               type="button"
                               onClick={() => setSelectedQuiz(quiz)}
                               aria-label={t('deleteExam', { title })}
@@ -420,7 +422,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
                               className="rounded-full p-2 text-[#64748B] transition hover:bg-red-50 hover:text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />
-                            </button>
+                            </button>}
                           </div>
                         </td>
                       </tr>
@@ -479,7 +481,7 @@ export function ExamManagementList({ basePath }: ExamManagementListProps) {
       </section>
 
       <DeleteModal
-        isOpen={selectedQuiz !== null}
+        isOpen={canDelete && selectedQuiz !== null}
         onClose={() => setSelectedQuiz(null)}
         onConfirm={() => void confirmDelete()}
         title={t('deleteTitle')}

@@ -10,6 +10,8 @@ import { useCourses } from '@/src/hooks/useCourses';
 import { useChapters } from '@/src/hooks/useChapters';
 import { useLibraries } from '@/src/hooks/useLibraries';
 import { useLiveRooms } from '@/src/hooks/useLiveRooms';
+import { useQuizzes, useQuiz } from '@/src/hooks/useQuizzes';
+import { useDebounce } from 'use-debounce';
 import { useDepartments } from '@/src/hooks/useDepartments';
 
 import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
@@ -22,6 +24,7 @@ function useCodeTypes(t: any) {
     { value: 'App\\Models\\Chapter', label: t('activation.types.chapter') },
     { value: 'App\\Models\\Library', label: t('activation.types.library') },
     { value: 'App\\Models\\LiveRoom', label: t('activation.types.liveRoom') },
+    { value: 'App\\Models\\Quiz', label: t('activation.types.quiz') },
   ];
 }
 
@@ -45,6 +48,10 @@ export default function EditCodePage() {
   const [codeType, setCodeType] = useState('');
   const [itemId, setItemId] = useState('');
   const [codeValue, setCodeValue] = useState('');
+  const [quizSearch, setQuizSearch] = useState('');
+  const [debouncedQuizSearch] = useDebounce(quizSearch, 500);
+  const { data: quizzes } = useQuizzes({ title: debouncedQuizSearch });
+  const { data: selectedQuiz } = useQuiz(Number(itemId), { enabled: codeType === 'App\\Models\\Quiz' && Boolean(itemId) });
 
   useEffect(() => {
     if (code) {
@@ -71,6 +78,8 @@ export default function EditCodePage() {
         return extractItems(libraries);
       case 'App\\Models\\LiveRoom':
         return extractItems(liveRooms);
+      case 'App\\Models\\Quiz':
+        return selectedQuiz && !quizzes?.some(quiz => quiz.id === selectedQuiz.id) ? [selectedQuiz, ...(quizzes ?? [])] : (quizzes ?? []);
       case 'App\\Models\\Department':
         return extractItems(departments);
       default:
@@ -205,6 +214,7 @@ export default function EditCodePage() {
                     <span className="text-sm font-medium text-[#2137D6]">{t('activation.edit.current')}: {getCurrentItemName()}</span>
                   </div>
                 )}
+                {codeType === 'App\\Models\\Quiz' && <input type="search" aria-label={t('activation.types.quiz')} value={quizSearch} onChange={event => setQuizSearch(event.target.value)} className="rounded-xl border p-3" />}
                 <select
                   className="w-full px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2137D6] focus:ring-opacity-10 transition-all appearance-none cursor-pointer"
                   value={itemId}

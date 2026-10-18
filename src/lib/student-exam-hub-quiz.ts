@@ -7,8 +7,10 @@ import {
   readIsPublicMode,
   readQuizOwningCourseIds,
   readRemainingAttemptsFromQuizAttributes,
-} from '@/src/lib/student-quiz-activation-lock';
-import { isWithinStudentCourses, readRecordCourseIds } from '@/src/lib/student-course-scope';
+} from './student-quiz-activation-lock.ts';
+// Relative specifiers with the extension, so `node --test src/lib/*.test.ts` can
+// load this module without the bundler's `@/` alias.
+import { isWithinStudentCourses, readRecordCourseIds } from './student-course-scope.ts';
 
 export type HubQuizListRow = {
   id: string;
@@ -194,6 +196,8 @@ export function classifyHubQuizRow(
   enrolledCourseIds?: ReadonlySet<string> | Iterable<string> | null
 ): HubQuizBucket {
   const attrs = hubQuizAttrs(row);
+  const status = String(attrs.status ?? '').trim().toLowerCase();
+  if (status === 'draft') return 'hidden';
   const endsAt = parseHubQuizTime(attrs.end_time);
   // An exam whose window already closed is expired whatever its lock state:
   // offering to activate a course for an exam nobody can sit any more only
@@ -213,14 +217,12 @@ export function classifyHubQuizRow(
     // It should go to 'locked' to prompt them for a code.
     return 'locked';
   }
-  const status = String(attrs.status ?? '')
-    .trim()
-    .toLowerCase();
+  // `end_time` was already handled above, before the activation branch.
   const start = parseHubQuizTime(attrs.start_time);
 
   const rem = readHubQuizRemainingAttempts(row);
 
-  if (status !== 'active' && status !== 'draft') {
+  if (status !== 'active') {
     return 'locked';
   }
 

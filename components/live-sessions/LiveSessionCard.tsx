@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Video, MessageCircle, Play, Settings as SettingsIcon, Info, Disc, Trash2, Edit } from 'lucide-react';
 
 interface LiveSessionCardProps {
-  status: 'LIVE' | 'UPCOMING' | 'ENDED';
+  status: 'DRAFT' | 'LIVE' | 'UPCOMING' | 'ENDED';
   title: string;
   course: string;
   instructor: string;
@@ -52,7 +52,7 @@ export default function LiveSessionCard({
             isUpcoming ? 'bg-[#DBEAFE] text-[#2563EB]' :
               'bg-[#F1F5F9] text-[#64748B]'
             }`}>
-            {isLive ? t('liveSessions.status.now') : t(`liveSessions.status.${status.toLowerCase()}`)}
+            {isLive ? t('liveSessions.status.now') : status === 'DRAFT' ? t('exams.status.draft') : t(`liveSessions.status.${status.toLowerCase()}`)}
           </span>
           <span className="text-[13px] font-medium text-[#1E293B]">{time}</span>
           {duration && <span className="text-[13px] text-[#64748B]">• {duration}</span>}
@@ -107,13 +107,13 @@ export default function LiveSessionCard({
             {t('common.edit') || 'Edit'}
           </button>
         )}
-        <button
+        {onDelete && <button
           onClick={onDelete}
           className="w-full py-2 bg-white border border-[#E2E8F0] text-[#EF4444] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-[#FEF2F2] hover:border-[#EF4444] transition-colors"
         >
           <Trash2 className="w-4 h-4" />
           {t('liveSessions.card.delete')}
-        </button>
+        </button>}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Users, 
   BookOpen, 
@@ -9,7 +10,6 @@ import {
   Play,
   Clock,
   ChevronRight,
-  Star,
   TrendingUp,
   UserPlus,
   HelpCircle,
@@ -29,6 +29,7 @@ export default function DoctorDashboardPage() {
   const [upcomingLiveClassesData, setUpcomingLiveClassesData] = useState<any>(null);
   const [studentsNeedingAttentionData, setStudentsNeedingAttentionData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState('month');
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -36,7 +37,7 @@ export default function DoctorDashboardPage() {
         const [header, stats, growth, activity, recent, live, students] = await Promise.all([
           instructorDashboardApi.getHeader(),
           instructorDashboardApi.getStats(),
-          instructorDashboardApi.getStudentGrowth({ period: 'month' }),
+          instructorDashboardApi.getStudentGrowth({ period }),
           instructorDashboardApi.getCourseActivity(),
           instructorDashboardApi.getRecentActivity(),
           instructorDashboardApi.getUpcomingLiveClasses(),
@@ -58,7 +59,7 @@ export default function DoctorDashboardPage() {
     };
 
     fetchAllData();
-  }, []);
+  }, [period]);
 
   if (loading) {
     return (
@@ -78,7 +79,7 @@ export default function DoctorDashboardPage() {
         <StatCard 
           label={t('stats.totalStudents')}
           value={statsData?.students?.value?.toLocaleString() || '0'}
-          subtext={`${t('stats.currentlyTeaching')}: ${statsData?.students?.growth || 0}%`}
+          subtext={`${t('charts.monthlyGrowth')}: ${statsData?.students?.growth || 0}%`}
           icon={<Users className="w-5 h-5" />}
           iconBg="bg-[#EEF2FF]"
           iconColor="text-[#4F46E5]"
@@ -116,7 +117,7 @@ export default function DoctorDashboardPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <EnrollmentChart data={studentGrowthData} t={t} />
+          <EnrollmentChart data={studentGrowthData} t={t} period={period} onPeriodChange={setPeriod} />
         </div>
         <div>
           <CourseActivityChart data={courseActivityData} t={t} />
@@ -169,35 +170,18 @@ function WelcomeBanner({ data, t }: { data: any; t: ReturnType<typeof useTransla
             {t('welcome.startLiveSessions')}: <span className="font-bold">{data?.summary?.today_live_classes || 0} {t('stats.liveClasses')}</span> - {t('welcome.quickCreate')}: <span className="font-bold">{data?.summary?.pending_questions || 0} {t('stats.pendingQuestions')}</span>
           </p>
           <div className="flex gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 bg-white text-[#4F46E5] rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors">
+            <Link href="/doctor/live-sessions" className="flex items-center gap-2 px-4 py-2 bg-white text-[#4F46E5] rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors">
               <Video className="w-4 h-4" />
               {t('welcome.startLiveSessions')}
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg text-sm font-semibold hover:bg-white/30 transition-colors">
+            </Link>
+            <Link href="/doctor/exams/create" className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg text-sm font-semibold hover:bg-white/30 transition-colors">
               <TrendingUp className="w-4 h-4" />
               {t('welcome.quickCreate')}
-            </button>
+            </Link>
           </div>
         </div>
         
-        <div className="hidden md:flex flex-col items-end gap-2">
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="flex items-center gap-1">
-                <span className="text-2xl font-bold">4.9</span>
-                <div className="flex">
-                  {[1,2,3,4,5].map(i => (
-                    <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-2xl font-bold">98%</span>
-              <p className="text-xs text-white/70">{t('welcome.satisfaction')}</p>
-            </div>
-          </div>
-        </div>
+
       </div>
     </div>
   );
@@ -228,7 +212,7 @@ function StatCard({ label, value, subtext, icon, iconBg, iconColor, borderColor 
   );
 }
 
-function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typeof useTranslations> }) {
+function EnrollmentChart({ data: growthData, t, period, onPeriodChange }: { data: any; t: ReturnType<typeof useTranslations>; period: string; onPeriodChange: (period: string) => void }) {
   const data = growthData?.labels?.map((label: string, i: number) => ({
     month: label,
     value: growthData.datasets[0]?.data[i] || 0,
@@ -250,7 +234,7 @@ function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typ
     );
   }
 
-  const maxValue = Math.max(...data.map((d: { value: number }) => d.value), 100) * 1.2;
+  const maxValue = Math.max(...data.map((d: { value: number }) => d.value), 1) * 1.2;
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -260,14 +244,15 @@ function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typ
           <p className="text-xs text-[#64748B]">{t('charts.monthlyGrowth')}</p>
         </div>
         <div className="flex bg-[#F1F5F9] rounded-lg p-1">
-          {[t('charts.week'), t('charts.month'), t('charts.year')].map((period, i) => (
+          {['week', 'month', 'year'].map((option) => (
             <button 
-              key={period}
+              key={option}
+              onClick={() => onPeriodChange(option)}
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
-                i === 1 ? 'bg-white text-[#1E293B] shadow-sm' : 'text-[#64748B] hover:text-[#1E293B]'
+                period === option ? 'bg-white text-[#1E293B] shadow-sm' : 'text-[#64748B] hover:text-[#1E293B]'
               }`}
             >
-              {period}
+              {t(`charts.${option}`)}
             </button>
           ))}
         </div>
@@ -276,11 +261,7 @@ function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typ
       <div className="relative h-48">
         {/* Y-axis labels */}
         <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-xs text-[#94A3B8] w-8">
-          <span>600</span>
-          <span>450</span>
-          <span>300</span>
-          <span>150</span>
-          <span>0</span>
+          {[1, 0.75, 0.5, 0.25, 0].map(ratio => <span key={ratio}>{Number((maxValue * ratio).toFixed(1))}</span>)}
         </div>
 
         {/* Chart area */}
@@ -291,7 +272,7 @@ function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typ
           ))}
 
           {/* Line chart */}
-          <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          <svg viewBox="0 0 600 200" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
             <defs>
               <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.2" />
@@ -303,11 +284,11 @@ function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typ
             <path
               d={`M 0 ${200 - (data[0].value / maxValue) * 200} ${
                 data.map((d: { month: string; value: number }, i: number) => {
-                  const x = (i / (data.length - 1)) * 100 + '%';
+                  const x = (i / Math.max(data.length - 1, 1)) * 600;
                   const y = 200 - (d.value / maxValue) * 200;
                   return `L ${x} ${y}`;
                 }).join(' ')
-              } L 100% 200 L 0 200 Z`}
+              } L 600 200 L 0 200 Z`}
               fill="url(#lineGradient)"
             />
             
@@ -315,7 +296,7 @@ function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typ
             <path
               d={`M 0 ${200 - (data[0].value / maxValue) * 200} ${
                 data.map((d: { month: string; value: number }, i: number) => {
-                  const x = (i / (data.length - 1)) * 100 + '%';
+                  const x = (i / Math.max(data.length - 1, 1)) * 600;
                   const y = 200 - (d.value / maxValue) * 200;
                   return `L ${x} ${y}`;
                 }).join(' ')
@@ -329,7 +310,7 @@ function EnrollmentChart({ data: growthData, t }: { data: any; t: ReturnType<typ
 
             {/* Data points */}
             {data.map((d: { month: string; value: number }, i: number) => {
-              const x = (i / (data.length - 1)) * 100 + '%';
+              const x = (i / Math.max(data.length - 1, 1)) * 600;
               const y = 200 - (d.value / maxValue) * 200;
               return (
                 <circle
@@ -443,9 +424,7 @@ function RecentActivity({ data: activities, t }: { data: any; t: ReturnType<type
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[#1E293B]">{t('activity.recentActivity')}</h3>
-        <button className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 hover:underline">
-          {t('activity.viewAll')} <ChevronRight className="w-3 h-3" />
-        </button>
+
       </div>
 
       <div className="space-y-4">
@@ -473,9 +452,9 @@ function UpcomingLiveClasses({ data: classes, t }: { data: any; t: ReturnType<ty
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[#1E293B]">{t('activity.upcomingLiveClasses')}</h3>
-        <button className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 hover:underline">
+        <Link href="/doctor/live-sessions" className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 hover:underline">
           {t('activity.viewAll')} <ChevronRight className="w-3 h-3" />
-        </button>
+        </Link>
       </div>
 
       <div className="space-y-3">
@@ -491,10 +470,7 @@ function UpcomingLiveClasses({ data: classes, t }: { data: any; t: ReturnType<ty
                 {cls.starts_in}
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold text-[#1E293B]">{cls.participants}</p>
-              <p className="text-xs text-[#94A3B8]">{t('activity.students')}</p>
-            </div>
+
           </div>
         ))}
         {(!classes || classes.length === 0) && (
@@ -519,9 +495,7 @@ function StudentsNeedingAttention({ data: students, t }: { data: any; t: ReturnT
     <div className="bg-white rounded-xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold text-[#1E293B]">{t('activity.studentsNeedingAttention')}</h3>
-        <button className="text-xs text-[#4F46E5] font-medium flex items-center gap-1 hover:underline">
-          {t('activity.viewAll')} <ChevronRight className="w-3 h-3" />
-        </button>
+
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -535,7 +509,7 @@ function StudentsNeedingAttention({ data: students, t }: { data: any; t: ReturnT
             </div>
             <div className="space-y-1">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#64748B]">{student.progress.toFixed(1)}% {t('activity.students')}</span>
+                <span className="text-[#64748B]">{student.progress.toFixed(1)}% {t('activity.progress')}</span>
               </div>
               <div className="h-1.5 bg-[#FECACA] rounded-full overflow-hidden">
                 <div 
