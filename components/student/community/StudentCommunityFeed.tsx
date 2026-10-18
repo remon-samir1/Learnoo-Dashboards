@@ -12,10 +12,12 @@ import { useCreateComment } from '@/src/hooks/useComments';
 import { useCreatePost, usePosts, useReactToPost } from '@/src/hooks/usePosts';
 import { useCourses } from '@/src/hooks/useCourses';
 import {
-  isTopLevelPublishedCommunityPost,
+  isCommunityCommentRow,
+  isCommunityPublishedRow,
   readCommunityPostCourseNames,
 } from '@/src/lib/student-community-posts';
 import { studentCourseTitleMap } from '@/src/lib/student-course-scope';
+import { useAuth } from '@/src/stores/authStore';
 import type { Course, CreatePostRequest, Post, SocialLink } from '@/src/types';
 
 const POST_TIME_AGO_PREFIX = 'community.posts.timeAgo';
@@ -36,6 +38,18 @@ export type StudentCommunityFeedProps = {
 };
 
 type FeedTab = 'all' | 'post' | 'summary' | 'question';
+
+/**
+ * A post that belongs in the feed. Replies are never rendered as posts — the
+ * parent reference has been sent under several names, so `isCommunityCommentRow`
+ * checks all of them — and a draft is visible only to the student who wrote it.
+ */
+function isVisibleRootPost(p: Post, userId: string | undefined): boolean {
+  if (isCommunityCommentRow(p)) return false;
+  if (isCommunityPublishedRow(p)) return true;
+  return userId != null && String(p.attributes.user?.data.id) === String(userId);
+}
+
 
 function isLikelyInstructorRole(role: string | undefined): boolean {
   if (!role?.trim()) return false;
@@ -114,6 +128,7 @@ export default function StudentCommunityFeed({
   onPostsRefresh,
 }: StudentCommunityFeedProps = {}) {
   const locale = useLocale();
+  const { user: currentUser } = useAuth();
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const t = useTranslations();
   const tPage = useTranslations('courses.studentCommunity');
@@ -162,7 +177,7 @@ export default function StudentCommunityFeed({
 
   const topPosts = useMemo(() => {
     const list = postsRaw ?? [];
-    let roots = list.filter(isTopLevelPublishedCommunityPost);
+    let roots = list.filter(p => isVisibleRootPost(p, currentUser?.id));
     if (scopedCourseId != null) {
       roots = roots.filter(
         (p) =>
@@ -180,7 +195,7 @@ export default function StudentCommunityFeed({
       const tb = new Date(b.attributes.created_at || 0).getTime();
       return tb - ta;
     });
-  }, [postsRaw, scopedCourseId, draftCourseIds]);
+  }, [postsRaw, scopedCourseId, draftCourseIds, currentUser?.id]);
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('post');
@@ -408,6 +423,9 @@ export default function StudentCommunityFeed({
                       >
                         {typeLabel}
                       </span>
+                      {post.attributes.status === 'draft' && (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">{t('courses.pending')}</span>
+                      )}
                     </div>
 
                     {courseNames.length > 0 ? (

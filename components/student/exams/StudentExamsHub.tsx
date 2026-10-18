@@ -1,5 +1,7 @@
 'use client';
 
+import { ScheduledCountdown } from "@/components/student/ScheduledCountdown";
+
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PaginationMeta } from '@/src/types';
@@ -35,7 +37,6 @@ import {
 } from '@/src/lib/student-quiz-attempt-display';
 import {
   classifyHubQuizRow,
-  daysWholeFromNowTo,
   hubQuizAttemptsSummaryLines,
   hubQuizAttrs,
   hubQuizChapterTitle,
@@ -476,19 +477,12 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
               {upcoming.map((row) => {
                 const title = hubQuizTitle(row);
                 const startRaw = row.attributes?.start_time;
-                const daysLeft =
-                  typeof startRaw === 'string' ? daysWholeFromNowTo(startRaw) : null;
                 return (
                   <li key={row.id} className={STUDENT_EXAM_CARD_BASE}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <h3 className="text-base font-bold leading-snug text-[#0F172A] sm:text-lg">{title}</h3>
                       </div>
-                      <span className="shrink-0 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-700 sm:text-xs">
-                        {daysLeft != null
-                          ? tDetails('examsDaysLeft', { count: daysLeft })
-                          : tDetails('examsUpcomingFallback')}
-                      </span>
                     </div>
                     {renderQuizMetaBlock(row, { chapterFallback: tDetails('examsChapterCourse') })}
                     <button
@@ -496,7 +490,7 @@ export default function StudentExamsHub({ locale }: { locale: string }) {
                       disabled
                       className="mt-5 w-full cursor-not-allowed rounded-lg bg-[#F1F5F9] py-3 text-center text-sm font-semibold text-[#64748B] sm:mt-6"
                     >
-                      {tDetails('examsScheduled')}
+                      <ScheduledCountdown date={typeof startRaw === "string" ? startRaw : null} />
                     </button>
                   </li>
                 );

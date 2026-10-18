@@ -504,9 +504,15 @@ export default function AdminDiscussionsPage() {
   const locale = useLocale();
   const [page, setPage] = useState(1);
   const [targetDiscussion, setTargetDiscussion] = useState<string | undefined>();
-  useEffect(() => { const id = new URLSearchParams(window.location.search).get('discussion'); if (id && /^\d+$/.test(id)) setTargetDiscussion(id); }, []);
+  const [unanswered, setUnanswered] = useState<boolean | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('discussion');
+    if (id && /^\d+$/.test(id)) setTargetDiscussion(id);
+    setUnanswered(params.get('unanswered') === '1');
+  }, []);
   const [perPage, setPerPage] = useState(10);
-  const { data: discussionsData, isLoading, refetch } = useDiscussions({ page, per_page: perPage, discussion_id: targetDiscussion });
+  const { data: discussionsData, isLoading, refetch } = useDiscussions({ page, per_page: perPage, discussion_id: targetDiscussion, unanswered: unanswered ? 1 : undefined }, { enabled: unanswered !== null });
   const { mutate: deleteDiscussion, isLoading: isDeleting } = useDeleteDiscussion();
   console.log(page)
   const [replyingTo, setReplyingTo] = useState<string | number | null>(null);
@@ -572,7 +578,7 @@ export default function AdminDiscussionsPage() {
     );
   };
 
-  if (isLoading) {
+  if (unanswered === null || isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#2137D6]" />
@@ -585,6 +591,10 @@ export default function AdminDiscussionsPage() {
       <div>
         <h1 className="text-2xl font-bold text-[#1E293B]">{t('pageTitle')}</h1>
         <p className="mt-0.5 text-sm text-[#64748B]">{t('pageDescription')}</p>
+        {unanswered && <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+          <span>{locale === 'ar' ? 'أسئلة الطلاب التي تحتاج إلى رد' : 'Student questions awaiting a reply'}</span>
+          <button className="text-[#2137D6] underline" onClick={() => { setPage(1); setUnanswered(false); }}>{locale === 'ar' ? 'عرض كل النقاشات' : 'Show all discussions'}</button>
+        </div>}
       </div>
 
       <div className="space-y-6">

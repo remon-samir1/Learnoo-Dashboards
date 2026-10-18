@@ -4,7 +4,6 @@
 
 import { useState } from "react";
 
-import { useRouter } from "next/navigation";
 
 import { toast } from "sonner";
 
@@ -58,13 +57,12 @@ export default function CompleteProfileForm({
 
 }: CompleteProfileFormProps) {
 
-  const router = useRouter();
 
   const locale = useLocale();
 
   const t = useTranslations("studentProfile.completeProfile");
 
-  const { fetchCurrentUser } = useAuthActions();
+  const { updateUser } = useAuthActions();
 
 
 
@@ -108,7 +106,7 @@ export default function CompleteProfileForm({
 
     if (!centerId) {
 
-      setCenterError(t("validation.facultyRequired"));
+      setCenterError(t("validation.centerRequired"));
 
       valid = false;
 
@@ -122,7 +120,7 @@ export default function CompleteProfileForm({
 
     if (!facultyId) {
 
-      setFacultyError(t("validation.centerRequired"));
+      setFacultyError(t("validation.facultyRequired"));
 
       valid = false;
 
@@ -180,15 +178,14 @@ export default function CompleteProfileForm({
 
 
 
-      await fetchCurrentUser();
+      updateUser((await authApi.me()).data);
 
 
 
       toast.success(t("toasts.success"));
 
-      router.replace(`/${locale}/student`);
+      window.location.replace(`/${locale}/student`);
 
-      router.refresh();
 
     } catch (error: unknown) {
 
@@ -281,5 +278,3 @@ export default function CompleteProfileForm({
   );
 
 }
-
-

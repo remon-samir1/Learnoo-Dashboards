@@ -143,6 +143,7 @@ export function ColumnItem({
 
   // ── Add buttons ────────────────────────────────────────────────────────────
   const renderAddButtons = () => {
+    if (isInstructor && !["course", "lecture", "chapter", "note"].includes(item.type)) return null;
     switch (item.type) {
       case "university":
         if (isInstructor) return null;
@@ -307,14 +308,14 @@ export function ColumnItem({
         {renderCopyMove()}
 
         {/* Edit */}
-        {(!isInstructor || ['course', 'lecture', 'chapter', 'note'].includes(item.type)) && (
+        {(!isInstructor || ["course", "lecture", "chapter", "note"].includes(item.type)) && (
         <ActionBtn onClick={() => onEdit(item)} title="Edit" className="text-gray-400 hover:text-orange-600 hover:bg-orange-50">
           <Edit className="w-3 h-3" />
         </ActionBtn>
         )}
 
         {/* Delete */}
-        {(item.type === 'course' || item.type === 'lecture' || item.type === 'chapter' || !isInstructor) && (
+        {(!isInstructor || ["lecture", "chapter", "note"].includes(item.type)) && (
           <ActionBtn onClick={() => onDelete(item)} title="Delete" className="text-gray-400 hover:text-red-600 hover:bg-red-50">
             <Trash2 className="w-3 h-3" />
           </ActionBtn>

@@ -1296,6 +1296,7 @@ export type CourseStatus = 0 | 1;
 
 
 export interface CourseAttributes {
+  drafted_by?: { first_name: string; last_name: string; created_at: string } | null;
 
 
 
@@ -5249,6 +5250,8 @@ export interface DashboardStats {
 
 
   active_courses: StatItem;
+  draft_courses: StatItem;
+  live_sessions: StatItem;
 
 
 

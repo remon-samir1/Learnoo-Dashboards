@@ -803,6 +803,7 @@ function TreeItem({
 }: TreeItemProps) {
   const t = useTranslations();
 
+  const { role } = useCurrentUser();
   const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
 
   const isExpanded = expanded.has(node.id);
@@ -1021,7 +1022,7 @@ function TreeItem({
                   </span>
                 )}
 
-                {node.stats.students !== undefined && (
+                {role === "Super Admin" && node.stats.students !== undefined && (
                   <span className="flex items-center gap-1 text-green-600">
                     <Users className="w-3 h-3" /> {node.stats.students}
                   </span>
@@ -1091,7 +1092,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "course" && !isInstructor && (
+          {node.type === "course" && (
             <>
               <button
                 onClick={() => onAdd("lecture", node.id)}
@@ -1103,7 +1104,7 @@ function TreeItem({
             </>
           )}
 
-          {node.type === "lecture" && !isInstructor && (
+          {node.type === "lecture" && (
             <div className="relative">
               <button
                 onClick={() => setIsAddDropdownOpen(!isAddDropdownOpen)}
@@ -1147,7 +1148,7 @@ function TreeItem({
             </div>
           )}
 
-          {node.type === "chapter" && !isInstructor && onCopyMove && (
+          {node.type === "chapter" && onCopyMove && (
             <>
               <button
                 onClick={() => onCopyMove(node, "copy")}
@@ -1168,7 +1169,7 @@ function TreeItem({
           )}
 
           {/* Edit and Delete buttons - skip chapters unless isInstructor */}
-          {node.type !== 'chapter' && !isInstructor && (
+          {node.type !== 'chapter' && (!isInstructor || ['course', 'lecture', 'note'].includes(node.type)) && (
             <>
               <button
                 onClick={() => onEdit(node)}
@@ -1178,17 +1179,17 @@ function TreeItem({
                 <Edit2 className="w-4 h-4" />
               </button>
 
-              <button
+              {(!isInstructor || node.type !== 'course') && <button
                 onClick={() => onDelete(node)}
                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                 title={t("common.delete")}
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </button>}
             </>
           )}
 
-          {node.type === 'chapter' && !isInstructor && (
+          {node.type === 'chapter' && (
             <>
               <button
                 onClick={() => onEdit(node)}
@@ -1239,6 +1240,7 @@ function TreeItem({
 
 export default function DepartmentsPage() {
   const t = useTranslations();
+  const ar = useLocale() === "ar";
   const { role, canUseActivations } = useCurrentUser();
   const isInstructor = role === 'Instructor';
 
@@ -1259,13 +1261,17 @@ export default function DepartmentsPage() {
   const [viewersModalOpen, setViewersModalOpen] = useState(false);
   const [viewersList, setViewersList] = useState<any[] | null>(null);
   const [viewersLoading, setViewersLoading] = useState(false);
+  const [subscriberPage, setSubscriberPage] = useState(1);
+  const [subscriberLastPage, setSubscriberLastPage] = useState(1);
 
-  const openViewers = async (node: TreeNode | null) => {
+  const openViewers = async (node: TreeNode | null, page = 1) => {
     if (!node) return;
     try {
       setViewNode(node);
       setViewersLoading(true);
       setViewersList(null);
+      setViewersModalOpen(true);
+      setSubscriberPage(page);
 
       const rawId = node.data?.id;
       const chapterId = Number(rawId);
@@ -1276,9 +1282,14 @@ export default function DepartmentsPage() {
         return;
       }
 
-      const res: any = await api.chapters.get(chapterId, { skipAuthRedirect: true } as any);
+      const res: any = node.type === "course"
+        ? await api.courses.subscribers(chapterId, page)
+        : await api.chapters.get(chapterId, { skipAuthRedirect: true } as any);
 
-      const users = res?.data?.attributes?.userViews || [];
+      const users = node.type === "course"
+        ? res.data.map((user: any) => ({ id: user.id, user }))
+        : res?.data?.attributes?.userViews || [];
+      setSubscriberLastPage(res.last_page || 1);
 
       setViewersList(users);
       setViewersModalOpen(true);
@@ -2391,7 +2402,7 @@ export default function DepartmentsPage() {
 
           await updateCourse(
             rawId,
-            {
+            isInstructor ? formData : {
               ...formData,
 
               category_id: categoryId,
@@ -2480,8 +2491,8 @@ export default function DepartmentsPage() {
       setUploadProgress(0);
 
       refetchAll();
-    } catch {
-      toast.error("Failed to update");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to update"));
 
       setUploadProgress(0);
     }
@@ -2649,8 +2660,8 @@ export default function DepartmentsPage() {
       setUploadProgress(0);
 
       refetchAll();
-    } catch {
-      toast.error("Failed to create");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to create"));
 
       setUploadProgress(0);
     }
@@ -2846,6 +2857,7 @@ export default function DepartmentsPage() {
           onCopyMove={handleCopyMove}
           openViewers={openViewers}
           isInstructor={isInstructor}
+          isOwner={role === "Super Admin"}
           canUseActivations={canUseActivations}
           codesLoading={codesLoading}
           selectedCode={selectedCode}
@@ -2881,6 +2893,7 @@ export default function DepartmentsPage() {
 
       {editModalOpen && selectedNode && (
         <EditModal
+          isInstructor={isInstructor}
           node={selectedNode}
           instructors={instructorsResponse?.data}
           instructorsLoading={instructorsLoading}
@@ -2954,13 +2967,13 @@ export default function DepartmentsPage() {
       )}
 
       {/* Viewers Modal */}
-      {viewersModalOpen && viewNode && viewNode.type === "chapter" && (
+      {viewersModalOpen && viewNode && ["chapter", "course"].includes(viewNode.type) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl p-4 w-full max-w-2xl max-h-[80vh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold">{t("departments.LessonViewers")}</h3>
-                <p className="text-sm text-gray-500 mt-0.5">{t("departments.listViewers")}</p>
+                <h3 className="text-lg font-semibold">{viewNode.type === "course" ? (ar ? "الطلاب المشتركون" : "Course subscribers") : t("departments.LessonViewers")}</h3>
+                <p className="text-sm text-gray-500 mt-0.5">{viewNode.type === "course" ? viewNode.name : t("departments.listViewers")}</p>
               </div>
 
               <button
@@ -2977,10 +2990,10 @@ export default function DepartmentsPage() {
                   <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
                 </div>
               ) : !viewersList || viewersList.length === 0 ? (
-                <p className="text-sm text-gray-400">No viewers recorded for this lesson.</p>
+                <p className="text-sm text-gray-400">{viewNode.type === "course" ? (ar ? "لا يوجد طلاب مشتركون في هذه الدورة." : "No subscribers in this course.") : (ar ? "لا توجد مشاهدات مسجلة لهذه المحاضرة." : "No viewers recorded for this lesson.")}</p>
               ) : (
                 <div className="divide-y divide-gray-100">
-                  <p className="py-3 text-sm text-gray-600">{t("departments.viewerExplanation", { count: viewersList.length })}</p>
+                  {viewNode.type === "chapter" && <p className="py-3 text-sm text-gray-600">{t("departments.viewerExplanation", { count: viewersList.length })}</p>}
                   {viewersList.map((uv: any) => (
                     <div key={uv.id} className="flex items-center justify-between py-3">
                       <div>
@@ -2988,19 +3001,24 @@ export default function DepartmentsPage() {
                           {uv.user ? `${uv.user.first_name || ''} ${uv.user.last_name || ''}`.trim() : uv.user_id}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {uv.user?.email || uv.user?.student_code || ''}
+                          {viewNode.type === 'course' ? <a dir="ltr" href={`tel:${uv.user?.phone || ''}`}>{uv.user?.phone || '—'}</a> : (uv.user?.email || uv.user?.student_code || '')}
                         </div>
                       </div>
 
-                      <div className="text-right">
+                      {viewNode.type === "chapter" && <div className="text-right">
                         <div className="text-sm text-gray-700">{t("departments.recordedViews")}: <span className="font-medium">{uv.count}</span></div>
                         <div className="text-xs text-gray-400">{uv.created_at ? new Date(uv.created_at).toLocaleString() : ''}</div>
-                      </div>
+                      </div>}
                     </div>
                   ))}
                 </div>
               )}
             </div>
+            {viewNode.type === "course" && subscriberLastPage > 1 && <div className="mt-4 flex items-center justify-between">
+              <button type="button" disabled={viewersLoading || subscriberPage === 1} onClick={() => openViewers(viewNode, subscriberPage - 1)}>{ar ? "السابق" : "Previous"}</button>
+              <span>{subscriberPage} / {subscriberLastPage}</span>
+              <button type="button" disabled={viewersLoading || subscriberPage === subscriberLastPage} onClick={() => openViewers(viewNode, subscriberPage + 1)}>{ar ? "التالي" : "Next"}</button>
+            </div>}
           </div>
         </div>
       )}
@@ -3308,6 +3326,7 @@ export default function DepartmentsPage() {
 // Edit Modal Component
 
 interface EditModalProps {
+  isInstructor?: boolean;
   node: TreeNode;
 
   instructors?: any[];
@@ -3324,6 +3343,7 @@ interface EditModalProps {
 }
 
 function EditModal({
+  isInstructor = false,
   node,
   instructors,
   instructorsLoading,
@@ -3527,7 +3547,7 @@ function EditModal({
       ? { ...formData, attachments_to_delete: attachmentsToDelete }
       : formData;
 
-    onSubmit(submitData);
+    onSubmit(isInstructor && node.type === 'course' ? { title: formData.title, sub_title: formData.sub_title, description: formData.description, objectives: formData.objectives, thumbnail: formData.thumbnail, status: formData.status } : submitData);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -4009,7 +4029,7 @@ function EditModal({
                     </select>
                   </div>
 
-                  {formData.status === 0 && (
+                  {!isInstructor && formData.status === 0 && (
                     <div className="flex flex-col gap-3 w-full">
                   <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -4036,7 +4056,7 @@ function EditModal({
                 </div>
                   )}
 
-                  <div>
+                  {!isInstructor && <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Instructor
                     </label>
@@ -4050,10 +4070,11 @@ function EditModal({
                         })
                       }
                     />
-                  </div>
+                  </div>}
                 </div>
               </div>
 
+              {!isInstructor && <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -4115,6 +4136,7 @@ function EditModal({
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#94A3B8] pointer-events-none" />
                 </div>
               </div>
+              </>}
             </>
           )}
 

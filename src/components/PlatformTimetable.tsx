@@ -59,7 +59,7 @@ export default function PlatformTimetable({ canUpload = false }: { canUpload?: b
     {error ? <p role="alert">{ar ? 'تعذر تحميل الجداول' : 'Could not load schedules'}</p> : loading ? <p>{ar ? 'جارٍ التحميل…' : 'Loading…'}</p> : <>
       {visible.slice((currentPage - 1) * 10, currentPage * 10).map(entry => <article key={entry.id} className="space-y-3 rounded-xl border bg-white p-4">
         <h2 className="font-bold">{entry.title}</h2>
-        <p className="text-sm">{entry.start ? new Date(entry.start).toLocaleString(ar ? 'ar' : 'en') : (ar ? 'بدون موعد محدد' : 'No scheduled date')}{entry.end && ` — ${new Date(entry.end).toLocaleString(ar ? 'ar' : 'en')}`}</p>
+        {entry.start && <p className="text-sm">{new Date(entry.start).toLocaleString(ar ? 'ar' : 'en')}{entry.end && ` — ${new Date(entry.end).toLocaleString(ar ? 'ar' : 'en')}`}</p>}
         {entry.documents?.map(document => <div key={document.id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
           <button className="text-primary underline" onClick={() => setPreview(document)}>{document.attributes.name}</button>
           {canUpload && <form className="flex flex-wrap items-center gap-2" onSubmit={event => upload(event, [String(entry.id)], document.id)}>

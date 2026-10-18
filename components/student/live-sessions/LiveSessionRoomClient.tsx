@@ -10,6 +10,8 @@ import {
   ArrowRight,
   MessageCircle,
   Hand,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { JitsiMeeting } from "@jitsi/react-sdk";
@@ -24,7 +26,8 @@ import {
   normalizeLiveStatus,
 } from "@/src/lib/student-live-room";
 import { useMemo, useRef, useState } from "react";
-import { JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
+import { liveMeetingBranding, liveWhiteboardConfig, JITSI_DOMAIN, getJitsiRoomName } from "@/src/lib/jitsi";
+import LiveMeetingStage from "@/components/live-sessions/LiveMeetingStage";
 
 interface JitsiExternalApi {
   executeCommand: (command: string, ...args: unknown[]) => void;
@@ -68,6 +71,7 @@ export default function LiveSessionRoomClient({
   // Whiteboard and meeting state
   const [isWhiteboardOpen, setIsWhiteboardOpen] = useState(false);
   const [isConferenceJoined, setIsConferenceJoined] = useState(false);
+  const [isAudioMuted, setIsAudioMuted] = useState(true);
   const [isHandRaised, setIsHandRaised] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -95,11 +99,6 @@ export default function LiveSessionRoomClient({
   const handleToggleChat = () => {
     if (jitsiApiRef.current) {
       jitsiApiRef.current.executeCommand("toggleChat");
-      setIsChatOpen((prev) => {
-        const next = !prev;
-        if (next) setUnreadChatCount(0);
-        return next;
-      });
     }
   };
 
@@ -188,6 +187,12 @@ export default function LiveSessionRoomClient({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <button type="button" disabled={!isConferenceJoined} onClick={() => jitsiApiRef.current?.executeCommand('toggleAudio')}
+                aria-pressed={!isAudioMuted}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-slate-200 px-3 text-xs font-bold disabled:opacity-40">
+                {isAudioMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                {isRtl ? (isAudioMuted ? 'تشغيل الميكروفون' : 'كتم الميكروفون') : (isAudioMuted ? 'Unmute microphone' : 'Mute microphone')}
+              </button>
               {/* Raise Hand Button */}
               <button
                 type="button"
@@ -248,7 +253,7 @@ export default function LiveSessionRoomClient({
                 </div>
               ) : null}
 
-              <JitsiMeeting
+              <LiveMeetingStage chatOpen={isChatOpen} whiteboardOpen={isWhiteboardOpen}><JitsiMeeting
                 domain={JITSI_DOMAIN}
                 roomName={jitsiRoomName}
                 configOverwrite={{
@@ -284,10 +289,7 @@ export default function LiveSessionRoomClient({
                     hideMuteAllButton: true,
                   },
                   // Enable whiteboard collab backend for students so they receive the canvas stream
-                  whiteboard: {
-                    enabled: true,
-                    collabServerBaseUrl: 'https://whiteboard.jitsi.net',
-                  },
+                  whiteboard: liveWhiteboardConfig,
                   toolbarButtons: studentToolbarButtons,
                   // Students auto-knock and wait in lobby until host admits them
                   lobby: {
@@ -296,8 +298,7 @@ export default function LiveSessionRoomClient({
                   },
                 }}
                 interfaceConfigOverwrite={{
-                  SHOW_JITSI_WATERMARK: false,
-                  SHOW_BRAND_WATERMARK: false,
+                  ...liveMeetingBranding,
                   DISABLE_JOIN_LEAVE_NOTIFICATIONS: false,
                   SHOW_CHROME_EXTENSION_BANNER: false,
                   MOBILE_APP_PROMO: false,
@@ -319,10 +320,17 @@ export default function LiveSessionRoomClient({
                     },
                     videoConferenceLeft: () => {
                       setIsConferenceJoined(false);
+                      setIsAudioMuted(true);
                       setIsWhiteboardOpen(false);
                       setIsHandRaised(false);
                       setIsChatOpen(false);
                     },
+                    audioMuteStatusChanged: (event: unknown) => {
+                      const ev = event as { muted: boolean };
+                      setIsAudioMuted(ev.muted);
+                    },
+                    // This server emits no event payload; read the selected participant from its API.
+                    largeVideoChanged: () => setIsWhiteboardOpen((api as typeof api & { _getOnStageParticipant: () => string })._getOnStageParticipant() === 'whiteboard'),
                     whiteboardStatusChanged: (event: unknown) => {
                       const ev = event as { status?: string; isOpen?: boolean } | string | undefined;
                       const rawStatus = typeof ev === "string" ? ev : ev?.status || "";
@@ -330,7 +338,6 @@ export default function LiveSessionRoomClient({
                       // Jitsi (meet.learnoo.app) reports: INSTANTIATED | SHOWN | HIDDEN | FORBIDDEN | RESET
                       const isOpen =
                         status === "shown" ||
-                        status === "instantiated" ||
                         status === "visible" ||
                         status === "open" ||
                         status === "opened" ||
@@ -358,14 +365,6 @@ export default function LiveSessionRoomClient({
                         setIsHandRaised(Boolean(ev?.handRaised));
                       }
                     },
-                    incomingMessage: () => {
-                      setIsChatOpen((open) => {
-                        if (!open) {
-                          setUnreadChatCount((count) => count + 1);
-                        }
-                        return open;
-                      });
-                    },
                   });
                 }}
                 getIFrameRef={(iframe) => {
@@ -380,14 +379,14 @@ export default function LiveSessionRoomClient({
               {isConferenceJoined && isWhiteboardOpen ? (
                 <div
                   className="absolute inset-x-0 top-0 bottom-[76px] z-10 select-none bg-transparent cursor-default"
-                  style={{ touchAction: "none" }}
+                  style={{ touchAction: "none", left: isChatOpen ? 315 : 0 }}
                   onMouseDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
                   onPointerDown={(e) => e.stopPropagation()}
                   title={isRtl ? "السبورة التفاعلية للعرض فقط" : "Whiteboard is view-only"}
                 />
               ) : null}
-
+              </LiveMeetingStage>
             </div>
           </div>
         </section>

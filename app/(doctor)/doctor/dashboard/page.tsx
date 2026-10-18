@@ -75,7 +75,7 @@ export default function DoctorDashboardPage() {
       <WelcomeBanner data={headerData} t={t} />
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard 
           label={t('stats.totalStudents')}
           value={statsData?.students?.value?.toLocaleString() || '0'}
@@ -94,6 +94,15 @@ export default function DoctorDashboardPage() {
           iconColor="text-[#EF4444]"
           borderColor="border-l-4 border-l-[#EF4444]"
         />
+        <StatCard
+          label={t('stats.draftCourses')}
+          value={statsData?.draft_courses?.value?.toString() || '0'}
+          subtext={t('stats.unpublished')}
+          icon={<FileText className="w-5 h-5" />}
+          iconBg="bg-[#F1F5F9]"
+          iconColor="text-[#64748B]"
+          borderColor="border-l-4 border-l-[#64748B]"
+        />
         <StatCard 
           label={t('stats.liveClasses')}
           value={statsData?.live_sessions_today?.value?.toString() || '0'}
@@ -103,15 +112,17 @@ export default function DoctorDashboardPage() {
           iconColor="text-[#EAB308]"
           borderColor="border-l-4 border-l-[#EAB308]"
         />
-        <StatCard 
+        <Link href="/doctor/discussions?unanswered=1" className="block rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#22C55E]">
+        <StatCard
           label={t('stats.pendingQuestions')}
-          value={headerData?.summary?.pending_questions?.toString() || '0'}
+          value={headerData?.summary?.pending_discussions?.toString() || '0'}
           subtext={t('stats.needResponse')}
           icon={<MessageCircle className="w-5 h-5" />}
           iconBg="bg-[#F0FDF4]"
           iconColor="text-[#22C55E]"
           borderColor="border-l-4 border-l-[#22C55E]"
         />
+        </Link>
       </div>
 
       {/* Charts Row */}
@@ -167,7 +178,7 @@ function WelcomeBanner({ data, t }: { data: any; t: ReturnType<typeof useTransla
           <p className="text-sm text-white/80 mb-1">{data?.date || new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           <h1 className="text-2xl font-bold mb-2">{t('welcome.goodMorning')}, {firstName}! 👋</h1>
           <p className="text-sm text-white/90 mb-4">
-            {t('welcome.startLiveSessions')}: <span className="font-bold">{data?.summary?.today_live_classes || 0} {t('stats.liveClasses')}</span> - {t('welcome.quickCreate')}: <span className="font-bold">{data?.summary?.pending_questions || 0} {t('stats.pendingQuestions')}</span>
+            {t('welcome.startLiveSessions')}: <span className="font-bold">{data?.summary?.today_live_classes || 0} {t('stats.liveClasses')}</span> - {t('welcome.quickCreate')}: <span className="font-bold">{data?.summary?.pending_discussions || 0} {t('stats.pendingQuestions')}</span>
           </p>
           <div className="flex gap-3">
             <Link href="/doctor/live-sessions" className="flex items-center gap-2 px-4 py-2 bg-white text-[#4F46E5] rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors">

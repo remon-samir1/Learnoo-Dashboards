@@ -80,7 +80,6 @@ export default function StudentCommunityPostComments({
 
   const displayComments = commentsArray.filter(
     (c: any) =>
-      c.attributes?.type === 'post' &&
       c.attributes?.parent_id != null &&
       String(c.attributes.parent_id) === String(postId)
   );

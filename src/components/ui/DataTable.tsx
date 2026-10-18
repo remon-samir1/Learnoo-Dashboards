@@ -222,11 +222,11 @@ export function Pagination({
   const to = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="px-6 py-4 bg-[#F8FAFC] border-t border-[#F1F5F9] flex items-center justify-between">
+    <div className="px-6 py-4 bg-[#F8FAFC] border-t border-[#F1F5F9] flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-[#64748B]">
         {t('showing', { from, to, total: totalItems })}
       </p>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
@@ -235,9 +235,18 @@ export function Pagination({
           <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
           {t('previous')}
         </button>
-        <span className="px-3 py-2 text-sm text-[#64748B]">
-          {t('pageInfo', { current: currentPage, total: totalPages })}
-        </span>
+        <span className="sr-only">{t('pageInfo', { current: currentPage, total: totalPages })}</span>
+        {[...new Set([1, ...Array.from({ length: 5 }, (_, i) => currentPage + i - 2), totalPages])]
+          .filter(page => page >= 1 && page <= totalPages).sort((a, b) => a - b)
+          .map((page, index, pages) => <React.Fragment key={page}>
+            {index > 0 && page - pages[index - 1] > 1 && <span aria-hidden="true">…</span>}
+            <button type="button" aria-current={page === currentPage ? 'page' : undefined}
+              aria-label={t('pageInfo', { current: page, total: totalPages })}
+              onClick={() => onPageChange(page)}
+              className={`rounded-lg border px-3 py-2 text-sm ${page === currentPage ? 'bg-blue-600 text-white' : 'bg-white text-slate-600'}`}>
+              {page}
+            </button>
+          </React.Fragment>)}
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}

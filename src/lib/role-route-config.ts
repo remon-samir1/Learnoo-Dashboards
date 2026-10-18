@@ -51,6 +51,7 @@ export const ONBOARDING_ROUTE_PREFIXES = [
  * Admin app routes — from `app/(admin)/*` (no `/admin` URL prefix).
  */
 export const ADMIN_ROUTE_PREFIXES = [
+  '/activity',
   '/activation',
   '/centers',
   '/chapters',

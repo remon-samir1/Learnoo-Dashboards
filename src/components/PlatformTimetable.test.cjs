@@ -30,6 +30,7 @@ test('timetable shows courses only, groups their documents and searches document
   const html = render(entries, 'weekly', 1, true);
   assert.match(html, /Biology[\s\S]*Weekly plan.pdf[\s\S]*استبدال الملف[\s\S]*<\/article>/);
   assert.match(html, /Course tree/);
+  assert.doesNotMatch(html, /بدون موعد محدد|No scheduled date/);
   assert.doesNotMatch(html, /Hidden live category|Other course/);
   assert.match(render(entries, 'unmatched'), /لا توجد جداول مطابقة للبحث/);
 });
@@ -40,4 +41,12 @@ test('timetable paginates courses and student pages do not expose upload control
   assert.match(html, /Course-10/);
   assert.doesNotMatch(html, /Course-0<|Course tree|type="file"/);
   assert.match(html, /2 \/ 2/);
+});
+
+test('dated courses retain their date range while undated courses retain their documents only', () => {
+  const html = render([{ kind: 'course', id: 1, title: 'Biology', start: '2026-10-10T12:00:00Z', end: '2026-10-10T13:00:00Z' }]);
+  assert.match(html, /<p class="text-sm">[^<]+ — [^<]+<\/p>/);
+  const undated = render([{ kind: 'course', id: 2, title: 'History', documents: [{ id: '3', attributes: { name: 'Schedule.png' } }] }]);
+  assert.match(undated, /Schedule.png/);
+  assert.doesNotMatch(undated, /<p class="text-sm">/);
 });

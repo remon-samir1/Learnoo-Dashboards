@@ -415,6 +415,7 @@
     "parentDashboard": "Parent Dashboard",
     "schedules": "Schedules and documents",
     "activity": "Staff activity and devices",
+    "deviceApprovals": "Device approvals",
     "guardians": "Guardians"
   },
   "issues": {
@@ -777,6 +778,8 @@
     "stats": {
       "totalStudents": "Total Students",
       "activeCourses": "Active Courses",
+      "draftCourses": "Draft courses",
+      "liveSessions": "Total live sessions",
       "liveSessionsToday": "Live Sessions Today",
       "notesCreated": "Notes Created",
       "monthlyRevenue": "Monthly Revenue",
@@ -1340,6 +1343,8 @@
       "notes": "notes",
       "exams": "exams",
       "noInstructor": "No Instructor",
+      "draftedBy": "Moved to draft by: {name}",
+      "draftActorUnknown": "Moved to draft by: not recorded",
       "noCenter": "No Center",
       "untitled": "Untitled Course"
     },
@@ -2498,7 +2503,8 @@
     "microphoneDenied": "Microphone access denied",
     "recordVoiceFirst": "Please record a voice note first",
     "showReplies": "Show replies",
-    "hideReplies": "Hide replies"
+    "hideReplies": "Hide replies",
+    "watchMoment": "Watch this moment"
   },
   "universities": {
     "pageTitle": "Universities Management",
@@ -3295,8 +3301,8 @@
   },
   "parentDashboard": {
     "welcome": "Welcome",
-    "subtitle": "Here is an overview of your children's progress.",
-    "selectChild": "Select Child:",
+    "subtitle": "Here is an overview of your linked students’ progress.",
+    "selectChild": "Select Student:",
     "attendance": "Attendance Rate",
     "courseProgress": "Course Progress",
     "examAverage": "Exam Average",
@@ -3307,24 +3313,24 @@
     "alertsSubtitle": "Urgent updates for attendance, exams, and learning progress",
     "noRecentActivity": "No recent activity is available yet.",
     "noAlerts": "No alerts at the moment.",
-    "noStudentSelected": "No linked children",
-    "manageChildren": "Manage Children",
+    "noStudentSelected": "No linked students",
+    "manageChildren": "Manage Students",
     "errorTitle": "Unable to load parent dashboard",
     "errorMessage": "There was an error fetching data. Please try again.",
     "retry": "Retry"
   },
   "parentStudents": {
     "title": "Student Management",
-    "description": "Link a child to your parent account and view their learning progress.",
+    "description": "Link a student to your parent account and view their learning progress.",
     "codeLabel": "Student Code",
     "codePlaceholder": "Enter student code",
     "linkButton": "Link Student",
     "linkedStudentsTitle": "Linked Students",
-    "noStudents": "No children are linked yet.",
+    "noStudents": "No students are linked yet.",
     "successLinked": "Student linked successfully.",
     "errorLinked": "Unable to link the student. Please check the code and try again.",
     "viewDashboard": "View Dashboard",
-    "manageChildren": "Manage Children"
+    "manageChildren": "Manage Students"
   },
   "parentStudentOverview": {
     "title": "Student Overview",
@@ -3396,6 +3402,8 @@
     "pageTitle": "Doctor Dashboard",
     "stats": {
       "totalStudents": "Total Students",
+      "draftCourses": "Draft Courses",
+      "unpublished": "Not published yet",
       "activeCourses": "Active Courses",
       "liveClasses": "Live Classes",
       "pendingQuestions": "Pending Questions",

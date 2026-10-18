@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { BookOpen, Video } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import StatCard from '@/components/StatCard';
 import QuickAction from '@/components/QuickAction';
@@ -53,6 +55,7 @@ export default function DashboardPage() {
                 </svg>
               }
             />
+            <Link href="/courses?status=active" className="rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
             <StatCard
               label={t('stats.activeCourses')}
               value={stats?.active_courses?.value?.toString() || '0'}
@@ -63,6 +66,13 @@ export default function DashboardPage() {
                 </svg>
               }
             />
+            </Link>
+            {role === 'Super Admin' && <Link href="/courses?status=draft" className="rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
+              <StatCard label={t('stats.draftCourses')} value={stats?.draft_courses?.value ?? 0} icon={BookOpen} />
+            </Link>}
+            <Link href="/live-sessions" className="rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-600">
+              <StatCard label={t('stats.liveSessions')} value={stats?.live_sessions?.value ?? 0} icon={Video} />
+            </Link>
             <StatCard
               label={t('stats.liveSessionsToday')}
               value={stats?.live_sessions_today?.value?.toString() || '0'}

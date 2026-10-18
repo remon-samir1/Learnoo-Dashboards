@@ -8,7 +8,7 @@ const ts = require('typescript');
 
 function room({ pathname = '/live-sessions/70/room', capture = true, recording = false, enabled = true, userAgent = 'iPad' } = {}) {
   const state = [], refs = [], effects = [], commands = [], destinations = [];
-  let cursor, refCursor, meeting, closed = false, tree, markup;
+  let onStage = 'instructor', cursor, refCursor, meeting, localRecording, closed = false, tree, markup;
   const module = { exports: {} };
   const compiled = ts.transpileModule(readFileSync(join(__dirname, 'StaffLiveRoom.tsx'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const jitsi = { exports: {} };
@@ -24,6 +24,8 @@ function room({ pathname = '/live-sessions/70/room', capture = true, recording =
     if (id === '@/src/hooks/useLiveRooms') return { useLiveRoom: () => ({ data: { attributes: { title: 'QA room', enable_recording: enabled } }, isLoading: false }) };
     if (id === '@/lib/auth') return { getUserData: () => ({ attributes: { first_name: 'مدرس & # " عربي' } }) };
     if (id === '@/src/lib/jitsi') return jitsi.exports;
+    if (id === './LiveMeetingStage') return { __esModule: true, default: ({ children }) => React.createElement('div', { 'data-meeting-stage': true }, children) };
+    if (id === './LocalSessionRecording') return { __esModule: true, default: props => { localRecording = props; return React.createElement('span', null, 'Local recorder'); } };
     if (id === '@jitsi/react-sdk') return { JitsiMeeting: props => { meeting = props; return React.createElement('iframe'); } };
     return require(id);
   }, module, module.exports, { userAgent, mediaDevices: capture ? { getDisplayMedia: () => { throw new Error('Must not capture browser media'); } } : {} }, { env: { NEXT_PUBLIC_JITSI_RECORDING_ENABLED: String(recording) } });
@@ -38,9 +40,9 @@ function room({ pathname = '/live-sessions/70/room', capture = true, recording =
   render();
   effects.shift()();
   render();
-  return { render, elements, commands, destinations, get meeting() { return meeting; }, get closed() { return closed; }, get markup() { return markup; }, ready() {
+  return { render, elements, commands, destinations, select: id => onStage = id, get meeting() { return meeting; }, get localRecording() { return localRecording; }, get closed() { return closed; }, get markup() { return markup; }, ready() {
     const listeners = {};
-    meeting.onApiReady({ executeCommand: (...args) => commands.push(args), addEventListeners: value => Object.assign(listeners, value) });
+    meeting.onApiReady({ _getOnStageParticipant: () => onStage, executeCommand: (...args) => commands.push(args), addEventListeners: value => Object.assign(listeners, value) });
     return listeners;
   } };
 }
@@ -50,59 +52,83 @@ test('staff hangup preserves another page and returns from the room page', () =>
     const view = room({ pathname });
     assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_JITSI_WATERMARK, false);
     assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_BRAND_WATERMARK, false);
+    assert.equal(view.meeting.interfaceConfigOverwrite.APP_NAME, 'Learnoo');
+    assert.equal(view.meeting.interfaceConfigOverwrite.PROVIDER_NAME, 'Learnoo');
+    assert.equal(view.meeting.interfaceConfigOverwrite.SHOW_POWERED_BY, false);
+    assert.equal(view.meeting.configOverwrite.toolbarButtons.includes('help'), false);
+    assert.equal(view.meeting.configOverwrite.toolbarButtons.includes('feedback'), false);
+    assert.equal(view.meeting.configOverwrite.whiteboard.collabServerBaseUrl, 'https://whiteboard.learnoo.app');
+    const button = () => view.elements().find(node => node.type === 'button' && React.Children.toArray(node.props.children).includes(' السبورة'));
+    assert.equal(button().props.disabled, true);
+    view.ready().videoConferenceJoined();
+    view.render();
+    assert.equal(button().props.disabled, false);
+    button().props.onClick();
+    assert.deepEqual(view.commands, [['toggleWhiteboard']]);
     view.meeting.onReadyToClose();
     assert.equal(view.closed, true);
     assert.deepEqual(view.destinations, pathname.endsWith('/room') ? ['/live-sessions'] : []);
   }
 });
 
-test('iPad opens the same native room without joining twice; Android uses an intent', () => {
+test('mobile starts with the browser whiteboard and can switch to native screen sharing without joining twice', () => {
   for (const userAgent of ['iPad', 'Macintosh', 'Android']) {
     const view = room({ capture: false, userAgent });
+    assert.equal(view.meeting.roomName, 'learnooroom70');
+    assert.ok(view.elements().some(node => node.type === 'button' && React.Children.toArray(node.props.children).includes(' السبورة')));
+    view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق مشاركة الشاشة').props.onClick();
+    view.render();
     assert.equal(view.meeting, null);
     const link = view.elements().find(node => node.type === 'a' && /^(org\.jitsi\.meet|intent):/.test(node.props.href));
     assert.ok(link.props.href.startsWith(userAgent === 'Android' ? 'intent://meet.learnoo.app/learnooroom70' : 'org.jitsi.meet://meet.learnoo.app/learnooroom70'));
     const name = link.props.href.split('#userInfo.displayName=')[1].split('#Intent')[0];
     assert.equal(JSON.parse(decodeURIComponent(name)), 'مدرس & # " عربي');
-    view.elements().find(node => node.type === 'button' && String(node.props.children).startsWith('متابعة في المتصفح')).props.onClick();
+    view.elements().find(node => node.type === 'button' && String(node.props.children).startsWith('فتح الجلسة والسبورة')).props.onClick();
     view.render();
     assert.equal(view.meeting.roomName, 'learnooroom70');
-    view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق Jitsi').props.onClick();
+    assert.ok(view.markup.includes('data-meeting-stage'));
+    view.elements().find(node => node.type === 'a' && node.props.children === 'فتح في تطبيق مشاركة الشاشة').props.onClick();
     view.render();
     assert.equal(view.meeting, null);
     assert.equal(view.closed, false);
   }
 });
 
-test('server recording respects readiness and room settings, and follows actual recorder events', () => {
-  for (const options of [{ recording: false }, { recording: true, enabled: false }]) {
-    const view = room(options);
+test('staff uses device recording with room permission and disables server recording', () => {
+  for (const enabled of [true, false]) {
+    const view = room({ enabled });
     assert.equal(view.meeting.configOverwrite.recordingService.enabled, false);
     assert.equal(view.meeting.configOverwrite.toolbarButtons.includes('recording'), false);
-    assert.equal(view.meeting.configOverwrite.localRecording.enabled, false);
+    assert.equal(view.meeting.configOverwrite.localRecording.disable, true);
+    assert.equal(view.localRecording.enabled, enabled);
+    assert.equal(view.localRecording.joined, false);
+    assert.equal(view.localRecording.roomId, '70');
+    view.ready().videoConferenceJoined();
+    view.render();
+    assert.equal(view.localRecording.joined, true);
   }
-  const view = room({ recording: true });
-  assert.equal(view.elements().find(node => node.type === 'button' && node.props.onClick?.name === 'toggleRecording').props.disabled, true);
+});
+
+test('staff scales only the visible whiteboard and restores video after closing it', () => {
+  const view = room();
+  const stage = () => view.elements().find(node => node.props?.whiteboardOpen !== undefined);
   const listeners = view.ready();
-  listeners.videoConferenceJoined();
+  assert.equal(stage().props.whiteboardOpen, false);
+  listeners.whiteboardStatusChanged({ status: 'INSTANTIATED' });
   view.render();
-  const click = () => view.elements().find(node => node.type === 'button' && node.props.onClick?.name === 'toggleRecording').props.onClick();
-  click();
+  assert.equal(stage().props.whiteboardOpen, false);
+  listeners.whiteboardStatusChanged({ status: 'SHOWN' });
   view.render();
-  assert.deepEqual(view.commands, [['startRecording', { mode: 'file' }]]);
-  assert.ok(view.markup.includes('جارٍ تحديث التسجيل'));
-  assert.ok(!view.markup.includes('إيقاف التسجيل'));
-  click();
-  assert.equal(view.commands.length, 1);
-  listeners.recordingStatusChanged({ mode: 'local', on: true });
+  assert.equal(stage().props.whiteboardOpen, true);
+  view.select('instructor-sharing-screen');
+  listeners.largeVideoChanged();
   view.render();
-  assert.ok(!view.markup.includes('إيقاف التسجيل'));
-  listeners.recordingStatusChanged({ mode: 'file', on: true });
+  assert.equal(stage().props.whiteboardOpen, false);
+  view.select('whiteboard');
+  listeners.largeVideoChanged();
   view.render();
-  click();
-  assert.deepEqual(view.commands[1], ['stopRecording', 'file']);
-  listeners.recordingStatusChanged({ mode: 'file', on: false, error: 'service-unavailable' });
+  assert.equal(stage().props.whiteboardOpen, true);
+  listeners.whiteboardStatusChanged({ status: 'HIDDEN' });
   view.render();
-  assert.ok(view.markup.includes('role="alert"'));
-  assert.ok(!view.markup.includes('منح الصلاحيات'));
+  assert.equal(stage().props.whiteboardOpen, false);
 });

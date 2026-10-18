@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { Search, Grid3X3, List, ChevronDown, MoreVertical, Pencil, Eye, Trash2, FileEdit, Plus, Loader2 } from 'lucide-react';
+import { Search, Grid3X3, List, ChevronDown, Eye, Users, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCourses, useDeleteCourse } from '@/src/hooks/useCourses';
+import { useCourses } from '@/src/hooks/useCourses';
 import { useCurrentUser } from '@/src/hooks/useAuth';
 import type { Course as ApiCourse } from '@/src/types';
 
@@ -50,13 +50,11 @@ function CourseCard({
               ? 'bg-green-100 text-green-700'
               : 'bg-gray-100 text-gray-600'
             }`}>
-            {course.status}
+            {course.status === 'active' ? t('active') : t('draft')}
           </span>
           <span className="text-xs text-gray-400">{course.subject}</span>
         </div>
-        <button className="text-gray-400 hover:text-gray-600">
-          <MoreVertical className="w-4 h-4" />
-        </button>
+
       </div>
 
       {/* Course Title and Center */}
@@ -65,6 +63,11 @@ function CourseCard({
 
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-3 mb-4">
+        <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <Users className="mx-auto mb-1 h-4 w-4 text-blue-600" />
+          <p className="text-lg font-semibold text-gray-900">{course.students}</p>
+          <p className="text-xs text-gray-500">{t('stats.students')}</p>
+        </div>
 
         <div className="text-center p-3 bg-gray-50 rounded-lg">
           {/* FIX: removed duplicated {course.exams} that was rendered
@@ -108,7 +111,7 @@ function CourseCard({
 }
 
 // List View Component
-function CourseListView({ courses, t, onDelete }: { courses: CourseDisplay[]; t: ReturnType<typeof useTranslations>; onDelete: (id: string) => void }) {
+function CourseListView({ courses, t }: { courses: CourseDisplay[]; t: ReturnType<typeof useTranslations> }) {
   const router = useRouter();
 
   // FIX: getProgressColor and getIndicatorColor were identical duplicated
@@ -132,6 +135,7 @@ function CourseListView({ courses, t, onDelete }: { courses: CourseDisplay[]; t:
             <tr className="bg-gray-50 border-b border-[#E5E7EB]">
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.course')}</th>
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.subject')}</th>
+              <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('stats.students')}</th>
 
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.progress')}</th>
               <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">{t('columns.exam')}</th>
@@ -153,6 +157,7 @@ function CourseListView({ courses, t, onDelete }: { courses: CourseDisplay[]; t:
                   </div>
                 </td>
                 <td className="py-4 px-4 text-sm text-gray-600">{course.subject}</td>
+                <td className="py-4 px-4 text-sm text-gray-600">{course.students}</td>
 
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-2">
@@ -183,18 +188,7 @@ function CourseListView({ courses, t, onDelete }: { courses: CourseDisplay[]; t:
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => router.push(`/doctor/courses/${course.id}/edit`)}
-                      className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(course.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+
                   </div>
                 </td>
               </tr>
@@ -220,8 +214,7 @@ export default function MyCoursesPage() {
   const router = useRouter();
   const { user } = useCurrentUser();
   const { data: allCourses, isLoading } = useCourses();
-  const deleteMutation = useDeleteCourse();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+
 
   // Filter courses by current doctor/instructor
   const courses = useMemo(() => {
@@ -265,22 +258,6 @@ export default function MyCoursesPage() {
     });
   }, [courses, searchQuery, centerFilter, statusFilter, t]);
 
-  // FIX: use mutateAsync so the try/catch around the await can actually
-  // catch a rejected promise. Also tracks which row is being deleted so
-  // its button can show a loading state and avoid double-clicks.
-  const handleDelete = async (id: string) => {
-    if (!window.confirm(t('deleteConfirm'))) return;
-
-    try {
-      setDeletingId(id);
-      await deleteMutation.mutateAsync(Number(id));
-    } catch {
-      // error handled by hook
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -297,21 +274,7 @@ export default function MyCoursesPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => router.push('/doctor/courses/add')} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
-            <Plus className="w-4 h-4" />
-            {t('createCourse')}
-          </button>
-          {viewMode === 'list' && (
-            <button
-              onClick={() => router.push('/doctor/content-manager')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-            >
-              <FileEdit className="w-4 h-4" />
-              {t('editContent')}
-            </button>
-          )}
-        </div>
+
       </div>
 
       {/* Filters and Controls */}
@@ -399,7 +362,7 @@ export default function MyCoursesPage() {
           ))}
         </div>
       ) : (
-        <CourseListView courses={filteredCourses} t={t} onDelete={handleDelete} />
+        <CourseListView courses={filteredCourses} t={t} />
       )}
     </div>
   );

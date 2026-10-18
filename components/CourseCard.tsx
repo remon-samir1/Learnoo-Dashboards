@@ -8,6 +8,7 @@ interface CourseCardProps {
   image: string;
   title: string;
   instructor: string;
+  draftedBy?: string;
   center: string;
   status: 'ACTIVE' | 'DRAFT';
   approval?: 'Approved' | 'Pending' | 'Declined';
@@ -23,6 +24,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   image,
   title,
   instructor,
+  draftedBy,
   center,
   status,
   approval,
@@ -82,6 +84,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         <div>
           <h3 className="text-base font-bold text-[#1E293B] line-clamp-1">{title}</h3>
           <p className="text-xs text-[#64748B] mt-1">{instructor}</p>
+          {draftedBy !== undefined && <p className="text-xs text-[#64748B] mt-1">{draftedBy ? t('card.draftedBy', { name: draftedBy }) : t('card.draftActorUnknown')}</p>}
           <div className="mt-2.5 inline-flex items-center px-2 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg text-[10px] text-[#64748B]">
             {center}
           </div>

@@ -112,7 +112,7 @@ export default function ParentDashboard() {
           <h1 className="text-2xl font-bold text-slate-900">
             {t('welcome') || 'Welcome'}, {user?.attributes?.first_name || 'Parent'}
           </h1>
-          <p className="text-slate-500 text-sm mt-1">{t('subtitle') || 'Here is an overview of your children\'s progress.'}</p>
+          <p className="text-slate-500 text-sm mt-1">{t('subtitle') || 'Here is an overview of your linked students’ progress.'}</p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -125,7 +125,7 @@ export default function ParentDashboard() {
               className="h-10 px-4 rounded-xl border border-slate-200 bg-white text-slate-900 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all disabled:cursor-not-allowed disabled:bg-slate-50"
             >
               {studentOptions.length === 0 ? (
-                <option value="">{t('noStudentSelected') || 'No linked children'}</option>
+                <option value="">{t('noStudentSelected') || 'No linked students'}</option>
               ) : (
                 studentOptions.map((student) => (
                   <option key={student.id} value={student.id}>{student.label}</option>
@@ -134,7 +134,7 @@ export default function ParentDashboard() {
             </select>
           </div>
           <Link href="/parent/students" className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition">
-            {t('manageChildren') || 'Manage Children'}
+            {t('manageChildren') || 'Manage Students'}
           </Link>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Pagination } from '@/src/components/ui/DataTable';
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus, Search } from 'lucide-react';
@@ -175,25 +176,8 @@ export default function LiveSessionsPage() {
 
       {/* Pagination controls */}
       {meta && meta.last_page > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-3">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1E293B] bg-white border border-[#E2E8F0] rounded-xl hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {t('common.previous') || 'Previous'}
-          </button>
-          <span className="text-sm font-medium text-[#64748B]">
-            {meta.current_page} / {meta.last_page}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))}
-            disabled={page >= meta.last_page}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#1E293B] bg-white border border-[#E2E8F0] rounded-xl hover:bg-[#F8FAFC] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {t('common.next') || 'Next'}
-          </button>
-        </div>
+        <Pagination currentPage={page} totalPages={meta.last_page} onPageChange={setPage}
+          totalItems={meta.total} itemsPerPage={meta.per_page} />
       )}
     </div>
   );
