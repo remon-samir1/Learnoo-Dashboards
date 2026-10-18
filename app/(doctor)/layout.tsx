@@ -12,7 +12,7 @@ export default function DoctorLayout({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const readOnlyRoute = /^\/doctor\/(universities|centers|faculties|departments|courses)\/(add|[^/]+\/edit)$/.test(pathname);
+  const readOnlyRoute = /^\/doctor\/(universities|centers|faculties|departments)\/(add|[^/]+\/edit)$/.test(pathname) || /^\/doctor\/courses\/[^/]+\/edit$/.test(pathname);
   useEffect(() => {
     if (readOnlyRoute) router.replace('/doctor/departments');
   }, [readOnlyRoute, router]);

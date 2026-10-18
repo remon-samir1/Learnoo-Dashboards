@@ -331,9 +331,9 @@ async function postMultipart<T>(path: string, formData: FormData, onProgress?: (
   return handleResponse<T>(response);
 }
 
-async function patch(path: string) {
-  const response = await fetch(buildUrl(path), { method: 'PATCH', headers: createHeaders() });
-  return handleResponse(response);
+async function patch<T>(path: string, data?: unknown): Promise<T> {
+  const response = await fetch(buildUrl(path), { method: 'PATCH', headers: createHeaders(), body: data ? JSON.stringify(data) : undefined });
+  return handleResponse<T>(response);
 }
 
 async function put<T>(
@@ -682,6 +682,8 @@ export const preActivationApi = {
 // ============================================
 
 export const coursesApi = {
+  review: (id: number, approval: 0 | 1 | 2, reason?: string) =>
+    patch<ApiResponse<Course>>(`/v1/course/${id}/approval`, { approval, reason }),
   list: (params?: { category_id?: number; activated?: number; per_page?: number } | Record<string, string | number>) =>
     get<ApiListResponse<Course>>('/v1/course', params),
 

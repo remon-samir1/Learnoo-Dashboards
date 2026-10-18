@@ -1460,6 +1460,24 @@
       "selectCodeAndStudent": "Please select both a code and a student",
       "courseActivated": "Course activated successfully!",
       "codeCopied": "Code copied to clipboard"
+    },
+    "review": {
+      "title": "Review course",
+      "0": "Pending review",
+      "1": "Approved",
+      "2": "Declined",
+      "hiddenHelp": "Hidden from students until the administration approves this course.",
+      "approvedHelp": "Approval allows student access only while the course and its lessons are published and available. Student activation is still required for paid content.",
+      "thumbnail": "Course thumbnail",
+      "reason": "Reason for declining (optional)",
+      "approve": "Approve course",
+      "reject": "Decline course",
+      "pending": "Return to pending",
+      "error": "Could not save the review. Please try again.",
+      "submitted": "Course submitted for review. It remains hidden from students until approved.",
+      "submit": "Submit for review",
+      "noDepartments": "Ask the administration to assign you a course in an academic department first.",
+      "description": "Create a course in one of your assigned departments. The administration reviews it before students can see it."
     }
   },
   "centers": {
@@ -3515,7 +3533,10 @@
     "contentProgress": "Content Progress",
     "viewCourse": "View Course",
     "deleteConfirm": "Are you sure you want to delete this course?",
-    "noCoursesFound": "No courses found."
+    "noCoursesFound": "No courses found.",
+    "approved": "Approved",
+    "pending": "Pending",
+    "declined": "Declined"
   },
   "settings": {
     "profile": {

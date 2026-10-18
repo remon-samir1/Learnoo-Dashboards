@@ -181,6 +181,7 @@ export function DetailPanel({
 
         {node.type === "course" && (
           <div className="space-y-4">
+            <a href={`${isInstructor ? '/doctor' : ''}/courses/${node.data.id}#course-review`} className="block text-sm font-medium text-primary">{locale === 'ar' ? 'مراجعة الكورس وحالة الموافقة' : 'Course review and approval status'}</a>
             {node.meta?.thumbnail && (
               <div className="w-full h-32 overflow-hidden rounded-lg border border-gray-100">
                 <img

@@ -1283,7 +1283,7 @@ export type CourseVisibility = 'public' | 'private';
 
 
 
-export type CourseApproval = 0 | 1;
+export type CourseApproval = 0 | 1 | 2;
 
 
 
@@ -1654,7 +1654,7 @@ export interface CreateCourseRequest {
 
 
 
-  price: number;
+  price?: number;
 
 
 

@@ -141,12 +141,12 @@ test('direct teacher authoring routes redirect before rendering content', () => 
     '../../components/DoctorHeader': { __esModule: true, default: () => null },
     'next/navigation': { usePathname: () => pathname, useRouter: () => ({ replace: value => { redirected = value; } }) },
   });
-  for (pathname of ['/doctor/courses/add', '/doctor/courses/12/edit']) {
+  for (pathname of ['/doctor/departments/add', '/doctor/courses/12/edit']) {
     redirected = null;
     assert.equal(Layout({ children: 'Protected form' }), null);
     assert.equal(redirected, '/doctor/departments');
   }
-  for (pathname of ['/doctor/courses/12', '/doctor/exams/create', '/doctor/discussions', '/doctor/chapters/5/edit', '/doctor/courses/12/lectures/create', '/doctor/courses/12/notes/create', '/doctor/content-manager', '/doctor/notes-summaries/add']) {
+  for (pathname of ['/doctor/courses/add', '/doctor/courses/12', '/doctor/exams/create', '/doctor/discussions', '/doctor/chapters/5/edit', '/doctor/courses/12/lectures/create', '/doctor/courses/12/notes/create', '/doctor/content-manager', '/doctor/notes-summaries/add']) {
     redirected = null;
     assert.ok(Layout({ children: 'Allowed content' }));
     assert.equal(redirected, null);
@@ -176,7 +176,7 @@ test('teacher edits course details and manages descendants while academic branch
   assert.match(renderToStaticMarkup(React.createElement(ColumnItem, { item, searchQuery: '', isInstructor: false })), /title="Edit"/);
 });
 
-test('teacher grid and list expose enrolled course counts without course authoring', () => {
+test('teacher grid and list expose enrolled course counts and course submission', () => {
   let mode = 'grid';
   const course = { id: '12', attributes: { doctor_id: 'teacher', title: 'Accounting', status: 1, stats: { students: 31 } } };
   const { default: Courses } = load('app/(doctor)/doctor/courses/page.tsx', {
@@ -188,7 +188,7 @@ test('teacher grid and list expose enrolled course counts without course authori
   for (mode of ['grid', 'list']) {
     const markup = renderToStaticMarkup(React.createElement(Courses));
     assert.match(markup, />31</);
-    assert.ok(!markup.includes(i18n.useTranslations('doctorCourses')('createCourse')));
+    assert.ok(markup.includes(i18n.useTranslations('doctorCourses')('createCourse')));
     assert.ok(!markup.includes('lucide-pencil'));
     assert.ok(!markup.includes('lucide-trash'));
   }

@@ -26,6 +26,7 @@ import { useParams } from 'next/navigation';
 import { StatCard } from '@/components/StatCard';
 import { ProgressBar } from '@/components/ProgressBar';
 import { useCourse } from '@/src/hooks/useCourses';
+import CourseApprovalPanel from '@/components/CourseApprovalPanel';
 import { useLectures } from '@/src/hooks/useLectures';
 import { useCodes, useActivateCode, useUploadPreActivation } from '@/src/hooks';
 import { useStudents } from '@/src/hooks/useStudents';
@@ -37,7 +38,7 @@ export default function CourseDetailPage() {
   const { id } = useParams();
   const courseId = Number(id);
 
-  const { data: course, isLoading: courseLoading, error: courseError } = useCourse(courseId);
+  const { data: course, isLoading: courseLoading, error: courseError, refetch: refetchCourse } = useCourse(courseId);
   const { data: lectures, isLoading: lecturesLoading } = useLectures({ course_id: courseId });
   const { data: codes, isLoading: codesLoading, refetch: refetchCodes } = useCodes();
   const { mutate: activateCode, isLoading: isActivating } = useActivateCode();
@@ -238,6 +239,8 @@ export default function CourseDetailPage() {
           </Link>}
         </div>
       </div>
+
+      <CourseApprovalPanel course={course} onReviewed={refetchCourse} />
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
