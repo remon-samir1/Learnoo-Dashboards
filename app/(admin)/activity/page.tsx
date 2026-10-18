@@ -33,6 +33,19 @@ export default function OwnerActivityPage() {
     const timer = window.setInterval(load, 30000);
     return () => { active = false; window.clearInterval(timer); };
   }, [role]);
+  async function resolveDevice(id: string, action: 'approve' | 'cancel') {
+    if (action === 'cancel' && !window.confirm(ar ? 'إلغاء طلب نقل الجهاز؟ سيبقى الجهاز المعتمد والجلسات الحالية كما هما.' : 'Cancel this transfer request? The approved device and current sessions will be kept.')) return;
+    setBusy(id);
+    try {
+      await api.ownerOperations[action](id);
+      setDevices(prev => prev.filter(device => device.id !== id));
+      toast.success(action === 'approve'
+        ? (ar ? 'تم اعتماد الجهاز الجديد وإلغاء الجلسات السابقة' : 'New device approved. Previous sessions revoked.')
+        : (ar ? 'تم إلغاء طلب النقل. الجهاز المعتمد والجلسات الحالية كما هما.' : 'Transfer request cancelled. The approved device and current sessions are unchanged.'));
+    } catch {
+      toast.error(ar ? 'تعذر تحديث طلب نقل الجهاز' : 'Could not update the transfer request');
+    } finally { setBusy(null); }
+  }
   if (role !== 'Super Admin' && role !== 'Admin') return <p>{ar ? 'هذه الصفحة متاحة للمالك والأدمن فقط' : 'This page is available to the Owner and Admin only'}</p>;
   return <div className="space-y-6 pb-12">
     <h1 className="text-2xl font-bold">{role === 'Admin' ? (ar ? 'اعتماد الأجهزة' : 'Device approvals') : (ar ? 'نشاط الفريق واعتماد الأجهزة' : 'Staff activity and device approvals')}</h1>
@@ -45,12 +58,10 @@ export default function OwnerActivityPage() {
         return <div key={key} className="text-sm"><p>{label}: {info ? `${info.device} · ${info.browser} · ${info.identifier}` : (ar ? 'التفاصيل غير متاحة؛ تظهر بعد تسجيل الدخول من الجهاز' : 'Details unavailable; captured on the next sign-in from this device')}</p>
           {info && <p className="text-xs text-gray-500"><span dir="ltr">IP: {info.ip}</span> · {new Date(info.at).toLocaleString(ar ? 'ar' : 'en')}</p>}</div>;
       })}
-    </div><button disabled={busy === device.id} className="text-primary underline" onClick={async () => {
-      setBusy(device.id);
-      try { await api.ownerOperations.approve(device.id); setDevices(prev => prev.filter(d => d.id !== device.id)); toast.success(ar ? 'تم اعتماد الجهاز الجديد وإلغاء الجلسات السابقة' : 'New device approved. Previous sessions revoked.'); }
-      catch { toast.error(ar ? 'تعذر اعتماد الجهاز' : 'Could not approve device'); }
-      finally { setBusy(null); }
-    }}>{ar ? 'اعتماد الجهاز الجديد' : 'Approve new device'}</button></article>)}
+    </div><div className="flex flex-wrap gap-3">
+      <button type="button" disabled={busy === device.id} className="text-primary underline disabled:opacity-50" onClick={() => resolveDevice(device.id, 'approve')}>{ar ? 'اعتماد الجهاز الجديد' : 'Approve new device'}</button>
+      <button type="button" disabled={busy === device.id} className="text-red-600 underline disabled:opacity-50" onClick={() => resolveDevice(device.id, 'cancel')}>{ar ? 'إلغاء الطلب' : 'Cancel request'}</button>
+    </div></article>)}
     {role === 'Super Admin' && <>
     <h2 className="text-lg font-bold">{ar ? 'نشاط آخر ٩٠ يومًا' : 'Activity over the past 90 days'}</h2>
     <div className="flex flex-wrap items-end gap-3">

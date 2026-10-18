@@ -93,6 +93,7 @@ import {
   Search,
 } from "lucide-react";
 
+import CourseSubscribers from '@/components/dashboard/CourseSubscribers';
 import { DeleteModal } from "@/src/components/ui/DeleteModal";
 import { CourseTreeSelect } from "@/src/components/admin/CourseTreeSelect";
 import { InstructorSelect } from "@/src/components/admin/InstructorSelect";
@@ -1260,17 +1261,15 @@ export default function DepartmentsPage() {
   const [viewersModalOpen, setViewersModalOpen] = useState(false);
   const [viewersList, setViewersList] = useState<any[] | null>(null);
   const [viewersLoading, setViewersLoading] = useState(false);
-  const [subscriberPage, setSubscriberPage] = useState(1);
-  const [subscriberLastPage, setSubscriberLastPage] = useState(1);
 
-  const openViewers = async (node: TreeNode | null, page = 1) => {
+  const openViewers = async (node: TreeNode | null) => {
     if (!node) return;
     try {
       setViewNode(node);
       setViewersLoading(true);
       setViewersList(null);
       setViewersModalOpen(true);
-      setSubscriberPage(page);
+      if (node.type === "course") return;
 
       const rawId = node.data?.id;
       const chapterId = Number(rawId);
@@ -1281,14 +1280,8 @@ export default function DepartmentsPage() {
         return;
       }
 
-      const res: any = node.type === "course"
-        ? await api.courses.subscribers(chapterId, page)
-        : await api.chapters.get(chapterId, { skipAuthRedirect: true } as any);
-
-      const users = node.type === "course"
-        ? res.data.map((user: any) => ({ id: user.id, user }))
-        : res?.data?.attributes?.userViews || [];
-      setSubscriberLastPage(res.last_page || 1);
+      const res: any = await api.chapters.get(chapterId, { skipAuthRedirect: true } as any);
+      const users = res?.data?.attributes?.userViews || [];
 
       setViewersList(users);
       setViewersModalOpen(true);
@@ -2977,12 +2970,12 @@ export default function DepartmentsPage() {
             </div>
 
             <div className="space-y-2">
-              {viewersLoading ? (
+              {viewNode.type === "course" ? <CourseSubscribers key={viewNode.id} courseId={Number(viewNode.data.id)} title={viewNode.name} onRemoved={refetchAll} /> : viewersLoading ? (
                 <div className="py-6 flex items-center justify-center">
                   <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
                 </div>
               ) : !viewersList || viewersList.length === 0 ? (
-                <p className="text-sm text-gray-400">{viewNode.type === "course" ? (ar ? "لا يوجد طلاب مشتركون في هذه الدورة." : "No subscribers in this course.") : (ar ? "لا توجد مشاهدات مسجلة لهذه المحاضرة." : "No viewers recorded for this lesson.")}</p>
+                <p className="text-sm text-gray-400">{ar ? "لا توجد مشاهدات مسجلة لهذه المحاضرة." : "No viewers recorded for this lesson."}</p>
               ) : (
                 <div className="divide-y divide-gray-100">
                   {viewNode.type === "chapter" && <p className="py-3 text-sm text-gray-600">{t("departments.viewerExplanation", { count: viewersList.length })}</p>}
@@ -2993,7 +2986,7 @@ export default function DepartmentsPage() {
                           {uv.user ? `${uv.user.first_name || ''} ${uv.user.last_name || ''}`.trim() : uv.user_id}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {viewNode.type === 'course' ? <a dir="ltr" href={`tel:${uv.user?.phone || ''}`}>{uv.user?.phone || '—'}</a> : (uv.user?.email || uv.user?.student_code || '')}
+                          {uv.user?.email || uv.user?.student_code || ''}
                         </div>
                       </div>
 
@@ -3006,11 +2999,6 @@ export default function DepartmentsPage() {
                 </div>
               )}
             </div>
-            {viewNode.type === "course" && subscriberLastPage > 1 && <div className="mt-4 flex items-center justify-between">
-              <button type="button" disabled={viewersLoading || subscriberPage === 1} onClick={() => openViewers(viewNode, subscriberPage - 1)}>{ar ? "السابق" : "Previous"}</button>
-              <span>{subscriberPage} / {subscriberLastPage}</span>
-              <button type="button" disabled={viewersLoading || subscriberPage === subscriberLastPage} onClick={() => openViewers(viewNode, subscriberPage + 1)}>{ar ? "التالي" : "Next"}</button>
-            </div>}
           </div>
         </div>
       )}

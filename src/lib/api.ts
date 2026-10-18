@@ -689,7 +689,9 @@ export const coursesApi = {
 
   get: (id: number) => get<ApiResponse<Course>>(`/v1/course/${id}`),
 
-  subscribers: (id: number, page = 1) => get<{ data: { id: number; first_name: string; last_name: string; phone: string }[]; last_page: number }>(`/v1/course/${id}/subscribers`, { page }),
+  subscribers: (id: number, page = 1) => get<{ data: { id: string; first_name: string; last_name: string; phone: string }[]; last_page: number; total: number; pending_count: number }>(`/v1/course/${id}/subscribers`, { page }),
+  removeSubscribers: (id: number, selection: { all: true } | { student_ids: string[] }) =>
+    post<{ removed: number; pending_removed: number }>(`/v1/course/${id}/subscribers/remove`, selection),
 
   create: (data: CreateCourseRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
@@ -1508,6 +1510,7 @@ export const ownerOperationsApi = {
   activity: (page = 1, dates?: { from?: string; to?: string }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...dates }),
   devices: () => get<{ data: DeviceTransfer[] }>('/v1/owner/device-transfers'),
   approve: (id: string) => post(`/v1/owner/device-transfers/${id}/approve`),
+  cancel: (id: string) => post(`/v1/owner/device-transfers/${id}/cancel`),
   resetDevice: (id: string) => post(`/v1/owner/device-transfers/${id}/reset`),
 };
 

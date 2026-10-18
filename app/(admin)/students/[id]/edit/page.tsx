@@ -16,6 +16,7 @@ import {
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { FileUpload } from '@/components/FileUpload';
+import StudentDeviceReset from '@/components/dashboard/StudentDeviceReset';
 import {
   useStudent,
   useUpdateStudent,
@@ -401,6 +402,7 @@ export default function EditStudentPage() {
                 onChange={(e) => setFormData({ ...formData, feedback: e.target.value })}
               />
             </div>
+            {studentResponse?.data.attributes.role === 'Student' && <StudentDeviceReset studentId={studentId} />}
           </div>
         </section>
 

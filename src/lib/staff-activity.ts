@@ -19,6 +19,8 @@ const actions: Record<string, readonly [string, string]> = {
   'POST quiz-user-answer': ['تسجيل إجابة امتحان', 'Submitted an exam answer'],
   'POST quiz-attempt': ['بدء محاولة امتحان', 'Started an exam attempt'],
   'POST owner/device-transfers/:id/approve': ['اعتماد الجهاز الجديد', 'Approved a new device'],
+  'POST owner/device-transfers/:id/cancel': ['إلغاء طلب نقل الجهاز', 'Cancelled a device transfer request'],
+  'POST course/:id/subscribers/remove': ['إلغاء تفعيل طلاب من دورة', 'Removed course subscriptions'],
   'POST owner/device-transfers/:id/reset': ['السماح للطالب بتغيير الجهاز وإلغاء الجلسات السابقة', 'Allowed a student device change and revoked previous sessions'],
   'POST timetable/:id/documents': ['رفع ملف إلى الجداول والمستندات', 'Uploaded a schedule document'],
   'POST ai-exam': ['طلب إنشاء امتحان بالذكاء الاصطناعي', 'Requested AI exam generation'],
