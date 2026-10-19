@@ -15,6 +15,7 @@ interface MillerColumnsProps {
   openViewers: (node: TreeNode) => void;
   isInstructor: boolean;
   isOwner: boolean;
+  isAdmin: boolean;
 
   // Activation & Student States (passed down to DetailPanel)
   canUseActivations: boolean;
@@ -56,6 +57,7 @@ export function MillerColumns({
   openViewers,
   isInstructor,
   isOwner,
+  isAdmin,
 
   canUseActivations,
   codesLoading,
@@ -179,6 +181,7 @@ export function MillerColumns({
             <DetailPanel
               node={detailPanelNode}
               isOwner={isOwner}
+              isAdmin={isAdmin}
               canUseActivations={canUseActivations}
               isInstructor={isInstructor}
               codesLoading={codesLoading}

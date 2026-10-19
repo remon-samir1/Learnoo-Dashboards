@@ -28,6 +28,7 @@ interface DetailPanelProps {
   canUseActivations: boolean;
   isInstructor: boolean;
   isOwner: boolean;
+  isAdmin: boolean;
   codesLoading: boolean;
   selectedCode: string;
   setSelectedCode: (val: string) => void;
@@ -63,6 +64,7 @@ export function DetailPanel({
   canUseActivations,
   isInstructor,
   isOwner,
+  isAdmin,
   codesLoading,
   selectedCode,
   setSelectedCode,
@@ -247,7 +249,7 @@ export function DetailPanel({
             )}
 
             {/* Course activation section */}
-            {isOwner && canUseActivations && (
+            {(isOwner || isAdmin) && canUseActivations && (
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1">
@@ -467,7 +469,7 @@ export function DetailPanel({
             )}
 
             {/* Chapter Activation codes */}
-            {isOwner && canUseActivations && (
+            {(isOwner || isAdmin) && canUseActivations && (
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-1">
