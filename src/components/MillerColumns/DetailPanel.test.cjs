@@ -6,6 +6,7 @@ const component = { exports: {} };
 new Function('require', 'module', 'exports', ts.transpileModule(readFileSync(`${__dirname}/DetailPanel.tsx`, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
 }).outputText)(name => name === 'next-intl' ? { useTranslations: () => key => key, useLocale: () => 'ar' }
+  : name === '@/src/lib/preactivation-phones' ? { readPreactivationPhones: async file => (await file.text()).split('\n') }
   : name === './ChapterPreview' ? { ChapterPreview: () => null }
   : name === './StudentSelector' ? { StudentSelector: () => null } : require(name), component, component.exports);
 
@@ -67,7 +68,8 @@ for (const type of ['course', 'chapter']) test(`Admin can activate a ${type} by 
   const html = renderToStaticMarkup(tree);
   assert.match(html, type === 'course' ? /activateCourse/ : /activateLesson/);
   assert.match(html, /availableCodes/); assert.match(html, /TEST-CODE/);
-  assert.doesNotMatch(html, /maxViews|View subscribers|عرض الطلاب المشتركين|>\s*viewers</);
+  assert.doesNotMatch(html, /maxViews|View subscribers|عرض الطلاب المشتركين/);
+  assert.equal(/>\s*viewers</.test(html), type === 'chapter');
   const ownerHtml = renderToStaticMarkup(component.exports.DetailPanel({ ...props, isOwner: true, isAdmin: false }));
   assert.match(ownerHtml, /availableCodes|activateStudent/);
   assert.match(ownerHtml, type === 'course' ? /maxViews/ : />\s*viewers</);
@@ -92,5 +94,17 @@ for (const type of ['course', 'chapter']) test(`Admin can activate a ${type} by 
   ]) {
     const hidden = renderToStaticMarkup(component.exports.DetailPanel({ ...props, ...state }));
     assert.doesNotMatch(hidden, /activateCourse|activateLesson|availableCodes|activateStudent|generateCodes/);
+  }
+});
+
+
+test('Admin lesson viewers opens only the selected lesson and course subscribers remain Owner-only', () => {
+  let selected;
+  for (const type of ['course', 'chapter']) {
+    const node = { type, name: 'Selected', data: { id: '12', attributes: {} }, stats: { students: 31 } };
+    const props = { node, isOwner: false, isAdmin: true, canUseActivations: false, openViewers: value => { selected = value; } };
+    const viewers = elements(component.exports.DetailPanel(props)).find(node => node.type === 'button' && Array.isArray(node.props.children) && node.props.children.includes('viewers'));
+    if (type === 'chapter') { assert.ok(viewers); viewers.props.onClick(); assert.equal(selected, node); }
+    else assert.equal(viewers, undefined);
   }
 });

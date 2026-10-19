@@ -1,5 +1,6 @@
 'use client';
 
+import { readPreactivationPhones } from '@/src/lib/preactivation-phones';
 import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import {
@@ -109,26 +110,16 @@ export default function CourseDetailPage() {
     }
   };
 
-  const handlePreactivationFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePreactivationFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) {
+    if (!file) return;
+    setPreactivationResults(null);
+    try {
+      setPreactivationNumbers(await readPreactivationPhones(file));
+    } catch {
       setPreactivationNumbers([]);
-      return;
+      toast.error(t('courses.view.preactivation.failed'));
     }
-
-    // Read file to show preview
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const numbers = text
-        .split(/[\n,\r,;]/)
-        .map((n) => n.trim())
-        .filter((n) => n.length > 0);
-      setPreactivationNumbers(numbers);
-      setPreactivationResults(null);
-      toast.success(`${numbers.length} ${t('courses.view.preactivation.numbersReady')}`);
-    };
-    reader.readAsText(file);
   };
 
   const clearPreactivationNumbers = () => {
@@ -140,16 +131,17 @@ export default function CourseDetailPage() {
   };
 
   const handlePreactivationUpload = async () => {
-    const file = preactivationFileRef.current?.files?.[0];
-    if (!file) {
+    const numbers = preactivationNumbers.map(number => number.trim()).filter(Boolean);
+    if (!numbers.length) {
       toast.error(t('courses.view.preactivation.selectFile'));
       return;
     }
 
     try {
+      const file = new File([numbers.join('\n')], 'phones.txt', { type: 'text/plain' });
       const result = await uploadPreActivation({ item_id: courseId, item_type: 'course', file });
       setPreactivationResults({
-        success: result.activated || 0,
+        success: (result.activated ?? 0) + (result.pending ?? 0),
         failed: result.skipped || 0,
         count: result.total_phones || 0
       });
@@ -502,14 +494,25 @@ export default function CourseDetailPage() {
                   </p>
                 </div>
 
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-[#64748B]">{t('courses.detailPanel.phoneNumbers')}</label>
+                  <div className="max-h-48 space-y-2 overflow-y-auto">
+                  {preactivationNumbers.map((number, index) => <div key={index} className="flex items-center gap-2">
+                    <input type="tel" aria-label={`${t('courses.detailPanel.phoneNumbers')} ${index + 1}`} value={number} onChange={event => setPreactivationNumbers(preactivationNumbers.map((value, i) => i === index ? event.target.value : value))} className="min-w-0 flex-1 rounded-xl border border-[#E2E8F0] p-2 text-sm" />
+                    <button type="button" aria-label={t('common.delete')} onClick={() => setPreactivationNumbers(preactivationNumbers.filter((_, i) => i !== index))} className="p-2 text-red-500"><X className="h-4 w-4" /></button>
+                  </div>)}
+                  </div>
+                  <button type="button" onClick={() => setPreactivationNumbers([...preactivationNumbers, ''])} className="w-full rounded-xl border border-dashed border-[#E2E8F0] p-2 text-sm">{t('courses.detailPanel.addNumber')}</button>
+                </div>
+
                 {/* File Upload */}
                 <div>
                   <label className="text-xs font-bold text-[#64748B] mb-2 block">{t('courses.view.preactivation.title')}</label>
-                  <p className="text-[10px] text-[#94A3B8] mb-2">Supported: .txt, .csv (one phone per line)</p>
+                  <p className="text-[10px] text-[#94A3B8] mb-2">TXT, CSV, XLS, XLSX</p>
                   <input
                     ref={preactivationFileRef}
                     type="file"
-                    accept=".txt,.csv"
+                    accept=".txt,.csv,.xls,.xlsx"
                     onChange={handlePreactivationFileSelect}
                     className="hidden"
                   />
@@ -522,38 +525,12 @@ export default function CourseDetailPage() {
                   </button>
                 </div>
 
-                {/* Phone Numbers Preview */}
-                {preactivationNumbers.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-bold text-[#64748B]">{t('courses.view.preactivation.title')} ({preactivationNumbers.length})</label>
-                      <button
-                        onClick={clearPreactivationNumbers}
-                        className="text-[10px] text-red-500 hover:text-red-600 flex items-center gap-1"
-                      >
-                        <X className="w-3 h-3" />
-                        {t('courses.view.preactivation.clear')}
-                      </button>
-                    </div>
-                    <div className="max-h-32 overflow-y-auto bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3">
-                      <div className="flex flex-wrap gap-2">
-                        {preactivationNumbers.map((num, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-1 bg-white border border-[#E2E8F0] rounded-lg text-xs text-[#475569]"
-                          >
-                            {num}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {preactivationNumbers.length > 0 && <button type="button" onClick={clearPreactivationNumbers} className="text-xs text-red-500">{t('courses.view.preactivation.clear')}</button>}
 
                 {/* Pre-activate Button */}
                 <button
                   onClick={handlePreactivationUpload}
-                  disabled={preactivationNumbers.length === 0 || isUploadingPreActivation}
+                  disabled={!preactivationNumbers.some(number => number.trim()) || isUploadingPreActivation}
                   className="w-full py-2.5 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isUploadingPreActivation ? (

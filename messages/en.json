@@ -1449,7 +1449,7 @@
       "activating": "Activating...",
       "preactivation": {
         "title": "Pre-activation File",
-        "description": "Upload a file with phone numbers",
+        "description": "Add phone numbers or select a file, then submit the list for activation.",
         "selectFile": "Select a file first",
         "numbersReady": "phone numbers ready for upload",
         "upload": "Upload Pre-activation",

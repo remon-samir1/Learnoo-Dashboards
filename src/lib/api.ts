@@ -567,7 +567,14 @@ export const centersApi = {
 // Chapters API
 // ============================================
 
+export interface LessonViewersResponse {
+  data: { id: number; user: { id: string; first_name: string; last_name: string; email: string | null; student_code: string | null }; created_at: string | null; count: number; remaining_views: number | null }[];
+  max_views: number;
+  last_page: number;
+}
+
 export const chaptersApi = {
+  viewers: (id: number, page = 1) => get<LessonViewersResponse>(`/v1/chapter/${id}/viewers`, { page }),
   list: (params?: { lecture_id?: number | string }) => get<ApiListResponse<Chapter>>('/v1/chapter', params),
 
   get: (id: number, options?: { skipAuthRedirect?: boolean }) =>

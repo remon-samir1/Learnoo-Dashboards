@@ -156,6 +156,7 @@ test('direct teacher authoring routes redirect before rendering content', () => 
 test('teacher edits course details and manages descendants while academic branches remain protected', () => {
   const { ColumnItem } = load('src/components/MillerColumns/ColumnItem.tsx');
   const { DetailPanel } = load('src/components/MillerColumns/DetailPanel.tsx', {
+    '@/src/lib/preactivation-phones': { readPreactivationPhones: async () => [] },
     './ChapterPreview': { ChapterPreview: () => null }, './StudentSelector': { StudentSelector: () => null },
   });
   for (const type of ['university', 'center', 'faculty', 'department', 'course', 'lecture', 'chapter', 'note']) {

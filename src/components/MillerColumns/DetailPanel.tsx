@@ -1,4 +1,6 @@
 import React from "react";
+import toast from "react-hot-toast";
+import { readPreactivationPhones } from "@/src/lib/preactivation-phones";
 import { useLocale, useTranslations } from "next-intl";
 import {
   X,
@@ -97,25 +99,15 @@ export function DetailPanel({
   const t = useTranslations("courses.detailPanel");
   const locale = useLocale();
 
-  const handlePreactivationFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePreactivationFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (/\.xlsx?$/i.test(file.name)) {
+    try {
+      setPreactivationNumbers(await readPreactivationPhones(file));
+    } catch {
       setPreactivationNumbers([]);
-      return;
+      toast.error(locale === 'ar' ? 'تعذر قراءة ملف الأرقام' : 'Could not read phone numbers');
     }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const numbers = text
-        .split(/[\n,\r,;]/)
-        .map((n) => n.trim())
-        .filter((n) => n.length > 0);
-      setPreactivationNumbers(numbers);
-    };
-    reader.readAsText(file);
   };
 
   const itemId = parseInt(node.data.id);
@@ -727,7 +719,7 @@ export function DetailPanel({
             >
               <ArrowRightLeft className="w-3.5 h-3.5" /> {t("move")}
             </button>
-            {isOwner && <button
+            {(isOwner || (isAdmin && node.type === "chapter")) && <button
               onClick={() => openViewers(node)}
               className="px-2.5 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-1"
             >
