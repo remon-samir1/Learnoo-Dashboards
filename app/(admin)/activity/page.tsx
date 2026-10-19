@@ -19,12 +19,22 @@ export default function OwnerActivityPage() {
   const [lastPage, setLastPage] = useState(1);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [activityRole, setActivityRole] = useState<'' | 'Instructor' | 'Admin'>('');
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityType, setActivityType] = useState<NonNullable<Parameters<typeof api.ownerOperations.activity>[1]>['type'] | ''>('');
   useEffect(() => {
     if (role !== 'Super Admin') return;
-    api.ownerOperations.activity(page, { from: from || undefined, to: to || undefined }).then(history => {
+    let active = true;
+    setActivityLoading(true);
+    setActivity([]);
+    setError(false);
+    api.ownerOperations.activity(page, { from: from || undefined, to: to || undefined, role: activityRole || undefined, type: activityType || undefined }).then(history => {
+      if (!active) return;
       setActivity(history.data); setLastPage(history.last_page); setError(false);
-    }).catch(() => setError(true));
-  }, [role, page, from, to]);
+    }).catch(() => { if (active) setError(true); })
+      .finally(() => { if (active) setActivityLoading(false); });
+    return () => { active = false; };
+  }, [role, page, from, to, activityRole, activityType]);
   useEffect(() => {
     if (role !== 'Super Admin' && role !== 'Admin') return;
     let active = true;
@@ -48,7 +58,7 @@ export default function OwnerActivityPage() {
   }
   if (role !== 'Super Admin' && role !== 'Admin') return <p>{ar ? 'هذه الصفحة متاحة للمالك والأدمن فقط' : 'This page is available to the Owner and Admin only'}</p>;
   return <div className="space-y-6 pb-12">
-    <h1 className="text-2xl font-bold">{role === 'Admin' ? (ar ? 'اعتماد الأجهزة' : 'Device approvals') : (ar ? 'نشاط الفريق واعتماد الأجهزة' : 'Staff activity and device approvals')}</h1>
+    <h1 className="text-2xl font-bold">{role === 'Admin' ? (ar ? 'اعتماد الأجهزة' : 'Device approvals') : (ar ? 'سجل النشاط واعتماد الأجهزة' : 'Activity history and device approvals')}</h1>
     {error && <p role="alert">{ar ? 'تعذر تحميل البيانات' : 'Could not load data'}</p>}
     <h2 className="text-lg font-bold">{ar ? 'طلبات نقل الجهاز' : 'Device transfer requests'}</h2>
     {!devices.length && <p>{ar ? 'لا توجد طلبات معلقة' : 'No pending requests'}</p>}
@@ -65,15 +75,34 @@ export default function OwnerActivityPage() {
     {role === 'Super Admin' && <>
     <h2 className="text-lg font-bold">{ar ? 'نشاط آخر ٩٠ يومًا' : 'Activity over the past 90 days'}</h2>
     <div className="flex flex-wrap items-end gap-3">
+      <label className="text-sm">{ar ? 'منفّذ العملية' : 'Performed by'}
+        <select value={activityRole} onChange={event => { setActivityRole(event.target.value as typeof activityRole); setPage(1); }} className="block rounded-xl border bg-white p-3">
+          <option value="">{ar ? 'كل العمليات' : 'All activity'}</option>
+          <option value="Instructor">{ar ? 'المدرسون' : 'Instructors'}</option>
+          <option value="Admin">{ar ? 'الأدمن' : 'Admins'}</option>
+        </select>
+      </label>
+      <label className="max-w-full text-sm">{ar ? 'نوع العملية' : 'Activity type'}
+        <select value={activityType} onChange={event => { setActivityType(event.target.value as typeof activityType); setPage(1); }} className="block max-w-full rounded-xl border bg-white p-3">
+          <option value="">{ar ? 'كل الأنواع' : 'All types'}</option>
+          <option value="device-requests">{ar ? 'طلبات نقل الأجهزة' : 'Device transfer requests'}</option>
+          <option value="device-decisions">{ar ? 'اعتماد الأجهزة وإلغاء الطلبات والسماح بالتغيير' : 'Device approvals, cancellations and resets'}</option>
+          <option value="courses">{ar ? 'الدورات' : 'Courses'}</option>
+          <option value="lessons">{ar ? 'المحاضرات والدروس' : 'Lectures and lessons'}</option>
+          <option value="accounts">{ar ? 'حسابات المستخدمين' : 'User accounts'}</option>
+          <option value="activations">{ar ? 'التفعيلات' : 'Activations'}</option>
+        </select>
+      </label>
       <button className="rounded-xl border p-3" onClick={() => { const today = new Date().toLocaleDateString('en-CA'); setFrom(today); setTo(today); setPage(1); }}>{ar ? 'اليوم' : 'Today'}</button>
       <button className="rounded-xl border p-3" onClick={() => { const today = new Date(); const start = new Date(); start.setDate(start.getDate() - 6); setFrom(start.toLocaleDateString('en-CA')); setTo(today.toLocaleDateString('en-CA')); setPage(1); }}>{ar ? 'آخر ٧ أيام' : 'Last 7 days'}</button>
       <button className="rounded-xl border p-3" onClick={() => { setFrom(''); setTo(''); setPage(1); }}>{ar ? 'آخر ٩٠ يومًا' : 'Last 90 days'}</button>
       <label>{ar ? 'من' : 'From'}<input type="date" value={from} max={to || undefined} onChange={event => { setFrom(event.target.value); setPage(1); }} className="block rounded-xl border p-3" /></label>
       <label>{ar ? 'إلى' : 'To'}<input type="date" value={to} min={from || undefined} onChange={event => { setTo(event.target.value); setPage(1); }} className="block rounded-xl border p-3" /></label>
     </div>
-    {!activity.length && <p>{ar ? 'لا توجد أنشطة مسجلة بعد' : 'No recorded activity yet'}</p>}
+    {activityLoading && <p role="status">{ar ? 'جارٍ تحميل النشاط…' : 'Loading activity…'}</p>}
+    {!activityLoading && !error && !activity.length && <p>{ar ? 'لا توجد أنشطة تطابق عوامل التصفية' : 'No activity matches these filters'}</p>}
     {activity.map(item => <article key={item.id} className="rounded-xl border bg-white p-4"><p>{item.first_name} {item.last_name}</p><p className="text-sm">{formatStaffActivity(item.action, ar ? 'ar' : 'en')}</p><StaffActivityDetails details={item.details} /><time className="text-xs text-gray-500">{new Date(item.created_at).toLocaleString(ar ? 'ar' : 'en')}</time></article>)}
-    <div className="flex gap-4"><button disabled={page <= 1} onClick={() => setPage(page - 1)}>{ar ? 'السابق' : 'Previous'}</button><span>{page} / {lastPage}</span><button disabled={page >= lastPage} onClick={() => setPage(page + 1)}>{ar ? 'التالي' : 'Next'}</button></div>
+    <div className="flex gap-4"><button disabled={activityLoading || page <= 1} onClick={() => setPage(page - 1)}>{ar ? 'السابق' : 'Previous'}</button><span>{page} / {lastPage}</span><button disabled={activityLoading || page >= lastPage} onClick={() => setPage(page + 1)}>{ar ? 'التالي' : 'Next'}</button></div>
     </>}
   </div>;
 }

@@ -1507,7 +1507,7 @@ export const archivedStudentsApi = {
 export interface DeviceDetails { device: string; browser: string; identifier: string; ip: string; at: string }
 export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null }
 export const ownerOperationsApi = {
-  activity: (page = 1, dates?: { from?: string; to?: string }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...dates }),
+  activity: (page = 1, filters?: { from?: string; to?: string; role?: 'Instructor' | 'Admin'; type?: 'device-requests' | 'device-decisions' | 'courses' | 'lessons' | 'accounts' | 'activations' }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...filters }),
   devices: () => get<{ data: DeviceTransfer[] }>('/v1/owner/device-transfers'),
   approve: (id: string) => post(`/v1/owner/device-transfers/${id}/approve`),
   cancel: (id: string) => post(`/v1/owner/device-transfers/${id}/cancel`),
