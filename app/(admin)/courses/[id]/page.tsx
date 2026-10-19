@@ -191,6 +191,7 @@ export default function CourseDetailPage() {
   }
 
   const attributes = course.attributes;
+  const studentCount = role === 'Super Admin' || isInstructor ? attributes.stats?.students : undefined;
 
   return (
     <div className="flex flex-col gap-8 pb-12">
@@ -235,12 +236,12 @@ export default function CourseDetailPage() {
       <CourseApprovalPanel course={course} onReviewed={refetchCourse} />
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className={`grid grid-cols-2 ${studentCount != null ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-4`}>
         <StatCard icon={Layers} value={attributes.stats?.lectures?.toString() || "0"} label={t('courses.view.stats.lectures')} />
         <StatCard icon={Video} value={attributes.stats?.chapters?.toString() || "0"} label={t('courses.view.stats.chapters')} />
         <StatCard icon={BookOpen} value={attributes.stats?.notes?.toString() || "0"} label={t('courses.view.stats.notes')} />
         <StatCard icon={FileText} value={attributes.stats?.exams?.toString() || "0"} label={t('courses.view.stats.exams')} />
-        <StatCard icon={Users} value={attributes.stats?.students?.toString() || "0"} label={t('courses.view.stats.students')} />
+        {studentCount != null && <StatCard icon={Users} value={studentCount.toString()} label={t('courses.view.stats.students')} />}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">

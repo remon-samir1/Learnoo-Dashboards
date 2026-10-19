@@ -5247,7 +5247,7 @@ export interface DashboardStats {
 
 
 
-  total_students: StatItem;
+  total_students?: StatItem;
 
 
 

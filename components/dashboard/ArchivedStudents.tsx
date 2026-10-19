@@ -11,6 +11,7 @@ export default function ArchivedStudents({ onRecovered }: { onRecovered: () => P
   const ar = useLocale() === 'ar';
   const { role } = useCurrentUser();
   const allowed = role === 'Admin' || role === 'Super Admin';
+  const isAdmin = role === 'Admin';
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState('');
@@ -39,6 +40,6 @@ export default function ArchivedStudents({ onRecovered }: { onRecovered: () => P
       <div className="flex flex-wrap gap-4"><button disabled={!!busy} className="text-primary underline" onClick={() => recover(student.id, 'restore')}>{ar ? 'استرجاع الحساب القديم' : 'Restore previous account'}</button>
         <button disabled={!!busy} className="text-amber-800 underline" onClick={() => recover(student.id, 'new')}>{ar ? 'السماح بحساب جديد' : 'Allow new account'}</button></div>
     </article>)}
-    {data && data.last_page > 1 && <div className="flex gap-4"><button disabled={page === 1} onClick={() => setPage(page - 1)}>{ar ? 'السابق' : 'Previous'}</button><span>{page} / {data.last_page}</span><button disabled={page === data.last_page} onClick={() => setPage(page + 1)}>{ar ? 'التالي' : 'Next'}</button></div>}
+    {data && (isAdmin ? page > 1 || !!data.next_page_url : (data.last_page ?? 1) > 1) && <div className="flex gap-4"><button disabled={page === 1} onClick={() => setPage(page - 1)}>{ar ? 'السابق' : 'Previous'}</button><span>{page}{!isAdmin && ` / ${data.last_page}`}</span><button disabled={isAdmin ? !data.next_page_url : page === data.last_page} onClick={() => setPage(page + 1)}>{ar ? 'التالي' : 'Next'}</button></div>}
   </section>;
 }

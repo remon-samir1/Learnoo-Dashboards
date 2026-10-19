@@ -40,7 +40,7 @@ function coursePage(role = 'Admin', permission = true, fail = false) {
     'next-intl': { useTranslations: () => key => key }, 'next/navigation': { useParams: () => ({ id: '12' }) },
     'next/link': { default: () => null }, 'react-hot-toast': { success: value => messages.push(['success', value]), error: value => messages.push(['error', value]) },
     '@/src/lib/preactivation-phones': phones,
-    '@/src/hooks/useCourses': { useCourse: () => ({ data: { id: '12', attributes: { title: 'Course', price: 0, status: 1, stats: {}, lectures: [] } }, refetch() {} }) },
+    '@/src/hooks/useCourses': { useCourse: () => ({ data: { id: '12', attributes: { title: 'Course', price: 0, status: 1, stats: { students: 7 }, lectures: [] } }, refetch() {} }) },
     '@/src/hooks/useLectures': { useLectures: () => ({ data: [] }) }, '@/src/hooks/useStudents': { useStudents: () => ({ data: { data: [] } }) },
     '@/src/hooks/useAuth': { useCurrentUser: () => ({ role, canUseActivations: permission }) }, '@/src/hooks': hooks,
     '@/components/StatCard': { StatCard: () => null }, '@/components/ProgressBar': { ProgressBar: () => null }, '@/components/CourseApprovalPanel': { default: () => null },
@@ -154,4 +154,10 @@ test('academic tree derives the same lecture and lesson hierarchy without state 
   assert.deepEqual(result, { lecturesByCourse: { 1: [lecture], 4: [] }, chaptersByLecture: { '1-2': [chapter] } });
   assert.equal(courses[0].attributes.lectures[0].attributes.chapters[0], chapter);
   assert.doesNotMatch(callback, /setLecturesByCourse|setChaptersByLecture|setExpanded/);
+});
+
+for (const role of ['Admin', 'Super Admin', 'Instructor', undefined]) test(`${role || 'Loading'} course student card respects role even with cached counts`, () => {
+  const cards = elements(coursePage(role === undefined ? null : role).render()).filter(node => node.props?.label === 'courses.view.stats.students');
+  assert.equal(cards.length, role === 'Super Admin' || role === 'Instructor' ? 1 : 0);
+  if (cards.length) assert.equal(cards[0].props.value, '7');
 });

@@ -3,6 +3,7 @@ import { getDeviceId } from './device-id';
 import type {
   ApiResponse,
   ApiListResponse,
+  PaginationMeta,
   ValidationError,
   // Auth types
   RegisterRequest,
@@ -1157,7 +1158,7 @@ export const studentsApi = {
     per_page?: number;
     page?: number;
     role?: number;
-  }) => get<ApiListResponse<Student>>('/v1/student', { ...params, role: 0 }),
+  }) => get<Omit<ApiListResponse<Student>, 'meta'> & { meta?: Partial<PaginationMeta> }>('/v1/student', { ...params, role: 0 }),
 
   get: (id: string) => get<ApiResponse<Student>>(`/v1/student/${id}`),
 
@@ -1508,7 +1509,7 @@ export interface ContentAuditSnapshot { id: number; title: string; video: string
 export interface StaffActivity { id: number; action: string; first_name: string; last_name: string; created_at: string; details?: { before: ContentAuditSnapshot; after: ContentAuditSnapshot | null; view_history: { student_id: string; name: string; count: number }[] } | null }
 export interface ArchivedStudent { id: string; first_name: string; last_name: string; phone: string; deleted_at: string }
 export const archivedStudentsApi = {
-  list: (page: number, search: string) => get<{ data: ArchivedStudent[]; last_page: number }>('/v1/student-archives', { page, search }),
+  list: (page: number, search: string) => get<{ data: ArchivedStudent[]; last_page?: number; next_page_url?: string | null }>('/v1/student-archives', { page, search }),
   recover: (id: string, mode: 'restore' | 'new') => post(`/v1/student-archives/${id}`, { mode }),
 };
 export interface DeviceDetails { device: string; browser: string; identifier: string; ip: string; at: string }
