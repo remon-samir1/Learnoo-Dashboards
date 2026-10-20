@@ -51,6 +51,15 @@ function elements(node) {
   return [node, ...[].concat(node.props?.children || []).flatMap(elements)];
 }
 
+test('course review link is hidden for Admin and retained for Owner and Instructor', () => {
+  const props = { node: { type: 'course', name: 'Course', data: { id: '12', attributes: {} } }, canUseActivations: false };
+  const reviewLink = roles => elements(component.exports.DetailPanel({ ...props, ...roles }))
+    .find(node => node.type === 'a' && node.props.href.endsWith('#course-review'));
+  assert.equal(reviewLink({ isAdmin: true, isOwner: false, isInstructor: false }), undefined);
+  assert.equal(reviewLink({ isAdmin: false, isOwner: true, isInstructor: false }).props.href, '/courses/12#course-review');
+  assert.equal(reviewLink({ isAdmin: false, isOwner: false, isInstructor: true }).props.href, '/doctor/courses/12#course-review');
+});
+
 for (const type of ['course', 'chapter']) test(`Admin can activate a ${type} by code or phone list when permitted`, async () => {
   const { renderToStaticMarkup } = require('react-dom/server');
   const events = [];

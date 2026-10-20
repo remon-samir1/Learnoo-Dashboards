@@ -496,12 +496,12 @@
   "instructors": {
     "publishing": {
       "title": "Course publishing",
-      "description": "Choose how this instructor’s new courses are approved.",
+      "description": "Choose how this instructor’s courses are approved.",
       "review": "Require administrative approval",
       "reviewHint": "New courses stay hidden from students until an Admin or Owner approves them.",
       "automatic": "Publish without waiting for approval",
       "automaticHint": "New courses are approved automatically. Administrators still receive notifications.",
-      "existingCourses": "Existing course approvals and student activations stay unchanged."
+      "existingCourses": "Saving “Publish without waiting for approval” also approves existing pending courses. Declined courses, draft status and student activations stay unchanged."
     },
     "pageTitle": "Instructors Management",
     "pageDescription": "Manage instructor accounts and details.",
