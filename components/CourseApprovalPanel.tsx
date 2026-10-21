@@ -12,7 +12,7 @@ export default function CourseApprovalPanel({ course, onReviewed }: { course: Co
   const [reason, setReason] = useState(course.attributes.reason || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const canReview = role === 'Admin' || role === 'Super Admin';
+  const canReview = role === 'Super Admin';
 
   async function review(approval: 0 | 1 | 2) {
     setBusy(true);
@@ -25,6 +25,8 @@ export default function CourseApprovalPanel({ course, onReviewed }: { course: Co
       setError(error instanceof Error ? error.message : t('error'));
     } finally { setBusy(false); }
   }
+
+  if (role === 'Admin') return null;
 
   return <section id="course-review" className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
     <h2 className="font-bold">{t('title')}</h2>

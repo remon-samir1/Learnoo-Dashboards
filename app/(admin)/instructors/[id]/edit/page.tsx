@@ -26,7 +26,7 @@ export default function EditInstructorPage() {
   const t = useTranslations();
   const router = useRouter();
   const { role } = useCurrentUser();
-  const canManagePublishing = role === 'Admin' || role === 'Super Admin';
+  const canManagePublishing = role === 'Super Admin';
   const params = useParams();
   const instructorId = params.id as string;
   

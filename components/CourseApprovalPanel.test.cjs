@@ -35,7 +35,7 @@ function setup(role, locale = 'ar', approval = 0, fail = false) {
   return { messages, requests, refreshed: () => refreshed, render: () => { cursor = 0; return Panel({ course, onReviewed: () => { refreshed++; } }); } };
 }
 
-for (const role of ['Admin', 'Super Admin']) {
+for (const role of ['Super Admin']) {
   for (const locale of ['ar', 'en']) {
     test(`${role} can approve and decline from the ${locale} course review panel`, async () => {
       const s = setup(role, locale);
@@ -55,6 +55,12 @@ for (const role of ['Admin', 'Super Admin']) {
   }
 }
 
+for (const locale of ['ar', 'en']) test(`Admin has no course review panel in ${locale}`, () => {
+  const s = setup('Admin', locale);
+  assert.equal(s.render(), null);
+  assert.deepEqual(s.requests, []);
+});
+
 for (const role of ['Instructor', 'Support', 'Student']) {
   test(`${role} sees the review status and rejection reason without review controls`, () => {
     const s = setup(role, 'en', 2);
@@ -67,7 +73,7 @@ for (const role of ['Instructor', 'Support', 'Student']) {
 }
 
 test('a failed review stays on the page and shows the API error without pretending it saved', async () => {
-  const s = setup('Admin', 'en', 0, true);
+  const s = setup('Super Admin', 'en', 0, true);
   await elements(s.render()).find(node => node.type === 'button').props.onClick();
   assert.equal(s.refreshed(), 0);
   assert.match(renderToStaticMarkup(s.render()), /role="alert"[^>]*>Review request failed/);

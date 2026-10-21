@@ -24,7 +24,7 @@ export default function InstructorsPage() {
   const t = useTranslations('instructors');
   const tc = useTranslations('common');
   const { role } = useCurrentUser();
-  const canManagePublishing = role === 'Admin' || role === 'Super Admin';
+  const canManagePublishing = role === 'Super Admin';
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);

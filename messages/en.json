@@ -498,7 +498,7 @@
       "title": "Course publishing",
       "description": "Choose how this instructor’s courses are approved.",
       "review": "Require administrative approval",
-      "reviewHint": "New courses stay hidden from students until an Admin or Owner approves them.",
+      "reviewHint": "New courses stay hidden from students until the Owner approves them.",
       "automatic": "Publish without waiting for approval",
       "automaticHint": "New courses are approved automatically. Administrators still receive notifications.",
       "existingCourses": "Saving “Publish without waiting for approval” also approves existing pending courses. Declined courses, draft status and student activations stay unchanged."
@@ -1477,7 +1477,7 @@
       "0": "Pending review",
       "1": "Approved",
       "2": "Declined",
-      "hiddenHelp": "Hidden from students until the administration approves this course.",
+      "hiddenHelp": "Hidden from students until the Owner approves this course.",
       "approvedHelp": "Approval allows student access only while the course and its lessons are published and available. Student activation is still required for paid content.",
       "thumbnail": "Course thumbnail",
       "reason": "Reason for declining (optional)",
@@ -1488,7 +1488,7 @@
       "submitted": "Course submitted for review. It remains hidden from students until approved.",
       "submit": "Submit for review",
       "noDepartments": "Ask the administration to assign you a course in an academic department first.",
-      "description": "Create a course in one of your assigned departments. The administration reviews it before students can see it."
+      "description": "Create a course in one of your assigned departments. The Owner reviews it before students can see it."
     }
   },
   "centers": {

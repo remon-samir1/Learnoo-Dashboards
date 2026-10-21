@@ -25,7 +25,7 @@ export default function AddInstructorPage() {
   const t = useTranslations();
   const router = useRouter();
   const { role } = useCurrentUser();
-  const canManagePublishing = role === 'Admin' || role === 'Super Admin';
+  const canManagePublishing = role === 'Super Admin';
   
   // Mutation
   const { mutate: createInstructor, isLoading: isCreating, error: createError, progress } = useCreateInstructor();
