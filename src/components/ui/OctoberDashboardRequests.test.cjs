@@ -199,6 +199,7 @@ test('student community shows their pending notification target but hides other 
   const post = (id, user, status = 'draft', parent_id = null) => ({ id, attributes: { title: `Post ${id}`, content: 'Question', type: 'post', status, parent_id, user: { data: { id: user, attributes: { first_name: 'Student' } } } } });
   const { default: Feed } = load('components/student/community/StudentCommunityFeed.tsx', {
     react: { ...React, useEffect: () => {} },
+    '@/components/student/AuthorRoleBadge': { AuthorRoleBadge: () => null },
     '@/components/student/community/StudentCommunityCreatePostModal': { __esModule: true, default: () => null },
     '@/components/student/community/StudentCommunityPostComments': { __esModule: true, default: ({ postId }) => React.createElement('span', null, `Replies for ${postId}`) },
     '@/src/lib/community-post-display': { communityPostRelativeTime: () => '', communityPostTypeBadgeClasses: () => '' },
@@ -221,6 +222,7 @@ test('student community renders replies of every accepted post type only for the
   const reply = (id, type, parent_id) => ({ id, attributes: { type, parent_id, content: `Reply ${id}` } });
   const { default: Comments } = load('components/student/community/StudentCommunityPostComments.tsx', {
     react: { ...React, useState: value => [value === false ? true : value, () => {}] },
+    '@/components/student/AuthorRoleBadge': { AuthorRoleBadge: () => null },
     '@/src/hooks/useComments': { useComments: () => ({ data: [reply(1, 'post', 104), reply(2, 'question', 104), reply(3, 'summary', 104), reply(4, 'post', 105), reply(5, 'post', null)] }), useDeleteComment: () => ({}) },
     '@/src/hooks/usePosts': { useReactToPost: () => ({}) },
     '@/src/stores/authStore': { useAuth: () => ({ user: null }) },

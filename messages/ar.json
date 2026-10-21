@@ -4,6 +4,14 @@
     "tagline": "Pro Instructor"
   },
   "common": {
+    "authorRoles": {
+      "student": "طالب",
+      "instructor": "مدرّس",
+      "admin": "أدمن",
+      "owner": "أونر",
+      "support": "الدعم",
+      "parent": "ولي أمر"
+    },
     "loading": "جاري التحميل...",
     "save": "حفظ",
     "saving": "جاري الحفظ...",

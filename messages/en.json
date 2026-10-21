@@ -4,6 +4,14 @@
     "tagline": "Pro Instructor"
   },
   "common": {
+    "authorRoles": {
+      "student": "Student",
+      "instructor": "Instructor",
+      "admin": "Admin",
+      "owner": "Owner",
+      "support": "Support",
+      "parent": "Parent"
+    },
     "loading": "Loading...",
     "save": "Save",
     "saving": "Saving...",

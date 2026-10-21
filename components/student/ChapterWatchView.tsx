@@ -48,6 +48,7 @@ import { isNoVideoUrl, isStudentChapterPdfVisible } from '@/src/lib/student-chap
 import PdfPreviewModal from './PdfPreviewModal';
 import type { WatermarkResolution } from '@/src/lib/watermark-from-features';
 import { HlsVideoPlayer } from '@/components/student/watch/HlsVideoPlayer';
+import { AuthorRoleBadge } from '@/components/student/AuthorRoleBadge';
 
 type ChapterAttachment = NonNullable<Chapter['attributes']['attachments']>[number];
 
@@ -164,8 +165,9 @@ function DiscussionNode({
               .join('') || '•'}
           </div>
           <div className="min-w-0">
-            <p className={`font-semibold text-slate-100 ${isReply ? 'text-[13px]' : 'text-sm'}`}>
-              {author}
+            <p className={`flex flex-wrap items-center gap-2 font-semibold text-slate-100 ${isReply ? 'text-[13px]' : 'text-sm'}`}>
+              <span className="break-words">{author}</span>
+              <AuthorRoleBadge role={d.attributes?.user?.data?.attributes?.role} dark />
               {created ? <span className="font-normal text-slate-500"> • {created}</span> : null}
             </p>
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
