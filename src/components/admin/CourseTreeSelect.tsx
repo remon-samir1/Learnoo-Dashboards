@@ -392,11 +392,11 @@ export function CourseTreeSelect({
     const query = searchQuery.toLowerCase();
     const newExpandedNodes: Record<string, boolean> = {};
 
-    const findMatches = (nodes: TreeNode[]): boolean => {
+    const findMatches = (nodes: TreeNode[], parentMatches = false): boolean => {
       let matchInBranch = false;
       nodes.forEach(node => {
-        const nameMatches = node.name.toLowerCase().includes(query);
-        const childrenMatch = findMatches(node.children);
+        const nameMatches = parentMatches || node.name.toLowerCase().includes(query);
+        const childrenMatch = findMatches(node.children, nameMatches);
 
         if (childrenMatch) {
           newExpandedNodes[node.id] = true;
@@ -427,7 +427,7 @@ export function CourseTreeSelect({
         const { filtered: childFiltered, hasMatch: childHasMatch } = filterNodes(node.children);
 
         if (nameMatches || childHasMatch) {
-          filtered.push({ ...node, children: childFiltered });
+          filtered.push({ ...node, children: nameMatches ? node.children : childFiltered });
           treeHasMatch = true;
         }
       });
