@@ -31,8 +31,8 @@ function setup(path = '/notifications', locale = 'ar', sent = 1) {
     '@/src/lib/notification-href': href.exports,
     '@/src/lib/api': { notifications: {
       options: async () => ({ courses, departments: [{ id: 10, name: 'الأولى' }, { id: 20, name: 'الثانية' }] }),
-      list: async (page, filters, view) => {
-        requests.push({ page, filters, view });
+      list: async (page, filters) => {
+        requests.push({ page, filters });
         return { data: [{ id: 'notice', data: { type: 'student-account', student_id: 'student-id', title: 'Access', message: 'Activated' }, recipient_count: 5, read_at: read ? '2026-10-23' : null, created_at: '2026-10-23T12:00:00Z' }], meta: { total: 25, last_page: 2 } };
       },
       send: async payload => { calls.push(payload); return { sent }; },
@@ -74,7 +74,7 @@ for (const path of ['/notifications/add', '/doctor/notifications/add']) for (con
 
 test('instructor inbox hides content links and retains mark-as-read', async () => {
   const s = setup('/doctor/notifications'); await s.ready();
-  assert.equal(elements(s.render()).filter(node => node.props.href).length, 0);
+  assert.equal(elements(s.render()).filter(node => node.props.href && node.props.href !== '/doctor/notifications/add').length, 0);
   await button(s, 'تحديد كمقروء').props.onClick(); await s.ready();
   assert.deepEqual(s.calls, ['notice']);
   assert.equal(button(s, 'تحديد كمقروء'), undefined);
@@ -102,30 +102,40 @@ test('combined filters reach the server, narrow courses and reset pagination', a
   const s = setup('/notifications', 'en'); await s.ready();
   button(s, 'Next').props.onClick(); await s.ready();
   assert.equal(s.requests.at(-1).page, 2);
-  control(s, 'Search title').props.onChange({ target: { value: 'Anatomy' } });
+  control(s, 'Search notifications').props.onChange({ target: { value: 'Anatomy' } });
   control(s, 'Academic year').props.onChange({ target: { value: '20' } });
   assert.deepEqual(elements(control(s, 'Course')).filter(n => n.type === 'option').map(n => String(n.props.value)), ['', '2']);
   for (const [name, value] of [['Course', '2'], ['Notification type', 'exam'], ['Read status', 'unread'], ['From date', '2026-10-21'], ['To date', '2026-10-23']]) control(s, name).props.onChange({ target: { value } });
   find(s, 'form').props.onSubmit({ preventDefault() {} }); await s.ready();
-  assert.deepEqual(s.requests.at(-1), { page: 1, view: 'inbox', filters: { search: 'Anatomy', department_id: '20', course_id: '2', type: 'exam', status: 'unread', from: '2026-10-21', to: '2026-10-23' } });
+  assert.deepEqual(s.requests.at(-1), { page: 1, filters: { search: 'Anatomy', department_id: '20', course_id: '2', type: 'exam', status: 'unread', from: '2026-10-21', to: '2026-10-23' } });
   control(s, 'Academic year').props.onChange({ target: { value: '10' } });
   assert.equal(control(s, 'Course').props.value, '');
   button(s, 'Reset filters').props.onClick(); await s.ready();
-  assert.deepEqual(s.requests.at(-1), { page: 1, view: 'inbox', filters: {} });
-  assert.equal(control(s, 'Search title').props.value, '');
+  assert.deepEqual(s.requests.at(-1), { page: 1, filters: {} });
+  assert.equal(control(s, 'Search notifications').props.value, '');
 });
 
-test('sent history hides read actions, displays recipients and clears incompatible filters', async () => {
-  const s = setup('/notifications', 'en'); await s.ready();
-  control(s, 'Notification type').props.onChange({ target: { value: 'exam' } });
-  find(s, 'form').props.onSubmit({ preventDefault() {} }); await s.ready();
-  button(s, 'Sent').props.onClick(); await s.ready();
-  assert.equal(s.requests.at(-1).view, 'sent');
-  assert.equal(s.requests.at(-1).filters.type, '');
-  assert.equal(control(s, 'Read status'), undefined);
-  assert.equal(button(s, 'Mark as read'), undefined);
-  assert.equal(button(s, 'Mark entire inbox as read'), undefined);
-  assert.ok(text(s.render().props.children).includes('Recipients: 5'));
-  button(s, 'Send announcement').props.onClick(); await s.ready();
+for (const path of ['/notifications', '/doctor/notifications']) {
+  test(`${path} puts filters above received items without a sender form or Sent tab`, async () => {
+    const s = setup(path, 'en'); await s.ready();
+    assert.equal(find(s, 'textarea'), undefined);
+    assert.equal(button(s, 'Sent'), undefined);
+    assert.equal(button(s, 'Received'), undefined);
+    assert.ok(control(s, 'Search notifications'));
+    assert.ok(control(s, 'Academic year'));
+    const nodes = elements(s.render());
+    assert.ok(nodes.findIndex(n => n.type === 'form') < nodes.findIndex(n => n.type === 'article'));
+    assert.ok(nodes.some(n => n.props.href === `${path}/add`));
+  });
+}
+
+test('the separate sender page keeps plain course names and no inbox filters', async () => {
+  const s = setup('/doctor/notifications/add', 'en'); await s.ready();
   assert.ok(find(s, 'textarea'));
+  assert.equal(control(s, 'Search notifications'), undefined);
+  assert.equal(control(s, 'Academic year'), undefined);
+  assert.equal(button(s, 'Sent'), undefined);
+  const labels = elements(find(s, 'select')).filter(n => n.type === 'option').map(n => text(n.props.children));
+  assert.deepEqual(labels, ['Select a course', ...courses.map(c => c.title)]);
+  assert.ok(elements(s.render()).some(n => n.props.href === '/doctor/notifications'));
 });
