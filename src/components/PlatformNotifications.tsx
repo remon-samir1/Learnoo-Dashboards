@@ -13,6 +13,7 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
   const ar = useLocale() === 'ar';
   const locale = useLocale();
   const pathname = usePathname();
+  const instructor = pathname.startsWith('/doctor/');
   const { data: courses } = useCourses({ per_page: 500 }, { enabled: canSend });
   const [items, setItems] = useState<PlatformNotification[]>([]);
   const [page, setPage] = useState(1);
@@ -23,6 +24,8 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [course, setCourse] = useState('');
+  const [courseSearch, setCourseSearch] = useState('');
+  const matchingCourses = (courses ?? []).filter(c => c.attributes.title.toLocaleLowerCase().includes(courseSearch.trim().toLocaleLowerCase()));
 
   useEffect(() => {
     let active = true;
@@ -43,6 +46,10 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
       e.preventDefault(); setSending(true);
       try {
         const result = await api.notifications.send({ title, message, course_id: course ? Number(course) : undefined });
+        if (!result.sent) {
+          toast.warning(ar ? 'لا يوجد طلاب مفعّل لهم المحتوى المحدد. لم يتم إرسال إشعارات.' : 'No students have access to the selected content. No notifications were sent.');
+          return;
+        }
         toast.success(ar ? `تم إرسال ${result.sent} إشعار` : `Sent ${result.sent} notifications`);
         setTitle(''); setMessage('');
       } catch { toast.error(ar ? 'تعذر الإرسال. تحقق من اختيار الدورة.' : 'Could not send. Check the selected course.'); }
@@ -50,10 +57,12 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
     }}>
       <label className="block">{ar ? 'العنوان' : 'Title'}<input required maxLength={255} value={title} onChange={e => setTitle(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
       <label className="block">{ar ? 'الرسالة' : 'Message'}<textarea required maxLength={2000} value={message} onChange={e => setMessage(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
-      <label className="block">{ar ? 'المستلمون' : 'Recipients'}<select value={course} onChange={e => setCourse(e.target.value)} className="mt-2 w-full rounded-xl border p-3">
-        <option value="">{ar ? 'كل الطلاب (للإدارة فقط)' : 'All students (administration only)'}</option>
-        {(courses ?? []).map(c => <option key={c.id} value={c.id}>{c.attributes.title}</option>)}
+      <label className="block">{ar ? 'البحث عن مادة' : 'Search courses'}<input type="search" value={courseSearch} onChange={e => setCourseSearch(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
+      <label className="block">{ar ? 'المستلمون' : 'Recipients'}<select required={instructor} value={course} onChange={e => setCourse(e.target.value)} className="mt-2 w-full rounded-xl border p-3">
+        <option value="">{instructor ? (ar ? 'اختر مادة' : 'Select a course') : (ar ? 'كل الطلاب (للإدارة فقط)' : 'All students (administration only)')}</option>
+        {(courses ?? []).filter(c => String(c.id) === course || matchingCourses.includes(c)).map(c => <option key={c.id} value={c.id}>{c.attributes.title}</option>)}
       </select></label>
+      {courseSearch.trim() && !matchingCourses.length && <p role="status" className="text-sm text-gray-500">{ar ? 'لا توجد مواد مطابقة للبحث' : 'No matching courses'}</p>}
       <button disabled={sending} className="rounded-xl bg-primary px-5 py-3 text-white disabled:opacity-50">{sending ? (ar ? 'جارٍ الإرسال…' : 'Sending…') : (ar ? 'إرسال' : 'Send')}</button>
     </form>}
     <button className="text-primary underline" onClick={async () => {

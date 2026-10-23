@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- CommonJS test harness. */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
@@ -8,13 +9,13 @@ const { notificationHref } = loaded.exports;
 
 test('activity notifications open reviews, parent courses and affected accounts without linking deleted content', () => {
   assert.equal(notificationHref({ type: 'course', content_id: 6, action: 'reviewed' }, '/notifications', 'ar'), '/courses/6#course-review');
-  assert.equal(notificationHref({ type: 'course', content_id: 6, action: 'reviewed' }, '/doctor/notifications', 'ar'), '/doctor/courses/6#course-review');
+  assert.equal(notificationHref({ type: 'course', content_id: 6, action: 'reviewed' }, '/doctor/notifications', 'ar'), null);
   assert.equal(notificationHref({ type: 'lecture', content_id: 9, course_id: 6 }, '/ar/student/notifications', 'ar'), '/ar/student/courses/course-details/6');
-  assert.equal(notificationHref({ type: 'lesson', content_id: 9, course_id: 6, action: 'deleted' }, '/doctor/notifications', 'ar'), '/doctor/courses/6');
+  assert.equal(notificationHref({ type: 'lesson', content_id: 9, course_id: 6, action: 'deleted' }, '/doctor/notifications', 'ar'), null);
   assert.equal(notificationHref({ type: 'course', content_id: 6, action: 'deleted' }, '/ar/student/notifications', 'ar'), '/ar/student/courses');
   assert.equal(notificationHref({ type: 'course', content_id: 6, action: 'unavailable' }, '/ar/student/notifications', 'ar'), '/ar/student/courses');
   assert.equal(notificationHref({ type: 'student-account', student_id: 'student-uuid' }, '/notifications', 'ar'), '/students/student-uuid');
-  assert.equal(notificationHref({ type: 'student-account', student_id: 'student-uuid' }, '/doctor/notifications', 'ar'), '/doctor/students/student-uuid');
+  assert.equal(notificationHref({ type: 'student-account', student_id: 'student-uuid' }, '/doctor/notifications', 'ar'), null);
   assert.equal(notificationHref({ type: 'instructor-account', student_id: 'teacher-uuid' }, '/notifications', 'ar'), '/instructors/teacher-uuid/edit');
   assert.equal(notificationHref({ type: 'lecture', content_id: 9, course_id: 'javascript:alert(1)' }, '/notifications', 'ar'), null);
   assert.equal(notificationHref({ type: 'lesson', course_id: 'javascript:alert(1)', action: 'deleted' }, '/notifications', 'ar'), '/courses');
@@ -23,7 +24,7 @@ test('activity notifications open reviews, parent courses and affected accounts 
 test('notifications open the correct content for students, teachers and parents without trusting external URLs', () => {
   assert.equal(notificationHref({ type: 'community', post_id: 42 }, '/ar/student/notifications', 'ar'), '/ar/student/community?post=42#post-42');
   assert.equal(notificationHref({ type: 'discussion', chapter_id: 12, discussion_id: 99 }, '/ar/student/notifications', 'ar'), '/ar/student/courses/watch/12?discussion=99#discussion-99');
-  assert.equal(notificationHref({ type: 'discussion', chapter_id: 12, discussion_id: 99 }, '/doctor/notifications', 'ar'), '/doctor/discussions?discussion=99');
+  assert.equal(notificationHref({ type: 'discussion', chapter_id: 12, discussion_id: 99 }, '/doctor/notifications', 'ar'), null);
   assert.equal(notificationHref({ type: 'exam', content_id: 6 }, '/ar/student/notifications', 'ar'), '/ar/student/exams/start-exam/6');
   assert.equal(notificationHref({ type: 'exam', content_id: 6, course_id: 12 }, '/en/student/notifications', 'en'), '/en/student/exams/start-exam/6?course=12');
   assert.equal(notificationHref({ type: 'device-transfer', student_id: 'student-uuid' }, '/notifications', 'ar'), '/activity#device-student-uuid');
@@ -43,4 +44,10 @@ test('a discussion destination retains nested replies and deduplicates replies a
   assert.equal(result.length, 1);
   assert.equal(result[0].replies.length, 1);
   assert.equal(result[0].replies[0].id, 2);
+});
+
+test('instructor notifications never expose content links', () => {
+  for (const data of [{ type: 'student-account', student_id: 'student-uuid' }, { type: 'course', content_id: 6 }, { type: 'support-issue', url: '/issues/inbox?issue=12' }, { type: 'device-transfer', student_id: 'student-uuid' }]) {
+    for (const path of ['/doctor/notifications', '/doctor/notifications/add']) assert.equal(notificationHref(data, path, 'ar'), null);
+  }
 });

@@ -10,22 +10,22 @@ export const metadata: Metadata = {
   description: "Learnoo-Dashboard",
   icons: {
     icon: [
-      { url: "/Logo.jpeg", sizes: "512x512", type: "image/jpeg" },
+      { url: "/icon?v=20261023", sizes: "512x512", type: "image/png" },
     ],
-    apple: "/Logo.jpeg",
+    apple: "/icon?v=20261023",
   },
   openGraph: {
     images: [
       {
-        url: "/Logo.jpeg",
-        width: 512,
-        height: 512,
+        url: "/Logo.jpeg?v=20261023",
+        width: 1097,
+        height: 1078,
         alt: "Learnoo Logo",
       },
     ],
   },
   twitter: {
-    images: ["/Logo.jpeg"],
+    images: ["/Logo.jpeg?v=20261023"],
   },
 };
 

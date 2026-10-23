@@ -719,7 +719,11 @@ export const coursesApi = {
 // ============================================
 
 export const departmentsApi = {
-  list: () => get<ApiListResponse<Department>>('/v1/department'),
+  list: () => get<ApiListResponse<Department>>('/v1/department').catch(async (error: unknown) => {
+    if (!(error instanceof TypeError)) throw error;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return get<ApiListResponse<Department>>('/v1/department');
+  }),
 
   get: (id: number) => get<ApiResponse<Department>>(`/v1/department/${id}`),
 

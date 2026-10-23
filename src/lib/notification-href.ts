@@ -1,6 +1,7 @@
 import { buildStudentStartExamHref } from './student-start-exam-href';
 
 export function notificationHref(data: Record<string, unknown>, pathname: string, locale: string): string | null {
+  if (pathname.startsWith('/doctor/')) return null;
   const student = pathname.includes('/student/');
   const prefix = pathname.includes('/doctor/') ? '/doctor' : '';
   const base = student ? `/${locale}/student` : prefix;

@@ -6,12 +6,10 @@ import {
   Search,
   Plus,
   Eye,
-  Edit2,
-  Trash2,
   Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useStudents, useDeleteStudent } from '@/src/hooks/useStudents';
+import { useStudents } from '@/src/hooks/useStudents';
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
 import type { Student, StudentStatus } from '@/src/types';
 import { StudentStatusLabels } from '@/src/types';
@@ -43,22 +41,11 @@ export default function StudentsPage() {
     search: debouncedSearch || undefined,
   }), [statusFilter, page, debouncedSearch]);
 
-  const { data: studentsResponse, isLoading, error, refetch } = useStudents(filter, {});
-  const { mutate: deleteStudent, isLoading: isDeleting } = useDeleteStudent();
+  const { data: studentsResponse, isLoading, error } = useStudents(filter, {});
 
   const students = studentsResponse?.data || [];
   const meta = studentsResponse?.meta as any;
 
-  const handleDelete = async (id: string) => {
-    if (confirm(t('deleteConfirm'))) {
-      try {
-        await deleteStudent(id);
-        refetch();
-      } catch {
-        // Error handled by hook
-      }
-    }
-  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -187,21 +174,7 @@ export default function StudentsPage() {
                               <Eye className="w-4 h-4" />
                             </Link>
 
-                            <Link
-                              href={`/doctor/students/${student.id}/edit`}
-                              className="p-2 text-[#64748B] hover:text-[#4F46E5] hover:bg-indigo-50 rounded-lg transition-all"
-                              title={t('editStudent')}
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </Link>
-                            <button
-                              className="p-2 text-[#64748B] hover:text-[#EF4444] hover:bg-red-50 rounded-lg transition-all"
-                              title={t('deleteStudent')}
-                              onClick={() => handleDelete(student.id)}
-                              disabled={isDeleting}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+
                           </div>
                         </td>
                       </tr>
