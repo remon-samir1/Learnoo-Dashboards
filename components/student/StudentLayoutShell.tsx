@@ -7,6 +7,7 @@ import Sidebar from "@/components/student/Sidebar";
 import { StudentToaster } from "@/components/student/StudentToaster";
 import type { CurrentUser } from "@/src/interfaces/current-user.interface";
 import { useAuth } from "@/src/stores/authStore";
+import AppDownloadLink from "@/src/components/AppDownloadLink";
 
 type StudentLayoutShellProps = {
   locale: string;
@@ -79,6 +80,7 @@ export default function StudentLayoutShell({
         <main className="flex flex-1 items-center justify-center px-4 py-8">
           {children}
         </main>
+        <AppDownloadLink />
         <StudentToaster />
       </div>
     );
@@ -97,6 +99,7 @@ export default function StudentLayoutShell({
         <main className="min-w-0 flex-1 px-4 py-4 pb-6 sm:px-5 sm:py-5 lg:px-16 lg:py-5">
           {children}
         </main>
+        <AppDownloadLink />
 
         <StudentToaster />
       </div>
