@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { notificationHref } from '@/src/lib/notification-href';
+import { CourseTreeSelect } from '@/src/components/admin/CourseTreeSelect';
 import { toast } from 'sonner';
 import api, { type NotificationFilters, type NotificationOptions, type PlatformNotification } from '@/src/lib/api';
 
@@ -24,7 +25,7 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [course, setCourse] = useState('');
-  const [courseSearch, setCourseSearch] = useState('');
+  const [audience, setAudience] = useState('course');
   const [draft, setDraft] = useState<NotificationFilters>({});
   const [filters, setFilters] = useState<NotificationFilters>({});
   const [options, setOptions] = useState<NotificationOptions>({ courses: [], departments: [] });
@@ -32,7 +33,6 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
   const [total, setTotal] = useState(0);
   const [refresh, setRefresh] = useState(0);
   const courses = options.courses;
-  const matchingCourses = courses.filter(c => c.sendable && c.title.toLocaleLowerCase().includes(courseSearch.trim().toLocaleLowerCase()));
   const filterCourses = courses.filter(c => !draft.department_id || c.department_ids.includes(Number(draft.department_id)));
   const kinds = [
     ['announcement', 'رسائل يدوية', 'Manual announcements'], ['activation', 'تفعيل وإلغاء تفعيل المحتوى', 'Content access'],
@@ -43,11 +43,12 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
   ];
 
   useEffect(() => {
+    if (sendForm) return;
     let active = true;
     api.notifications.options().then(result => { if (active) { setOptions(result); setOptionsError(false); } })
       .catch(() => active && setOptionsError(true));
     return () => { active = false; };
-  }, [refresh]);
+  }, [refresh, sendForm]);
 
   useEffect(() => {
     if (sendForm) return;
@@ -69,11 +70,16 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
       <h1 className="text-2xl font-bold">{sendForm ? (ar ? 'إرسال إشعار' : 'Send notification') : (ar ? 'الإشعارات' : 'Notifications')}</h1>
       {canSend && <Link href={sendForm ? inboxHref : `${inboxHref}/add`} className="text-primary underline">{sendForm ? (ar ? 'العودة إلى الإشعارات' : 'Back to notifications') : (ar ? 'إرسال إشعار' : 'Send notification')}</Link>}
     </div>
-    {optionsError && <p role="alert">{ar ? 'تعذر تحميل خيارات المواد والفِرَق. أعد تحميل الصفحة للمحاولة.' : 'Could not load course and year options. Reload the page to retry.'}</p>}
+    {!sendForm && optionsError && <p role="alert">{ar ? 'تعذر تحميل خيارات المواد والفِرَق. أعد تحميل الصفحة للمحاولة.' : 'Could not load course and year options. Reload the page to retry.'}</p>}
     {sendForm && <form className="space-y-4 rounded-2xl border bg-white p-6" onSubmit={async e => {
-      e.preventDefault(); setSending(true);
+      e.preventDefault();
+      if ((instructor || audience === 'course') && !course) {
+        toast.error(ar ? 'اختر مادة من الشجرة الأكاديمية.' : 'Choose a course from the academic tree.');
+        return;
+      }
+      setSending(true);
       try {
-        const result = await api.notifications.send({ title, message, course_id: course ? Number(course) : undefined });
+        const result = await api.notifications.send({ title, message, course_id: instructor || audience === 'course' ? Number(course) : undefined });
         if (!result.sent) {
           toast.warning(ar ? 'لا يوجد طلاب مفعّل لهم المحتوى المحدد. لم يتم إرسال إشعارات.' : 'No students have access to the selected content. No notifications were sent.');
           return;
@@ -83,15 +89,17 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
       } catch { toast.error(ar ? 'تعذر الإرسال. تحقق من اختيار الدورة.' : 'Could not send. Check the selected course.'); }
       finally { setSending(false); }
     }}>
+      <fieldset disabled={sending} className="space-y-4">
+      <legend className="mb-3 font-semibold">{ar ? 'المستلمون' : 'Recipients'}</legend>
+      {!instructor && <div className="flex flex-wrap gap-4">
+        <label className="flex items-center gap-2"><input type="radio" name="audience" value="course" checked={audience === 'course'} onChange={() => setAudience('course')} />{ar ? 'طلاب مادة محددة' : 'Students in one course'}</label>
+        <label className="flex items-center gap-2"><input type="radio" name="audience" value="all" checked={audience === 'all'} onChange={() => setAudience('all')} />{ar ? 'كل الطلاب' : 'All students'}</label>
+      </div>}
+      {(instructor || audience === 'course') ? <CourseTreeSelect value={course} onChange={setCourse} label={ar ? 'المادة' : 'Course'} required /> : <p className="text-sm text-gray-600">{ar ? 'سيصل هذا الإشعار إلى كل حسابات الطلاب النشطة.' : 'This notification will reach all active student accounts.'}</p>}
+      </fieldset>
       <label className="block">{ar ? 'العنوان' : 'Title'}<input required maxLength={255} value={title} onChange={e => setTitle(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
       <label className="block">{ar ? 'الرسالة' : 'Message'}<textarea required maxLength={2000} value={message} onChange={e => setMessage(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
-      <label className="block">{ar ? 'البحث عن مادة' : 'Search courses'}<input type="search" value={courseSearch} onChange={e => setCourseSearch(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
-      <label className="block">{ar ? 'المستلمون' : 'Recipients'}<select required={instructor} value={course} onChange={e => setCourse(e.target.value)} className="mt-2 w-full min-w-0 rounded-xl border p-3">
-        <option value="">{instructor ? (ar ? 'اختر مادة' : 'Select a course') : (ar ? 'كل الطلاب (للإدارة فقط)' : 'All students (administration only)')}</option>
-        {courses.filter(c => c.sendable && (String(c.id) === course || matchingCourses.includes(c))).map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-      </select></label>
-      {courseSearch.trim() && !matchingCourses.length && <p role="status" className="text-sm text-gray-500">{ar ? 'لا توجد مواد مطابقة للبحث' : 'No matching courses'}</p>}
-      <button disabled={sending || optionsError} className="rounded-xl bg-primary px-5 py-3 text-white disabled:opacity-50">{sending ? (ar ? 'جارٍ الإرسال…' : 'Sending…') : (ar ? 'إرسال' : 'Send')}</button>
+      <button disabled={sending || ((instructor || audience === 'course') && !course)} className="rounded-xl bg-primary px-5 py-3 text-white disabled:opacity-50">{sending ? (ar ? 'جارٍ الإرسال…' : 'Sending…') : (ar ? 'إرسال' : 'Send')}</button>
     </form>}
     {!sendForm && <>
       <form className="space-y-4 rounded-2xl border bg-white p-5" onSubmit={e => { e.preventDefault(); setPage(1); setLoading(true); setFilters({ ...draft }); }}>

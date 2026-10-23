@@ -3,6 +3,8 @@ import { cookies, headers } from "next/headers";
 import "./globals.css";
 import Providers from "./providers";
 import { Toaster } from "sonner";
+import { Suspense } from "react";
+import AppDownloadLink from "@/src/components/AppDownloadLink";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://learnoo.app"),
@@ -67,6 +69,7 @@ export default async function RootLayout({
         >
         <Toaster />
           {children}
+          <Suspense fallback={null}><AppDownloadLink floating /></Suspense>
         </Providers>
       </body>
     </html>

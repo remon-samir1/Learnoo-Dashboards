@@ -10,6 +10,7 @@ const compile = file => ts.transpileModule(readFileSync(`${__dirname}/${file}`, 
 const href = { exports: {} };
 new Function('require', 'module', 'exports', compile('../lib/notification-href.ts'))(() => ({ buildStudentStartExamHref: () => '' }), href, href.exports);
 const code = compile('PlatformNotifications.tsx');
+const CourseTreeSelect = () => null;
 const courses = [
   { id: 1, title: 'محاسبة انتظام Accounting', label: 'الأولى / محاسبة انتظام Accounting', department_ids: [10], sendable: true },
   { id: 2, title: 'محاسبة انتساب Finance', label: 'الثانية / محاسبة انتساب Finance', department_ids: [20], sendable: true },
@@ -29,6 +30,7 @@ function setup(path = '/notifications', locale = 'ar', sent = 1) {
     'next/navigation': { usePathname: () => path },
     'next/link': () => null,
     '@/src/lib/notification-href': href.exports,
+    '@/src/components/admin/CourseTreeSelect': { CourseTreeSelect },
     '@/src/lib/api': { notifications: {
       options: async () => ({ courses, departments: [{ id: 10, name: 'الأولى' }, { id: 20, name: 'الثانية' }] }),
       list: async (page, filters) => {
@@ -52,23 +54,22 @@ function control(s, name) { return elements(label(s, name)).find(node => ['input
 function button(s, name) { return elements(s.render()).find(node => node.type === 'button' && text(node.props.children) === name); }
 
 for (const path of ['/notifications/add', '/doctor/notifications/add']) for (const locale of ['ar', 'en']) {
-  test(`${path} course search and selected recipient work in ${locale}`, async () => {
+  test(`${path} uses the academic tree and requires a course in ${locale}`, async () => {
     const s = setup(path, locale); await s.ready();
-    const search = () => elements(s.render()).find(node => node.type === 'input' && node.props.type === 'search');
-    search().props.onChange({ target: { value: 'انتساب' } });
-    assert.deepEqual(elements(find(s, 'select')).filter(node => node.type === 'option').map(node => String(node.props.value)), ['', '2']);
-    find(s, 'select').props.onChange({ target: { value: '2' } });
-    search().props.onChange({ target: { value: ' Business ' } });
-    assert.equal(find(s, 'select').props.value, '2');
-    assert.deepEqual(elements(find(s, 'select')).filter(node => node.type === 'option').map(node => String(node.props.value)), ['', '2', '3']);
-    assert.equal(find(s, 'select').props.required, path.startsWith('/doctor/'));
-    search().props.onChange({ target: { value: 'no match' } });
-    assert.ok(elements(s.render()).some(node => node.props.role === 'status'));
+    assert.equal(find(s, 'select'), undefined);
+    assert.equal(elements(s.render()).find(node => node.type === 'input' && node.props.type === 'search'), undefined);
+    assert.equal(find(s, CourseTreeSelect).props.required, true);
+    assert.equal(elements(s.render()).filter(node => node.props.name === 'audience').length, path.startsWith('/doctor/') ? 0 : 2);
     elements(s.render()).find(node => node.type === 'input' && !node.props.type).props.onChange({ target: { value: 'Notice' } });
     find(s, 'textarea').props.onChange({ target: { value: 'Message' } });
     await find(s, 'form').props.onSubmit({ preventDefault() {} });
+    assert.deepEqual(s.calls, []);
+    assert.equal(s.toasts[0][0], 'error');
+    find(s, CourseTreeSelect).props.onChange('2');
+    assert.equal(find(s, CourseTreeSelect).props.value, '2');
+    await find(s, 'form').props.onSubmit({ preventDefault() {} });
     assert.deepEqual(s.calls, [{ title: 'Notice', message: 'Message', course_id: 2 }]);
-    assert.equal(s.toasts[0][0], 'success');
+    assert.equal(s.toasts.at(-1)[0], 'success');
   });
 }
 
@@ -82,11 +83,15 @@ test('instructor inbox hides content links and retains mark-as-read', async () =
   assert.ok(elements(owner.render()).some(node => node.props.href === '/students/student-id'));
 });
 
-test('zero recipients show a warning and preserve the unsent message', async () => {
+test('administration explicitly selects all students and preserves an unsent message', async () => {
   const s = setup('/notifications/add', 'ar', 0); await s.ready();
+  find(s, CourseTreeSelect).props.onChange('2');
+  elements(s.render()).find(n => n.props.name === 'audience' && n.props.value === 'all').props.onChange();
+  assert.equal(find(s, CourseTreeSelect), undefined);
   elements(s.render()).find(node => node.type === 'input' && !node.props.type).props.onChange({ target: { value: 'Notice' } });
   find(s, 'textarea').props.onChange({ target: { value: 'Message' } });
   await find(s, 'form').props.onSubmit({ preventDefault() {} });
+  assert.deepEqual(s.calls, [{ title: 'Notice', message: 'Message', course_id: undefined }]);
   assert.equal(s.toasts[0][0], 'warning');
   assert.equal(find(s, 'textarea').props.value, 'Message');
 });
@@ -129,13 +134,13 @@ for (const path of ['/notifications', '/doctor/notifications']) {
   });
 }
 
-test('the separate sender page keeps plain course names and no inbox filters', async () => {
+test('the separate sender page uses the academic tree without inbox filters', async () => {
   const s = setup('/doctor/notifications/add', 'en'); await s.ready();
   assert.ok(find(s, 'textarea'));
   assert.equal(control(s, 'Search notifications'), undefined);
   assert.equal(control(s, 'Academic year'), undefined);
   assert.equal(button(s, 'Sent'), undefined);
-  const labels = elements(find(s, 'select')).filter(n => n.type === 'option').map(n => text(n.props.children));
-  assert.deepEqual(labels, ['Select a course', ...courses.map(c => c.title)]);
+  assert.ok(find(s, CourseTreeSelect));
+  assert.equal(find(s, 'select'), undefined);
   assert.ok(elements(s.render()).some(n => n.props.href === '/doctor/notifications'));
 });

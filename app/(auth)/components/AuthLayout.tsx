@@ -1,5 +1,6 @@
 import Logo from '@/components/Logo';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import AppDownloadLink from '@/src/components/AppDownloadLink';
 
 interface AuthLayoutProps {
   title: string;
@@ -27,6 +28,7 @@ export default function AuthPageLayout({ title, subtitle, children }: AuthLayout
           </div>
           {children}
         </div>
+        <AppDownloadLink />
       </div>
     </div>
   );
