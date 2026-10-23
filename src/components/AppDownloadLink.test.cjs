@@ -16,11 +16,13 @@ for (const locale of ['ar', 'en']) test(`download footer links to Google Play an
   const footer = loaded.exports.default();
   assert.equal(footer.type, 'footer');
   const nodes = elements(footer);
-  assert.ok(nodes.every(n => !/\b(fixed|sticky)\b/.test(n.props.className || '')));
-  const image = nodes.find(n => n.type === Image);
-  assert.equal(image.props.src, '/images/app-download-badges.png');
-  assert.equal(image.props.width, 1280);
-  assert.equal(image.props.height, 427);
+  assert.ok(nodes.every(n => !/\b(fixed|sticky|absolute)\b/.test(n.props.className || '')));
+  const images = nodes.filter(n => n.type === Image);
+  assert.deepEqual(images.map(n => n.props.src), [
+    `/images/store-badges/google-play-${locale}.png`,
+    '/images/store-badges/appgallery-en.png',
+  ]);
+  for (const image of images) assert.ok(readFileSync(`${__dirname}/../../public${image.props.src}`).length > 0);
   const links = nodes.filter(n => n.type === 'a');
   assert.deepEqual(links.map(n => n.props.href), [
     'https://play.google.com/store/apps/details?id=com.sunmed.learnoo',
@@ -29,7 +31,8 @@ for (const locale of ['ar', 'en']) test(`download footer links to Google Play an
   for (const link of links) {
     assert.equal(link.props.target, '_blank');
     assert.equal(link.props.rel, 'noopener noreferrer');
-    assert.ok(link.props['aria-label'].includes(link.props.children.props.children));
+    assert.equal(link.props.children.type, Image);
+    assert.ok(link.props['aria-label'].includes(link.props.children.props.alt));
   }
 });
 
