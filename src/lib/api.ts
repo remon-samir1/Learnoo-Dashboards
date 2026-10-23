@@ -1476,13 +1476,24 @@ export const appVersionsApi = {
 
 export interface PlatformNotification {
   id: string;
-  data: { title: string; message: string; type?: string; action?: string; event?: string; actor_name?: string; url?: string; content_id?: string | number; course_id?: string | number; post_id?: string | number; chapter_id?: string | number; discussion_id?: string | number; student_id?: string };
+  data: { title: string; message: string; type?: string; action?: string; event?: string; actor_name?: string; url?: string; content_id?: string | number; course_id?: string | number; post_id?: string | number; chapter_id?: string | number; discussion_id?: string | number; student_id?: string; course_title?: string; audience?: string };
   read_at: string | null;
+  recipient_count?: number;
   created_at: string;
 }
 
+export interface NotificationFilters {
+  search?: string; type?: string; department_id?: string; course_id?: string; status?: string; from?: string; to?: string;
+}
+
+export interface NotificationOptions {
+  departments: { id: number; name: string }[];
+  courses: { id: number; title: string; label: string; department_ids: number[]; sendable: boolean }[];
+}
+
 export const notificationsApi = {
-  list: (page = 1) => get<{ data: PlatformNotification[]; meta: { last_page: number; unread_count: number } }>('/v1/notifications', { page }),
+  list: (page = 1, filters: NotificationFilters = {}, view = 'inbox') => get<{ data: PlatformNotification[]; meta: { last_page: number; total: number; unread_count: number } }>('/v1/notifications', { page, ...filters, view }),
+  options: () => get<NotificationOptions>('/v1/notifications/options'),
   send: (data: { title: string; message: string; course_id?: number }) => post<{ sent: number }>('/v1/notifications/send', data),
   read: (id: string) => patch(`/v1/notifications/${id}/read`),
   readAll: () => patch('/v1/notifications/read-all'),

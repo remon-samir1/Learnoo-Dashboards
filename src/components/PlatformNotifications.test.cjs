@@ -11,35 +11,49 @@ const href = { exports: {} };
 new Function('require', 'module', 'exports', compile('../lib/notification-href.ts'))(() => ({ buildStudentStartExamHref: () => '' }), href, href.exports);
 const code = compile('PlatformNotifications.tsx');
 const courses = [
-  { id: '1', attributes: { title: 'محاسبة انتظام Accounting' } },
-  { id: '2', attributes: { title: 'محاسبة انتساب Finance' } },
-  { id: '3', attributes: { title: 'إدارة Business' } },
+  { id: 1, title: 'محاسبة انتظام Accounting', label: 'الأولى / محاسبة انتظام Accounting', department_ids: [10], sendable: true },
+  { id: 2, title: 'محاسبة انتساب Finance', label: 'الثانية / محاسبة انتساب Finance', department_ids: [20], sendable: true },
+  { id: 3, title: 'إدارة Business', label: 'الأولى / إدارة Business', department_ids: [10], sendable: true },
 ];
 function setup(path = '/notifications', locale = 'ar', sent = 1) {
-  const state = [[{ id: 'notice', data: { type: 'student-account', student_id: 'student-id', title: 'Access', message: 'Activated' }, read_at: null, created_at: '2026-10-23T12:00:00Z' }], 1, 1, false];
-  let cursor = 0;
-  const calls = [], toasts = [];
+  const state = [], effects = [], pending = [];
+  let cursor = 0, effectCursor = 0, read = false;
+  const calls = [], requests = [], toasts = [];
   const loadedModule = { exports: {} };
   const mocks = {
-    react: { ...React, useEffect() {}, useState: initial => { const index = cursor++; if (!(index in state)) state[index] = initial; return [state[index], value => { state[index] = typeof value === 'function' ? value(state[index]) : value; }]; } },
+    react: { ...React,
+      useEffect(fn, deps) { const index = effectCursor++; if (!effects[index] || deps.some((v, i) => effects[index][i] !== v)) { effects[index] = deps; pending.push(fn); } },
+      useState(initial) { const index = cursor++; if (!(index in state)) state[index] = initial; return [state[index], value => { state[index] = typeof value === 'function' ? value(state[index]) : value; }]; },
+    },
     'next-intl': { useLocale: () => locale },
     'next/navigation': { usePathname: () => path },
     'next/link': () => null,
     '@/src/lib/notification-href': href.exports,
-    '@/src/hooks/useCourses': { useCourses: () => ({ data: courses }) },
-    '@/src/lib/api': { notifications: { send: async payload => { calls.push(payload); return { sent }; }, read: async id => { calls.push(id); }, readAll: async () => {} } },
+    '@/src/lib/api': { notifications: {
+      options: async () => ({ courses, departments: [{ id: 10, name: 'الأولى' }, { id: 20, name: 'الثانية' }] }),
+      list: async (page, filters, view) => {
+        requests.push({ page, filters, view });
+        return { data: [{ id: 'notice', data: { type: 'student-account', student_id: 'student-id', title: 'Access', message: 'Activated' }, recipient_count: 5, read_at: read ? '2026-10-23' : null, created_at: '2026-10-23T12:00:00Z' }], meta: { total: 25, last_page: 2 } };
+      },
+      send: async payload => { calls.push(payload); return { sent }; },
+      read: async id => { read = true; calls.push(id); }, readAll: async () => { read = true; calls.push('all'); },
+    } },
     sonner: { toast: { success: message => toasts.push(['success', message]), warning: message => toasts.push(['warning', message]), error: message => toasts.push(['error', message]) } },
   };
-  new Function('require', 'module', 'exports', code)(id => mocks[id] || require(id), loadedModule, loadedModule.exports);
-  return { calls, toasts, render: () => { cursor = 0; return loadedModule.exports.default({ canSend: !path.includes('/student/') }); } };
+  new Function('require', 'module', 'exports', 'setInterval', 'clearInterval', code)(id => mocks[id] || require(id), loadedModule, loadedModule.exports, () => 0, () => {});
+  const render = () => { cursor = effectCursor = 0; const result = loadedModule.exports.default({ canSend: !path.includes('/student/') }); pending.splice(0).forEach(fn => fn()); return result; };
+  return { calls, requests, toasts, render, async ready() { render(); await new Promise(setImmediate); return render(); } };
 }
 function elements(node) { return !React.isValidElement(node) ? [] : [node, ...React.Children.toArray(node.props.children).flatMap(elements)]; }
 function find(s, type) { return elements(s.render()).find(node => node.type === type); }
 function text(node) { return React.Children.toArray(node).map(child => typeof child === 'object' ? text(child.props.children) : String(child)).join(''); }
+function label(s, name) { return elements(s.render()).find(node => node.type === 'label' && text(node.props.children).startsWith(name)); }
+function control(s, name) { return elements(label(s, name)).find(node => ['input', 'select', 'textarea'].includes(node.type)); }
+function button(s, name) { return elements(s.render()).find(node => node.type === 'button' && text(node.props.children) === name); }
 
-for (const path of ['/notifications', '/doctor/notifications']) for (const locale of ['ar', 'en']) {
+for (const path of ['/notifications/add', '/doctor/notifications/add']) for (const locale of ['ar', 'en']) {
   test(`${path} course search and selected recipient work in ${locale}`, async () => {
-    const s = setup(path, locale);
+    const s = setup(path, locale); await s.ready();
     const search = () => elements(s.render()).find(node => node.type === 'input' && node.props.type === 'search');
     search().props.onChange({ target: { value: 'انتساب' } });
     assert.deepEqual(elements(find(s, 'select')).filter(node => node.type === 'option').map(node => String(node.props.value)), ['', '2']);
@@ -50,8 +64,7 @@ for (const path of ['/notifications', '/doctor/notifications']) for (const local
     assert.equal(find(s, 'select').props.required, path.startsWith('/doctor/'));
     search().props.onChange({ target: { value: 'no match' } });
     assert.ok(elements(s.render()).some(node => node.props.role === 'status'));
-    const title = elements(s.render()).find(node => node.type === 'input' && !node.props.type);
-    title.props.onChange({ target: { value: 'Notice' } });
+    elements(s.render()).find(node => node.type === 'input' && !node.props.type).props.onChange({ target: { value: 'Notice' } });
     find(s, 'textarea').props.onChange({ target: { value: 'Message' } });
     await find(s, 'form').props.onSubmit({ preventDefault() {} });
     assert.deepEqual(s.calls, [{ title: 'Notice', message: 'Message', course_id: 2 }]);
@@ -60,17 +73,17 @@ for (const path of ['/notifications', '/doctor/notifications']) for (const local
 }
 
 test('instructor inbox hides content links and retains mark-as-read', async () => {
-  const s = setup('/doctor/notifications');
+  const s = setup('/doctor/notifications'); await s.ready();
   assert.equal(elements(s.render()).filter(node => node.props.href).length, 0);
-  const button = elements(s.render()).find(node => node.type === 'button' && text(node.props.children) === 'تحديد كمقروء');
-  await button.props.onClick();
+  await button(s, 'تحديد كمقروء').props.onClick(); await s.ready();
   assert.deepEqual(s.calls, ['notice']);
-  assert.equal(elements(s.render()).filter(node => node.type === 'button' && text(node.props.children) === 'تحديد كمقروء').length, 0);
-  assert.ok(elements(setup('/notifications').render()).some(node => node.props.href === '/students/student-id'));
+  assert.equal(button(s, 'تحديد كمقروء'), undefined);
+  const owner = setup('/notifications'); await owner.ready();
+  assert.ok(elements(owner.render()).some(node => node.props.href === '/students/student-id'));
 });
 
 test('zero recipients show a warning and preserve the unsent message', async () => {
-  const s = setup('/notifications', 'ar', 0);
+  const s = setup('/notifications/add', 'ar', 0); await s.ready();
   elements(s.render()).find(node => node.type === 'input' && !node.props.type).props.onChange({ target: { value: 'Notice' } });
   find(s, 'textarea').props.onChange({ target: { value: 'Message' } });
   await find(s, 'form').props.onSubmit({ preventDefault() {} });
@@ -78,7 +91,41 @@ test('zero recipients show a warning and preserve the unsent message', async () 
   assert.equal(find(s, 'textarea').props.value, 'Message');
 });
 
-test('student inbox cannot render a sender form', () => {
-  const s = setup('/ar/student/notifications');
-  assert.equal(find(s, 'form'), undefined);
+test('student inbox has search filters but cannot render sender or sent view', async () => {
+  const s = setup('/ar/student/notifications'); await s.ready();
+  assert.equal(find(s, 'textarea'), undefined);
+  assert.equal(button(s, 'المرسل'), undefined);
+  assert.ok(control(s, 'حالة القراءة'));
+});
+
+test('combined filters reach the server, narrow courses and reset pagination', async () => {
+  const s = setup('/notifications', 'en'); await s.ready();
+  button(s, 'Next').props.onClick(); await s.ready();
+  assert.equal(s.requests.at(-1).page, 2);
+  control(s, 'Search title').props.onChange({ target: { value: 'Anatomy' } });
+  control(s, 'Academic year').props.onChange({ target: { value: '20' } });
+  assert.deepEqual(elements(control(s, 'Course')).filter(n => n.type === 'option').map(n => String(n.props.value)), ['', '2']);
+  for (const [name, value] of [['Course', '2'], ['Notification type', 'exam'], ['Read status', 'unread'], ['From date', '2026-10-21'], ['To date', '2026-10-23']]) control(s, name).props.onChange({ target: { value } });
+  find(s, 'form').props.onSubmit({ preventDefault() {} }); await s.ready();
+  assert.deepEqual(s.requests.at(-1), { page: 1, view: 'inbox', filters: { search: 'Anatomy', department_id: '20', course_id: '2', type: 'exam', status: 'unread', from: '2026-10-21', to: '2026-10-23' } });
+  control(s, 'Academic year').props.onChange({ target: { value: '10' } });
+  assert.equal(control(s, 'Course').props.value, '');
+  button(s, 'Reset filters').props.onClick(); await s.ready();
+  assert.deepEqual(s.requests.at(-1), { page: 1, view: 'inbox', filters: {} });
+  assert.equal(control(s, 'Search title').props.value, '');
+});
+
+test('sent history hides read actions, displays recipients and clears incompatible filters', async () => {
+  const s = setup('/notifications', 'en'); await s.ready();
+  control(s, 'Notification type').props.onChange({ target: { value: 'exam' } });
+  find(s, 'form').props.onSubmit({ preventDefault() {} }); await s.ready();
+  button(s, 'Sent').props.onClick(); await s.ready();
+  assert.equal(s.requests.at(-1).view, 'sent');
+  assert.equal(s.requests.at(-1).filters.type, '');
+  assert.equal(control(s, 'Read status'), undefined);
+  assert.equal(button(s, 'Mark as read'), undefined);
+  assert.equal(button(s, 'Mark entire inbox as read'), undefined);
+  assert.ok(text(s.render().props.children).includes('Recipients: 5'));
+  button(s, 'Send announcement').props.onClick(); await s.ready();
+  assert.ok(find(s, 'textarea'));
 });
