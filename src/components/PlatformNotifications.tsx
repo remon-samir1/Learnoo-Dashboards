@@ -24,7 +24,7 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
   const [sending, setSending] = useState(false);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
-  const [course, setCourse] = useState('');
+  const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [audience, setAudience] = useState('course');
   const [draft, setDraft] = useState<NotificationFilters>({});
   const [filters, setFilters] = useState<NotificationFilters>({});
@@ -73,13 +73,13 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
     {!sendForm && optionsError && <p role="alert">{ar ? 'تعذر تحميل خيارات المواد والفِرَق. أعد تحميل الصفحة للمحاولة.' : 'Could not load course and year options. Reload the page to retry.'}</p>}
     {sendForm && <form className="space-y-4 rounded-2xl border bg-white p-6" onSubmit={async e => {
       e.preventDefault();
-      if ((instructor || audience === 'course') && !course) {
-        toast.error(ar ? 'اختر مادة من الشجرة الأكاديمية.' : 'Choose a course from the academic tree.');
+      if ((instructor || audience === 'course') && !selectedCourses.length) {
+        toast.error(ar ? 'اختر مادة واحدة أو أكثر من الشجرة الأكاديمية.' : 'Choose one or more courses from the academic tree.');
         return;
       }
       setSending(true);
       try {
-        const result = await api.notifications.send({ title, message, course_id: instructor || audience === 'course' ? Number(course) : undefined });
+        const result = await api.notifications.send({ title, message, course_ids: instructor || audience === 'course' ? selectedCourses.map(Number) : undefined });
         if (!result.sent) {
           toast.warning(ar ? 'لا يوجد طلاب مفعّل لهم المحتوى المحدد. لم يتم إرسال إشعارات.' : 'No students have access to the selected content. No notifications were sent.');
           return;
@@ -92,14 +92,14 @@ export default function PlatformNotifications({ canSend = false }: { canSend?: b
       <fieldset disabled={sending} className="space-y-4">
       <legend className="mb-3 font-semibold">{ar ? 'المستلمون' : 'Recipients'}</legend>
       {!instructor && <div className="flex flex-wrap gap-4">
-        <label className="flex items-center gap-2"><input type="radio" name="audience" value="course" checked={audience === 'course'} onChange={() => setAudience('course')} />{ar ? 'طلاب مادة محددة' : 'Students in one course'}</label>
+        <label className="flex items-center gap-2"><input type="radio" name="audience" value="course" checked={audience === 'course'} onChange={() => setAudience('course')} />{ar ? 'طلاب مواد محددة' : 'Students in selected courses'}</label>
         <label className="flex items-center gap-2"><input type="radio" name="audience" value="all" checked={audience === 'all'} onChange={() => setAudience('all')} />{ar ? 'كل الطلاب' : 'All students'}</label>
       </div>}
-      {(instructor || audience === 'course') ? <CourseTreeSelect value={course} onChange={setCourse} label={ar ? 'المادة' : 'Course'} required /> : <p className="text-sm text-gray-600">{ar ? 'سيصل هذا الإشعار إلى كل حسابات الطلاب النشطة.' : 'This notification will reach all active student accounts.'}</p>}
+      {(instructor || audience === 'course') ? <CourseTreeSelect multiple value={selectedCourses} onMultiChange={setSelectedCourses} label={ar ? 'المواد' : 'Courses'} required /> : <p className="text-sm text-gray-600">{ar ? 'سيصل هذا الإشعار إلى كل حسابات الطلاب النشطة.' : 'This notification will reach all active student accounts.'}</p>}
       </fieldset>
       <label className="block">{ar ? 'العنوان' : 'Title'}<input required maxLength={255} value={title} onChange={e => setTitle(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
       <label className="block">{ar ? 'الرسالة' : 'Message'}<textarea required maxLength={2000} value={message} onChange={e => setMessage(e.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
-      <button disabled={sending || ((instructor || audience === 'course') && !course)} className="rounded-xl bg-primary px-5 py-3 text-white disabled:opacity-50">{sending ? (ar ? 'جارٍ الإرسال…' : 'Sending…') : (ar ? 'إرسال' : 'Send')}</button>
+      <button disabled={sending || ((instructor || audience === 'course') && !selectedCourses.length)} className="rounded-xl bg-primary px-5 py-3 text-white disabled:opacity-50">{sending ? (ar ? 'جارٍ الإرسال…' : 'Sending…') : (ar ? 'إرسال' : 'Send')}</button>
     </form>}
     {!sendForm && <>
       <form className="space-y-4 rounded-2xl border bg-white p-5" onSubmit={e => { e.preventDefault(); setPage(1); setLoading(true); setFilters({ ...draft }); }}>

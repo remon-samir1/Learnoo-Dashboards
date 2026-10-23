@@ -1493,7 +1493,7 @@ export interface NotificationOptions {
 export const notificationsApi = {
   list: (page = 1, filters: NotificationFilters = {}) => get<{ data: PlatformNotification[]; meta: { last_page: number; total: number; unread_count: number } }>('/v1/notifications', { page, ...filters }),
   options: () => get<NotificationOptions>('/v1/notifications/options'),
-  send: (data: { title: string; message: string; course_id?: number }) => post<{ sent: number }>('/v1/notifications/send', data),
+  send: (data: { title: string; message: string; course_id?: number; course_ids?: number[] }) => post<{ sent: number }>('/v1/notifications/send', data),
   read: (id: string) => patch(`/v1/notifications/${id}/read`),
   readAll: () => patch('/v1/notifications/read-all'),
 };

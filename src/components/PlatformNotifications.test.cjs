@@ -59,16 +59,17 @@ for (const path of ['/notifications/add', '/doctor/notifications/add']) for (con
     assert.equal(find(s, 'select'), undefined);
     assert.equal(elements(s.render()).find(node => node.type === 'input' && node.props.type === 'search'), undefined);
     assert.equal(find(s, CourseTreeSelect).props.required, true);
+    assert.equal(find(s, CourseTreeSelect).props.multiple, true);
     assert.equal(elements(s.render()).filter(node => node.props.name === 'audience').length, path.startsWith('/doctor/') ? 0 : 2);
     elements(s.render()).find(node => node.type === 'input' && !node.props.type).props.onChange({ target: { value: 'Notice' } });
     find(s, 'textarea').props.onChange({ target: { value: 'Message' } });
     await find(s, 'form').props.onSubmit({ preventDefault() {} });
     assert.deepEqual(s.calls, []);
     assert.equal(s.toasts[0][0], 'error');
-    find(s, CourseTreeSelect).props.onChange('2');
-    assert.equal(find(s, CourseTreeSelect).props.value, '2');
+    find(s, CourseTreeSelect).props.onMultiChange(['2', '3']);
+    assert.deepEqual(find(s, CourseTreeSelect).props.value, ['2', '3']);
     await find(s, 'form').props.onSubmit({ preventDefault() {} });
-    assert.deepEqual(s.calls, [{ title: 'Notice', message: 'Message', course_id: 2 }]);
+    assert.deepEqual(s.calls, [{ title: 'Notice', message: 'Message', course_ids: [2, 3] }]);
     assert.equal(s.toasts.at(-1)[0], 'success');
   });
 }
@@ -85,13 +86,13 @@ test('instructor inbox hides content links and retains mark-as-read', async () =
 
 test('administration explicitly selects all students and preserves an unsent message', async () => {
   const s = setup('/notifications/add', 'ar', 0); await s.ready();
-  find(s, CourseTreeSelect).props.onChange('2');
+  find(s, CourseTreeSelect).props.onMultiChange(['2', '3']);
   elements(s.render()).find(n => n.props.name === 'audience' && n.props.value === 'all').props.onChange();
   assert.equal(find(s, CourseTreeSelect), undefined);
   elements(s.render()).find(node => node.type === 'input' && !node.props.type).props.onChange({ target: { value: 'Notice' } });
   find(s, 'textarea').props.onChange({ target: { value: 'Message' } });
   await find(s, 'form').props.onSubmit({ preventDefault() {} });
-  assert.deepEqual(s.calls, [{ title: 'Notice', message: 'Message', course_id: undefined }]);
+  assert.deepEqual(s.calls, [{ title: 'Notice', message: 'Message', course_ids: undefined }]);
   assert.equal(s.toasts[0][0], 'warning');
   assert.equal(find(s, 'textarea').props.value, 'Message');
 });

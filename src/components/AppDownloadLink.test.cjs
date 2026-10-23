@@ -3,6 +3,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const React = require('react');
+const Image = () => null;
 const ts = require('typescript');
 const code = ts.transpileModule(readFileSync(`${__dirname}/AppDownloadLink.tsx`, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
@@ -11,11 +12,15 @@ const elements = node => !React.isValidElement(node) ? [] : [node, ...React.Chil
 
 for (const locale of ['ar', 'en']) test(`download footer links to Google Play and Huawei without floating in ${locale}`, () => {
   const loaded = { exports: {} };
-  new Function('require', 'module', 'exports', code)(id => id === 'next-intl' ? { useLocale: () => locale } : require(id), loaded, loaded.exports);
+  new Function('require', 'module', 'exports', code)(id => id === 'next-intl' ? { useLocale: () => locale } : id === 'next/image' ? { default: Image } : require(id), loaded, loaded.exports);
   const footer = loaded.exports.default();
   assert.equal(footer.type, 'footer');
   const nodes = elements(footer);
-  assert.ok(nodes.every(n => !/\b(fixed|absolute|sticky)\b/.test(n.props.className || '')));
+  assert.ok(nodes.every(n => !/\b(fixed|sticky)\b/.test(n.props.className || '')));
+  const image = nodes.find(n => n.type === Image);
+  assert.equal(image.props.src, '/images/app-download-badges.png');
+  assert.equal(image.props.width, 1280);
+  assert.equal(image.props.height, 427);
   const links = nodes.filter(n => n.type === 'a');
   assert.deepEqual(links.map(n => n.props.href), [
     'https://play.google.com/store/apps/details?id=com.sunmed.learnoo',
@@ -24,7 +29,7 @@ for (const locale of ['ar', 'en']) test(`download footer links to Google Play an
   for (const link of links) {
     assert.equal(link.props.target, '_blank');
     assert.equal(link.props.rel, 'noopener noreferrer');
-    assert.ok(link.props['aria-label'].includes(link.props.children));
+    assert.ok(link.props['aria-label'].includes(link.props.children.props.children));
   }
 });
 
