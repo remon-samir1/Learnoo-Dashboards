@@ -49,7 +49,7 @@ type ProfileAttributes = {
     live_attendance?: number;
     community_posts?: number;
   };
-  device_transfers?: { used: number; limit: number; remaining: number };
+  device_transfers?: { enabled?: boolean; used: number; limit: number; remaining: number };
   device_access?: {
     device?: string | null;
     last_ip?: string | null;
@@ -127,7 +127,7 @@ export default async function StudentProfilePage() {
         />
       </section>
 
-      {student?.device_transfers && <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 text-sm">
+      {student?.device_transfers && student.device_transfers.enabled !== false && <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5 text-sm">
         <p role="status">{t('deviceTransferRemaining', { remaining: student.device_transfers.remaining, limit: student.device_transfers.limit })}</p>
         {student.device_transfers.remaining === 0 && <p className="mt-2 text-gray-600">{t('deviceTransferSupport')}</p>}
       </section>}
