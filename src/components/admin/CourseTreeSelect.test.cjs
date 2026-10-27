@@ -88,7 +88,7 @@ function elements(node) {
 }
 function row(tree, name) {
   return elements(tree).find(node => node.type === 'div' && typeof node.props.onClick === 'function'
-    && React.Children.toArray(node.props.children).some(child => child.props?.children === name));
+    && React.Children.toArray(node.props.children).some(child => child.props?.children === name || Array.isArray(child.props?.children) && child.props.children.includes(name)));
 }
 const click = { stopPropagation() {} };
 
@@ -206,3 +206,27 @@ for (const folder of ['(admin)', '(doctor)/doctor']) {
     assert.equal(closed, true); assert.equal(refetched, true);
   });
 }
+
+
+test('notification search directly lists courses with full academic context and tappable native checkboxes', () => {
+  const s = selector({ selectLectures: false, searchCoursesDirectly: true });
+  let tree = s.search('ادارة');
+  for (const course of courses.slice(0, 2)) assert.ok(row(tree, course.attributes.title));
+  assert.equal(row(tree, 'University'), undefined);
+  const first = row(tree, courses[0].attributes.title);
+  assert.ok(elements(first).some(node => node.type === 'small' && node.props.children.includes('University / Center / Faculty / الفرقة الثانية')));
+  let checkbox = elements(first).find(node => node.type === 'input' && node.props.type === 'checkbox');
+  assert.equal(checkbox.props.checked, false);
+  checkbox.props.onClick(click);
+  checkbox.props.onChange();
+  assert.deepEqual(s.changes.at(-1), ['10']);
+  tree = s.search('انتساب');
+  const second = elements(row(tree, courses[1].attributes.title)).find(node => node.type === 'input' && node.props.type === 'checkbox');
+  second.props.onChange();
+  assert.deepEqual(s.changes.at(-1), ['10', '11']);
+  tree = s.search('ادارة');
+  checkbox = elements(row(tree, courses[0].attributes.title)).find(node => node.type === 'input' && node.props.type === 'checkbox');
+  assert.equal(checkbox.props.checked, true);
+  checkbox.props.onChange();
+  assert.deepEqual(s.changes.at(-1), ['11']);
+});

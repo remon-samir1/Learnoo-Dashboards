@@ -31,6 +31,8 @@ interface CourseTreeSelectProps {
   required?: boolean;
   label?: string;
   error?: string;
+  searchCoursesDirectly?: boolean;
+  searchPlaceholder?: string;
   selectLectures?: boolean;
   selectChapters?: boolean;
   lecturesData?: any[];
@@ -48,6 +50,10 @@ interface TreeNode {
   path: string[];
 }
 
+function normalizeSearch(value: string): string {
+  return value.normalize('NFKD').replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').toLowerCase().trim();
+}
+
 export function CourseTreeSelect({
   value,
   onChange,
@@ -58,6 +64,8 @@ export function CourseTreeSelect({
   label,
   error,
   coursesData: outerCoursesData,
+  searchCoursesDirectly = false,
+  searchPlaceholder,
   selectLectures = false,
   selectChapters = false,
   lecturesData: outerLecturesData,
@@ -332,7 +340,7 @@ export function CourseTreeSelect({
 
     centerMap.forEach((node, id) => {
       const center = centers.find((c: any) => String(c.id) === id);
-      const parentId = (center as any)?.attributes?.parent?.data?.id || (center as any)?.relationships?.parent?.data?.id || center?.parent?.data?.id || center?.parent_id || (center as any)?.university_id;
+      const parentId = (center as any)?.attributes?.parent?.data?.id || (center as any)?.relationships?.parent?.data?.id || center?.parent?.data?.id || center?.parent_id || (center as any)?.university_id || (center as any)?.attributes?.university_id;
       if (!parentId || !universityMap.has(String(parentId))) {
         rootNodes.push(node);
       }
@@ -362,6 +370,15 @@ export function CourseTreeSelect({
       }
     });
 
+    const assignPaths = (nodes: TreeNode[], ancestors: string[] = []) => {
+      nodes.forEach(node => {
+        node.path = [...ancestors, node.name];
+        node.level = ancestors.length;
+        assignPaths(node.children, node.path);
+      });
+    };
+    assignPaths(rootNodes);
+
     const cleanTree = (nodes: TreeNode[]): TreeNode[] => {
       return nodes
         .map(node => {
@@ -389,13 +406,13 @@ export function CourseTreeSelect({
   useEffect(() => {
     if (!searchQuery) return;
 
-    const query = searchQuery.toLowerCase();
+    const query = normalizeSearch(searchQuery);
     const newExpandedNodes: Record<string, boolean> = {};
 
     const findMatches = (nodes: TreeNode[], parentMatches = false): boolean => {
       let matchInBranch = false;
       nodes.forEach(node => {
-        const nameMatches = parentMatches || node.name.toLowerCase().includes(query);
+        const nameMatches = parentMatches || normalizeSearch(node.name).includes(query);
         const childrenMatch = findMatches(node.children, nameMatches);
 
         if (childrenMatch) {
@@ -416,14 +433,19 @@ export function CourseTreeSelect({
   const filteredTree = useMemo(() => {
     if (!searchQuery) return tree;
 
-    const query = searchQuery.toLowerCase();
+    const query = normalizeSearch(searchQuery);
+
+    if (searchCoursesDirectly && !selectLectures && !selectChapters) {
+      return [...flatCourses.values()].filter(node => normalizeSearch(node.path.join(' ')).includes(query))
+        .map(node => ({ ...node, level: 0, children: [] }));
+    }
 
     const filterNodes = (nodes: TreeNode[]): { filtered: TreeNode[]; hasMatch: boolean } => {
       let treeHasMatch = false;
       const filtered: TreeNode[] = [];
 
       nodes.forEach(node => {
-        const nameMatches = node.name.toLowerCase().includes(query);
+        const nameMatches = normalizeSearch(node.name).includes(query);
         const { filtered: childFiltered, hasMatch: childHasMatch } = filterNodes(node.children);
 
         if (nameMatches || childHasMatch) {
@@ -436,7 +458,7 @@ export function CourseTreeSelect({
     };
 
     return filterNodes(tree).filtered;
-  }, [searchQuery, tree]);
+  }, [searchQuery, tree, flatCourses, searchCoursesDirectly, selectLectures, selectChapters]);
 
   const selectedCourse = useMemo(() => {
     if (multiple || selectedValues.length !== 1) return null;
@@ -563,18 +585,24 @@ export function CourseTreeSelect({
           ) : null}
 
           {isSelectable && multiple && !isExcluded ? (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? 'bg-[#2137D6] border-[#2137D6]' : 'border-[#CBD5E1]'
-                }`}
-            >
-              {isSelected && <Check className="w-3 h-3 text-white" />}
-            </div>
+            <input
+              type="checkbox"
+              aria-label={[node.name, ...node.path.slice(0, -1)].join(' — ')}
+              checked={isSelected}
+              onClick={event => event.stopPropagation()}
+              onChange={() => handleSelectCourse(itemId)}
+              className="w-5 h-5 rounded border-2 border-[#CBD5E1] accent-[#2137D6] flex-shrink-0 cursor-pointer"
+            />
           ) : null}
 
           {getNodeIcon()}
 
-          <span className="whitespace-normal break-words flex-1">{node.name}</span>
+          <span className="whitespace-normal break-words flex-1 min-w-0">
+            {node.name}
+            {searchCoursesDirectly && searchQuery && node.type === 'course' && node.path.length > 1 && (
+              <small className="block mt-1 text-xs font-normal text-slate-500">{node.path.slice(0, -1).join(' / ')}</small>
+            )}
+          </span>
 
           {isExcluded && <span className="text-xs text-gray-400">(Current)</span>}
           {isSelected && !multiple && <Check className="w-4 h-4 text-white flex-shrink-0" />}
@@ -606,10 +634,11 @@ export function CourseTreeSelect({
       <Search className="w-4 h-4 text-[#94A3B8] flex-shrink-0" />
       <input
         type="text"
-        placeholder={`Search ${selectLectures ? 'lectures' : selectChapters ? 'chapters' : 'courses'}...`}
+        placeholder={searchPlaceholder || `Search ${selectLectures ? 'lectures' : selectChapters ? 'chapters' : 'courses'}...`}
+        aria-label={searchPlaceholder || displayLabel}
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-full bg-transparent text-sm text-[#1E293B] border-none focus:outline-none placeholder:text-[#94A3B8]"
+        className="w-full bg-transparent text-base md:text-sm text-[#1E293B] border-none focus:outline-none placeholder:text-[#94A3B8]"
       />
       {searchQuery && (
         <button
