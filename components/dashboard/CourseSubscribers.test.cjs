@@ -10,7 +10,7 @@ function nodes(tree) {
 
 function setup(locale = 'en') {
   const states = [], deps = [], effects = [], requests = [], events = [];
-  let cursor = 0, effectCursor = 0, failLoad = false, failRemove = false, pendingOnly = false;
+  let cursor = 0, effectCursor = 0, failLoad = false, failRemove = false, pendingOnly = false, mixed = false;
   const module = { exports: {} };
   const mocks = {
     react: { ...React,
@@ -23,6 +23,7 @@ function setup(locale = 'en') {
       subscribers: async (id, page) => {
         requests.push(['list', id, page]);
         if (failLoad) throw new Error('Load failed');
+        if (mixed) return { data: [], total: 35, pending_count: 73, last_page: 2 };
         if (pendingOnly) return { data: [], total: 0, pending_count: 1, last_page: 1 };
         return { data: [{ id: `student-${page}`, first_name: 'Student', last_name: String(page), phone: `0100000000${page}` }], total: 31, pending_count: 0, last_page: 2 };
       },
@@ -35,7 +36,7 @@ function setup(locale = 'en') {
   new Function('require', 'module', 'exports', compiled)(name => mocks[name] || require(name), module, module.exports);
   const render = () => { cursor = effectCursor = 0; return module.exports.default({ courseId: 12, title: 'Physics', onRemoved: () => events.push(['refresh']) }); };
   return { render, requests, events, failLoad: value => { failLoad = value; }, failRemove: value => { failRemove = value; },
-    pendingOnly: () => { pendingOnly = true; },
+    pendingOnly: () => { pendingOnly = true; }, mixed: () => { mixed = true; },
     settle: async () => { while (effects.length) effects.shift()(); await new Promise(resolve => setImmediate(resolve)); return render(); },
   };
 }
@@ -99,11 +100,21 @@ test('the course subscriber component is wired to the academic tree and refreshe
 
 test('pending numbers can be selected for cancellation even before any students have registered', async () => {
   const s = setup(); s.pendingOnly(); s.render(); let tree = await s.settle();
-  button(tree, 'Select all subscriptions (1)').props.onClick(); tree = s.render();
+  button(tree, 'Select all (0 students and 1 pending numbers)').props.onClick(); tree = s.render();
   const previous = global.window;
   global.window = { confirm: message => { assert.match(message, /pending pre-activation numbers/); return true; } };
   try {
     await button(tree, 'Remove selected access').props.onClick();
     assert.deepEqual(s.requests.at(-1), ['remove', 12, { all: true }]);
   } finally { global.window = previous; }
+});
+
+for (const locale of ['ar', 'en']) test(`${locale}: registered students and pending numbers stay visibly separate`, async () => {
+  const s = setup(locale); s.mixed(); s.render(); let tree = await s.settle();
+  const labels = nodes(tree).map(node => node.props.children).filter(value => typeof value === 'string');
+  assert.ok(labels.includes(locale === 'ar' ? 'الطلاب المسجلون المفعّل لهم: 35' : 'Registered students with access: 35'));
+  assert.ok(!labels.some(label => /\(108\)/.test(label)));
+  button(tree, locale === 'ar' ? 'تحديد الكل (35 طالبًا و73 رقمًا معلقًا)' : 'Select all (35 students and 73 pending numbers)').props.onClick();
+  tree = s.render();
+  assert.equal(nodes(tree).find(node => node.props.role === 'status').props.children, locale === 'ar' ? 'المحدد: 35 طالبًا و73 رقمًا معلقًا' : 'Selected: 35 students and 73 pending numbers');
 });

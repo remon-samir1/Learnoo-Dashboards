@@ -51,12 +51,18 @@ export default function CourseSubscribers({ courseId, title, onRemoved }: { cour
   if (error || !list) return <div role="alert"><p>{ar ? 'تعذر تحميل الطلاب' : 'Could not load students'}</p><button type="button" onClick={() => setRevision(value => value + 1)}>{ar ? 'إعادة المحاولة' : 'Retry'}</button></div>;
   return <div className="space-y-4">
     <p className="text-sm text-gray-500">{ar ? 'إلغاء التفعيل يوقف الوصول لهذا الكورس ويحفظ المشاهدات والتقدم عند إعادة التفعيل.' : 'Removing access keeps viewing history and progress for reactivation.'}</p>
+    <p className="text-sm font-medium">{ar ? `الطلاب المسجلون المفعّل لهم: ${list.total}` : `Registered students with access: ${list.total}`}</p>
+    <p className="text-sm text-gray-500">{ar ? 'القائمة تشمل كل تفعيلات الكورس، وليس آخر شيت فقط.' : 'This list includes all course activations, not only the latest sheet.'}</p>
     {list.pending_count > 0 && <p className="text-sm text-gray-500">{ar ? `أرقام تفعيل مسبق معلقة: ${list.pending_count}. إلغاء الكل يشملها حتى لا تتفعل لاحقًا عند تسجيل الدخول.` : `Pending pre-activation numbers: ${list.pending_count}. Removing all includes them so they cannot activate on a later sign-in.`}</p>}
     {list.total + list.pending_count > 0 && <div className="flex flex-wrap items-center gap-3 border-b pb-3">
       <button type="button" disabled={busy || all} onClick={() => setSelected([...new Set([...selected, ...list.data.map(student => student.id)])])} className="text-sm text-primary underline disabled:opacity-50">{ar ? 'تحديد الصفحة' : 'Select page'}</button>
-      <button type="button" disabled={busy} onClick={() => { setAll(true); setSelected([]); }} className="text-sm text-primary underline disabled:opacity-50">{ar ? `تحديد الكل (${list.total + list.pending_count})` : `Select all subscriptions (${list.total + list.pending_count})`}</button>
+      <button type="button" disabled={busy} onClick={() => { setAll(true); setSelected([]); }} className="text-sm text-primary underline disabled:opacity-50">{list.pending_count > 0
+        ? (ar ? `تحديد الكل (${list.total} طالبًا و${list.pending_count} رقمًا معلقًا)` : `Select all (${list.total} students and ${list.pending_count} pending numbers)`)
+        : (ar ? `تحديد الكل (${list.total})` : `Select all subscriptions (${list.total})`)}</button>
       {count > 0 && <button type="button" disabled={busy} onClick={() => { setAll(false); setSelected([]); }} className="text-sm underline">{ar ? 'إلغاء التحديد' : 'Clear selection'}</button>}
-      <span role="status" className="text-sm">{ar ? `المحدد: ${count}` : `Selected: ${count}`}</span>
+      <span role="status" className="text-sm">{all && list.pending_count > 0
+        ? (ar ? `المحدد: ${list.total} طالبًا و${list.pending_count} رقمًا معلقًا` : `Selected: ${list.total} students and ${list.pending_count} pending numbers`)
+        : (ar ? `المحدد: ${count}` : `Selected: ${count}`)}</span>
     </div>}
     {!list.data.length && <p>{ar ? 'لا يوجد طلاب مشتركون في هذه الدورة.' : 'No subscribers in this course.'}</p>}
     <div className="divide-y divide-gray-100">
