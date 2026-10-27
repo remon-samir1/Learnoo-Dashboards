@@ -20,6 +20,10 @@ export default function AppDownloadLink() {
         aria-label={ar ? `تحميل تطبيق ليرنو من ${name} (يفتح في نافذة جديدة)` : `Download Learnoo from ${name} (opens in a new window)`}
         className="flex h-[72px] items-center rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
       ><Image src={src} alt={name} width={width} height={height} sizes="190px" className={className} /></a>)}
+      <div aria-disabled="true" className="flex h-[88px] flex-col items-center justify-center gap-1 text-xs text-gray-500">
+        <Image src="/images/store-badges/app-store-en.svg" alt="App Store" width={250} height={83} sizes="150px" className="h-12 w-auto" />
+        <span>{ar ? 'قريبًا' : 'Coming soon'}</span>
+      </div>
     </div>
   </footer>;
 }

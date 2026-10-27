@@ -21,8 +21,12 @@ for (const locale of ['ar', 'en']) test(`download footer links to Google Play an
   assert.deepEqual(images.map(n => n.props.src), [
     `/images/store-badges/google-play-${locale}.png`,
     '/images/store-badges/appgallery-en.png',
+    '/images/store-badges/app-store-en.svg',
   ]);
   for (const image of images) assert.ok(readFileSync(`${__dirname}/../../public${image.props.src}`).length > 0);
+  const unavailable = nodes.find(n => n.props['aria-disabled'] === 'true');
+  assert.ok(unavailable);
+  assert.equal(elements(unavailable).filter(n => n.type === 'a').length, 0);
   const links = nodes.filter(n => n.type === 'a');
   assert.deepEqual(links.map(n => n.props.href), [
     'https://play.google.com/store/apps/details?id=com.sunmed.learnoo',
