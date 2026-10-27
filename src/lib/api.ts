@@ -1528,7 +1528,10 @@ export const archivedStudentsApi = {
 };
 export interface DeviceDetails { device: string; browser: string; identifier: string; ip: string; at: string }
 export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null; device_transfer_count?: number; remaining_device_transfers?: number }
+export interface PendingActivationFilters { phone?: string; item_type?: string; course_id?: number }
+export interface PendingActivationPage { data: { id: number; phone: string; item_type: string; title: string | null; category_path: string[]; created_at: string | null }[]; total: number; last_page: number }
 export const ownerOperationsApi = {
+  pendingActivations: (page = 1, filters: PendingActivationFilters = {}) => get<PendingActivationPage>('/v1/owner/pre-activations', { page, ...filters }),
   activity: (page = 1, filters?: { from?: string; to?: string; role?: 'Instructor' | 'Admin'; type?: 'device-requests' | 'device-decisions' | 'courses' | 'lessons' | 'accounts' | 'activations' }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...filters }),
   devices: () => get<{ data: DeviceTransfer[] }>('/v1/owner/device-transfers'),
   approve: (id: string) => post(`/v1/owner/device-transfers/${id}/approve`),

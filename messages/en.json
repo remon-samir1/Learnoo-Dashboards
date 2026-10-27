@@ -421,6 +421,7 @@
     "parentDashboard": "Parent Dashboard",
     "schedules": "Schedules and documents",
     "activity": "Staff activity and devices",
+    "pendingActivations": "Pending activations",
     "deviceApprovals": "Device approvals",
     "guardians": "Guardians"
   },

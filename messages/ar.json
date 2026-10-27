@@ -434,6 +434,7 @@
     "parentDashboard": "لوحة تحكم ولي الأمر",
     "schedules": "الجداول والمستندات",
     "activity": "نشاط الفريق والأجهزة",
+    "pendingActivations": "أرقام التفعيل المسبق",
     "deviceApprovals": "اعتماد الأجهزة",
     "guardians": "أولياء الأمور"
   },
