@@ -248,7 +248,7 @@ export default function Sidebar({
           <div className="flex items-center">
             <div className="relative size-12 shrink-0">
               <Image
-                src={logo || "/logo.svg"}
+                src={logo || "/Logo.jpeg"}
                 unoptimized
                 alt={platformName}
                 fill

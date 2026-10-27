@@ -562,7 +562,7 @@ export default function ChapterWatchView({
 
   const chapterThumb = useMemo(() => {
     const u = chapter?.attributes?.thumbnail?.trim();
-    return u || '/logo.svg';
+    return u || '/Logo.jpeg';
   }, [chapter]);
 
   const accessDenied = watchAccessDenied || clientPlaybackBlocked;

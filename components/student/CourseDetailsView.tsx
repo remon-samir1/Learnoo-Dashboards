@@ -541,7 +541,7 @@ export default function CourseDetailsView({ courseId }: { courseId: string }) {
   );
   const coursePosts = useMemo(() => normalizeCoursePosts(course), [course]);
 
-  const heroThumb = course?.attributes?.thumbnail?.trim() || "/logo.svg";
+  const heroThumb = course?.attributes?.thumbnail?.trim() || "/Logo.jpeg";
   const instructorName =
     course?.attributes?.instructor?.data?.attributes?.full_name?.trim() ?? "";
   const centerName =
