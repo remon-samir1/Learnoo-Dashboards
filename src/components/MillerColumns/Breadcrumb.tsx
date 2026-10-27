@@ -1,27 +1,15 @@
 import React from "react";
 import { ChevronRight } from "lucide-react";
-import type { SelectionPath } from "./useMillerState";
+import type { TreeNode } from "./useMillerState";
 import { useTranslations } from "next-intl";
 
 interface BreadcrumbProps {
-  path: SelectionPath;
-  onJump: (level: keyof SelectionPath | null) => void;
+  nodes: TreeNode[];
+  onJump: (index: number | null) => void;
 }
 
-function getName(item: any): string {
-  if (!item) return "";
-  if (item.attributes) {
-    return item.attributes.name || item.attributes.title || "";
-  }
-  return item.name || item.title || "";
-}
-
-export function Breadcrumb({ path, onJump }: BreadcrumbProps) {
-    const t = useTranslations("Breadcrumb");
-  
-  const segments = Object.entries(path)
-    .filter(([_, v]) => v != null)
-    .map(([key, val]) => ({ key: key as keyof SelectionPath, label: getName(val) }));
+export function Breadcrumb({ nodes, onJump }: BreadcrumbProps) {
+  const t = useTranslations("Breadcrumb");
 
   return (
     <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto whitespace-nowrap">
@@ -31,15 +19,15 @@ export function Breadcrumb({ path, onJump }: BreadcrumbProps) {
       >
         {t("ContentManager")}
       </button>
-      {segments.map((seg, i) => (
-        <React.Fragment key={seg.key}>
+      {nodes.map((node, i) => (
+        <React.Fragment key={node.id}>
           <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <button
             className="hover:text-blue-600 transition-colors"
-            onClick={() => onJump(seg.key)}
-            style={{ fontWeight: i === segments.length - 1 ? 500 : 400 }}
+            onClick={() => onJump(i)}
+            style={{ fontWeight: i === nodes.length - 1 ? 500 : 400 }}
           >
-            {seg.label}
+            {node.name}
           </button>
         </React.Fragment>
       ))}
