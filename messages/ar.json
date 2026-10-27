@@ -3149,6 +3149,8 @@
     "highlights": "أهم النقاط"
   },
   "studentProfile": {
+    "deviceTransferRemaining": "مرات تغيير الجهاز المتبقية: {remaining} من {limit}",
+    "deviceTransferSupport": "لتغيير الجهاز بعد استهلاك المرتين، يرجى التواصل مع الإدارة أو الدعم الفني.",
     "title": "الملف الشخصي",
     "description": "إدارة بياناتك الشخصية وتفاصيل حسابك",
     "personalInformation": "المعلومات الشخصية",

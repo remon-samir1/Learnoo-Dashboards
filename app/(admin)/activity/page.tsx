@@ -63,13 +63,14 @@ export default function OwnerActivityPage() {
     <h2 className="text-lg font-bold">{ar ? 'طلبات نقل الجهاز' : 'Device transfer requests'}</h2>
     {!devices.length && <p>{ar ? 'لا توجد طلبات معلقة' : 'No pending requests'}</p>}
     {devices.map(device => <article key={device.id} id={`device-${device.id}`} className="flex scroll-mt-24 flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-4"><div className="space-y-2"><p className="font-bold">{device.first_name} {device.last_name} · {device.phone}</p>
+      {typeof device.remaining_device_transfers === 'number' && <p className="text-sm text-gray-600">{ar ? `مرات تغيير الجهاز المتبقية: ${device.remaining_device_transfers} من 2` : `Device changes remaining: ${device.remaining_device_transfers} of 2`}</p>}
       {([['current_device', ar ? 'الجهاز الحالي' : 'Current device'], ['requested_device', ar ? 'الجهاز المطلوب' : 'Requested device']] as const).map(([key, label]) => {
         const info: DeviceDetails | null = device[key];
         return <div key={key} className="text-sm"><p>{label}: {info ? `${info.device} · ${info.browser} · ${info.identifier}` : (ar ? 'التفاصيل غير متاحة؛ تظهر بعد تسجيل الدخول من الجهاز' : 'Details unavailable; captured on the next sign-in from this device')}</p>
           {info && <p className="text-xs text-gray-500"><span dir="ltr">IP: {info.ip}</span> · {new Date(info.at).toLocaleString(ar ? 'ar' : 'en')}</p>}</div>;
       })}
     </div><div className="flex flex-wrap gap-3">
-      <button type="button" disabled={busy === device.id} className="text-primary underline disabled:opacity-50" onClick={() => resolveDevice(device.id, 'approve')}>{ar ? 'اعتماد الجهاز الجديد' : 'Approve new device'}</button>
+      <button type="button" disabled={busy === device.id || device.remaining_device_transfers === 0} className="text-primary underline disabled:opacity-50" onClick={() => resolveDevice(device.id, 'approve')}>{ar ? 'اعتماد الجهاز الجديد' : 'Approve new device'}</button>
       <button type="button" disabled={busy === device.id} className="text-red-600 underline disabled:opacity-50" onClick={() => resolveDevice(device.id, 'cancel')}>{ar ? 'إلغاء الطلب' : 'Cancel request'}</button>
     </div></article>)}
     {role === 'Super Admin' && <>

@@ -1527,7 +1527,7 @@ export const archivedStudentsApi = {
   recover: (id: string, mode: 'restore' | 'new') => post(`/v1/student-archives/${id}`, { mode }),
 };
 export interface DeviceDetails { device: string; browser: string; identifier: string; ip: string; at: string }
-export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null }
+export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null; device_transfer_count?: number; remaining_device_transfers?: number }
 export const ownerOperationsApi = {
   activity: (page = 1, filters?: { from?: string; to?: string; role?: 'Instructor' | 'Admin'; type?: 'device-requests' | 'device-decisions' | 'courses' | 'lessons' | 'accounts' | 'activations' }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...filters }),
   devices: () => get<{ data: DeviceTransfer[] }>('/v1/owner/device-transfers'),

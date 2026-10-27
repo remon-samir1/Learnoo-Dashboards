@@ -3149,6 +3149,8 @@
     "highlights": "Highlights"
   },
   "studentProfile": {
+    "deviceTransferRemaining": "Device changes remaining: {remaining} of {limit}",
+    "deviceTransferSupport": "To change devices after using both changes, contact administration or support.",
     "title": "Profile",
     "description": "Manage your personal information and account details",
     "personalInformation": "Personal Information",
