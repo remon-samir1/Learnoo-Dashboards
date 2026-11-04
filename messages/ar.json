@@ -87,12 +87,12 @@
     "actions": "إجراءات",
     "badges": {
       "student": "طالب",
+      "instructor": "مدرّس",
       "doctor": "طبيب",
       "admin": "مشرف",
-      "Student": "طالب",
-      "Admin": "مشرف",
-      "Doctor": "طبيب",
-      "Super Admin": "مشرف عام"
+      "superAdmin": "مشرف عام",
+      "support": "الدعم",
+      "parent": "ولي أمر"
     },
     "notifications": {
       "deleted": "تم حذف النقاش بنجاح",
@@ -1129,6 +1129,8 @@
       "badgeQuestion": "سؤال",
       "badgeComment": "تعليق",
       "viewReplies": "عرض {count} ردود",
+      "showRepliesCount": "{count, plural, one {عرض رد واحد} two {عرض ردين} few {عرض # ردود} other {عرض # رد}}",
+      "hideRepliesCount": "{count, plural, one {إخفاء رد واحد} two {إخفاء ردين} few {إخفاء # ردود} other {إخفاء # رد}}",
       "quizSectionTitle": "الاختبارات القصيرة",
       "quizDuration": "{count} د",
       "quizPassing": "النجاح {passing} / {total} درجة",

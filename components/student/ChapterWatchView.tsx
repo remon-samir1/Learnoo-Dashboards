@@ -241,8 +241,8 @@ function DiscussionNode({
               className={`size-3 shrink-0 transition-transform ${repliesOpen ? 'rotate-180' : ''}`}
             />
             {repliesOpen
-              ? `Hide ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`
-              : `Show ${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}`}
+              ? t('hideRepliesCount', { count: replies.length })
+              : t('showRepliesCount', { count: replies.length })}
           </button>
         )}
       </div>

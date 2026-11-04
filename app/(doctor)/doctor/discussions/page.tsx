@@ -281,7 +281,7 @@
 //                 </h3>
 //                 {getDiscussionTypeBadge(discussion.attributes?.type)}
 //                 <span className="rounded bg-[#E0E7FF] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#2137D6]">
-//                   {t(`badges.${discussion.attributes?.user?.data?.attributes?.role || 'student'}`)}
+//                   {t(`badges.${discussionRoleBadgeKey(discussion.attributes?.user?.data?.attributes?.role)}`)}
 //                 </span>
 //               </div>
 //               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#94A3B8]">
@@ -497,6 +497,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '@/src/lib/api';
 
 import { buildDiscussionTree } from '@/components/student/watch/watchChapterDiscussionUtils';
+import { discussionRoleBadgeKey } from '@/src/lib/discussion-role-badge';
 
 export default function AdminDiscussionsPage() {
   const t = useTranslations('discussions');
@@ -739,7 +740,7 @@ const DiscussionNode = ({
                 </h3>
                 {getDiscussionTypeBadge(discussion.attributes?.type)}
                 <span className="rounded bg-[#E0E7FF] px-1.5 py-0.5 text-[9px] font-bold uppercase text-[#2137D6]">
-                  {t(`badges.${discussion.attributes?.user?.data?.attributes?.role || 'student'}`)}
+                  {t(`badges.${discussionRoleBadgeKey(discussion.attributes?.user?.data?.attributes?.role)}`)}
                 </span>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#94A3B8]">

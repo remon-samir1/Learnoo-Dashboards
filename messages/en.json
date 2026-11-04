@@ -1092,6 +1092,8 @@
       "badgeQuestion": "question",
       "badgeComment": "comment",
       "viewReplies": "View {count} replies",
+      "showRepliesCount": "Show {count, plural, one {# reply} other {# replies}}",
+      "hideRepliesCount": "Hide {count, plural, one {# reply} other {# replies}}",
       "quizSectionTitle": "Quizzes",
       "quizDuration": "{count} min",
       "quizPassing": "Pass {passing} / {total} marks",
@@ -2528,12 +2530,12 @@
     "actions": "Actions",
     "badges": {
       "student": "Student",
+      "instructor": "Instructor",
       "doctor": "Doctor",
       "admin": "Admin",
-      "Student": "Student",
-      "Admin": "Admin",
-      "Doctor": "Doctor",
-      "Super Admin": "Super Admin"
+      "superAdmin": "Super Admin",
+      "support": "Support",
+      "parent": "Parent"
     },
     "notifications": {
       "deleted": "Discussion deleted successfully",
