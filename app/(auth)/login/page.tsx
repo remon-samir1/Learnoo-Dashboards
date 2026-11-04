@@ -30,7 +30,7 @@ export default function LoginPage() {
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
     if (sp.has('session')) {
-      setSessionNotice(sp.get('session') === 'device-changed' ? 'deviceChanged' : 'sessionExpired');
+      setSessionNotice(sp.get('session') === 'inactive' ? 'accountInactive' : sp.get('session') === 'device-changed' ? 'deviceChanged' : 'sessionExpired');
       for (const key of ['pending_auth_token', 'pending_auth_user', 'pending_auth_meta', 'auth_flow', 'registration_onboarding']) sessionStorage.removeItem(key);
       useAuthStore.setState({ user: null, token: null, isAuthenticated: false, isLoading: false });
       sp.delete('session');

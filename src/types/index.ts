@@ -535,6 +535,8 @@ export interface UserAttributes {
   /** When true, user may use course/chapter activation flows (API-dependent). */
   can_use_activations?: boolean;
 
+  can_publish_without_approval?: boolean;
+
   //added by mohamed ahmed
   student_code: string;
 
@@ -1283,7 +1285,7 @@ export type CourseVisibility = 'public' | 'private';
 
 
 
-export type CourseApproval = 0 | 1;
+export type CourseApproval = 0 | 1 | 2;
 
 
 
@@ -1654,7 +1656,7 @@ export interface CreateCourseRequest {
 
 
 
-  price: number;
+  price?: number;
 
 
 
@@ -5042,6 +5044,8 @@ export interface StudentAttributes extends Omit<UserAttributes, 'centers'> {
   /** When set, instructor may use course activation flows (API-dependent). */
   can_use_activations?: boolean;
 
+  can_publish_without_approval?: boolean;
+
   feedback?: string;
 
 
@@ -5118,6 +5122,8 @@ export interface CreateStudentRequest {
 
   /** Instructor-only: allow activation-related features. */
   can_use_activations?: boolean;
+
+  can_publish_without_approval?: boolean;
 
 
 
@@ -5241,7 +5247,7 @@ export interface DashboardStats {
 
 
 
-  total_students: StatItem;
+  total_students?: StatItem;
 
 
 

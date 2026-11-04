@@ -93,6 +93,8 @@ import {
   Search,
 } from "lucide-react";
 
+import LessonViewers from '@/components/dashboard/LessonViewers';
+import CourseSubscribers from '@/components/dashboard/CourseSubscribers';
 import { DeleteModal } from "@/src/components/ui/DeleteModal";
 import { CourseTreeSelect } from "@/src/components/admin/CourseTreeSelect";
 import { InstructorSelect } from "@/src/components/admin/InstructorSelect";
@@ -1258,55 +1260,11 @@ export default function DepartmentsPage() {
 
   const [viewNode, setViewNode] = useState<TreeNode | null>(null);
   const [viewersModalOpen, setViewersModalOpen] = useState(false);
-  const [viewersList, setViewersList] = useState<any[] | null>(null);
-  const [viewersLoading, setViewersLoading] = useState(false);
-  const [subscriberPage, setSubscriberPage] = useState(1);
-  const [subscriberLastPage, setSubscriberLastPage] = useState(1);
-
-  const openViewers = async (node: TreeNode | null, page = 1) => {
-    if (!node) return;
-    try {
-      setViewNode(node);
-      setViewersLoading(true);
-      setViewersList(null);
-      setViewersModalOpen(true);
-      setSubscriberPage(page);
-
-      const rawId = node.data?.id;
-      const chapterId = Number(rawId);
-
-      if (!rawId || Number.isNaN(chapterId)) {
-        toast.error("Invalid chapter id");
-        setViewersLoading(false);
-        return;
-      }
-
-      const res: any = node.type === "course"
-        ? await api.courses.subscribers(chapterId, page)
-        : await api.chapters.get(chapterId, { skipAuthRedirect: true } as any);
-
-      const users = node.type === "course"
-        ? res.data.map((user: any) => ({ id: user.id, user }))
-        : res?.data?.attributes?.userViews || [];
-      setSubscriberLastPage(res.last_page || 1);
-
-      setViewersList(users);
-      setViewersModalOpen(true);
-    } catch (err) {
-      console.error("Failed to load viewers", err);
-      toast.error(getApiErrorMessage(err, "Failed to load viewers"));
-    } finally {
-      setViewersLoading(false);
-    }
+  const openViewers = (node: TreeNode | null) => {
+    if (!node || (role !== 'Super Admin' && !(role === 'Admin' && node.type === 'chapter'))) return;
+    setViewNode(node);
+    setViewersModalOpen(true);
   };
-
-  const [lecturesByCourse, setLecturesByCourse] = useState<
-    Record<string, Lecture[]>
-  >({});
-
-  const [chaptersByLecture, setChaptersByLecture] = useState<
-    Record<string, Chapter[]>
-  >({});
 
   // Modal states
 
@@ -1661,36 +1619,17 @@ export default function DepartmentsPage() {
 
   const [generateCodeItemId, setGenerateCodeItemId] = useState<string>("");
 
-  // Extract nested data from courses
-
-  useEffect(() => {
-    if (courses) {
-      const lecturesData: Record<string, Lecture[]> = {};
-
-      const chaptersData: Record<string, Chapter[]> = {};
-
-      courses.forEach((course) => {
-        const nestedLectures = course.attributes.lectures || [];
-
-        if (nestedLectures.length > 0) {
-          lecturesData[course.id] = nestedLectures;
-
-          nestedLectures.forEach((lecture) => {
-            const chapterKey = `${course.id}-${lecture.id}`;
-
-            const nestedChapters = lecture.attributes?.chapters || [];
-
-            if (nestedChapters.length > 0) {
-              chaptersData[chapterKey] = nestedChapters;
-            }
-          });
-        }
-      });
-
-      setLecturesByCourse(lecturesData);
-
-      setChaptersByLecture(chaptersData);
+  const { lecturesByCourse, chaptersByLecture } = useMemo(() => {
+    const lecturesByCourse: Record<string, Lecture[]> = {};
+    const chaptersByLecture: Record<string, Chapter[]> = {};
+    for (const course of courses ?? []) {
+      const lectures = course.attributes.lectures || [];
+      lecturesByCourse[course.id] = lectures;
+      for (const lecture of lectures) {
+        chaptersByLecture[`${course.id}-${lecture.id}`] = lecture.attributes?.chapters || [];
+      }
     }
+    return { lecturesByCourse, chaptersByLecture };
   }, [courses]);
 
   // Build unified tree
@@ -1753,26 +1692,6 @@ export default function DepartmentsPage() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  // Auto-expand when searching
-
-  useMemo(() => {
-    if (searchQuery.trim() && treeData.length > 0) {
-      const allIds = new Set<string>();
-
-      const collectIds = (nodes: TreeNode[]) => {
-        nodes.forEach((node) => {
-          allIds.add(node.id);
-
-          collectIds(node.children);
-        });
-      };
-
-      collectIds(treeData);
-
-      setExpanded(allIds);
-    }
-  }, [searchQuery, treeData]);
 
   const handleToggle = (id: string) => {
     setExpanded((prev) => {
@@ -2850,6 +2769,7 @@ export default function DepartmentsPage() {
           openViewers={openViewers}
           isInstructor={isInstructor}
           isOwner={role === "Super Admin"}
+          isAdmin={role === "Admin"}
           canUseActivations={canUseActivations}
           codesLoading={codesLoading}
           selectedCode={selectedCode}
@@ -2965,7 +2885,7 @@ export default function DepartmentsPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-semibold">{viewNode.type === "course" ? (ar ? "الطلاب المشتركون" : "Course subscribers") : t("departments.LessonViewers")}</h3>
-                <p className="text-sm text-gray-500 mt-0.5">{viewNode.type === "course" ? viewNode.name : t("departments.listViewers")}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{viewNode.name}</p>
               </div>
 
               <button
@@ -2977,40 +2897,8 @@ export default function DepartmentsPage() {
             </div>
 
             <div className="space-y-2">
-              {viewersLoading ? (
-                <div className="py-6 flex items-center justify-center">
-                  <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
-                </div>
-              ) : !viewersList || viewersList.length === 0 ? (
-                <p className="text-sm text-gray-400">{viewNode.type === "course" ? (ar ? "لا يوجد طلاب مشتركون في هذه الدورة." : "No subscribers in this course.") : (ar ? "لا توجد مشاهدات مسجلة لهذه المحاضرة." : "No viewers recorded for this lesson.")}</p>
-              ) : (
-                <div className="divide-y divide-gray-100">
-                  {viewNode.type === "chapter" && <p className="py-3 text-sm text-gray-600">{t("departments.viewerExplanation", { count: viewersList.length })}</p>}
-                  {viewersList.map((uv: any) => (
-                    <div key={uv.id} className="flex items-center justify-between py-3">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {uv.user ? `${uv.user.first_name || ''} ${uv.user.last_name || ''}`.trim() : uv.user_id}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {viewNode.type === 'course' ? <a dir="ltr" href={`tel:${uv.user?.phone || ''}`}>{uv.user?.phone || '—'}</a> : (uv.user?.email || uv.user?.student_code || '')}
-                        </div>
-                      </div>
-
-                      {viewNode.type === "chapter" && <div className="text-right">
-                        <div className="text-sm text-gray-700">{t("departments.recordedViews")}: <span className="font-medium">{uv.count}</span></div>
-                        <div className="text-xs text-gray-400">{uv.created_at ? new Date(uv.created_at).toLocaleString() : ''}</div>
-                      </div>}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {viewNode.type === "course" ? <CourseSubscribers key={viewNode.id} courseId={Number(viewNode.data.id)} title={viewNode.name} onRemoved={refetchAll} /> : <LessonViewers key={viewNode.id} chapterId={Number(viewNode.data.id)} />}
             </div>
-            {viewNode.type === "course" && subscriberLastPage > 1 && <div className="mt-4 flex items-center justify-between">
-              <button type="button" disabled={viewersLoading || subscriberPage === 1} onClick={() => openViewers(viewNode, subscriberPage - 1)}>{ar ? "السابق" : "Previous"}</button>
-              <span>{subscriberPage} / {subscriberLastPage}</span>
-              <button type="button" disabled={viewersLoading || subscriberPage === subscriberLastPage} onClick={() => openViewers(viewNode, subscriberPage + 1)}>{ar ? "التالي" : "Next"}</button>
-            </div>}
           </div>
         </div>
       )}

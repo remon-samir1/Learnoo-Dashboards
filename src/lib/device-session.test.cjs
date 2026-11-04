@@ -62,6 +62,47 @@ test('session cleanup redirects to login with the notice and preserves the devic
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
 
+test('inactive accounts keep their reason through server rendering and cookie cleanup', async (t) => {
+  const { getCurrentUser } = load('../services/auth/me.service.ts', {
+    '@/lib/server.utils': async () => ({ token: 'old-token' }), '@/src/lib/api': { API_BASE_URL: 'https://api.learnoo.app' },
+  });
+  t.mock.method(globalThis, 'fetch', async () => Response.json({ code: 'account_inactive' }, { status: 401 }));
+  assert.equal((await getCurrentUser()).sessionReason, 'inactive');
+  const { GET } = load('../../app/api/auth/session-end/route.ts');
+  const response = GET(new NextRequest('http://localhost/api/auth/session-end?reason=inactive'));
+  assert.equal(response.headers.get('location'), '/login?session=inactive');
+  assert.equal(response.cookies.get('token').value, '');
+});
+
+test('an open student page checks access every five seconds and on focus without a logout click', () => {
+  const effects = [];
+  const listeners = {};
+  let checked = 0;
+  let interval;
+  global.document = { visibilityState: 'visible', addEventListener: (name, fn) => { listeners[name] = fn; }, removeEventListener: () => {} };
+  global.window = { setInterval: (fn, ms) => { interval = { fn, ms }; return 1; }, clearInterval: () => {}, addEventListener: (name, fn) => { listeners[name] = fn; }, removeEventListener: () => {} };
+  try {
+    const { default: ProtectedRoute } = load('../../components/ProtectedRoute.tsx', {
+      react: { useEffect: effect => effects.push(effect) },
+      'next/navigation': { useRouter: () => ({ replace: () => {} }) },
+      '@/src/stores/authStore': { useAuth: () => ({ isInitialized: true, isAuthenticated: true, isLoading: false, user: { attributes: { role: 'Student' } } }) },
+      '@/src/lib/profile-completeness': { isProfileComplete: () => true },
+      '@/src/lib/api': { authApi: { me: () => { checked++; return Promise.resolve(); } } },
+    });
+    ProtectedRoute({ children: null });
+    const cleanup = effects[0]();
+    assert.equal(checked, 1);
+    assert.equal(interval.ms, 5000);
+    interval.fn();
+    listeners.focus();
+    assert.equal(checked, 3);
+    cleanup();
+  } finally {
+    delete global.window;
+    delete global.document;
+  }
+});
+
 test('the student server layout redirects a revoked session instead of rendering the profile error', async (t) => {
   const { getCurrentUser } = load('../services/auth/me.service.ts', {
     '@/lib/server.utils': async () => ({ token: 'old-token' }), '@/src/lib/api': { API_BASE_URL: 'https://api.learnoo.app' },

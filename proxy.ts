@@ -132,6 +132,6 @@ export const config = {
     /*
      * Skip API, Next internals, static files, images, favicon, public folder.
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|public).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|icon$|.*\\..*|public).*)',
   ],
 };

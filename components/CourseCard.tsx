@@ -18,6 +18,7 @@ interface CourseCardProps {
   onView?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onReview?: () => void;
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({
@@ -33,7 +34,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({
   exams,
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  onReview
 }) => {
   const t = useTranslations('courses');
   
@@ -109,6 +111,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({
         </div>
 
         <div className="flex items-center justify-end gap-2 pt-2">
+          {onReview && <button type="button" onClick={event => { event.stopPropagation(); onReview(); }} className="me-auto rounded-lg border px-3 py-2 text-xs font-medium text-primary">{t('review.title')}</button>}
           <button onClick={(e) => { e.stopPropagation(); onView?.(); }} className="p-1.5 text-[#94A3B8] hover:text-[#2137D6] hover:bg-blue-50 rounded-lg transition-colors">
             <Eye className="w-4 h-4" />
           </button>

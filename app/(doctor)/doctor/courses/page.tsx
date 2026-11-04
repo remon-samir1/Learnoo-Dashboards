@@ -19,6 +19,7 @@ interface CourseDisplay {
   notes: number;
   progress: number;
   status: 'active' | 'draft';
+  approval: string;
   category: string;
   color: string;
 }
@@ -53,6 +54,7 @@ function CourseCard({
             {course.status === 'active' ? t('active') : t('draft')}
           </span>
           <span className="text-xs text-gray-400">{course.subject}</span>
+          <span className="text-xs font-medium text-blue-700">{course.approval}</span>
         </div>
 
       </div>
@@ -179,6 +181,7 @@ function CourseListView({ courses, t }: { courses: CourseDisplay[]; t: ReturnTyp
                     }`}>
                     {course.status === 'active' ? t('active') : t('draft')}
                   </span>
+                  <p className="mt-1 text-xs text-blue-700">{course.approval}</p>
                 </td>
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-1">
@@ -236,10 +239,11 @@ export default function MyCoursesPage() {
         notes: c.attributes.stats?.notes || 0,
         progress: 0,
         status: c.attributes.status === 1 ? 'active' as const : 'draft' as const,
+        approval: t(c.attributes.approval === 1 ? 'approved' : c.attributes.approval === 2 ? 'declined' : 'pending'),
         category: c.attributes.status === 1 ? 'active' : 'draft',
         color: 'blue',
       }));
-  }, [allCourses, user]);
+  }, [allCourses, user, t]);
 
   // Extract unique centers for filter dropdown
   const centers = useMemo(() => {
@@ -274,7 +278,7 @@ export default function MyCoursesPage() {
           <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
           <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
-
+        <button type="button" onClick={() => router.push('/doctor/courses/add')} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white">{t('createCourse')}</button>
       </div>
 
       {/* Filters and Controls */}

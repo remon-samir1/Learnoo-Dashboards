@@ -3,6 +3,7 @@ import { getDeviceId } from './device-id';
 import type {
   ApiResponse,
   ApiListResponse,
+  PaginationMeta,
   ValidationError,
   // Auth types
   RegisterRequest,
@@ -180,7 +181,8 @@ async function handleResponse<T>(response: Response, skipAuthRedirect: boolean =
     // Handle unauthorized errors - redirect to login (unless skipped)
     if ((response.status === 401) && !skipAuthRedirect) {
       if (typeof window !== 'undefined') {
-        window.location.replace(`/api/auth/session-end?reason=${errorData.code === 'device_session_revoked' ? 'device-changed' : 'expired'}`);
+        if (typeof document !== 'undefined') document.querySelectorAll<HTMLMediaElement>('video, audio').forEach(media => media.pause());
+        window.location.replace(`/api/auth/session-end?reason=${errorData.code === 'account_inactive' ? 'inactive' : errorData.code === 'device_session_revoked' ? 'device-changed' : 'expired'}`);
       }
     }
 
@@ -580,7 +582,14 @@ export const centersApi = {
 // Chapters API
 // ============================================
 
+export interface LessonViewersResponse {
+  data: { id: number; user: { id: string; first_name: string; last_name: string; email: string | null; student_code: string | null }; created_at: string | null; count: number; remaining_views: number | null }[];
+  max_views: number;
+  last_page: number;
+}
+
 export const chaptersApi = {
+  viewers: (id: number, page = 1) => get<LessonViewersResponse>(`/v1/chapter/${id}/viewers`, { page }),
   list: (params?: { lecture_id?: number | string }) => get<ApiListResponse<Chapter>>('/v1/chapter', params),
 
   get: (id: number, options?: { skipAuthRedirect?: boolean }) =>
@@ -695,12 +704,16 @@ export const preActivationApi = {
 // ============================================
 
 export const coursesApi = {
+  review: (id: number, approval: 0 | 1 | 2, reason?: string) =>
+    patch<ApiResponse<Course>>(`/v1/course/${id}/approval`, { approval, reason }),
   list: (params?: { category_id?: number; activated?: number; per_page?: number } | Record<string, string | number>) =>
     get<ApiListResponse<Course>>('/v1/course', params),
 
   get: (id: number) => get<ApiResponse<Course>>(`/v1/course/${id}`),
 
-  subscribers: (id: number, page = 1) => get<{ data: { id: number; first_name: string; last_name: string; phone: string }[]; last_page: number }>(`/v1/course/${id}/subscribers`, { page }),
+  subscribers: (id: number, page = 1) => get<{ data: { id: string; first_name: string; last_name: string; phone: string }[]; last_page: number; total: number; pending_count: number }>(`/v1/course/${id}/subscribers`, { page }),
+  removeSubscribers: (id: number, selection: { all: true } | { student_ids: string[] }) =>
+    post<{ removed: number; pending_removed: number }>(`/v1/course/${id}/subscribers/remove`, selection),
 
   create: (data: CreateCourseRequest, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
@@ -720,7 +733,11 @@ export const coursesApi = {
 // ============================================
 
 export const departmentsApi = {
-  list: () => get<ApiListResponse<Department>>('/v1/department'),
+  list: () => get<ApiListResponse<Department>>('/v1/department').catch(async (error: unknown) => {
+    if (!(error instanceof TypeError)) throw error;
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return get<ApiListResponse<Department>>('/v1/department');
+  }),
 
   get: (id: number) => get<ApiResponse<Department>>(`/v1/department/${id}`),
 
@@ -1159,7 +1176,7 @@ export const studentsApi = {
     per_page?: number;
     page?: number;
     role?: number;
-  }) => get<ApiListResponse<Student>>('/v1/student', { ...params, role: 0 }),
+  }) => get<Omit<ApiListResponse<Student>, 'meta'> & { meta?: Partial<PaginationMeta> }>('/v1/student', { ...params, role: 0 }),
 
   get: (id: string) => get<ApiResponse<Student>>(`/v1/student/${id}`),
 
@@ -1170,6 +1187,7 @@ export const studentsApi = {
 
   update: (id: string, data: Partial<CreateStudentRequest>, onProgress?: (progress: number) => void) => {
     const formData = buildFormData(data as unknown as Record<string, unknown>);
+    if (data.course_ids?.length === 0) formData.append('course_ids', '');
     return putMultipart<ApiResponse<Student>>(`/v1/student/${id}`, formData, onProgress);
   },
 
@@ -1502,14 +1520,24 @@ export const appVersionsApi = {
 
 export interface PlatformNotification {
   id: string;
-  data: { title: string; message: string; type?: string; url?: string; content_id?: string | number; course_id?: string | number; post_id?: string | number; chapter_id?: string | number; discussion_id?: string | number; student_id?: string };
+  data: { title: string; message: string; type?: string; action?: string; event?: string; actor_name?: string; url?: string; content_id?: string | number; course_id?: string | number; post_id?: string | number; chapter_id?: string | number; discussion_id?: string | number; student_id?: string };
   read_at: string | null;
   created_at: string;
 }
 
+export interface NotificationFilters {
+  search?: string; type?: string; department_id?: string; course_id?: string; status?: string; from?: string; to?: string;
+}
+
+export interface NotificationOptions {
+  departments: { id: number; name: string }[];
+  courses: { id: number; title: string; department_ids: number[]; sendable: boolean }[];
+}
+
 export const notificationsApi = {
-  list: (page = 1) => get<{ data: PlatformNotification[]; meta: { last_page: number; unread_count: number } }>('/v1/notifications', { page }),
-  send: (data: { title: string; message: string; course_id?: number }) => post<{ sent: number }>('/v1/notifications/send', data),
+  list: (page = 1, filters: NotificationFilters = {}) => get<{ data: PlatformNotification[]; meta: { last_page: number; total: number; unread_count: number } }>('/v1/notifications', { page, ...filters }),
+  options: () => get<NotificationOptions>('/v1/notifications/options'),
+  send: (data: { title: string; message: string; course_id?: number; course_ids?: number[] }) => post<{ sent: number }>('/v1/notifications/send', data),
   read: (id: string) => patch(`/v1/notifications/${id}/read`),
   readAll: () => patch('/v1/notifications/read-all'),
 };
@@ -1536,18 +1564,23 @@ export const timetableApi = {
 };
 
 export interface ContentAuditSnapshot { id: number; title: string; video: string | null; lecture_id: number | null; course_id: number | null; status: number; max_views: number | null; view_by_minute: number | null }
-export interface StaffActivity { id: number; action: string; first_name: string; last_name: string; created_at: string; details?: { before: ContentAuditSnapshot; after: ContentAuditSnapshot | null; view_history: { student_id: string; name: string; count: number }[] } | null }
+export interface StaffActivity { id: number; action: string; first_name: string; last_name: string; created_at: string; details?: { course?: { id: number; title: string | null; category_path: string[] }; course_context_current?: boolean; before?: ContentAuditSnapshot; after?: ContentAuditSnapshot | null; view_history?: { student_id: string; name: string; count: number }[] } | null }
 export interface ArchivedStudent { id: string; first_name: string; last_name: string; phone: string; deleted_at: string }
 export const archivedStudentsApi = {
-  list: (page: number, search: string) => get<{ data: ArchivedStudent[]; last_page: number }>('/v1/student-archives', { page, search }),
+  list: (page: number, search: string) => get<{ data: ArchivedStudent[]; last_page?: number; next_page_url?: string | null }>('/v1/student-archives', { page, search }),
   recover: (id: string, mode: 'restore' | 'new') => post(`/v1/student-archives/${id}`, { mode }),
 };
 export interface DeviceDetails { device: string; browser: string; identifier: string; ip: string; at: string }
-export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null }
+export interface DeviceTransfer { id: string; first_name: string; last_name: string; phone: string; current_device: DeviceDetails | null; requested_device: DeviceDetails | null; device_transfer_count?: number; remaining_device_transfers?: number }
+export interface PendingActivationFilters { phone?: string; item_type?: string; course_id?: number }
+export interface PendingActivationPage { data: { id: number; phone: string; item_type: string; title: string | null; category_path: string[]; created_at: string | null }[]; total: number; last_page: number }
 export const ownerOperationsApi = {
-  activity: (page = 1, dates?: { from?: string; to?: string }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...dates }),
+  pendingActivations: (page = 1, filters: PendingActivationFilters = {}) => get<PendingActivationPage>('/v1/owner/pre-activations', { page, ...filters }),
+  activity: (page = 1, filters?: { from?: string; to?: string; role?: 'Instructor' | 'Admin'; type?: 'device-requests' | 'device-decisions' | 'courses' | 'lessons' | 'accounts' | 'activations' }) => get<{ data: StaffActivity[]; last_page: number }>('/v1/owner/activity', { page, ...filters }),
   devices: () => get<{ data: DeviceTransfer[] }>('/v1/owner/device-transfers'),
   approve: (id: string) => post(`/v1/owner/device-transfers/${id}/approve`),
+  cancel: (id: string) => post(`/v1/owner/device-transfers/${id}/cancel`),
+  resetDevice: (id: string) => post(`/v1/owner/device-transfers/${id}/reset`),
 };
 
 export interface GuardianStudent { id: string; first_name: string; last_name: string; phone?: string; email?: string; student_code?: string; university?: { name: string } | null; faculty?: { name: string } | null; centers?: { name: string }[]; activated_courses?: { id: string; title: string }[]; parents: { id: string; first_name: string; last_name: string; email: string; phone: string }[] }

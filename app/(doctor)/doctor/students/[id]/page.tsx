@@ -4,7 +4,6 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
-  Edit2,
   Mail,
   Phone,
   Calendar,
@@ -118,16 +117,7 @@ export default function StudentProfilePage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
 
-          <Link
-            href={`/doctor/students/${student.id}/edit`}
-            className="flex-1 md:flex-none px-5 py-2.5 bg-[#2137D6] hover:bg-[#1a2bb3] text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-200"
-          >
-            <Edit2 className="w-4 h-4" />
-            Edit Student
-          </Link>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

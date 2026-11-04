@@ -2858,6 +2858,7 @@ export default function DepartmentsPage() {
           openViewers={openViewers}
           isInstructor={isInstructor}
           isOwner={role === "Super Admin"}
+          isAdmin={role === "Admin"}
           canUseActivations={canUseActivations}
           codesLoading={codesLoading}
           selectedCode={selectedCode}

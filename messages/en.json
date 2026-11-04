@@ -4,6 +4,14 @@
     "tagline": "Pro Instructor"
   },
   "common": {
+    "authorRoles": {
+      "student": "Student",
+      "instructor": "Instructor",
+      "admin": "Admin",
+      "owner": "Owner",
+      "support": "Support",
+      "parent": "Parent"
+    },
     "loading": "Loading...",
     "save": "Save",
     "saving": "Saving...",
@@ -79,6 +87,7 @@
       "deviceRequestSent": "Your request was sent to the administrator. Once approved, sign in on this device.",
       "deviceChanged": "This session ended because the approved device changed. Sign in to continue.",
       "sessionExpired": "Your session expired. Please sign in again.",
+      "accountInactive": "Your account has been disabled. Please contact the administration.",
       "errors": {
         "missingFields": "Please enter your phone number",
         "localPhoneFormat": "For Egypt, enter your local number, such as 010..., without +20 or 020.",
@@ -415,6 +424,7 @@
     "parentDashboard": "Parent Dashboard",
     "schedules": "Schedules and documents",
     "activity": "Staff activity and devices",
+    "pendingActivations": "Pending activations",
     "deviceApprovals": "Device approvals",
     "guardians": "Guardians"
   },
@@ -496,6 +506,15 @@
     }
   },
   "instructors": {
+    "publishing": {
+      "title": "Course publishing",
+      "description": "Choose how this instructor’s courses are approved.",
+      "review": "Require administrative approval",
+      "reviewHint": "New courses stay hidden from students until the Owner approves them.",
+      "automatic": "Publish without waiting for approval",
+      "automaticHint": "New courses are approved automatically. Administrators still receive notifications.",
+      "existingCourses": "Saving “Publish without waiting for approval” also approves existing pending courses. Declined courses, draft status and student activations stay unchanged."
+    },
     "pageTitle": "Instructors Management",
     "pageDescription": "Manage instructor accounts and details.",
     "addInstructor": "Add Instructor",
@@ -1442,7 +1461,7 @@
       "activating": "Activating...",
       "preactivation": {
         "title": "Pre-activation File",
-        "description": "Upload a file with phone numbers",
+        "description": "Add phone numbers or select a file, then submit the list for activation.",
         "selectFile": "Select a file first",
         "numbersReady": "phone numbers ready for upload",
         "upload": "Upload Pre-activation",
@@ -1462,6 +1481,26 @@
       "selectCodeAndStudent": "Please select both a code and a student",
       "courseActivated": "Course activated successfully!",
       "codeCopied": "Code copied to clipboard"
+    },
+    "review": {
+      "automaticDescription": "You can publish new courses without waiting for administrative approval.",
+      "publish": "Create and publish",
+      "title": "Review course",
+      "0": "Pending review",
+      "1": "Approved",
+      "2": "Declined",
+      "hiddenHelp": "Hidden from students until the Owner approves this course.",
+      "approvedHelp": "Approval allows student access only while the course and its lessons are published and available. Student activation is still required for paid content.",
+      "thumbnail": "Course thumbnail",
+      "reason": "Reason for declining (optional)",
+      "approve": "Approve course",
+      "reject": "Decline course",
+      "pending": "Return to pending",
+      "error": "Could not save the review. Please try again.",
+      "submitted": "Course submitted for review. It remains hidden from students until approved.",
+      "submit": "Submit for review",
+      "noDepartments": "Ask the administration to assign you a course in an academic department first.",
+      "description": "Create a course in one of your assigned departments. The Owner reviews it before students can see it."
     }
   },
   "centers": {
@@ -3119,6 +3158,8 @@
     "highlights": "Highlights"
   },
   "studentProfile": {
+    "deviceTransferRemaining": "Device changes remaining: {remaining} of {limit}",
+    "deviceTransferSupport": "To change devices after using both changes, contact administration or support.",
     "title": "Profile",
     "description": "Manage your personal information and account details",
     "personalInformation": "Personal Information",
@@ -3527,7 +3568,10 @@
     "contentProgress": "Content Progress",
     "viewCourse": "View Course",
     "deleteConfirm": "Are you sure you want to delete this course?",
-    "noCoursesFound": "No courses found."
+    "noCoursesFound": "No courses found.",
+    "approved": "Approved",
+    "pending": "Pending",
+    "declined": "Declined"
   },
   "settings": {
     "profile": {

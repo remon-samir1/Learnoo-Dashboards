@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import ArchivedStudents from '@/components/dashboard/ArchivedStudents';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 import { useStudents, useDeleteStudent } from '@/src/hooks/useStudents';
 import { TableSkeleton } from '@/src/components/ui/Skeleton';
 import type { Student, StudentStatus } from '@/src/types';
@@ -25,6 +26,8 @@ function getInitials(firstName: string, lastName: string) {
 
 export default function StudentsPage() {
   const queryClient = useQueryClient();
+  const { role } = useCurrentUser();
+  const hideStudentCounts = role !== 'Super Admin' && role !== 'Instructor';
   const t = useTranslations('students');
   const tc = useTranslations('common');
   const [searchTerm, setSearchTerm] = useState('');
@@ -218,7 +221,7 @@ export default function StudentsPage() {
             {/* Pagination */}
             <div className="px-6 py-4 bg-[#F8FAFC] border-t border-[#F1F5F9] flex items-center justify-between mt-auto">
               <p className="text-[13px] text-[#64748B]">
-                {tc('showing')} <span className="font-bold text-[#1E293B]">{meta?.from || 0} {tc('to')} {meta?.to || 0}</span> {tc('of')} <span className="font-bold text-[#1E293B]">{meta?.total || 0}</span> {tc('results')}
+                {!hideStudentCounts && <>{tc('showing')} <span className="font-bold text-[#1E293B]">{meta?.from || 0} {tc('to')} {meta?.to || 0}</span> {tc('of')} <span className="font-bold text-[#1E293B]">{meta?.total || 0}</span> {tc('results')}</>}
               </p>
               <div className="flex items-center gap-1.5">
                 {/* Previous Button */}
@@ -231,7 +234,7 @@ export default function StudentsPage() {
                 </button>
 
                 {/* Page Numbers */}
-                {(() => {
+                {!hideStudentCounts && (() => {
                   const totalPages = meta?.last_page || 1;
                   const currentPage = page;
                   const pages: (number | string)[] = [];
@@ -269,7 +272,7 @@ export default function StudentsPage() {
                 {/* Next Button */}
                 <button
                   className="px-3 py-2 border border-[#E2E8F0] rounded-lg text-sm font-medium text-[#64748B] hover:bg-white hover:border-[#2137D6] hover:text-[#2137D6] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#E2E8F0] disabled:hover:text-[#64748B]"
-                  disabled={page >= (meta?.last_page || 1)}
+                  disabled={hideStudentCounts ? !studentsResponse?.links?.next : page >= (meta?.last_page || 1)}
                   onClick={() => setPage(page + 1)}
                 >
                   {tc('next')}

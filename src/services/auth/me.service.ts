@@ -6,7 +6,7 @@ export type GetCurrentUserResult = {
   success: boolean;
   data?: CurrentUser | null;
   message?: string;
-  sessionReason?: 'device-changed' | 'expired';
+  sessionReason?: 'device-changed' | 'inactive' | 'expired';
 };
 
 export async function getCurrentUser(): Promise<GetCurrentUserResult> {
@@ -30,7 +30,7 @@ export async function getCurrentUser(): Promise<GetCurrentUserResult> {
     const body = await res.json().catch(() => ({}));
 
     if (res.status === 401) {
-      return { success: false, data: null, sessionReason: body.code === 'device_session_revoked' ? 'device-changed' : 'expired' };
+      return { success: false, data: null, sessionReason: body.code === 'account_inactive' ? 'inactive' : body.code === 'device_session_revoked' ? 'device-changed' : 'expired' };
     }
 
     if (!res.ok) {

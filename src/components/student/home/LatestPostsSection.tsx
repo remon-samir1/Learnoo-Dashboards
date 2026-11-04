@@ -5,18 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight, BookOpen, MessageSquare, ThumbsUp, User } from "lucide-react";
 import type { Post } from "@/src/services/student/post.service";
 import { readCommunityPostCourseNames } from "@/src/lib/student-community-posts";
-
-function isLikelyInstructorRole(role: string | undefined): boolean {
-  if (!role?.trim()) return false;
-  const r = role.trim().toLowerCase();
-  return (
-    r.includes("instructor") ||
-    r.includes("doctor") ||
-    r.includes("teacher") ||
-    r.includes("faculty") ||
-    r === "admin"
-  );
-}
+import { AuthorRoleBadge } from "@/components/student/AuthorRoleBadge";
 
 function getPostRelativeTime(isoString: string, locale: string): string {
   const date = new Date(isoString);
@@ -74,7 +63,6 @@ export default function LatestPostsSection({
             const user = post.attributes.user?.data.attributes;
             const userInitial = user?.first_name?.[0] || user?.full_name?.[0] || "?";
             const userName = user?.full_name || user?.first_name || t("community.posts.unknownUser");
-            const instructor = isLikelyInstructorRole(user?.role);
             const typeKey = post.attributes.type;
             const typeLabel = t(`community.posts.type.${typeKey}`);
             const comments = post.attributes.comments_count ?? 0;
@@ -99,11 +87,6 @@ export default function LatestPostsSection({
                           <span className="line-clamp-1 text-base font-bold text-[var(--text-dark)] sm:text-lg">
                             {post.attributes.title}
                           </span>
-                          {instructor ? (
-                            <span className="shrink-0 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-violet-700">
-                              {t("courses.studentCommunity.badgeInstructor")}
-                            </span>
-                          ) : null}
                           <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
                             {typeLabel}
                           </span>
@@ -128,6 +111,7 @@ export default function LatestPostsSection({
                             <User size={13} />
                             {userName}
                           </span>
+                          <AuthorRoleBadge role={user?.role} />
                           <span className="flex items-center gap-1">
                             <MessageSquare size={13} />
                             {comments}

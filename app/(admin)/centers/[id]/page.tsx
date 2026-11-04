@@ -12,10 +12,13 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
+import { useCurrentUser } from '@/src/hooks/useAuth';
 
 export default function CenterDetailsPage() {
   const router = useRouter();
   const params = useParams();
+  const { role } = useCurrentUser();
+  const isOwner = role === 'Super Admin';
   
   // Mock data for a single center
   const center = {
@@ -71,7 +74,7 @@ export default function CenterDetailsPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {center.stats.map((stat, idx) => {
+        {center.stats.filter(stat => isOwner || stat.label !== 'Students').map((stat, idx) => {
           const Icon = stat.icon;
           return (
             <div key={idx} className="bg-white p-6 rounded-3xl border border-[#F1F5F9] shadow-sm flex flex-col items-center justify-center text-center gap-2 hover:shadow-md transition-all group cursor-default">
@@ -100,7 +103,7 @@ export default function CenterDetailsPage() {
             >
               <div className="flex flex-col gap-1">
                 <span className="text-[15px] font-bold text-[#1E293B]">{course.name}</span>
-                <span className="text-[12px] text-[#64748B] font-medium">{course.students} students enrolled</span>
+                {isOwner && <span className="text-[12px] text-[#64748B] font-medium">{course.students} students enrolled</span>}
               </div>
               <span className="px-2.5 py-1 bg-[#EBFDF5] text-[#10B981] text-[10px] font-bold rounded-full border border-emerald-50">
                 {course.status}

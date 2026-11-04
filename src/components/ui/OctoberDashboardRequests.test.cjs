@@ -141,12 +141,12 @@ test('direct teacher authoring routes redirect before rendering content', () => 
     '../../components/DoctorHeader': { __esModule: true, default: () => null },
     'next/navigation': { usePathname: () => pathname, useRouter: () => ({ replace: value => { redirected = value; } }) },
   });
-  for (pathname of ['/doctor/courses/add', '/doctor/courses/12/edit']) {
+  for (pathname of ['/doctor/departments/add', '/doctor/courses/12/edit']) {
     redirected = null;
     assert.equal(Layout({ children: 'Protected form' }), null);
     assert.equal(redirected, '/doctor/departments');
   }
-  for (pathname of ['/doctor/courses/12', '/doctor/exams/create', '/doctor/discussions', '/doctor/chapters/5/edit', '/doctor/courses/12/lectures/create', '/doctor/courses/12/notes/create', '/doctor/content-manager', '/doctor/notes-summaries/add']) {
+  for (pathname of ['/doctor/courses/add', '/doctor/courses/12', '/doctor/exams/create', '/doctor/discussions', '/doctor/chapters/5/edit', '/doctor/courses/12/lectures/create', '/doctor/courses/12/notes/create', '/doctor/content-manager', '/doctor/notes-summaries/add']) {
     redirected = null;
     assert.ok(Layout({ children: 'Allowed content' }));
     assert.equal(redirected, null);
@@ -156,6 +156,7 @@ test('direct teacher authoring routes redirect before rendering content', () => 
 test('teacher edits course details and manages descendants while academic branches remain protected', () => {
   const { ColumnItem } = load('src/components/MillerColumns/ColumnItem.tsx');
   const { DetailPanel } = load('src/components/MillerColumns/DetailPanel.tsx', {
+    '@/src/lib/preactivation-phones': { readPreactivationPhones: async () => [] },
     './ChapterPreview': { ChapterPreview: () => null }, './StudentSelector': { StudentSelector: () => null },
   });
   for (const type of ['university', 'center', 'faculty', 'department', 'course', 'lecture', 'chapter', 'note']) {
@@ -176,7 +177,7 @@ test('teacher edits course details and manages descendants while academic branch
   assert.match(renderToStaticMarkup(React.createElement(ColumnItem, { item, searchQuery: '', isInstructor: false })), /title="Edit"/);
 });
 
-test('teacher grid and list expose enrolled course counts without course authoring', () => {
+test('teacher grid and list expose enrolled course counts and course submission', () => {
   let mode = 'grid';
   const course = { id: '12', attributes: { doctor_id: 'teacher', title: 'Accounting', status: 1, stats: { students: 31 } } };
   const { default: Courses } = load('app/(doctor)/doctor/courses/page.tsx', {
@@ -188,7 +189,7 @@ test('teacher grid and list expose enrolled course counts without course authori
   for (mode of ['grid', 'list']) {
     const markup = renderToStaticMarkup(React.createElement(Courses));
     assert.match(markup, />31</);
-    assert.ok(!markup.includes(i18n.useTranslations('doctorCourses')('createCourse')));
+    assert.ok(markup.includes(i18n.useTranslations('doctorCourses')('createCourse')));
     assert.ok(!markup.includes('lucide-pencil'));
     assert.ok(!markup.includes('lucide-trash'));
   }
@@ -198,6 +199,7 @@ test('student community shows their pending notification target but hides other 
   const post = (id, user, status = 'draft', parent_id = null) => ({ id, attributes: { title: `Post ${id}`, content: 'Question', type: 'post', status, parent_id, user: { data: { id: user, attributes: { first_name: 'Student' } } } } });
   const { default: Feed } = load('components/student/community/StudentCommunityFeed.tsx', {
     react: { ...React, useEffect: () => {} },
+    '@/components/student/AuthorRoleBadge': { AuthorRoleBadge: () => null },
     '@/components/student/community/StudentCommunityCreatePostModal': { __esModule: true, default: () => null },
     '@/components/student/community/StudentCommunityPostComments': { __esModule: true, default: ({ postId }) => React.createElement('span', null, `Replies for ${postId}`) },
     '@/src/lib/community-post-display': { communityPostRelativeTime: () => '', communityPostTypeBadgeClasses: () => '' },
@@ -220,6 +222,7 @@ test('student community renders replies of every accepted post type only for the
   const reply = (id, type, parent_id) => ({ id, attributes: { type, parent_id, content: `Reply ${id}` } });
   const { default: Comments } = load('components/student/community/StudentCommunityPostComments.tsx', {
     react: { ...React, useState: value => [value === false ? true : value, () => {}] },
+    '@/components/student/AuthorRoleBadge': { AuthorRoleBadge: () => null },
     '@/src/hooks/useComments': { useComments: () => ({ data: [reply(1, 'post', 104), reply(2, 'question', 104), reply(3, 'summary', 104), reply(4, 'post', 105), reply(5, 'post', null)] }), useDeleteComment: () => ({}) },
     '@/src/hooks/usePosts': { useReactToPost: () => ({}) },
     '@/src/stores/authStore': { useAuth: () => ({ user: null }) },

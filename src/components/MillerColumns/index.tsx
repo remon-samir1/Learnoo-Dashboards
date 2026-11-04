@@ -15,6 +15,7 @@ interface MillerColumnsProps {
   openViewers: (node: TreeNode) => void;
   isInstructor: boolean;
   isOwner: boolean;
+  isAdmin: boolean;
 
   // Activation & Student States (passed down to DetailPanel)
   canUseActivations: boolean;
@@ -56,6 +57,7 @@ export function MillerColumns({
   openViewers,
   isInstructor,
   isOwner,
+  isAdmin,
 
   canUseActivations,
   codesLoading,
@@ -85,7 +87,7 @@ export function MillerColumns({
 }: MillerColumnsProps) {
   // Use shared state hook, or hook initialized inside
   const internalHook = useMillerState();
-  const { selectedNodes, path, selectNode, selectAt, setSelectedNodes } = stateHook || internalHook;
+  const { selectedNodes, selectNode, setSelectedNodes } = stateHook || internalHook;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -150,7 +152,7 @@ export function MillerColumns({
   return (
     <div className="flex flex-col space-y-4 w-full">
       {/* Breadcrumb */}
-      <Breadcrumb path={path} onJump={selectAt} />
+      <Breadcrumb nodes={selectedNodes} onJump={index => setSelectedNodes(index === null ? [] : selectedNodes.slice(0, index + 1))} />
 
       {/* Miller Columns Scroll View */}
       <div
@@ -179,6 +181,7 @@ export function MillerColumns({
             <DetailPanel
               node={detailPanelNode}
               isOwner={isOwner}
+              isAdmin={isAdmin}
               canUseActivations={canUseActivations}
               isInstructor={isInstructor}
               codesLoading={codesLoading}

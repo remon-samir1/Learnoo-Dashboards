@@ -153,6 +153,7 @@ export default function CoursesPage() {
                   onView={() => window.location.href = `/courses/${cardProps.id}`}
                   onEdit={() => window.location.href = `/courses/${cardProps.id}/edit`}
                   onDelete={() => handleDelete(cardProps.id)}
+                  onReview={() => window.location.href = `/courses/${cardProps.id}#course-review`}
                 />
               );
             })

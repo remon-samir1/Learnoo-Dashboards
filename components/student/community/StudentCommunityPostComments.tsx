@@ -6,6 +6,7 @@ import { MessageSquare, ThumbsUp as LikeIcon, Trash2, Loader2 } from 'lucide-rea
 import { useComments, useDeleteComment } from '@/src/hooks/useComments';
 import { useReactToPost } from '@/src/hooks/usePosts';
 import { useAuth } from '@/src/stores/authStore';
+import { AuthorRoleBadge } from '@/components/student/AuthorRoleBadge';
 
 interface StudentCommunityPostCommentsProps {
   postId: string | number;
@@ -156,11 +157,7 @@ export default function StudentCommunityPostComments({
                         <span className="text-[13px] font-bold text-[#1E293B]">
                           {userName}
                         </span>
-                        {instructor && (
-                          <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-bold text-violet-700">
-                            {t('instructorBadge')}
-                          </span>
-                        )}
+                        <AuthorRoleBadge role={commentUser?.role} />
                         {commentDate && (
                           <span className="text-[11px] text-[#94A3B8]">
                             · {commentDate}

@@ -121,6 +121,7 @@ const getMenuItems = (t: (key: string) => string, role: string | null | undefine
   if (role === 'Super Admin') {
     items.push({ name: t('sidebar.dashboard'), icon: LayoutDashboard, path: '/dashboard' });
     items.push({ name: t('sidebar.activity'), icon: ClipboardList, path: '/activity' });
+    items.push({ name: t('sidebar.pendingActivations'), icon: ClipboardList, path: '/pre-activations' });
   }
   if (role === 'Admin') {
     items.push({ name: t('sidebar.deviceApprovals'), icon: ClipboardList, path: '/activity' });
