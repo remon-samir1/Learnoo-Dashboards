@@ -439,7 +439,7 @@
 
 //         {hasReplies && (
 //           <div className="mt-2 border-l border-[#E2E8F0] ml-4 sm:ml-5">
-//             {discussion.replies.map((reply: any) => (
+//             {discussion.replies.map((reply: Discussion) => (
 //               <DiscussionNode
 //                 key={reply.id}
 //                 discussion={reply}
@@ -910,7 +910,7 @@ const DiscussionNode = ({
           <div className="overflow-hidden">
             {hasReplies && (
               <div className="mt-2 border-l border-[#E2E8F0] ml-4 sm:ml-5">
-                {discussion.replies.map((reply: any) => (
+                {discussion.replies.map((reply: Discussion) => (
                   <DiscussionNode
                     key={reply.id}
                     discussion={reply}

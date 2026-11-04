@@ -32,18 +32,72 @@ export function normalizeDiscussions(raw: unknown): WatchDiscussionItem[] {
   return raw as WatchDiscussionItem[];
 }
 
+/**
+ * Threads a discussion list, whatever shape it arrives in.
+ *
+ * The chapter payload the student page reads lists every level as its own row
+ * carrying a `parent_id`, while the list endpoint behind the staff pages
+ * returns the roots only and hangs the thread under `attributes.replies`. The
+ * UI reads `replies`, so both have to end up there: the nested rows are
+ * registered as nodes of their own (a reply to a reply used to keep its
+ * children in `attributes.replies`, where nothing rendered them), and a row
+ * naming a parent is attached to it even when that parent arrived nested.
+ */
 export function buildDiscussionTree<T extends { id?: string | number; attributes?: { parent_id?: number | null; replies?: T[] }; replies?: T[] }>(flat: T[]): T[] {
-  const map = new Map<string, T>();
-  const roots: T[] = [];
+  type Node = T & { replies: T[] };
+
+  const map = new Map<string, Node>();
+  /** Ids already sitting in some node's `replies`, so they are not also roots. */
+  const attached = new Set<string>();
+
+  const nestedReplies = (item: T): T[] => item.attributes?.replies ?? item.replies ?? [];
+  const toNode = (item: T): Node => ({ ...item, replies: [] }) as Node;
+
+  // The rows the caller passed in are authoritative: a nested copy of one of
+  // them may be a stub, so it must not replace the row itself.
   for (const item of flat) {
-    if (item.id != null) map.set(String(item.id), { ...item, replies: [...(item.attributes?.replies ?? item.replies ?? [])] });
+    if (item.id != null && !map.has(String(item.id))) map.set(String(item.id), toNode(item));
   }
-  for (const item of map.values()) {
-    const parent = item.attributes?.parent_id != null ? map.get(String(item.attributes.parent_id)) : undefined;
-    if (parent) {
-      if (!parent.replies?.some(reply => String(reply.id) === String(item.id))) parent.replies?.push(item);
-    } else roots.push(item);
+
+  const walked = new Set<string>();
+  const linkNested = (item: T): void => {
+    const key = item.id != null ? String(item.id) : null;
+    // A payload that nests a row inside itself would otherwise recurse forever.
+    if (key != null) {
+      if (walked.has(key)) return;
+      walked.add(key);
+    }
+
+    const parent = key != null ? map.get(key) : undefined;
+    for (const child of nestedReplies(item)) {
+      if (child.id == null) continue;
+      const childKey = String(child.id);
+      if (!map.has(childKey)) map.set(childKey, toNode(child));
+      const childNode = map.get(childKey)!;
+
+      if (parent && parent !== childNode && !parent.replies.some(reply => String(reply.id) === childKey)) {
+        parent.replies.push(childNode);
+        attached.add(childKey);
+      }
+
+      linkNested(child);
+    }
+  };
+  for (const item of flat) linkNested(item);
+
+  const roots: Node[] = [];
+  for (const node of map.values()) {
+    const parentId = node.attributes?.parent_id;
+    const parent = parentId != null ? map.get(String(parentId)) : undefined;
+
+    if (parent && parent !== node) {
+      if (!parent.replies.some(reply => String(reply.id) === String(node.id))) parent.replies.push(node);
+      attached.add(String(node.id));
+    } else if (!attached.has(String(node.id))) {
+      roots.push(node);
+    }
   }
+
   return roots;
 }
 

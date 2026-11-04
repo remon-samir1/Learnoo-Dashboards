@@ -1981,6 +1981,9 @@ export interface DiscussionAttributes {
 
   duration?: number | null;
 
+  /** The list endpoint nests a discussion's thread here instead of returning each reply as its own row. */
+  replies?: Discussion[];
+
   user?: {
     data: {
       id: string;
