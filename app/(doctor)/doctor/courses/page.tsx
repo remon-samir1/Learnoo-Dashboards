@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { Search, Grid3X3, List, ChevronDown, Eye, Users, Loader2 } from 'lucide-react';
+import { Search, Grid3X3, List, ChevronDown, Eye, Users, Layers, PlayCircle, FileText, StickyNote, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCourses } from '@/src/hooks/useCourses';
 import { useCurrentUser } from '@/src/hooks/useAuth';
@@ -16,6 +16,7 @@ interface CourseDisplay {
   students: number;
   exams: number;
   lectures: number;
+  chapters: number;
   notes: number;
   progress: number;
   status: 'active' | 'draft';
@@ -64,7 +65,7 @@ function CourseCard({
       <p className="text-sm text-gray-500 mb-4">{course.center}</p>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
         <div className="text-center p-3 bg-gray-50 rounded-lg">
           <Users className="mx-auto mb-1 h-4 w-4 text-blue-600" />
           <p className="text-lg font-semibold text-gray-900">{course.students}</p>
@@ -74,14 +75,22 @@ function CourseCard({
         <div className="text-center p-3 bg-gray-50 rounded-lg">
           {/* FIX: removed duplicated {course.exams} that was rendered
               twice (once here and once above) unlike the other three cells */}
+          <FileText className="mx-auto mb-1 h-4 w-4 text-rose-600" />
           <p className="text-lg font-semibold text-gray-900">{course.exams}</p>
           <p className="text-xs text-gray-500">{t('stats.exams')}</p>
         </div>
         <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <Layers className="mx-auto mb-1 h-4 w-4 text-amber-600" />
           <p className="text-lg font-semibold text-gray-900">{course.lectures}</p>
           <p className="text-xs text-gray-500">{t('stats.lectures')}</p>
         </div>
         <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <PlayCircle className="mx-auto mb-1 h-4 w-4 text-indigo-600" />
+          <p className="text-lg font-semibold text-gray-900">{course.chapters}</p>
+          <p className="text-xs text-gray-500">{t('stats.chapters')}</p>
+        </div>
+        <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <StickyNote className="mx-auto mb-1 h-4 w-4 text-emerald-600" />
           <p className="text-lg font-semibold text-gray-900">{course.notes}</p>
           <p className="text-xs text-gray-500">{t('stats.notes')}</p>
         </div>
@@ -236,6 +245,7 @@ export default function MyCoursesPage() {
         students: c.attributes.stats?.students || 0,
         exams: c.attributes.stats?.exams || 0,
         lectures: c.attributes.stats?.lectures || 0,
+        chapters: c.attributes.stats?.chapters || 0,
         notes: c.attributes.stats?.notes || 0,
         progress: 0,
         status: c.attributes.status === 1 ? 'active' as const : 'draft' as const,
