@@ -3,7 +3,14 @@
 import { FileText, X, ZoomIn, ZoomOut, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { api } from '@/src/lib/api';
-import { useEffect, useRef, useState } from 'react';
+import { useCurrentUser } from '@/src/hooks';
+import { getStudentPlatformFeatures } from '@/src/services/student/platform-feature.service';
+import {
+  resolveEnabledWatermarkBucket,
+  type WatermarkResolution,
+} from '@/src/lib/watermark-from-features';
+import { buildWatermarkText } from '@/src/lib/watermark-text';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -35,18 +42,39 @@ type Props = {
   viewByMinute?: number;
 };
 
+/**
+ * Pixels to rasterise a page at, per CSS pixel.
+ *
+ * This used to be capped at 1.5, which on a phone (`devicePixelRatio` 3) drew
+ * the page at about half the screen's real resolution and left dense scans
+ * looking blurred. The cap the canvas actually needs is on its total area —
+ * mobile Safari drops a canvas that grows too large — so the budget below is
+ * what limits big screens, and a phone now renders at its own pixel density.
+ */
+const MAX_PAGE_MEGAPIXELS = 4_000_000;
+
+function pageDevicePixelRatio(pageWidth: number, pageRatio: number): number {
+  const screenRatio = Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, 3);
+  const areaBudget = Math.sqrt(MAX_PAGE_MEGAPIXELS / (pageWidth ** 2 * pageRatio));
+  return Math.max(1, Math.min(screenRatio, areaBudget));
+}
+
 function PdfPreviewContent({
   proxiedPdfUrl,
   expandToContainer = false,
   scale,
   currentPage,
   onPagesLoaded,
+  watermarkText,
+  watermarkStyle,
 }: {
   proxiedPdfUrl: string;
   expandToContainer?: boolean;
   scale?: number;
   currentPage: number;
   onPagesLoaded: (numPages: number) => void;
+  watermarkText: string;
+  watermarkStyle: { color: string; opacity: number };
 }) {
   const [pageWidth, setPageWidth] = useState(720);
   const [totalPages, setTotalPages] = useState(0);
@@ -156,7 +184,7 @@ function PdfPreviewContent({
               {visiblePages.has(pageNum) && <Page
                 pageNumber={pageNum}
                 width={pageWidth}
-                devicePixelRatio={Math.min(window.devicePixelRatio || 1, 1.5, Math.sqrt(4_000_000 / (pageWidth ** 2 * (pageRatios[pageNum] ?? Math.SQRT2))))}
+                devicePixelRatio={pageDevicePixelRatio(pageWidth, pageRatios[pageNum] ?? Math.SQRT2)}
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
                 onLoadSuccess={({ width, height }) => setPageRatios(ratios => ({ ...ratios, [pageNum]: height / width }))}
@@ -165,6 +193,25 @@ function PdfPreviewContent({
                 className="[&_canvas]:!h-auto [&_canvas]:!w-full"
               />}
 
+              {watermarkText ? (
+                <div
+                  className="pointer-events-none absolute inset-0 z-10 select-none overflow-hidden"
+                  aria-hidden
+                >
+                  <div className="grid h-full w-full grid-cols-3 gap-16 p-10">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <div key={i} className="flex items-center justify-center">
+                        <span
+                          className="rotate-[-25deg] whitespace-nowrap text-2xl font-bold"
+                          style={watermarkStyle}
+                        >
+                          {watermarkText}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -187,9 +234,12 @@ export default function PdfPreviewModal({
   onPageChange,
   numPages: externalNumPages,
   onNumPagesChange,
+  contentType = 'chapters',
   chapterId,
   viewByMinute = 0,
 }: Props) {
+  const { user } = useCurrentUser();
+  const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
   const [internalScale, setInternalScale] = useState(1.0);
   const [internalNumPages, setInternalNumPages] = useState(0);
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
@@ -300,6 +350,41 @@ export default function PdfPreviewModal({
   }, [open, chapterId, viewByMinute]);
   // ────────────────────────────────────────────────────────────────────────
 
+  useEffect(() => {
+    if (!open) return;
+
+    let mounted = true;
+
+    getStudentPlatformFeatures()
+      .then((features) => {
+        if (mounted) setWatermarkConfig(resolveEnabledWatermarkBucket(features, contentType));
+      })
+      .catch(() => {
+        // An unreachable settings call must not hide the document.
+        if (mounted) setWatermarkConfig(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [open, contentType]);
+
+  /** Empty whenever the bucket is off, which is what hides the overlay. */
+  const watermarkText = useMemo(() => {
+    const config = watermarkConfig?.config;
+    if (!config?.enabled) return '';
+    // The same line the video overlay draws, so one leak points at one account.
+    return buildWatermarkText(user ?? null, config);
+  }, [watermarkConfig, user]);
+
+  const watermarkStyle = useMemo(
+    () => ({
+      color: watermarkConfig?.config?.color ?? '#666666',
+      opacity: (watermarkConfig?.config?.opacity ?? 50) / 100,
+    }),
+    [watermarkConfig],
+  );
+
   const sourceUrl = pdfUrl ? new URL(pdfUrl) : null;
   const proxiedPdfUrl = sourceUrl ? `${sourceUrl.pathname}${sourceUrl.search}` : '';
 
@@ -312,6 +397,8 @@ export default function PdfPreviewModal({
       <PdfPreviewContent
         key={proxiedPdfUrl}
         proxiedPdfUrl={proxiedPdfUrl}
+        watermarkText={watermarkText}
+        watermarkStyle={watermarkStyle}
         expandToContainer={expandToContainer}
         scale={scale}
         currentPage={currentPage}
