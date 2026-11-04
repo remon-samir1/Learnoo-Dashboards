@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
 import { createPortal } from "react-dom";
+import { useLocale } from "next-intl";
 import {
   Building2,
   Award,
@@ -110,6 +111,7 @@ export function ColumnItem({
   onCopyMove,
   isInstructor,
 }: ColumnItemProps) {
+  const locale = useLocale();
   const hasChildren = item.children && item.children.length > 0;
   const [addDropdownOpen, setAddDropdownOpen] = useState(false);
   const addButtonRef = useRef<HTMLButtonElement>(null);
@@ -280,9 +282,13 @@ export function ColumnItem({
           <span className="truncate text-[11px] font-medium leading-snug">
             {highlightText(item.name, searchQuery)}
           </span>
+          {/* `undefined` formatted with the browser's locale, so an English date
+              landed in the Arabic panel and the bidi algorithm moved the day to
+              the end of the line ("Oct 2026 at 13:03 15"). The app's own locale
+              formats it, and `dir="auto"` isolates it either way. */}
           {(item.type === 'course' || item.type === 'lecture' || item.type === 'chapter') && createdAt && (
-            <span className="text-[9.5px] text-slate-400 mt-0.5 truncate font-normal">
-              {new Date(createdAt).toLocaleString(undefined, {
+            <span dir="auto" className="text-[9.5px] text-slate-400 mt-0.5 truncate font-normal">
+              {new Date(createdAt).toLocaleString(locale, {
                 year: "numeric",
                 month: "short",
                 day: "numeric",

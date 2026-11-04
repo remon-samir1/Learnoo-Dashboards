@@ -116,8 +116,8 @@ export function DetailPanel({
     <div className="flex-1 min-width-[280px] bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col overflow-hidden max-h-[calc(100vh-220px)]">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
-        <h3 className="text-sm font-semibold text-gray-900 capitalize">
-          {node.type} {t("details")}
+        <h3 className="text-sm font-semibold text-gray-900">
+          {t(`nodeTypes.${node.type}`)} {t("details")}
         </h3>
         <button
           onClick={onClose}

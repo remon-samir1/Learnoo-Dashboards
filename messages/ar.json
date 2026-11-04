@@ -67,6 +67,13 @@
     "welcome": "مرحباً",
     "dashboard": "لوحة التحكم"
   },
+  "pdfViewer": {
+    "preview": "معاينة PDF",
+    "loading": "جارٍ تحميل الملف...",
+    "inlineError": "تعذر عرض الملف داخل الصفحة.",
+    "errorHint": "صوّر رمز الخطأ وأرسله للدعم:",
+    "renderError": "تعذر عرض ملف PDF."
+  },
   "discussions": {
     "pageTitle": "إدارة النقاشات",
     "pageDescription": "عرض والرد على وحذف نقاشات الطلاب في جميع الفصول.",
@@ -936,6 +943,16 @@
       "uploading": "جاري الرفع...",
       "uploadPreactivations": "رفع التفعيلات المسبقة",
       "processed": "تمت المعالجة: {success} نجح، {failed} تم تخطيهم.",
+      "nodeTypes": {
+        "university": "الجامعة",
+        "faculty": "الكلية",
+        "center": "المركز",
+        "department": "القسم",
+        "course": "الدورة",
+        "lecture": "المحاضرة",
+        "chapter": "الفصل",
+        "note": "الملاحظة"
+      },
       "videoPreview": "معاينة الفيديو",
       "pdfPreview": "معاينة PDF",
       "thumbnail": "الصورة المصغرة",
@@ -1030,12 +1047,12 @@
       "hasExam": "يحتوي على امتحان",
       "hasPdf": "يحتوي على PDF",
       "viewsExhausted": "انتهت المشاهدات",
-      "partsCount": "{count} أجزاء",
+      "partsCount": "{count, plural, one {جزء واحد} two {جزءان} few {# أجزاء} other {# جزء}}",
       "viewsRemaining": "{remaining}/{max} مشاهدات متبقية",
       "viewsUsageBadge": "{current} / {max} مشاهدة",
       "viewsUnlimited": "مشاهدات غير محدودة",
       "openPdf": "PDF",
-      "heroLectureCount": "{count} محاضرات",
+      "heroLectureCount": "{count, plural, one {محاضرة واحدة} two {محاضرتان} few {# محاضرات} other {# محاضرة}}",
       "examsEmpty": "لا توجد اختبارات لهذه الدورة.",
       "notesEmpty": "لا توجد ملاحظات أو ملخصات لهذه الدورة.",
       "notes": {

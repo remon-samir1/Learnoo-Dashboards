@@ -899,6 +899,16 @@
       "uploading": "Uploading...",
       "uploadPreactivations": "Upload Preactivations",
       "processed": "Processed: {success} success, {failed} skipped.",
+      "nodeTypes": {
+        "university": "University",
+        "faculty": "Faculty",
+        "center": "Center",
+        "department": "Department",
+        "course": "Course",
+        "lecture": "Lecture",
+        "chapter": "Chapter",
+        "note": "Note"
+      },
       "videoPreview": "Video Preview",
       "pdfPreview": "PDF Preview",
       "thumbnail": "Thumbnail",
@@ -993,12 +1003,12 @@
       "hasExam": "Has Exam",
       "hasPdf": "Has PDF",
       "viewsExhausted": "Views Exhausted",
-      "partsCount": "{count} parts",
+      "partsCount": "{count, plural, one {# part} other {# parts}}",
       "viewsRemaining": "{remaining}/{max} views left",
       "viewsUsageBadge": "{current} / {max} views",
       "viewsUnlimited": "Unlimited views left",
       "openPdf": "PDF",
-      "heroLectureCount": "{count} Lectures",
+      "heroLectureCount": "{count, plural, one {# lecture} other {# lectures}}",
       "examsEmpty": "No exams for this course.",
       "notesEmpty": "No notes or summaries for this course.",
       "notes": {
@@ -2509,6 +2519,13 @@
       "socialLinkUpdated": "Social link updated successfully!",
       "socialLinkDeleted": "Social link deleted successfully!"
     }
+  },
+  "pdfViewer": {
+    "preview": "PDF Preview",
+    "loading": "Loading the file...",
+    "inlineError": "This file could not be shown on the page.",
+    "errorHint": "Send a screenshot of this error code to support:",
+    "renderError": "This PDF could not be displayed."
   },
   "discussions": {
     "pageTitle": "Discussions Management",

@@ -1,6 +1,16 @@
+"use client";
+
 import React, { useState } from "react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import type { ChapterAttributes } from "@/src/types";
+
+// Same renderer the student side uses. An `<iframe>` pointed at a PDF renders
+// nothing on iOS Safari, which left this box blank on a phone while the file
+// was plainly there in the attachments list underneath.
+const PdfPreviewModal = dynamic(() => import("@/components/student/PdfPreviewModal"), {
+  ssr: false,
+});
 
 interface ChapterPreviewProps {
   chapter: ChapterAttributes;
@@ -111,11 +121,13 @@ export function ChapterPreview({ chapter }: ChapterPreviewProps) {
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
           {t("pdfPreview")}
         </label>
-        <div className="w-full h-64 rounded-lg overflow-hidden border border-gray-200">
-          <iframe
-            src={pdfAttachment.attributes?.path}
-            className="w-full h-full"
+        <div className="h-64 w-full overflow-hidden rounded-lg border border-gray-200">
+          <PdfPreviewModal
+            open
+            pdfUrl={pdfAttachment.attributes?.path ?? null}
             title={pdfAttachment.attributes?.name || t("pdfPreview")}
+            variant="inline"
+            contentType="chapters"
           />
         </div>
       </div>

@@ -10,6 +10,7 @@ import {
   type WatermarkResolution,
 } from '@/src/lib/watermark-from-features';
 import { buildWatermarkText } from '@/src/lib/watermark-text';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -76,6 +77,7 @@ function PdfPreviewContent({
   watermarkText: string;
   watermarkStyle: { color: string; opacity: number };
 }) {
+  const t = useTranslations('pdfViewer');
   const [pageWidth, setPageWidth] = useState(720);
   const [totalPages, setTotalPages] = useState(0);
   const [pdfData, setPdfData] = useState<Blob | null>(null);
@@ -158,16 +160,16 @@ function PdfPreviewContent({
     <div ref={contentRef} className="min-h-0 w-full">
       {loadError ? (
         <div className="flex min-h-48 flex-col items-center justify-center gap-4 text-center">
-          <p className="text-sm text-slate-600">تعذر عرض الملف داخل الصفحة.</p>
-          <p className="text-xs text-slate-500">صوّر رمز الخطأ وأرسله للدعم:</p>
+          <p className="text-sm text-slate-600">{t('inlineError')}</p>
+          <p className="text-xs text-slate-500">{t('errorHint')}</p>
           <code dir="ltr" className="max-w-full break-all rounded bg-slate-100 p-2 text-xs text-slate-700">{loadError}</code>
         </div>
       ) : !pdfData ? (
-        <p className="py-12 text-sm text-[#64748B]">Loading PDF...</p>
+        <p className="py-12 text-sm text-[#64748B]">{t('loading')}</p>
       ) : (
       <Document
         file={pdfData}
-        error={<p className="py-12 text-sm text-red-600">تعذر عرض ملف PDF.</p>}
+        error={<p className="py-12 text-sm text-red-600">{t('renderError')}</p>}
         onLoadSuccess={handleLoadSuccess}
         onSourceError={(error) => reportError('source', error)}
         onLoadError={(error) => reportError('document', error)}
@@ -238,6 +240,7 @@ export default function PdfPreviewModal({
   chapterId,
   viewByMinute = 0,
 }: Props) {
+  const tViewer = useTranslations('pdfViewer');
   const { user } = useCurrentUser();
   const [watermarkConfig, setWatermarkConfig] = useState<WatermarkResolution | null>(null);
   const [internalScale, setInternalScale] = useState(1.0);
@@ -420,7 +423,7 @@ export default function PdfPreviewModal({
               <FileText className="size-5 shrink-0 text-[#2D43D1]" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-[#0F172A]">{title}</p>
-                <p className="text-xs text-[#64748B]">PDF Preview</p>
+                <p className="text-xs text-[#64748B]">{tViewer('preview')}</p>
               </div>
             </div>
 
