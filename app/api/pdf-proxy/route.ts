@@ -6,6 +6,21 @@ import type { WatermarkContentType } from '@/src/types/watermark-config';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.learnoo.app').replace(/\/$/, '');
 
+/**
+ * A deployment carries `PDF_PROXY_KEY`; a developer's machine does not. Since
+ * the API hands out a PDF URL on the app's *own* origin, every document opened
+ * against a local server answered 503, and the viewer could not be worked on
+ * locally at all.
+ *
+ * Outside production the request goes on without the key — `source` is a signed
+ * `/v1/attachment/` URL on the API, so it authenticates itself — and a response
+ * that carries no watermark headers is passed through as it arrived. The page
+ * still draws the viewer's own watermark overlay on top.
+ *
+ * Production is unchanged: no key, or no headers, and nothing is served.
+ */
+const FAIL_OPEN = process.env.NODE_ENV !== 'production';
+
 export async function GET(req: NextRequest) {
   const source = req.nextUrl.searchParams.get('source');
 
@@ -22,12 +37,12 @@ export async function GET(req: NextRequest) {
       return new Response('Invalid PDF source', { status: 400 });
     }
 
-    if (!key) {
+    if (!key && !FAIL_OPEN) {
       return new Response('PDF protection is unavailable', { status: 503 });
     }
 
     const response = await fetch(sourceUrl, {
-      headers: { 'X-PDF-Proxy-Key': key },
+      headers: key ? { 'X-PDF-Proxy-Key': key } : undefined,
       cache: 'no-store',
     });
 
@@ -41,20 +56,24 @@ export async function GET(req: NextRequest) {
     const viewer = response.headers.get('X-PDF-Viewer');
     const contentType = response.headers.get('X-PDF-Content-Type') as WatermarkContentType | null;
 
-    if (!features || !viewer || !contentType) {
+    const unprotected = !features || !viewer || !contentType;
+    if (unprotected && !FAIL_OPEN) {
       return new Response('PDF protection is unavailable', { status: 503 });
     }
 
     let pdfBuffer = await response.arrayBuffer();
-    const watermarkConfig = parseWatermarkConfigFromFeatures(
-      JSON.parse(Buffer.from(features, 'base64').toString()),
-      contentType,
-    );
 
-    if (watermarkConfig.enabled) {
-      const user = { attributes: JSON.parse(Buffer.from(viewer, 'base64').toString()) } as User;
-      const studentCode = String(user.attributes?.student_code ?? '').trim() || undefined;
-      pdfBuffer = await addWatermarkToPdf(pdfBuffer, watermarkConfig, user, studentCode);
+    if (!unprotected) {
+      const watermarkConfig = parseWatermarkConfigFromFeatures(
+        JSON.parse(Buffer.from(features, 'base64').toString()),
+        contentType,
+      );
+
+      if (watermarkConfig.enabled) {
+        const user = { attributes: JSON.parse(Buffer.from(viewer, 'base64').toString()) } as User;
+        const studentCode = String(user.attributes?.student_code ?? '').trim() || undefined;
+        pdfBuffer = await addWatermarkToPdf(pdfBuffer, watermarkConfig, user, studentCode);
+      }
     }
 
     return new Response(pdfBuffer, {
