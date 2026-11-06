@@ -1564,7 +1564,21 @@ export const timetableApi = {
 };
 
 export interface ContentAuditSnapshot { id: number; title: string; video: string | null; lecture_id: number | null; course_id: number | null; status: number; max_views: number | null; view_by_minute: number | null }
-export interface StaffActivity { id: number; action: string; first_name: string; last_name: string; created_at: string; details?: { course?: { id: number; title: string | null; category_path: string[] }; course_context_current?: boolean; before?: ContentAuditSnapshot; after?: ContentAuditSnapshot | null; view_history?: { student_id: string; name: string; count: number }[] } | null }
+export interface StaffActivity {
+  id: number; action: string; first_name: string; last_name: string; created_at: string;
+  details?: {
+    course?: { id: number; title: string | null; category_path: string[] };
+    course_context_current?: boolean;
+    chapter?: { id: number; title: string; type: 'chapter' | 'note' };
+    lecture?: { id: number; title: string };
+    import?: {
+      item: { id: number; title: string; type: 'course' | 'chapter' | 'library' | 'category' | 'quiz' };
+      total_phones: number; activated: number; pending: number; skipped: number;
+    };
+    before?: ContentAuditSnapshot; after?: ContentAuditSnapshot | null;
+    view_history?: { student_id: string; name: string; count: number }[];
+  } | null;
+}
 export interface ArchivedStudent { id: string; first_name: string; last_name: string; phone: string; deleted_at: string }
 export const archivedStudentsApi = {
   list: (page: number, search: string) => get<{ data: ArchivedStudent[]; last_page?: number; next_page_url?: string | null }>('/v1/student-archives', { page, search }),
