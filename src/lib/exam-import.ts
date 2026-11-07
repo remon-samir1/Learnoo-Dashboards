@@ -9,6 +9,24 @@ export interface ImportedExam {
 const WORD_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const OPTION = /^\(?([أابجدA-Da-d])(?:\s*[)）.:-]\s*|\s+)/u;
 
+/**
+ * Whether a `w:shd` fill marks the answer rather than just styling the table.
+ *
+ * Only `AUTO`, `FFFFFF` and `000000` used to be ignored, so the near-white
+ * tint Word's own table styles paint cells with (`F6F9FA` in the file this
+ * came from) read as a marked answer: every wrong option carried it, all four
+ * came back correct, and the review flagged the question while the browser
+ * left just the last radio of the group checked.
+ */
+export function isMarkedFill(fill: string | null | undefined): boolean {
+  const value = fill?.trim().toUpperCase();
+  if (!value || value === "AUTO" || !/^[0-9A-F]{6}$/.test(value)) return false;
+  const [red, green, blue] = [0, 2, 4].map(at => parseInt(value.slice(at, at + 2), 16));
+  const nearWhite = red >= 0xe8 && green >= 0xe8 && blue >= 0xe8;
+  const nearBlack = red <= 0x11 && green <= 0x11 && blue <= 0x11;
+  return !nearWhite && !nearBlack;
+}
+
 export function importedQuestion(text: string, type: ExamFormQuestionType, answers: { text: string; isCorrect: boolean; reason?: string }[] = []): ExamFormQuestion {
   return {
     id: "", text: text.trim().replace(/^[\d٠-٩]+\s*[.、)]\s*/u, ""), type, score: 1,
@@ -105,14 +123,21 @@ export function parseWordExam(xml: string): ImportedExam {
     } else {
       if (pending.length > 1) contexts.push(pending.slice(0, -1).join("\n"));
       const stem = pending.at(-1) ?? "";
-      const answers = cells.map(cell => {
-        const shaded = Array.from(cell.getElementsByTagNameNS(WORD_NS, "shd")).some(shade => {
-          const fill = shade.getAttributeNS(WORD_NS, "fill")?.toUpperCase();
-          return fill && !["AUTO", "FFFFFF", "000000"].includes(fill);
-        });
-        const highlighted = Array.from(cell.getElementsByTagNameNS(WORD_NS, "highlight")).some(mark => !["none", "white"].includes(mark.getAttributeNS(WORD_NS, "val") ?? "none"));
-        return { text: text(cell, true).replace(OPTION, ""), isCorrect: shaded || highlighted, reason: explanation(cell) || pendingReasons.at(-1) || "" };
-      });
+      const marked = cells.map(cell => ({
+        cell,
+        shaded: Array.from(cell.getElementsByTagNameNS(WORD_NS, "shd"))
+          .some(shade => isMarkedFill(shade.getAttributeNS(WORD_NS, "fill"))),
+        highlighted: Array.from(cell.getElementsByTagNameNS(WORD_NS, "highlight"))
+          .some(mark => !["none", "white"].includes(mark.getAttributeNS(WORD_NS, "val") ?? "none")),
+      }));
+      // A highlighted option is the author saying which one is right, so when
+      // any cell carries one the table's own shading is styling, not an answer.
+      const byHighlight = marked.some(entry => entry.highlighted);
+      const answers = marked.map(({ cell, shaded, highlighted }) => ({
+        text: text(cell, true).replace(OPTION, ""),
+        isCorrect: byHighlight ? highlighted : shaded,
+        reason: explanation(cell) || pendingReasons.at(-1) || "",
+      }));
       if (answers.some(answer => answer.text) && pending.length) questions.push(importedQuestion(stem, "single_choice", answers));
     }
     pending = [];

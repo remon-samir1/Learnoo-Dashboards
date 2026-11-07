@@ -6,7 +6,18 @@ const loaded = { exports: {} };
 new Function('require', 'module', 'exports', ts.transpileModule(readFileSync(`${__dirname}/exam-import.ts`, 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText)(require, loaded, loaded.exports);
-const { importedQuestion, importedTrueFalseQuestion, finishImportedExam, parseWordExam, readWordExam } = loaded.exports;
+const { importedQuestion, importedTrueFalseQuestion, finishImportedExam, parseWordExam, readWordExam, isMarkedFill } = loaded.exports;
+
+test('a near-white cell fill is the table style, not a marked answer', () => {
+  // `F6F9FA` is what Word's own table styles paint the cells in the exam files
+  // this came from; counting it as a mark made every option correct.
+  for (const styling of ['F6F9FA', 'FFFFFF', 'ffffff', 'FAFAFA', 'AUTO', 'auto', '000000', '0A0A0A', '', null, undefined, 'nonsense']) {
+    assert.equal(isMarkedFill(styling), false, `${styling} should not mark an answer`);
+  }
+  for (const mark of ['FFFF00', 'D9D9D9', 'C6E0B4', '92D050', 'ffff00']) {
+    assert.equal(isMarkedFill(mark), true, `${mark} should mark an answer`);
+  }
+});
 
 test('true/false answer marks preserve the statement and require review when missing or ambiguous', () => {
   assert.deepEqual(importedTrueFalseQuestion('English statement', '✓').answers.map(answer => answer.text), ['True', 'False']);
@@ -64,6 +75,13 @@ test('Word preserves all mixed questions and red feedback, including English tab
   const p = (...runs) => node('p', runs);
   const cell = (...runs) => node('tc', [p(...runs)]);
   const choice = () => node('tbl', [node('tr', [cell(run('A. One')), cell(run('B. Two'))])]);
+  const shd = fill => node('tcPr', [node('shd', [], { fill })]);
+  const hl = () => node('rPr', [node('highlight', [], { val: 'yellow' })]);
+  /** One option cell exactly as the exam files lay it out. */
+  const option = (value, correct) => node('tc', [
+    shd(correct ? 'FFFFFF' : 'F6F9FA'),
+    node('p', [node('r', [...(correct ? [hl()] : []), node('t', [], {}, value)])]),
+  ]);
   let body;
   const previous = global.DOMParser;
   global.DOMParser = class {
@@ -90,5 +108,30 @@ test('Word preserves all mixed questions and red feedback, including English tab
     assert.deepEqual(english.map(question => question.type), ['true_false', 'single_choice', 'short_answer']);
     assert.equal(english[0].answers[0].text, 'True');
     assert.equal(english[2].text, 'Compare between\nFirst and second');
+
+    // The real shape: every wrong option carries the table's near-white tint
+    // and the right one is highlighted. All four used to come back correct.
+    body = node('body', [
+      p(run('أي العبارات التالية تعبّر بصورة أدق عن المهمة الأساسية للإدارة؟')),
+      node('tbl', [
+        node('tr', [option('أ) زيادة عدد العاملين بصورة مستمرة'), option('ب) تحقيق الأهداف مع الاستخدام الكفء للموارد', true)]),
+        node('tr', [option('ج) إلغاء المتابعة لتخفيض التكاليف'), option('د) التركيز على الإنتاج دون بقية الوظائف')]),
+      ]),
+      p(run('حدّد المدير المسؤوليات والسلطات. ما الوظيفة؟')),
+      node('tbl', [node('tr', [option('أ) التنظيم', true), option('ب) التخطيط'), option('ج) الرقابة'), option('د) التسويق')])]),
+    ]);
+    const real = parseWordExam('fixture');
+    assert.deepEqual(real.review, [], 'no question should need a correct answer picked');
+    assert.deepEqual(real.questions.map(question => question.answers.filter(answer => answer.isCorrect).length), [1, 1]);
+    assert.equal(real.questions[0].answers.findIndex(answer => answer.isCorrect), 1);
+    // The answer is the first option here, which the old code could never show.
+    assert.equal(real.questions[1].answers.findIndex(answer => answer.isCorrect), 0);
+    assert.deepEqual(real.questions[1].answers.map(answer => answer.text), ['التنظيم', 'التخطيط', 'الرقابة', 'التسويق']);
+
+    // A table that marks its answer by shading alone still works.
+    body = node('body', [p(run('Shaded answer')), node('tbl', [node('tr', [
+      node('tc', [shd('FFFF00'), p(run('A. Right'))]), node('tc', [shd('F6F9FA'), p(run('B. Wrong'))]),
+    ])])]);
+    assert.equal(parseWordExam('fixture').questions[0].answers.findIndex(answer => answer.isCorrect), 0);
   } finally { global.DOMParser = previous; }
 });
