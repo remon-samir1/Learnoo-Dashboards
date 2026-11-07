@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale } from 'next-intl';
-import type { StaffActivity, StaffActivityRef } from '@/src/lib/api';
+import type { StaffActivity } from '@/src/lib/api';
 import {
   auditFieldChanged,
   auditFieldKeys,
@@ -14,34 +14,31 @@ import {
  *
  * The snapshot table used to hold a fixed list of seven fields and, on an
  * update, only the ones that differed — so an entry whose change fell outside
- * that list showed its title and an empty table. It reads the keys out of the
- * payload now, marks the ones that moved, and the lecture and lesson the
- * endpoint names are rendered too instead of being dropped.
+ * that list showed its title above an empty table. It reads the keys out of
+ * the payload now and marks the ones that moved.
  */
 export default function StaffActivityDetails({ details }: { details: StaffActivity['details'] }) {
   const ar = useLocale() === 'ar';
   if (!details) return null;
 
-  const { course, chapter, lecture, before, after, view_history = [] } = details;
+  const { course, lecture, chapter, import: activationImport, before, after, view_history = [] } = details;
   const keys = auditFieldKeys(before, after);
   const views = view_history.reduce((sum, view) => sum + Number(view.count || 0), 0);
-
-  const place: [StaffActivityRef | undefined, string][] = [
-    [lecture, ar ? 'المحاضرة' : 'Lecture'],
-    [chapter, ar ? 'الدرس' : 'Lesson'],
-  ];
+  const itemLabels = ar
+    ? { course: 'دورة', chapter: 'درس', library: 'مكتبة', category: 'تصنيف', quiz: 'اختبار' }
+    : { course: 'Course', chapter: 'Lesson', library: 'Library', category: 'Category', quiz: 'Quiz' };
 
   return <div className="mt-2 space-y-2 text-sm">
-    {course && <div className="break-words rounded-lg bg-slate-50 p-3">
-      <p className="font-semibold">{ar ? 'الدورة' : 'Course'}: {course.title || (ar ? 'تفاصيل الدورة غير متاحة' : 'Course details unavailable')} <bdi>#{course.id}</bdi></p>
-      {course.category_path.length > 0 && <p className="mt-1 text-gray-600">{ar ? 'المسار الدراسي' : 'Academic path'}: {course.category_path.join(' / ')}</p>}
-      {details.course_context_current && course.title && <p className="mt-1 text-xs text-gray-500">{ar ? 'بيانات الدورة الحالية؛ لم تُحفظ تفاصيلها وقت العملية القديمة.' : 'Current course details; no snapshot was saved for this older activity.'}</p>}
-    </div>}
-
-    {place.some(([ref]) => ref) && <div className="break-words rounded-lg bg-slate-50 p-3">
-      {place.map(([ref, label]) => ref && <p key={label} className="first:mt-0 mt-1">
-        <span className="font-semibold">{label}:</span> {ref.title || (ar ? 'بدون عنوان' : 'Untitled')} <bdi>#{ref.id}</bdi>
-      </p>)}
+    {(course || lecture || chapter || activationImport) && <div className="break-words rounded-lg bg-slate-50 p-3">
+      {course && <p className="font-semibold">{ar ? 'الدورة' : 'Course'}: {course.title || (ar ? 'تفاصيل الدورة غير متاحة' : 'Course details unavailable')} <bdi>#{course.id}</bdi></p>}
+      {!!course?.category_path.length && <p className="mt-1 text-gray-600">{ar ? 'المسار الدراسي' : 'Academic path'}: {course.category_path.join(' / ')}</p>}
+      {details.course_context_current && course?.title && <p className="mt-1 text-xs text-gray-500">{ar ? 'بيانات الدورة الحالية؛ لم تُحفظ تفاصيلها وقت العملية القديمة.' : 'Current course details; no snapshot was saved for this older activity.'}</p>}
+      {lecture && <p className="mt-1"><span className="font-semibold">{ar ? 'المحاضرة' : 'Lecture'}:</span> {lecture.title} <bdi>#{lecture.id}</bdi></p>}
+      {chapter && <p className="mt-1"><span className="font-semibold">{chapter.type === 'note' ? (ar ? 'الملاحظة' : 'Note') : (ar ? 'الدرس' : 'Lesson')}:</span> {chapter.title} <bdi>#{chapter.id}</bdi></p>}
+      {activationImport && <>
+        <p className="mt-1"><span className="font-semibold">{ar ? 'هدف الاستيراد' : 'Import target'}:</span> {itemLabels[activationImport.item.type]} — {activationImport.item.title} <bdi>#{activationImport.item.id}</bdi></p>
+        <p className="mt-1 text-gray-600">{ar ? 'إجمالي الأرقام' : 'Total numbers'}: {activationImport.total_phones} · {ar ? 'تم التفعيل' : 'Activated'}: {activationImport.activated} · {ar ? 'قيد الانتظار' : 'Pending'}: {activationImport.pending} · {ar ? 'تم التخطي' : 'Skipped'}: {activationImport.skipped}</p>
+      </>}
     </div>}
 
     {before && <div className="break-words rounded-lg bg-slate-50 p-3">
