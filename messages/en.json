@@ -1,4 +1,9 @@
 {
+  "videoSleepSettings": {
+    "label": "Video screen sleep interval (minutes)",
+    "description": "Screen sleep interval for the mobile video player, in minutes.",
+    "invalid": "Enter a whole number of minutes between 1 and 1440."
+  },
   "app": {
     "name": "Learnoo ",
     "tagline": "Pro Instructor"
