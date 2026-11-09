@@ -1374,12 +1374,32 @@ export const videoSettingsApi = {
   get: () => get<VideoSettingsResponse>('/v1/video-settings'),
 
   /**
-   * `POST /v1/video-settings` with `{ sleep_per_minute: <number> }`.
-   * The write contract is not verified against the live API yet, so callers surface the
-   * server's own error message instead of swallowing a method/validation mismatch.
+   * Updates `{ sleep_per_minute: <number> }` on `/v1/video-settings`.
+   *
+   * The route currently answers `GET, HEAD` only — `PUT`, `PATCH` and `POST`
+   * all come back 405 — so the write still has to be added server side. `PUT`
+   * is sent first as the update verb; a 405 falls through to `PATCH` and then
+   * `POST`, so whichever the backend settles on works without another release.
+   * Every other failure (validation, auth) surfaces the server's own message.
    */
-  update: (data: UpdateVideoSettingsRequest) =>
-    post<VideoSettingsResponse>('/v1/video-settings', data),
+  update: async (data: UpdateVideoSettingsRequest) => {
+    const verbs = [
+      () => put<VideoSettingsResponse>('/v1/video-settings', data),
+      () => patch<VideoSettingsResponse>('/v1/video-settings', data),
+      () => post<VideoSettingsResponse>('/v1/video-settings', data),
+    ];
+
+    let lastError: unknown;
+    for (const send of verbs) {
+      try {
+        return await send();
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 405) throw error;
+        lastError = error;
+      }
+    }
+    throw lastError;
+  },
 };
 
 // ============================================
