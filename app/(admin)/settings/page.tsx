@@ -59,6 +59,12 @@ export default function PlatformSettingsPage() {
       titleKey: 'watermark',
       href: '/settings/watermark',
       adminOnly: true
+    },
+    {
+      icon: 'Video' as const,
+      titleKey: 'videoSettings',
+      href: '/settings/video',
+      adminOnly: true
     }
   ];
 

@@ -194,6 +194,7 @@ export { useCodes, useActivateCode } from './useCodes';
 export { usePreActivations, useUploadPreActivation, useDeletePreActivation } from './usePreActivation';
 export { useDashboardStats, useActivityData, useEngagementData, useRecentActivity } from './useDashboard';
 export { usePlatformFeature, useUpdatePlatformFeature } from './usePlatformFeature';
+export { useVideoSettings, useUpdateVideoSettings } from './useVideoSettings';
 export * from './useDepartments';
 export * from './useFaculties';
 export * from './useUniversities';

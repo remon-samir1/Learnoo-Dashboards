@@ -106,6 +106,10 @@ import type {
   StudentNotificationCountResponse,
   StudentNotificationListResponse,
 } from '@/src/types/student-notification';
+import type {
+  UpdateVideoSettingsRequest,
+  VideoSettingsResponse,
+} from '@/src/types/video-settings';
 
 // ============================================
 // Configuration
@@ -1362,6 +1366,23 @@ export const platformFeatureApi = {
 
 
 // ============================================
+// Video Settings API
+// ============================================
+
+export const videoSettingsApi = {
+  /** `GET /v1/video-settings` → `{ "sleep_per_minute": 5 }` — minutes the lecture video keeps the phone screen awake. */
+  get: () => get<VideoSettingsResponse>('/v1/video-settings'),
+
+  /**
+   * `POST /v1/video-settings` with `{ sleep_per_minute: <number> }`.
+   * The write contract is not verified against the live API yet, so callers surface the
+   * server's own error message instead of swallowing a method/validation mismatch.
+   */
+  update: (data: UpdateVideoSettingsRequest) =>
+    post<VideoSettingsResponse>('/v1/video-settings', data),
+};
+
+// ============================================
 // Admin API
 // ============================================
 
@@ -1641,6 +1662,7 @@ export const api = {
   search: searchApi,
   dashboard: dashboardApi,
   platformFeature: platformFeatureApi,
+  videoSettings: videoSettingsApi,
   socialLinks: socialLinksApi,
   appVersions: appVersionsApi,
   admin: adminApi,

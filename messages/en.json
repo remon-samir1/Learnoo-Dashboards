@@ -2828,6 +2828,28 @@
     "voiceIntervalDesc": "Play voice announcement every X minutes (1-30 minutes)",
     "minutes": "minutes"
   },
+  "videoSettings": {
+    "title": "Video Settings",
+    "description": "Control how long the lecture video keeps the phone screen awake in the mobile app.",
+    "sectionTitle": "Screen Wake Time",
+    "label": "Screen stays awake",
+    "unit": "minutes",
+    "help": "While a lecture video is playing in the mobile app, the phone screen stays awake for this many minutes before it is allowed to sleep.",
+    "rangeHint": "A whole number between {min} and {max} minutes.",
+    "emptyHint": "No value has been set yet. Enter a number of minutes and save it.",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "saved": "Video settings saved successfully!",
+    "saveFailed": "Failed to save video settings",
+    "loadFailed": "Failed to load video settings",
+    "retry": "Try again",
+    "validation": {
+      "required": "Please enter the number of minutes",
+      "integer": "Please enter a whole number of minutes",
+      "range": "Enter a whole number between {min} and {max} minutes"
+    }
+  },
   "platformSettings": {
     "pageDescription": "Manage your platform's core configuration and preferences.",
     "generalSettings": {
@@ -2853,6 +2875,10 @@
     "watermark": {
       "title": "Watermark Settings",
       "description": "Configure watermarks for chapters, exams, and library content."
+    },
+    "videoSettings": {
+      "title": "Video Settings",
+      "description": "How long the lecture video keeps the phone screen awake."
     },
     "soon": "Soon"
   },
