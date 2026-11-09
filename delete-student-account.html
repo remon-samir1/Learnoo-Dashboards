@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حذف حساب الطالب | منصة Learnoo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --bg-input: #1f2937;
+      --border-color: #374151;
+      --border-focus: #6366f1;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --danger-bg: rgba(220, 38, 38, 0.12);
+      --danger-border: rgba(220, 38, 38, 0.35);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --warning-border: rgba(245, 158, 11, 0.3);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --radius: 16px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 10%, #1e1b4b 0%, #0b0f19 75%);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -150px;
+      right: 20%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -150px;
+      left: 20%;
+      width: 450px;
+      height: 450px;
+      background: radial-gradient(circle, rgba(239, 68, 68, 0.12), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 580px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    .brand-header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid var(--danger-border);
+      color: #f87171;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .brand-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .brand-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* Card */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+      transition: var(--transition);
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    .input-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 13px 20px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: none;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: var(--danger-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #1f2937;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #374151;
+      color: white;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .alert-danger {
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      color: #fca5a5;
+    }
+
+    .alert-warning {
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      color: #fcd34d;
+    }
+
+    .alert-success {
+      background: var(--success-bg);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #6ee7b7;
+    }
+
+    /* Step Indicator */
+    .steps {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .step-item.active {
+      color: #a5b4fc;
+    }
+
+    .step-item.completed {
+      color: var(--success);
+    }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #1f2937;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .step-item.active .step-number {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .step-item.completed .step-number {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+
+    /* Profile Badge Card */
+    .profile-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .profile-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4f46e5, #9333ea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 20px;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .profile-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .profile-name {
+      font-weight: 700;
+      font-size: 16px;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .profile-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .profile-role-badge {
+      background: rgba(99, 102, 241, 0.2);
+      color: #a5b4fc;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Consequences List */
+    .consequences-box {
+      background: rgba(220, 38, 38, 0.08);
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+
+    .consequences-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fca5a5;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .consequences-list {
+      list-style-type: none;
+    }
+
+    .consequences-list li {
+      position: relative;
+      padding-right: 18px;
+      font-size: 13px;
+      color: #fecaca;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .consequences-list li::before {
+      content: "•";
+      position: absolute;
+      right: 0;
+      color: #f87171;
+      font-weight: bold;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    /* Tabs for login mode */
+    .tab-nav {
+      display: flex;
+      background: var(--bg-input);
+      border-radius: 8px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .tab-btn.active {
+      background: #374151;
+      color: white;
+    }
+
+    /* Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Success Icon */
+    .success-animation {
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .success-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: rgba(16, 185, 129, 0.15);
+      border: 2px solid var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      color: var(--success);
+      font-size: 36px;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .footer-note a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="brand-header">
+      <div class="brand-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        إجراء نهائي لا رجعة فيه
+      </div>
+      <h1 class="brand-title">حذف حساب الطالب - منصة Learnoo</h1>
+      <p class="brand-subtitle">
+        تتيح هذه الصفحة للطلاب حذف حساباتهم وبياناتهم الشخصية نهائياً من قاعدة بيانات المنصة وفقاً لسياسات الخصوصية.
+      </p>
+    </div>
+
+    <!-- Main Card -->
+    <div class="card">
+
+      <!-- Step Indicator -->
+      <div class="steps" id="stepIndicator">
+        <div class="step-item active" id="stepBadge1">
+          <span class="step-number">1</span>
+          <span>تسجيل الدخول</span>
+        </div>
+        <div class="step-item" id="stepBadge2">
+          <span class="step-number">2</span>
+          <span>مراجعة وتأكيد</span>
+        </div>
+        <div class="step-item" id="stepBadge3">
+          <span class="step-number">3</span>
+          <span>اكتمال الحذف</span>
+        </div>
+      </div>
+
+      <!-- General Alert Message -->
+      <div id="globalAlert" class="alert hidden">
+        <div id="globalAlertText"></div>
+      </div>
+
+      <!-- ================= STEP 1: AUTHENTICATION ================= -->
+      <div id="step1">
+        <div class="tab-nav">
+          <button class="tab-btn active" id="tabLogin" onclick="switchAuthTab('login')">تسجيل الدخول (بريد / هاتف وكلمة
+            مرور)</button>
+          <button class="tab-btn" id="tabToken" onclick="switchAuthTab('token')">استخدام رمز الدخول (Bearer
+            Token)</button>
+        </div>
+
+        <!-- Mode 1: Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="loginIdentifier">البريد الإلكتروني أو رقم الهاتف</label>
+            <input type="text" id="loginIdentifier" placeholder="مثال: student@example.com أو 01012345678" required />
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">كلمة المرور</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" required />
+          </div>
+          <button type="submit" class="btn btn-primary" id="loginSubmitBtn">
+            <span>التحقق من الحساب</span>
+          </button>
+        </form>
+
+        <!-- Mode 2: Token Form -->
+        <form id="tokenForm" class="hidden" onsubmit="handleTokenSubmit(event)">
+          <div class="form-group">
+            <label for="bearerToken">رمز الجلسة (Bearer Token)</label>
+            <textarea id="bearerToken" rows="3" placeholder="أدخل رمز التوكن الخاص بك هنا..."
+              style="resize: vertical;"></textarea>
+            <div class="input-hint">إذا كنت مسجلاً بالفعل داخل تطبيق الهاتف أو الموقع، يمكنك لصق التوكن الخاص بك هنا.
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="tokenSubmitBtn">
+            <span>متابعة باستخدام الرمز</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- ================= STEP 2: REVIEW & CONFIRM DELETION ================= -->
+      <div id="step2" class="hidden">
+        <!-- Profile Info -->
+        <div class="profile-card">
+          <div class="profile-avatar" id="userAvatar">ط</div>
+          <div class="profile-info">
+            <div class="profile-name" id="userName">اسم الطالب</div>
+            <div class="profile-meta">
+              <span id="userEmail">email@example.com</span>
+              <span id="userPhone">0100000000</span>
+              <span class="profile-role-badge" id="userRole">طالب</span>
+            </div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
+              معرف الحساب (ID): <strong id="userId" style="color: #cbd5e1;">-</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning & Consequences -->
+        <div class="consequences-box">
+          <div class="consequences-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01" />
+            </svg>
+            ماذا سيحدث عند إتمام عملية الحذف؟
+          </div>
+          <ul class="consequences-list">
+            <li>سيتم حذف حسابك وجميع بيانات ملفك الشخصي نهائياً من الخوادم.</li>
+            <li>ستفقد إمكانية الوصول إلى جميع الكورسات والمحاضرات والمذكرات التي قمت بالاشتراك فيها.</li>
+            <li>سيتم حذف سجل درجاتك ونتائج الاختبارات والواجبات والمحاولات السابقة.</li>
+            <li>لن تتمكن من استرداد الأكواد المفعلة أو استرجاع قيمتها المالية.</li>
+            <li><strong>هذا الإجراء نهائي ولا يمكن التراجع عنه بأي شكل من الأشكال.</strong></li>
+          </ul>
+        </div>
+
+        <!-- Confirmation Input -->
+        <div class="form-group">
+          <label for="confirmKeyword">للتأكيد، يرجى كتابة كلمة "<strong style="color:#ef4444;">حذف</strong>" في الحقل
+            أدناه:</label>
+          <input type="text" id="confirmKeyword" placeholder="اكتب كلمة: حذف" oninput="validateConfirmationWord()"
+            autocomplete="off" />
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-secondary" onclick="resetFlow()" style="flex: 1;">إلغاء وتراجع</button>
+          <button type="button" class="btn btn-danger" id="executeDeleteBtn" onclick="executeAccountDeletion()" disabled
+            style="flex: 2;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>تأكيد حذف الحساب نهائياً</span>
+          </button>
+        </div>
+
+        <!-- Secondary Fallback: Support ticket option if backend rejects delete -->
+        <div id="supportFallbackCard" class="hidden"
+          style="margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--border-color);">
+          <div class="alert alert-warning">
+            <div>
+              <strong>ملاحظة هامة:</strong> واجهة الحذف المباشرة (DELETE /v1/student) تتطلب أحياناً صلاحيات إدارية على
+              الخادم إذا كانت سياسة الأمان تمنع الحذف المباشر من قبل الطالب.
+              إذا تعذر الحذف المباشر، يمكنك إرسال طلب حذف رسمي لإدارة المنصة من هنا:
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="sendDeletionRequestIssue()">
+            <span>📩 إرسال طلب حذف الحساب للإدارة (تذكرة رسمية)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= STEP 3: SUCCESS ================= -->
+      <div id="step3" class="hidden">
+        <div class="success-animation">
+          <div class="success-circle">✓</div>
+          <h2 style="font-size: 22px; font-weight: 800; color: #10b981; margin-bottom: 8px;">تم حذف الحساب بنجاح</h2>
+          <p
+            style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; max-width: 440px; margin: 0 auto 24px;">
+            تمت إزالة جميع بيانات الحساب بنجاح وإنهاء كافة الجلسات النشطة. نأسف لمغادرتك ونتمنى لك دوام التوفيق والنجاح.
+          </p>
+          <button type="button" class="btn btn-primary" onclick="resetFlow()" style="max-width: 200px; margin: 0 auto;">
+            <span>العودة للصفحة الرئيسية</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer Note -->
+    <div class="footer-note">
+      منصة Learnoo للتعليم الذكي • متصل بخادم: <span id="serverUrlDisplay"
+        style="direction: ltr; display: inline-block;">https://api.learnoo.app</span>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // Configuration & State
+    // ==========================================
+    const API_BASE_URL = 'https://api.learnoo.app';
+
+    let currentAuthToken = '';
+    let currentUserData = null;
+
+    // ==========================================
+    // UI Helpers
+    // ==========================================
+    function showAlert(message, type = 'danger') {
+      const alertEl = document.getElementById('globalAlert');
+      const textEl = document.getElementById('globalAlertText');
+      alertEl.className = `alert alert-${type}`;
+      textEl.innerHTML = message;
+      alertEl.classList.remove('hidden');
+    }
+
+    function hideAlert() {
+      const alertEl = document.getElementById('globalAlert');
+      alertEl.classList.add('hidden');
+    }
+
+    function setBtnLoading(btnId, isLoading, text = '') {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      if (isLoading) {
+        btn.disabled = true;
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.innerHTML = `<div class="spinner"></div> <span>${text || 'جاري المعالجة...'}</span>`;
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalHtml) {
+          btn.innerHTML = btn.dataset.originalHtml;
+        }
+      }
+    }
+
+    function updateStepIndicator(currentStep) {
+      const s1 = document.getElementById('stepBadge1');
+      const s2 = document.getElementById('stepBadge2');
+      const s3 = document.getElementById('stepBadge3');
+
+      [s1, s2, s3].forEach(el => el.className = 'step-item');
+
+      if (currentStep === 1) {
+        s1.classList.add('active');
+      } else if (currentStep === 2) {
+        s1.classList.add('completed');
+        s2.classList.add('active');
+      } else if (currentStep === 3) {
+        s1.classList.add('completed');
+        s2.classList.add('completed');
+        s3.classList.add('completed');
+      }
+    }
+
+    function switchAuthTab(tab) {
+      hideAlert();
+      const tabLogin = document.getElementById('tabLogin');
+      const tabToken = document.getElementById('tabToken');
+      const loginForm = document.getElementById('loginForm');
+      const tokenForm = document.getElementById('tokenForm');
+
+      if (tab === 'login') {
+        tabLogin.classList.add('active');
+        tabToken.classList.remove('active');
+        loginForm.classList.remove('hidden');
+        tokenForm.classList.add('hidden');
+      } else {
+        tabToken.classList.add('active');
+        tabLogin.classList.remove('active');
+        tokenForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+      }
+    }
+
+    function validateConfirmationWord() {
+      const input = document.getElementById('confirmKeyword');
+      const btn = document.getElementById('executeDeleteBtn');
+      const val = (input.value || '').trim();
+      // Allow Arabic "حذف" or English "delete"
+      if (val === 'حذف' || val.toLowerCase() === 'delete') {
+        btn.disabled = false;
+      } else {
+        btn.disabled = true;
+      }
+    }
+
+    function resetFlow() {
+      currentAuthToken = '';
+      currentUserData = null;
+      hideAlert();
+      document.getElementById('step1').classList.remove('hidden');
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step3').classList.add('hidden');
+      document.getElementById('loginForm').reset();
+      document.getElementById('tokenForm').reset();
+      document.getElementById('confirmKeyword').value = '';
+      document.getElementById('executeDeleteBtn').disabled = true;
+      document.getElementById('supportFallbackCard').classList.add('hidden');
+      updateStepIndicator(1);
+    }
+
+    // ==========================================
+    // Step 1: Authentication
+    // ==========================================
+    async function handleLogin(event) {
+      event.preventDefault();
+      hideAlert();
+
+      const identifier = document.getElementById('loginIdentifier').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!identifier || !password) {
+        showAlert('يرجى ملء جميع الحقول');
+        return;
+      }
+
+      setBtnLoading('loginSubmitBtn', true, 'جاري التحقق...');
+
+      try {
+        // Call POST /v1/auth/login
+        const response = await fetch(`${API_BASE_URL}/v1/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'lang': 'ar',
+          },
+          body: JSON.stringify({
+            identifier: identifier,
+            password: password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          const errMsg = data.message || 'فشل تسجيل الدخول. يرجى التأكد من صحة البيانات.';
+          throw new Error(errMsg);
+        }
+
+        // Extract token
+        const token = data.meta?.token || data.token || data.data?.token;
+        if (!token) {
+          throw new Error('لم يتم إرجاع رمز الجلسة (token) من الخادم.');
+        }
+
+        currentAuthToken = token;
+        await fetchCurrentUserAndProceed(token);
+
+      } catch (err) {
+        showAlert(err.message || 'حدث خطأ في الاتصال بالخادم.');
+      } finally {
+        setBtnLoading('loginSubmitBtn', false);
+      }
+    }
+
+    async function handleTokenSubmit(event) {
+      event.preventDefault();
+      hideAlert();
+
+      const token = document.getElementById('bearerToken').value.trim();
+      if (!token) {
+        showAlert('يرجى لصق رمز الـ Token أولاً.');
+        return;
+      }
+
+      setBtnLoading('tokenSubmitBtn', true, 'جاري التحقق من الرمز...');
+
+      try {
+        currentAuthToken = token;
+        await fetchCurrentUserAndProceed(token);
+      } catch (err) {
+        showAlert(err.message || 'رمز الجلسة غير صالح أو منتهي الصلاحية.');
+      } finally {
+        setBtnLoading('tokenSubmitBtn', false);
+      }
+    }
+
+    // ==========================================
+    // Step 2: Fetch Current User (/v1/auth/me)
+    // ==========================================
+    async function fetchCurrentUserAndProceed(token) {
+      const response = await fetch(`${API_BASE_URL}/v1/auth/me`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          'lang': 'ar',
+        },
+      });
+
+      const json = await response.json();
+
+      if (!response.ok) {
+        throw new Error(json.message || 'فشل جلب بيانات المستخدم. قد يكون الرمز غير صالح.');
+      }
+
+      const userData = json.data;
+      if (!userData) {
+        throw new Error('لم يتم العثور على بيانات المستخدم.');
+      }
+
+      currentUserData = userData;
+      renderUserData(userData);
+
+      // Transition to Step 2
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('step2').classList.remove('hidden');
+      document.getElementById('step3').classList.add('hidden');
+      updateStepIndicator(2);
+    }
+
+    function renderUserData(userData) {
+      const attrs = userData.attributes || userData;
+      const firstName = attrs.first_name || '';
+      const lastName = attrs.last_name || '';
+      const fullName = attrs.full_name || `${firstName} ${lastName}`.trim() || 'طالب منصة Learnoo';
+
+      document.getElementById('userName').textContent = fullName;
+      document.getElementById('userAvatar').textContent = firstName ? firstName.charAt(0).toUpperCase() : 'ط';
+      document.getElementById('userEmail').textContent = attrs.email || 'بدون بريد';
+      document.getElementById('userPhone').textContent = attrs.phone || 'بدون هاتف';
+      document.getElementById('userRole').textContent = attrs.role || 'طالب';
+      document.getElementById('userId').textContent = userData.id || attrs.id || 'غير معروف';
+    }
+
+    // ==========================================
+    // Step 2: Execute Account Deletion
+    // ==========================================
+    async function executeAccountDeletion() {
+      hideAlert();
+
+      if (!currentUserData || !currentAuthToken) {
+        showAlert('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.');
+        resetFlow();
+        return;
+      }
+
+      const studentId = currentUserData.id || currentUserData.attributes?.id;
+      if (!studentId) {
+        showAlert('تعذر تحديد معرف الطالب (Student ID).');
+        return;
+      }
+
+      const confirmWord = document.getElementById('confirmKeyword').value.trim();
+      if (confirmWord !== 'حذف' && confirmWord.toLowerCase() !== 'delete') {
+        showAlert('يرجى كتابة كلمة "حذف" للتأكيد.');
+        return;
+      }
+
+      setBtnLoading('executeDeleteBtn', true, 'جاري حذف الحساب...');
+
+      try {
+        // First try: DELETE /v1/student/{id} (as defined in studentsApi.delete)
+        let deleteResponse = await fetch(`${API_BASE_URL}/v1/student/${studentId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${currentAuthToken}`,
+            'Accept': 'application/json',
+            'lang': 'ar',
+          },
+        });
+
+        // If 404 or 405, try fallback DELETE /v1/auth/me
+        if (deleteResponse.status === 404 || deleteResponse.status === 405) {
+          deleteResponse = await fetch(`${API_BASE_URL}/v1/auth/me`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${currentAuthToken}`,
+              'Accept': 'application/json',
+              'lang': 'ar',
+            },
+          });
+        }
+
+        // Handle Status Codes
+        if (deleteResponse.status === 200 || deleteResponse.status === 204) {
+          // Success! Revoke tokens if possible
+          try {
+            await fetch(`${API_BASE_URL}/v1/auth/tokens`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${currentAuthToken}` }
+            });
+          } catch (_) {
+            // Ignore revoke error on success
+          }
+
+          // Move to Step 3
+          document.getElementById('step2').classList.add('hidden');
+          document.getElementById('step3').classList.remove('hidden');
+          updateStepIndicator(3);
+          return;
+        }
+
+        const errData = await deleteResponse.json().catch(() => ({}));
+
+        if (deleteResponse.status === 403) {
+          // 403 Forbidden: Student is not authorized to delete directly via /v1/student/{id}
+          document.getElementById('supportFallbackCard').classList.remove('hidden');
+          showAlert(`
+            <strong>تعذر الحذف المباشر (رمز 403 - غير مصرح):</strong><br/>
+            نظام الخادم (API) يقصر استدعاء <code>DELETE /v1/student/${studentId}</code> على المشرفين (Admin) فقط ولا يسمح للطالب بالحذف الذاتي المباشر.<br/>
+            يمكنك الضغط على الزر بالأسفل لتقديم طلب حذف رسمي لإدارة المنصة.
+          `, 'warning');
+          return;
+        }
+
+        throw new Error(errData.message || `خطأ ${deleteResponse.status}: فشل في حذف الحساب.`);
+
+      } catch (err) {
+        showAlert(err.message || 'حدث خطأ أثناء محاولة حذف الحساب.');
+      } finally {
+        setBtnLoading('executeDeleteBtn', false);
+      }
+    }
+
+    // ==========================================
+    // Fallback: Submit Deletion Request via /v1/issues
+    // ==========================================
+    async function sendDeletionRequestIssue() {
+      if (!currentAuthToken || !currentUserData) return;
+
+      const studentId = currentUserData.id || currentUserData.attributes?.id;
+      const attrs = currentUserData.attributes || currentUserData;
+      const fullName = attrs.full_name || `${attrs.first_name || ''} ${attrs.last_name || ''}`.trim();
+
+      const issuePayload = {
+        category: 'account',
+        type: 'account_deletion_request',
+        priority: 'high',
+        description: `طلب حذف حساب طالب رسمي. المعرف: ${studentId}, الاسم: ${fullName}, البريد: ${attrs.email}, الهاتف: ${attrs.phone || 'غير مسجل'}. يرجى حذف الحساب وبياناته نهائياً وفقاً لطلب المستخدم.`,
+        steps_before_problem_appears: 'طلب الحذف عبر صفحة حذف الحساب المستقلة.',
+        expected_result: 'حذف الحساب نهائياً.',
+        actual_result: 'واجهة DELETE /v1/student تتطلب صلاحيات المشرف.',
+        status: 'open'
+      };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/v1/issues`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentAuthToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'lang': 'ar',
+          },
+          body: JSON.stringify(issuePayload),
+        });
+
+        if (res.ok) {
+          showAlert('✅ تم إرسال طلب حذف الحساب بنجاح إلى فريق الدعم الفني والإدارة لمراجعته وتنفيذه.', 'success');
+        } else {
+          // Open mailto fallback
+          const subject = encodeURIComponent('طلب حذف حساب طالب - منصة Learnoo');
+          const body = encodeURIComponent(`مرحباً إدارة Learnoo،\n\nأرجو التكرم بحذف حسابي وبياناتي نهائياً من المنصة:\nالمعرف: ${studentId}\nالاسم: ${fullName}\nالبريد: ${attrs.email}\nالهاتف: ${attrs.phone}\n\nشكراً لكم.`);
+          window.location.href = `mailto:support@learnoo.app?subject=${subject}&body=${body}`;
+        }
+      } catch (e) {
+        window.location.href = `mailto:support@learnoo.app?subject=طلب حذف حساب&body=ID: ${studentId}`;
+      }
+    }
+  </script>
+</body>
+
+</html>
