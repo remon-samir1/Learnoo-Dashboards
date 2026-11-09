@@ -110,6 +110,7 @@ import type {
   UpdateVideoSettingsRequest,
   VideoSettingsResponse,
 } from '@/src/types/video-settings';
+import { SLEEP_PER_MINUTE_FEATURE_KEY } from '@/src/lib/video-settings';
 
 // ============================================
 // Configuration
@@ -1374,32 +1375,18 @@ export const videoSettingsApi = {
   get: () => get<VideoSettingsResponse>('/v1/video-settings'),
 
   /**
-   * Updates `{ sleep_per_minute: <number> }` on `/v1/video-settings`.
+   * Saves the value through the platform features endpoint:
+   * `POST /v1/feature/store-or-update` with `{ key: 'sleep_per_minute', value }`.
    *
-   * The route currently answers `GET, HEAD` only — `PUT`, `PATCH` and `POST`
-   * all come back 405 — so the write still has to be added server side. `PUT`
-   * is sent first as the update verb; a 405 falls through to `PATCH` and then
-   * `POST`, so whichever the backend settles on works without another release.
-   * Every other failure (validation, auth) surfaces the server's own message.
+   * `/v1/video-settings` itself is read-only — it answers `GET, HEAD` and
+   * returns 405 for every write verb — so it is the reader and the feature
+   * store is the writer.
    */
-  update: async (data: UpdateVideoSettingsRequest) => {
-    const verbs = [
-      () => put<VideoSettingsResponse>('/v1/video-settings', data),
-      () => patch<VideoSettingsResponse>('/v1/video-settings', data),
-      () => post<VideoSettingsResponse>('/v1/video-settings', data),
-    ];
-
-    let lastError: unknown;
-    for (const send of verbs) {
-      try {
-        return await send();
-      } catch (error) {
-        if (!(error instanceof ApiError) || error.status !== 405) throw error;
-        lastError = error;
-      }
-    }
-    throw lastError;
-  },
+  update: (data: UpdateVideoSettingsRequest) =>
+    post<ApiResponse<PlatformFeature>>('/v1/feature/store-or-update', {
+      key: SLEEP_PER_MINUTE_FEATURE_KEY,
+      value: String(data.sleep_per_minute),
+    }),
 };
 
 // ============================================

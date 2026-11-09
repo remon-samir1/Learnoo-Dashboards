@@ -16,9 +16,13 @@ export function useVideoSettings() {
 export function useUpdateVideoSettings() {
   const queryClient = useQueryClient();
 
-  return useMutation<number | null, Error, UpdateVideoSettingsRequest>({
-    mutationFn: async (data: UpdateVideoSettingsRequest) =>
-      parseSleepPerMinute(await api.videoSettings.update(data)),
+  // The save answers with the stored feature row, not the video settings
+  // payload, so the fresh value comes from the refetch below rather than from
+  // the mutation's own response.
+  return useMutation<void, Error, UpdateVideoSettingsRequest>({
+    mutationFn: async (data: UpdateVideoSettingsRequest) => {
+      await api.videoSettings.update(data);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },

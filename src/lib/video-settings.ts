@@ -1,5 +1,14 @@
 import type { VideoSettingsResponse } from '@/src/types/video-settings';
 
+/**
+ * Platform-feature key the value is stored under.
+ *
+ * `/v1/video-settings` only reads it back; saving goes through
+ * `POST /v1/feature/store-or-update` with this key, like every other
+ * platform setting.
+ */
+export const SLEEP_PER_MINUTE_FEATURE_KEY = 'sleep_per_minute';
+
 /** Smallest screen-awake window the dashboard accepts, in minutes. */
 export const MIN_SLEEP_PER_MINUTE = 1;
 
